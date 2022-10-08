@@ -30,7 +30,7 @@
 
 ## About The Project
 
-What is it ?
+Very fancy DeepMD-based semi-automatic highly-customizable iterative training procedure.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -43,39 +43,16 @@ What is it ?
 
 ### Prerequisites
 
-What is needed for your project.
-
-ex: 
-
-Compilation
-* gfortran (version with Fortran 2008 support)
-* make
-
-Tests
-* python3 & numpy
+* python >= 3.8
+* numpy >= 1.15
+* VMD >= 1.9.4
+* Atomsk >= beta-0.11.2
 
 <div id="installation"></div>
 
 ### Installation
 
-1. Clone the repository
-   ```sh
-   git clone https://github.com/laagegroup/PROJECT.git
-   ```
-2. Or get a release and untar the archive (source code)
-   ```sh
-   tar -xzvf program_name-x.x.tar.gz
-   ```
-3. Go into the folder and compile the program
-   ```sh
-   make program_name
-   ```
-4. Test the program (python3 with numpy)
-   ```sh
-   cd tests
-   ../bin/program_name input_test output_test
-   python test.py && echo "Success"
-   ```
+TODO
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -84,19 +61,7 @@ Tests
 
 ## Usage
 
-How to use the code ?
-
-   ```sh
-   program_name input output
-   ```
-
-The input_file a formatted file:
-
-   ```sh
-   coord test.dcd
-   n_atoms 932
-   n_frames 10
-   ```
+TODO
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -114,7 +79,7 @@ Distributed under the GNU Affero General Public License v3.0. See `LICENSE` for 
 
 ## Acknowledgments & Sources
 
-*
+* [Stackoverflow](https://stackoverflow.com/)
 *
 *
 
