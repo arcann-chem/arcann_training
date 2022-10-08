@@ -9,7 +9,7 @@ arch_name='v100'
 ####### Override / Read from config.json (local subsys)
 #timestep_ps = [0.0005, 0.0005]
 #temperature_K = [300.0, 300.0]
-####### Override / print_freq is every 10% / nb_steps is initial/auto-calculated (local subsys)
+####### Override / print_freq is every 1% / nb_steps is initial/auto-calculated (local subsys)
 #nb_steps_li = [20000, 40000]
 #print_freq = [200, 200]
 

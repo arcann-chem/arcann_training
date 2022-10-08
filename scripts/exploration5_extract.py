@@ -13,7 +13,6 @@ import subprocess
 import numpy as np
 import logging
 
-from tomllib import TOMLDecodeError
 logging.basicConfig(level = logging.INFO,format='%(levelname)s: %(message)s')
 
 if 'atomsk_fpath' not in globals():
