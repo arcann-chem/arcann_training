@@ -47,7 +47,7 @@ check = 0
 for it_nnp in range(1, config_json['nb_nnp'] + 1):
     cf.change_dir('./'+str(it_nnp))
 #-----# The check serves no purpose now, the job file in training1 always exists or abort !
-    cf.check_file('job_deepmd_train_'+arch_type+'_'+cluster+'.sh',0,1,'Training NNP '+str(it_nnp)+' was not lauched. No job file found.')
+    cf.check_file('job_deepmd_train_'+arch_type+'_'+cluster+'.sh',0,1,'Training of NNP '+str(it_nnp)+' was not lauched. No job file found.')
     if Path('job_deepmd_train_'+arch_type+'_'+cluster+'.sh').is_file():
         subprocess.call(['sbatch','./job_deepmd_train_'+arch_type+'_'+cluster+'.sh'])
         check = check + 1

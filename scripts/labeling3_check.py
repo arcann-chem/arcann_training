@@ -35,7 +35,7 @@ labeling_json = cf.json_read(labeling_json_fpath, abort=True)
 #del current_iteration, training_iterative_apath, config_json, config_json_fpath
 
 if labeling_json['is_launched'] is False:
-    logging.critical('Lock found. Launch first (labeling2.py)')
+    logging.critical('Lock found. Run/Check first: labeling2_launch.py')
     logging.critical('Aborting...')
     sys.exit(1)
 
