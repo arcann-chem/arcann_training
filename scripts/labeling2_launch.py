@@ -33,6 +33,11 @@ labeling_json_fpath = training_iterative_apath+'/control/labeling_'+current_iter
 labeling_json = cf.json_read(labeling_json_fpath, abort=True)
 del current_iteration_zfill, training_iterative_apath
 
+if labeling_json['is_locked'] is False:
+    logging.critical('Lock found. Run/Check first: labeling1_prep.py')
+    logging.critical('Aborting...')
+    sys.exit(1)
+    
 cluster = cf.check_cluster()
 if labeling_json['cluster'] != cluster:
     logging.critical('Different cluster ('+str(cluster)+') than the one for exploration1.py ('+str(labeling_json['cluster'])+')')
