@@ -33,12 +33,18 @@ labeling_json_fpath = training_iterative_apath+'/control/labeling_'+current_iter
 labeling_json = cf.json_read(labeling_json_fpath, abort=True)
 del current_iteration_zfill, training_iterative_apath
 
+if labeling_json['is_launched'] is True:
+    logging.critical('Already launched.')
+    logging.critical('Aborting...')
+    sys.exit(1)
+
 if labeling_json['is_locked'] is False:
     logging.critical('Lock found. Run/Check first: labeling1_prep.py')
     logging.critical('Aborting...')
     sys.exit(1)
     
 cluster = cf.check_cluster()
+
 if labeling_json['cluster'] != cluster:
     logging.critical('Different cluster ('+str(cluster)+') than the one for exploration1.py ('+str(labeling_json['cluster'])+')')
     logging.critical('Aborting...')
@@ -49,12 +55,25 @@ if labeling_json['arch_name'] == 'cpu':
 
 cluster = str(labeling_json['cluster'])
 
-for it_subsys_nr in config_json['subsys_nr']:
+for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
     cf.change_dir('./'+str(it_subsys_nr))
-    cf.check_file('job_labeling_array_'+arch_type+'_'+cluster+'.sh',0,1,'Labeling - '+str(it_subsys_nr)+' not lauched. Job file missing.')
-    subprocess.call(['sbatch','./job_labeling_array_'+arch_type+'_'+cluster+'.sh'])
+    if cluster == 'jz':
+        cf.check_file('job_labeling_array_'+arch_type+'_'+cluster+'.sh',0,1,'Labeling - '+str(it_subsys_nr)+' not lauched. Job file missing.')
+        subprocess.call(['sbatch','./job_labeling_array_'+arch_type+'_'+cluster+'.sh'])
+    elif cluster == 'ir':
+        if it0_subsys_nr == 0:
+            if Path('job_labeling_array_'+arch_type+'_'+cluster+'.sh').is_file():
+                subprocess.call(['sbatch','./job_labeling_array_'+arch_type+'_'+cluster+'.sh'])
+                logging.warning('Labeling - '+str(it_subsys_nr)+' lauched.')
+            elif Path('job_labeling_array_'+arch_type+'_'+cluster+'_0.sh').is_file():
+                subprocess.call(['sbatch','./job_labeling_array_'+arch_type+'_'+cluster+'_0.sh'])
+                logging.warning('Labeling - '+str(it_subsys_nr)+', first batch _0 lauched.')
+                logging.warning('Since Irene-Rome does not supports more than 1000 jobs array. Only the first one has been launched.')
+                logging.warming('Good luck launching the rest...')
+        else:
+            True
     cf.change_dir('..')
-del it_subsys_nr, config_json, cluster
+del it_subsys_nr, it0_subsys_nr, config_json, cluster
 
 labeling_json['is_launched'] = True
 

@@ -8,7 +8,7 @@
 #SBATCH --qos=qos_cpu-t3
 # Number of nodes/processes/tasksperprocess
 #SBATCH --nodes 1
-#SBATCH --ntasks-per-node 10
+#SBATCH --ntasks-per-node _NUMBER_OF_MPI_PROCESSES_PER_NODE_
 #SBATCH --cpus-per-task 1
 #SBATCH --hint=nomultithread
 # Wall-time
@@ -66,12 +66,12 @@ export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 SRUN_CP2K_EXE="srun --ntasks=${SLURM_NTASKS} --nodes=${SLURM_NNODES} --ntasks-per-node=${TASKS_PER_NODE} --cpus-per-task=${SLURM_CPUS_PER_TASK} ${CP2K_EXE}"
 
 # Launch command
-echo "${SRUN_CP2K_EXE} -i ${CP2K_INPUT_F1}.inp > ${CP2K_INPUT_F1}.out"
 export EXIT_CODE="0"
 ${SRUN_CP2K_EXE} -i "${CP2K_INPUT_F1}".inp > "${CP2K_INPUT_F1}".out || export EXIT_CODE="1"
 cp ${CP2K_WFRST_F}.wfn 1_${CP2K_WFRST_F}.wfn
 ${SRUN_CP2K_EXE} -i "${CP2K_INPUT_F2}".inp > "${CP2K_INPUT_F2}".out || export EXIT_CODE="1"
 mv ${CP2K_WFRST_F}.wfn 2_${CP2K_WFRST_F}.wfn
+echo "# [$(date)] Ended"
 
 # Move back data from the temporary work directory and scratch, and clean-up
 mv ./* "${SLURM_SUBMIT_DIR}"

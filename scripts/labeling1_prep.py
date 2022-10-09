@@ -2,6 +2,7 @@
 project_name='nvs'
 allocation_name='cpu'
 arch_name='cpu'
+number_of_mpi_processes_per_node=10
 
 ###################################### No change past here
 import sys
@@ -49,6 +50,11 @@ if arch_name == 'cpu':
     arch_type='cpu'
 
 cluster = cf.check_cluster()
+if cluster != 'ir' or cluster != 'jz':
+    logging.critical('Unsupported cluster.')
+    logging.critical('Aborting...')
+    sys.exit(1)
+
 labeling_json['cluster'] = cluster
 labeling_json['project_name'] = project_name if 'project_name' in globals() else 'nvs'
 labeling_json['allocation_name'] = allocation_name if 'allocation_name' in globals() else 'cpu'
@@ -58,13 +64,27 @@ slurm_email = '' if 'slurm_email' not in globals() else slurm_email
 
 labeling_json['subsys_nr'] = {}
 
+slurm_file_array_master = cf.read_file(deepmd_iterative_path+'/jobs/labeling/job_labeling_array_'+arch_type+'_'+cluster+'.sh')
+slurm_file_array_master = cf.replace_in_list(slurm_file_array_master,'_PROJECT_',project_name)
+slurm_file_array_master = cf.replace_in_list(slurm_file_array_master,'_ALLOC_',allocation_name)
+slurm_file_array_master = cf.replace_in_list(slurm_file_array_master,'_NUMBER_OF_MPI_PROCESS_PER_NODE_',str(number_of_mpi_processes_per_node))
+
+slurm_file_master = cf.read_file(deepmd_iterative_path+'/jobs/labeling/job_labeling_XXXXX_'+arch_type+'_'+cluster+'.sh')
+slurm_file_master = cf.replace_in_list(slurm_file_master,'_PROJECT_',project_name)
+slurm_file_master = cf.replace_in_list(slurm_file_master,'_ALLOC_',allocation_name)
+slurm_file_master = cf.replace_in_list(slurm_file_master,'_NUMBER_OF_MPI_PROCESS_PER_NODE_',str(number_of_mpi_processes_per_node))
+
+if cluster == 'jz':
+    slurm_file_array_master = cf.replace_in_list(slurm_file_array_master,'_WALLTIME_','02:00:00')
+    slurm_file_master = cf.replace_in_list(slurm_file_master,'_WALLTIME_','02:00:00')
+elif cluster == 'ir':
+    slurm_file_array_master = cf.replace_in_list(slurm_file_array_master,'_WALLTIME_','7200')
+    slurm_file_master = cf.replace_in_list(slurm_file_master,'_WALLTIME_','7200')
+
 for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
     cf.create_dir(it_subsys_nr)
     cf.change_dir('./'+str(it_subsys_nr))
     labeling_json['subsys_nr'][it_subsys_nr] = {}
-
-    slurm_file_array_master = cf.read_file(deepmd_iterative_path+'/jobs/labeling/job_labeling_array_'+arch_type+'_'+cluster+'.sh')
-    slurm_file_master = cf.read_file(deepmd_iterative_path+'/jobs/labeling/job_labeling_XXXXX_'+arch_type+'_'+cluster+'.sh')
 
     xyz_file=training_iterative_apath+'/'+current_iteration_zfill+'-exploration/'+it_subsys_nr+'/candidates_'+str(it_subsys_nr)+'_'+current_iteration_zfill+'.xyz'
     if Path(training_iterative_apath+'/'+current_iteration_zfill+'-exploration/'+it_subsys_nr+'/candidates_'+str(it_subsys_nr)+'_'+current_iteration_zfill+'_disturbed.xyz').is_file():
@@ -75,7 +95,6 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
 
     cp2k_input_file_1 = cf.replace_in_list(cp2k_input_file_1,'_CELL_',' '.join([str(v) for v in config_json['subsys_nr'][it_subsys_nr]['cell']]))
     cp2k_input_file_2 = cf.replace_in_list(cp2k_input_file_2,'_CELL_',' '.join([str(v) for v in config_json['subsys_nr'][it_subsys_nr]['cell']]))
-
     cp2k_input_file_1 = cf.replace_in_list(cp2k_input_file_1,'_WALLTIME_','00:30:00')
     cp2k_input_file_2 = cf.replace_in_list(cp2k_input_file_2,'_WALLTIME_','01:00:00')
 
@@ -92,10 +111,8 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
         cf.write_file('./'+step_iter_str+'/2_labeling_'+step_iter_str+'.inp',cp2k_input_file_t2)
 
         slurm_file = cf.replace_in_list(slurm_file_master,'XXXXX',step_iter_str)
-        slurm_file = cf.replace_in_list(slurm_file,'_PROJECT_',project_name)
-        slurm_file = cf.replace_in_list(slurm_file,'_ALLOC_',allocation_name)
-        slurm_file = cf.replace_in_list(slurm_file,'_WALLTIME_','02:00:00')
         slurm_file = cf.replace_in_list(slurm_file,'_CP2K_JOBNAME_','CP2K_'+it_subsys_nr+'_'+current_iteration_zfill)
+
         cf.write_file('./'+step_iter_str+'/job_labeling_'+step_iter_str+'_'+arch_type+'_'+cluster+'.sh',slurm_file)
 
         cf.write_xyz_from_index(step_iter-1,'./'+step_iter_str+'/labeling_'+step_iter_str+'.xyz',n_atom,step_atoms,step_coordinates,blank)
@@ -118,8 +135,8 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
             cf.write_file('./'+d_step_iter_str+'/2_labeling_'+d_step_iter_str+'.inp',cp2k_input_file_t2)
 
             slurm_file=cf.replace_in_list(slurm_file_master,'XXXXX',d_step_iter_str)
-            slurm_file=cf.replace_in_list(slurm_file,'_WALLTIME_','02:00:00')
             slurm_file=cf.replace_in_list(slurm_file,'_CP2K_JOBNAME_','CP2K_'+it_subsys_nr+'_'+current_iteration_zfill)
+
             cf.write_file('./'+d_step_iter_str+'/job_labeling_'+d_step_iter_str+'_'+arch_type+'_'+cluster+'.sh',slurm_file)
 
             cf.write_xyz_from_index(d_step_iter-end_step-1,'./'+d_step_iter_str+'/labeling_'+d_step_iter_str+'.xyz',n_atom,step_atoms,step_coordinates,blank)
@@ -131,13 +148,34 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
     else:
         labeling_json['subsys_nr'][it_subsys_nr]['disturbed'] = 0
 
-    slurm_file_array=cf.replace_in_list(slurm_file_array_master,'_WALLTIME_','02:00:00')
-    slurm_file_array = cf.replace_in_list(slurm_file_array,'_PROJECT_',project_name)
-    slurm_file_array = cf.replace_in_list(slurm_file_array,'_ALLOC_',allocation_name)
-    slurm_file_array=cf.replace_in_list(slurm_file_array,'_CP2K_JOBNAME_','CP2K_'+it_subsys_nr+'_'+current_iteration_zfill)
-    slurm_file_array=cf.replace_in_list(slurm_file_array,'_ARRAYCOUNT_',str(int(labeling_json['subsys_nr'][it_subsys_nr]['standard']+labeling_json['subsys_nr'][it_subsys_nr]['disturbed'] )))
+    slurm_file_array = cf.replace_in_list(slurm_file_array_master,'_CP2K_JOBNAME_','CP2K_'+it_subsys_nr+'_'+current_iteration_zfill)
+    if slurm_email != '':
+        if cluster == 'jz':
+            slurm_file_array = cf.replace_in_list(slurm_file_array,'##SBATCH --mail-type','#SBATCH --mail-type')
+            slurm_file_array = cf.replace_in_list(slurm_file_array,'##SBATCH --mail-user _EMAIL_','#SBATCH --mail-user '+slurm_email)
+        elif cluster == 'ir':
+            slurm_file_array = cf.replace_in_list(slurm_file_array,'##MSUB -@ _EMAIL_','##SUB -@ '+slurm_email)
 
-    cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'.sh',slurm_file_array)
+    if cluster == 'jz':
+        slurm_file_array = cf.replace_in_list(slurm_file_array,'_ARRAYCOUNT_',str(int(labeling_json['subsys_nr'][it_subsys_nr]['standard']+labeling_json['subsys_nr'][it_subsys_nr]['disturbed'] )))
+        cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'.sh',slurm_file_array)
+    elif cluster == 'ir':
+        if int(labeling_json['subsys_nr'][it_subsys_nr]['standard']+labeling_json['subsys_nr'][it_subsys_nr]['disturbed']) <= 1000:
+            slurm_file_array = cf.replace_in_list(slurm_file_array,'_ARRAYCOUNT_',str(int(labeling_json['subsys_nr'][it_subsys_nr]['standard']+labeling_json['subsys_nr'][it_subsys_nr]['disturbed'] )))
+            slurm_file_array = cf.replace_in_list(slurm_file_array,'_NEW_START_','0')
+            cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'.sh',slurm_file_array)
+        else:
+            slurm_file_array_list={}
+            quotient = int( int(labeling_json['subsys_nr'][it_subsys_nr]['standard']+labeling_json['subsys_nr'][it_subsys_nr]['disturbed']) / 1000 )
+            remainder = int ( int(labeling_json['subsys_nr'][it_subsys_nr]['standard']+labeling_json['subsys_nr'][it_subsys_nr]['disturbed']) % 1000 )
+            for i in range(0,quotient+1):
+                slurm_file_array_list[str(i)]  = cf.replace_in_list(slurm_file_array ,'_NEW_START_',str(i*1000))
+                if i < quotient:
+                    slurm_file_array_list[str(i)] = cf.replace_in_list(slurm_file_array_list[str(i)],'_ARRAYCOUNT_','1000')
+                else:
+                    slurm_file_array_list[str(i)] = cf.replace_in_list(slurm_file_array_list[str(i)],'_ARRAYCOUNT_',str(remainder))
+                cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'_'+str(i)+'.sh',slurm_file_array)
+
     labeling_json['is_locked'] = True
     labeling_json['is_launched'] = False
     labeling_json['is_checked'] = False
