@@ -39,7 +39,7 @@ labeling_json_fpath = training_iterative_apath+'/control/labeling_'+current_iter
 labeling_json = cf.json_read(labeling_json_fpath, abort=True)
 
 if labeling_json['is_checked'] is False:
-    logging.critical('Lock found. Check first (labeling3.py)')
+    logging.critical('Lock found. Run/Check first: labeling3_check.py')
     logging.critical('Aborting...')
     sys.exit(1)
 

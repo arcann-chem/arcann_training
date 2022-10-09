@@ -1,28 +1,28 @@
 ###### Project name / AllocType/GPUType -- > v100/v100 or v100/a100 or a100/a100
-project_name='nvs'
-allocation_name='v100'
-arch_name='v100'
+#project_name='nvs'
+#allocation_name='v100'
+#arch_name='v100'
 
-###### Default no email
+###### Default no email (empty string)
 #slurm_email=''
 
 ###### deepmd_iterative_path
 #deepmd_iterative_path=''
 
 ###### Training Parameters
-###### Use initial sets ?
-use_datasets_initial = True
-###### Use extra sets ?
-use_datasets_extra = False
-######Uncoment for override training parameters
+#use_datasets_initial = True
+#use_datasets_extra = False
 #start_lr = 0.001
-#stop_lr = 1e-6
+#stop_lr = 1e-06
 #decay_rate = 0.90
 #decay_steps = 5000
-#stop_batch = 500000
+#stop_batch = 400000
 #numb_test = 0
+#deepmd_model_version = 2.1
+#deepmd_model_type_descriptor = 'se_e2_a'
 
-####### NEED TO CHANGE SET WALLTIME
+##### Guess for initial training walltime
+#initial_seconds_per_1000steps = 90
 
 ###################################### No change past here
 import sys
@@ -33,9 +33,6 @@ import numpy as np
 import random
 import logging
 logging.basicConfig(level=logging.INFO,format='%(levelname)s: %(message)s')
-
-if arch_name == 'v100' or arch_name == 'a100':
-    arch_type='gpu'
 
 training_iterative_apath = str(Path('..').resolve())
 ### Check if the DeePMD Iterative PY path is defined
@@ -61,11 +58,23 @@ config_json['current_iteration'] = training_iterative_apath if 'current_iteratio
 current_iteration = config_json['current_iteration']
 current_iteration_zfill = str(current_iteration).zfill(3)
 
+if current_iteration > 0:
+    labeling_json_fpath = training_iterative_apath+'/control/labeling_'+current_iteration_zfill+'.json'
+    labeling_json = cf.json_read(labeling_json_fpath, abort=True)
+    if labeling_json['is_extracted'] is False:
+        logging.critical('Lock found. Run/Check first: labeling4_extract.py')
+        logging.critical('Aborting...')
+        sys.exit(1)
+    del labeling_json_fpath, labeling_json
+
 ### Check the cluster name
 cluster = cf.check_cluster()
-cf.check_file(deepmd_iterative_path+'/jobs/training/job_deepmd_train_'+arch_type+'_'+cluster+'.sh',0,0)
-slurm_file_master = cf.read_file(deepmd_iterative_path+'/jobs/training/job_deepmd_train_'+arch_type+'_'+cluster+'.sh')
-slurm_email = '' if 'slurm_email' not in globals() else slurm_email
+
+### Some checks
+if 'arch_name' in globals() and ( arch_name is not 'v100' or arch_name is not 'a100' ):
+    logging.critical('Invalid arch_name: '+ arch_name)
+    logging.critical('Aborting...')
+    sys.exit(1)
 
 ### Get/Create training parameters
 training_json_path = training_iterative_apath+'/control/training_'+current_iteration_zfill+'.json'
@@ -76,17 +85,23 @@ training_json['decay_rate'] = decay_rate if 'decay_rate' in globals() else cf.ch
 training_json['decay_steps'] = int(decay_steps) if 'decay_steps' in globals() else cf.check_if_in_dict(training_json,'decay_steps',5000,1)
 training_json['stop_batch'] = int(stop_batch) if 'stop_batch' in globals() else cf.check_if_in_dict(training_json,'stop_batch',400000,1)
 training_json['numb_test'] = numb_test if 'numb_test' in globals() else cf.check_if_in_dict(training_json,'numb_test',0,1)
-training_json['use_datasets_initial'] = use_datasets_initial
-training_json['use_datasets_extra'] = use_datasets_extra
+training_json['use_datasets_initial'] = use_datasets_initial if 'use_datasets_initial' in globals() else cf.check_if_in_dict(training_json,'use_datasets_initial',True,1)
+training_json['use_datasets_extra'] = use_datasets_extra if 'use_datasets_extra' in globals() else cf.check_if_in_dict(training_json,'use_datasets_extra',False,1)
 training_json['cluster'] = cluster
-training_json['project_name'] = project_name
-training_json['allocation_name'] = allocation_name
-training_json['arch_name'] = arch_name
+training_json['project_name'] = project_name if 'project_name' in globals() else cf.check_if_in_dict(training_json,'project_name','nvs',1)
+training_json['allocation_name'] = allocation_name if 'allocation_name' in globals() else cf.check_if_in_dict(training_json,'allocation_name','v100',1)
+training_json['arch_name'] = arch_name if 'arch_name' in globals() else cf.check_if_in_dict(training_json,'arch_name','v100',1)
+if training_json['arch_name'] == 'v100' or training_json['arch_name'] == 'a100':
+    arch_type='gpu'
 training_json['arch_type'] = arch_type
 training_json['deepmd_model_version'] = deepmd_model_version if 'deepmd_model_version' in globals() else cf.check_if_in_dict(training_json,'deepmd_model_version',2.1,1)
 training_json['deepmd_model_type_descriptor'] = deepmd_model_type_descriptor if 'deepmd_model_type_descriptor' in globals() else cf.check_if_in_dict(training_json,'deepmd_model_type_descriptor','se_e2_a',1)
 deepmd_model_version = training_json['deepmd_model_version']
 deepmd_model_type_descriptor = training_json['deepmd_model_type_descriptor']
+
+cf.check_file(deepmd_iterative_path+'/jobs/training/job_deepmd_train_'+arch_type+'_'+cluster+'.sh',0,0)
+slurm_file_master = cf.read_file(deepmd_iterative_path+'/jobs/training/job_deepmd_train_'+arch_type+'_'+cluster+'.sh')
+slurm_email = '' if 'slurm_email' not in globals() else slurm_email
 
 if current_iteration > 0:
     previous_iteration = current_iteration-1
@@ -359,7 +374,8 @@ del config_json_fpath, training_json_path, training_json
 if current_iteration > 0:
     approx_time = int(np.ceil((stop_batch*(prevtraining_json['avg_seconds_per_step']+0.25*prevtraining_json['avg_seconds_per_step'])/3600)))
 else:
-    approx_time = int(np.ceil((stop_batch*90/1000/3600)))
+    initial_seconds_per_1000steps = initial_seconds_per_1000steps if 'initial_seconds_per_1000steps' in globals() else 90
+    approx_time = int(np.ceil((stop_batch*initial_seconds_per_1000steps/1000/3600)))
 if approx_time > 100:
     approx_time = 100
 
@@ -380,13 +396,13 @@ for it_nnp in range(1,config_json['nb_nnp'] + 1):
     cf.json_dump(training_input_json,training_input_json_fpath, True, 'deepmd training input file')
 
     slurm_file = slurm_file_master
-    slurm_file = cf.replace_in_list(slurm_file,'_PROJECT_',project_name)
+    slurm_file = cf.replace_in_list(slurm_file,'_PROJECT_',training_json['project_name'])
     slurm_file = cf.replace_in_list(slurm_file,'_WALLTIME_',str(approx_time)+':00:00')
     slurm_file = cf.replace_in_list(slurm_file,'SET_DEEPMD_MODEL_VERSION',str(deepmd_model_version))
-    if allocation_name == 'v100':
+    if training_json['allocation_name'] == 'v100':
         slurm_file = cf.replace_in_list(slurm_file,'_ALLOC_','v100')
         if approx_time <= 20:
-            if arch_name == 'v100':
+            if training_json['arch_name'] == 'v100':
                 slurm_file = cf.replace_in_list(slurm_file,'_QOS_','qos_gpu-t3')
                 slurm_file = cf.replace_in_list(slurm_file,'_PARTITION_','gpu_p13')
                 slurm_file = cf.replace_in_list(slurm_file,'#SBATCH -C _SUBPARTITION_','##SBATCH -C _SUBPARTITION_')
@@ -398,7 +414,7 @@ for it_nnp in range(1,config_json['nb_nnp'] + 1):
             slurm_file = cf.replace_in_list(slurm_file,'_QOS_','qos_gpu-t4')
             slurm_file = cf.replace_in_list(slurm_file,'_PARTITION_','gpu_p13')
             slurm_file = cf.replace_in_list(slurm_file,'#SBATCH -C _SUBPARTITION_','##SBATCH -C _SUBPARTITION_')
-    elif allocation_name == 'a100':
+    elif training_json['allocation_name'] == 'a100':
         slurm_file = cf.replace_in_list(slurm_file,'_ALLOC_','a100')
         if approx_time <= 20:
             slurm_file = cf.replace_in_list(slurm_file,'_QOS_','qos_gpu-t3')
@@ -418,8 +434,8 @@ for it_nnp in range(1,config_json['nb_nnp'] + 1):
 
     del slurm_file, RAND
 
-del allocation_name, project_name, slurm_email, cluster, it_nnp, config_json, deepmd_model_version, approx_time, training_input_json, training_input_json_fpath, current_iteration_zfill, deepmd_model_type_descriptor
-del stop_batch, deepmd_iterative_path, training_iterative_apath, current_iteration, use_datasets_extra, use_datasets_initial, arch_name, slurm_file_master, arch_type
+del slurm_email, cluster, it_nnp, config_json, deepmd_model_version, approx_time, training_input_json, training_input_json_fpath, current_iteration_zfill, deepmd_model_type_descriptor
+del stop_batch, deepmd_iterative_path, training_iterative_apath, current_iteration, slurm_file_master, arch_type
 
 del sys, Path, json, subprocess, np, random, logging, cf
 import gc; gc.collect(); del gc

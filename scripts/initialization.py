@@ -5,10 +5,10 @@ nb_nnp = 3
 
 #temperature_K=[300, 300]
 #timestep_ps=[0.0005, 0.0005]
-#nb_candidates_max=[1000, 2000]
-#s_low=[0.01, 0.01]
-#s_high=[0.60, 0.60]
-#s_high_max=[1.00, 1.00]
+#nb_candidates_max=[500, 500]
+#s_low=[0.1, 0.1]
+#s_high=[0.8, 0.8]
+#s_high_max=[1.0, 1.0]
 #skip_frames=[10, 10]
 
 ### Set where deepmd_iterative_py is 'installed'
@@ -63,31 +63,28 @@ f.close()
 del f, deepmd_iterative_apath
 
 ### Check if data exists, get init_* datasets and extract number of atoms and cell dimensions
-cf.check_dir(training_iterative_apath+'/data', 0, error_msg='data')
-datasets_initial_folders=[zzz for zzz in Path(training_iterative_apath+'/data').glob('init_*')]
+cf.check_dir(training_iterative_apath+'/data',0,error_msg='data')
+datasets_initial_folders = [ zzz for zzz in Path(training_iterative_apath+'/data').glob('init_*') ]
 if len(datasets_initial_folders) == 0 :
     logging.critical('No initial data sets found.')
     logging.critical('Aborting...')
     sys.exit(1)
+
 datasets_initial=[str(zzz).split('/')[-1] for zzz in datasets_initial_folders]
 
 datasets_initial_json={}
 for it_datasets_initial in datasets_initial:
-    data_path = training_iterative_apath+'/data/'+it_datasets_initial+'/set.000/'
-    cf.check_file(data_path+'/box.npy', 0, 0)
-    a = np.load(data_path+'/box.npy')
-    datasets_initial_json[it_datasets_initial] = a.shape[0]
-    del a
-    cf.check_file(data_path+'/coord.npy',0 , 0)
-    b = np.load(data_path+'/coord.npy')
-    del b,data_path
+    data_path = training_iterative_apath+'/data/'+it_datasets_initial
+    cf.check_file(data_path+'/type.raw',0,0,'No type.raw found in '+ data_path)
+    cf.check_file(data_path+'/set.000/box.npy',0,0,'No box.npy found in '+ data_path+'/set.000/')
+    datasets_initial_json[it_datasets_initial] = np.load(data_path+'/set.000/box.npy').shape[0]
+    cf.check_file(data_path+'/set.000/coord.npy',0,0,'No coord.npy found in '+ data_path+'/set.000/')
+    cf.check_file(data_path+'/set.000/force.npy',0,0,'No force.npy found in '+ data_path+'/set.000/')
+    cf.check_file(data_path+'/set.000/energy.npy',0,0,'No energy.npy found in '+ data_path+'/set.000/')
 
-del it_datasets_initial,datasets_initial_folders
+config_json['datasets_initial']=[ zzz for zzz in datasets_initial_json.keys() ]
 
-### Update config_json
-config_json['datasets_initial']=[zzz for zzz in datasets_initial_json.keys()]
-
-del datasets_initial
+del it_datasets_initial,datasets_initial_folders,data_path,datasets_initial
 
 ### Print/Write config and datasets_initial json files
 logging.info(config_json)

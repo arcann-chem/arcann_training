@@ -1,11 +1,9 @@
 ####### Override / Read from config.json (local subsys)
-s_low=[0.06,0.06]
-#s_high=[0.60,0.60]
-#s_high_max=[1.0,1.0]
-nb_candidates_max=[50,100]
-#skip_frames=[10,10]
-
-### WOLOLO
+#nb_candidates_max=[500, 500]
+#s_low=[0.1, 0.1]
+#s_high=[0.8, 0.8]
+#s_high_max=[1.0, 1.0]
+#skip_frames=[10, 10]
 
 ###################################### No change past here
 import sys
@@ -15,6 +13,7 @@ import logging
 logging.basicConfig(level = logging.INFO,format='%(levelname)s: %(message)s')
 
 training_iterative_apath = str(Path('..').resolve())
+
 ### Check if the DeePMD Iterative PY path is defined
 if Path(training_iterative_apath+'/control/path').is_file():
     with open(training_iterative_apath+'/control/path', "r") as f:
@@ -42,7 +41,7 @@ exploration_json_fpath = training_iterative_apath+'/control/exploration_'+curren
 exploration_json = cf.json_read(exploration_json_fpath, abort = True)
 
 if exploration_json['is_checked'] is False:
-    logging.critical('Lock found. Check Normal termination (ex3.py)')
+    logging.critical('Lock found. Run/Check first: exploration3_check.py')
     logging.critical('Aborting...')
     sys.exit(1)
 
@@ -82,7 +81,6 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                 end = np.argmax(devi[:,4] >= s_high_max_local)
             else:
                 end = -1
-
 
             if end == -1:
                 devi_json['average_max_devi'] = np.average(devi[skip_frame_local:,4])

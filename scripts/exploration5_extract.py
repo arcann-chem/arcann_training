@@ -83,7 +83,7 @@ cf.check_file(deepmd_iterative_path+'/scripts/vmd_dcd_selection_index.tcl',0,0)
 master_vmd_tcl = cf.read_file(deepmd_iterative_path+'/scripts/vmd_dcd_selection_index.tcl')
 
 if exploration_json['is_deviated'] is False:
-    logging.critical('Lock found. Check Normal termination (ex4.py)')
+    logging.critical('Lock found. Run/Check first: exploration4_devi.py')
     logging.critical('Aborting...')
     sys.exit(1)
 

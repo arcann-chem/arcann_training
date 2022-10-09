@@ -34,7 +34,7 @@ exploration_json = cf.json_read(exploration_json_fpath, abort=True)
 del current_iteration, training_iterative_apath, config_json, config_json_fpath
 
 if exploration_json['is_launched'] is False:
-    logging.critical('Lock found. Launch first (ex2.py)')
+    logging.critical('Lock found. Run/Check first: exploration2_launch.py')
     logging.critical('Aborting...')
     sys.exit(1)
 
@@ -49,7 +49,6 @@ for it_subsys_nr in exploration_json['subsys_nr']:
             it_each_zfill = str(it_each).zfill(5)
             check_path='./'+str(it_subsys_nr)+'/'+str(it_nnp)+'/'+it_each_zfill
             lammps_output_file = check_path+'/'+str(it_subsys_nr)+'_'+str(it_nnp)+'_'+current_iteration_zfill+'.log'
-            cf.check_file(lammps_output_file,0,1)
             if Path(lammps_output_file).is_file():
                 lammps_output = cf.read_file(check_path+'/'+str(it_subsys_nr)+'_'+str(it_nnp)+'_'+current_iteration_zfill+'.log')
                 if any('Total wall time:' in f for f in lammps_output):
@@ -58,8 +57,10 @@ for it_subsys_nr in exploration_json['subsys_nr']:
                     timings=[zzz for zzz in lammps_output if 'Loop time of' in zzz]
                     timings_sum = timings_sum+float(timings[0].split(' ')[3])
                 else:
-                    logging.critical(str(it_subsys_nr)+'_'+str(it_nnp)+'_'+current_iteration_zfill+' failed. Check manually')
+                    logging.critical(lammps_output_file+' failed. Check manually')
                 del lammps_output
+            else:
+                logging.critical(lammps_output_file+' not found. Check manually')
             del lammps_output_file, check_path
     timings = timings_sum/subsys_count
     average_per_step = timings/exploration_json['subsys_nr'][it_subsys_nr]['nb_steps']

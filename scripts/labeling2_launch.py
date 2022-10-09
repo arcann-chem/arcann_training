@@ -38,6 +38,11 @@ if labeling_json['is_launched'] is True:
     logging.critical('Aborting...')
     sys.exit(1)
 
+if labeling_json['is_locked'] is False:
+    logging.critical('Lock found. Run/Check first: labeling1_prep.py')
+    logging.critical('Aborting...')
+    sys.exit(1)
+    
 cluster = cf.check_cluster()
 
 if labeling_json['cluster'] != cluster:

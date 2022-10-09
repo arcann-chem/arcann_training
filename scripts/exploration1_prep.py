@@ -59,6 +59,10 @@ previous_iteration_zfill = str(previous_iteration).zfill(3)
 
 prevtraining_json_fpath = training_iterative_apath+'/control/training_'+previous_iteration_zfill+'.json'
 prevtraining_json = cf.json_read(prevtraining_json_fpath, abort=True)
+if prevtraining_json['is_frozen'] is False:
+    logging.critical('Lock found. Previous NNPs aren\'t frozen')
+    logging.critical('Aborting...')
+    sys.exit(1)
 deepmd_model_version = prevtraining_json['deepmd_model_version']
 deepmd_model_type_descriptor = prevtraining_json['deepmd_model_type_descriptor']
 

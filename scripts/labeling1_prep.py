@@ -35,6 +35,14 @@ config_json['current_iteration'] = current_iteration if 'current_iteration' in g
 current_iteration = config_json['current_iteration']
 current_iteration_zfill = str(current_iteration).zfill(3)
 
+exploration_json_fpath = training_iterative_apath+'/control/exploration_'+current_iteration_zfill+'.json'
+exploration_json = cf.json_read(exploration_json_fpath, abort = True)
+if exploration_json['is_extracted'] is False:
+    logging.critical('Lock found. Run/Check first: exploration5_extract.py')
+    logging.critical('Aborting...')
+    sys.exit(1)
+del exploration_json_fpath, exploration_json
+
 labeling_json_fpath = training_iterative_apath+'/control/labeling_'+current_iteration_zfill+'.json'
 labeling_json = cf.json_read(labeling_json_fpath, abort = False)
 
@@ -48,9 +56,10 @@ if cluster != 'ir' or cluster != 'jz':
     sys.exit(1)
 
 labeling_json['cluster'] = cluster
-labeling_json['project_name'] = project_name
-labeling_json['allocation_name'] = allocation_name
-labeling_json['arch_name'] = arch_name
+labeling_json['project_name'] = project_name if 'project_name' in globals() else 'nvs'
+labeling_json['allocation_name'] = allocation_name if 'allocation_name' in globals() else 'cpu'
+labeling_json['arch_name'] = arch_name if 'arch_name' in globals() else 'cpu'
+
 slurm_email = '' if 'slurm_email' not in globals() else slurm_email
 
 labeling_json['subsys_nr'] = {}
