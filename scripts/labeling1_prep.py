@@ -54,11 +54,10 @@ if exploration_json['is_extracted'] is False:
     logging.critical('Lock found. Run/Check first: exploration5_extract.py')
     logging.critical('Aborting...')
     sys.exit(1)
-del exploration_json_fpath, exploration_json
 
 cluster = cf.check_cluster()
 
-if cluster != 'ir' or cluster != 'jz':
+if cluster != 'ir' and cluster != 'jz':
     logging.critical('Unsupported cluster.')
     logging.critical('Aborting...')
     sys.exit(1)
@@ -97,6 +96,9 @@ if slurm_email != '':
 labeling_json['subsys_nr'] = {}
 
 for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
+    nb_standard = int(exploration_json['subsys_nr'][it_subsys_nr]['nb_candidates_kept'])
+    nb_disturbed = int(exploration_json['subsys_nr'][it_subsys_nr]['nb_candidates_kept']) if exploration_json['subsys_nr'][it_subsys_nr] == 'disturbed' else 0
+
     cf.create_dir(it_subsys_nr)
     cf.change_dir('./'+str(it_subsys_nr))
 
@@ -127,20 +129,20 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
 
     if cluster == 'jz':
         slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_WALLTIME_',cf.seconds_to_walltime(slurm_walltime_s))
-        slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_ARRAYCOUNT_',str(int(labeling_json['subsys_nr'][it_subsys_nr]['standard']+labeling_json['subsys_nr'][it_subsys_nr]['disturbed'] )))
+        slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_ARRAYCOUNT_',str(int(nb_standard + nb_disturbed)))
         cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'.sh',slurm_file_array_subsys)
         slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,'_WALLTIME_',cf.seconds_to_walltime(slurm_walltime_s))
 
     elif cluster == 'ir':
         slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_WALLTIME_',slurm_walltime_s)
-        if int(labeling_json['subsys_nr'][it_subsys_nr]['standard']+labeling_json['subsys_nr'][it_subsys_nr]['disturbed']) <= 1000:
-            slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_ARRAYCOUNT_',str(int(labeling_json['subsys_nr'][it_subsys_nr]['standard']+labeling_json['subsys_nr'][it_subsys_nr]['disturbed'] )))
+        if int(nb_standard + nb_disturbed) <= 1000:
+            slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_ARRAYCOUNT_',str(int(nb_standard + nb_disturbed)))
             slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_NEW_START_','0')
             cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'.sh',slurm_file_array_subsys)
         else:
             slurm_file_array_subsys_list={}
-            quotient = int( int(labeling_json['subsys_nr'][it_subsys_nr]['standard']+labeling_json['subsys_nr'][it_subsys_nr]['disturbed']) / 1000 )
-            remainder = int ( int(labeling_json['subsys_nr'][it_subsys_nr]['standard']+labeling_json['subsys_nr'][it_subsys_nr]['disturbed']) % 1000 )
+            quotient = int( int(nb_standard + nb_disturbed) / 1000 )
+            remainder = int( int(nb_standard + nb_disturbed) % 1000 )
             for i in range(0,quotient+1):
                 slurm_file_array_subsys_list[str(i)]  = cf.replace_in_list(slurm_file_array_subsys ,'_NEW_START_',str(i*1000))
                 if i < quotient:
@@ -235,6 +237,7 @@ del slurm_file_array_master, slurm_file_array_subsys
 del config_json, config_json_fpath, training_iterative_apath
 del current_iteration, current_iteration_zfill
 del labeling_json, labeling_json_fpath
+del exploration_json, exploration_json_fpath
 del cluster, arch_type
 del project_name, allocation_name, arch_name
 del deepmd_iterative_apath

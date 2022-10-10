@@ -78,8 +78,8 @@ project_name = exploration_json['project_name']
 allocation_name = exploration_json['allocation_name']
 arch_name = exploration_json['arch_name']
 
-if arch_name == 'cpu':
-    arch_type ='cpu'
+if arch_name == 'v100' or arch_name == 'a100':
+    arch_type ='gpu'
 slurm_email = '' if 'slurm_email' not in globals() else slurm_email
 
 ### Checks
@@ -309,23 +309,25 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
     cf.json_dump(exploration_json,exploration_json_fpath, True, 'exploration file')
 
 del it_list_plumed_files,it0_subsys_nr
+
 del slurm_file_master, slurm_file, lammps_data, lammps_input
-del prevtraining_json, prevtraining_json_fpath, previous_iteration, previous_iteration_zfill
-del config_json, config_json_fpath
+del nb_traj, exploration_type
+del temperature, timestep, nb_steps_exploration_initial
+del it_subsys_nr, it_nnp, it_number, local_path, reorder_nnp_list, models_list, RAND, nb_steps, data_file_name, print_freq_local, n, string, approx_time, models_list_job, list_plumed_files, plumed_input, it_plumed_input, prev_plumed
 
-if 'temperature_K' in globals():
-    del temperature_K
-if 'timestep_ps' in globals():
-    del timestep_ps
-if 'print_freq' in globals():
-    del print_freq
-
+### Cleaning
+del config_json, config_json_fpath, training_iterative_apath
+del current_iteration, current_iteration_zfill
 del exploration_json, exploration_json_fpath
-del deepmd_iterative_apath, nb_traj, exploration_type
+del cluster, arch_type
+del project_name, allocation_name, arch_name
+del deepmd_iterative_apath
+del slurm_email
 
-del project_name, allocation_name, arch_name, slurm_email, temperature, timestep, nb_steps_exploration_initial, arch_type, training_iterative_apath, current_iteration, current_iteration_zfill, deepmd_model_version, deepmd_model_type_descriptor
-del cluster, it_subsys_nr, it_nnp, it_number, local_path, reorder_nnp_list, models_list, RAND, nb_steps, data_file_name, print_freq_local, n, string, approx_time, models_list_job, list_plumed_files, plumed_input, it_plumed_input, prev_plumed
+del previous_iteration, previous_iteration_zfill
+del prevtraining_json, prevtraining_json_fpath
 
-del sys, Path, subprocess, np, random, logging, cf
+del sys, Path, logging, cf
+del subprocess, np, random
 import gc; gc.collect(); del gc
 exit()

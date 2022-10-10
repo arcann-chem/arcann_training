@@ -69,12 +69,11 @@ for it_subsys_nr in config_json['subsys_nr']:
         cf.change_dir('..')
     del it_nnp
     cf.change_dir('..')
-del it_subsys_nr, config_json, cluster
+del it_subsys_nr
 
-if check == config_json['nb_nnp']:
+if check == (len( exploration_json['subsys_nr']) * exploration_json['nb_nnp'] * exploration_json['nb_traj'] ):
     exploration_json['is_launched'] = True
     logging.info('Slurm launch of the exploration is a success!')
-
 else:
     logging.critical('Some Exploration did not launched correctly')
     logging.critical('Please launch manually before continuing to the next step')

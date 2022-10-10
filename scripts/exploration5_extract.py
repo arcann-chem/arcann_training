@@ -123,7 +123,9 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                 vmd_tcl = cf.replace_in_list(vmd_tcl,'_DCD_FILE_',traj_file)
                 vmd_tcl = cf.replace_in_list(vmd_tcl,'_SELECTION_FILE_','min.vmd')
                 cf.write_file('vmd.tcl',vmd_tcl)
-                subprocess.call([vmd_bin,'-e','vmd.tcl','-dispdev', 'text'])
+                subprocess.call([vmd_bin,'-e','vmd.tcl','-dispdev', 'text'],\
+                    stdout=subprocess.DEVNULL,\
+                    stderr=subprocess.STDOUT)
                 cf.remove_file('vmd.tcl')
                 cf.remove_file('min.vmd')
                 del vmd_tcl, traj_file, min_index
@@ -137,20 +139,18 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                             '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][1]), 'H2',\
                             '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][2]), 'H3',\
                             '-disturb', str(disturb[it0_subsys_nr]),\
-                            'xyz'])
+                            'xyz'],\
+                            stdout=subprocess.DEVNULL,\
+                            stderr=subprocess.STDOUT)
 
-                        # subprocess.call([atomsk_bin, '-ow', min_file_name+'.xyz',\
-                        #     '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][0]), 'H1',\
-                        #     '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][1]), 'H2',\
-                        #     '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][2]), 'H3',\
-                        #     '-disturb', str(disturb[it0_subsys_nr]),\
-                        #     'lmp'])
-                    # else:
                     subprocess.call([atomsk_bin, '-ow', min_file_name+'.xyz',\
                         '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][0]), 'H1',\
                         '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][1]), 'H2',\
                         '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][2]), 'H3',\
-                        'lmp'])
+                        'lmp'],\
+                        stdout=subprocess.DEVNULL,\
+                        stderr=subprocess.STDOUT)
+
                     Path(min_file_name+'.xyz').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'.xyz')
                     Path(min_file_name+'.lmp').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'.lmp')
                     del min_file_name
@@ -172,7 +172,9 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                     vmd_tcl = cf.replace_in_list(vmd_tcl,'_DCD_FILE_',traj_file)
                     vmd_tcl = cf.replace_in_list(vmd_tcl,'_SELECTION_FILE_','label.vmd')
                     cf.write_file('vmd.tcl',vmd_tcl)
-                    subprocess.call([vmd_bin,'-e','vmd.tcl','-dispdev', 'text'])
+                    subprocess.call([vmd_bin,'-e','vmd.tcl','-dispdev', 'text'],\
+                                    stdout=subprocess.DEVNULL,\
+                                    stderr=subprocess.STDOUT)
                     cf.remove_file('vmd.tcl')
                     cf.remove_file('label.vmd')
                     del candidates_index, vmd_tcl, traj_file
@@ -189,7 +191,11 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                                 '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][0]), 'H1',\
                                 '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][1]), 'H2',\
                                 '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][2]), 'H3',\
-                                'xyz', str(it_vmd_xyz_files)+'_disturbed'])
+                                '-disturb', str(disturb_devi[it0_subsys_nr]),\
+                                'xyz', str(it_vmd_xyz_files)+'_disturbed'],\
+                                stdout=subprocess.DEVNULL,\
+                                stderr=subprocess.STDOUT)
+
                         del it_vmd_xyz_files, vmd_xyz_files
                         os.system('cat vmd_*_disturbed.xyz >> temp_candidates_'+str(it_subsys_nr)+'_'+str(it_nnp)+'_'+current_iteration_zfill+'_disturbed.xyz')
 
@@ -231,7 +237,7 @@ del current_iteration, current_iteration_zfill
 del exploration_json, exploration_json_fpath
 del deepmd_iterative_apath
 
-del sys, os, Path, logging, cf
+del sys, Path, logging, cf
 del os, np, subprocess
 import gc; gc.collect(); del gc
 exit()

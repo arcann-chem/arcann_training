@@ -149,7 +149,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
     exploration_json['subsys_nr'][it_subsys_nr]['average_max_devi'] =  exploration_json['subsys_nr'][it_subsys_nr]['average_max_devi'] / ( exploration_json['nb_nnp'] +  len(range(1, exploration_json['nb_traj'] + 1)) - full_skip )
     exploration_json['subsys_nr'][it_subsys_nr]['standard_dev_max_devi'] =  exploration_json['subsys_nr'][it_subsys_nr]['standard_dev_max_devi'] / ( exploration_json['nb_nnp'] +  len(range(1, exploration_json['nb_traj'] + 1)) - full_skip )
 
-del it_subsys_nr, config_json, config_json_fpath, training_iterative_apath
+del it_subsys_nr
 
 for it0_subsys_nr,it_subsys_nr in enumerate(exploration_json['subsys_nr']):
     cf.change_dir('./'+str(it_subsys_nr))

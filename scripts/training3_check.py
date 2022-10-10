@@ -73,7 +73,7 @@ if check == config_json['nb_nnp']:
     training_json['is_checked'] = True
 else:
     logging.critical('Some DP Train did not finished correctly')
-    logging.critical('Please check manually before relaunching this step step')
+    logging.critical('Please check manually before relaunching this step')
     logging.critical('Aborting...')
     sys.exit(1)
 del check

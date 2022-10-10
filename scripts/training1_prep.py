@@ -55,7 +55,7 @@ config_json['current_iteration'] = training_iterative_apath if 'current_iteratio
 current_iteration = config_json['current_iteration']
 current_iteration_zfill = str(current_iteration).zfill(3)
 
-if 'arch_name' in globals() and ( arch_name is not 'v100' or arch_name is not 'a100' ):
+if 'arch_name' in globals() and ( arch_name != 'v100' or arch_name != 'a100' ):
     logging.critical('Invalid arch_name: '+ arch_name)
     logging.critical('Aborting...')
     sys.exit(1)

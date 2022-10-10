@@ -90,7 +90,7 @@ else:
     del it_subsys_nr
 del check, exploration_json, exploration_json_fpath
 
-logging.info('The exploraiton phase is a success!')
+logging.info('The exploration phase is a success!')
 
 ### Cleaning
 ##TODO
