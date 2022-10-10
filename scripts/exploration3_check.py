@@ -6,19 +6,19 @@ logging.basicConfig(level=logging.INFO,format='%(levelname)s: %(message)s')
 
 training_iterative_apath = str(Path('..').resolve())
 ### Check if the deepmd_iterative_apath is defined
-if 'deepmd_iterative_path' in globals():
+if 'deepmd_iterative_apath' in globals():
     True
 elif Path(training_iterative_apath+'/control/path').is_file():
     with open(training_iterative_apath+'/control/path', "r") as f:
-        deepmd_iterative_path = f.read()
+        deepmd_iterative_apath = f.read()
     f.close()
     del f
 else:
-    if 'deepmd_iterative_path' not in globals() :
-        logging.critical(training_iterative_apath+'/control/path not found and deepmd_iterative_path not defined.')
+    if 'deepmd_iterative_apath' not in globals() :
+        logging.critical(training_iterative_apath+'/control/path not found and deepmd_iterative_apath not defined.')
         logging.critical('Aborting...')
         sys.exit(1)
-sys.path.insert(0, deepmd_iterative_path+'/scripts/')
+sys.path.insert(0, deepmd_iterative_apath+'/scripts/')
 import common_functions as cf
 
 ### Read what is needed (json files)

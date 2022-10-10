@@ -27,19 +27,19 @@ import random
 
 training_iterative_apath = str(Path('..').resolve())
 ### Check if the deepmd_iterative_apath is defined
-if 'deepmd_iterative_path' in globals():
+if 'deepmd_iterative_apath' in globals():
     True
 elif Path(training_iterative_apath+'/control/path').is_file():
     with open(training_iterative_apath+'/control/path', "r") as f:
-        deepmd_iterative_path = f.read()
+        deepmd_iterative_apath = f.read()
     f.close()
     del f
 else:
-    if 'deepmd_iterative_path' not in globals() :
-        logging.critical(training_iterative_apath+'/control/path not found and deepmd_iterative_path not defined.')
+    if 'deepmd_iterative_apath' not in globals() :
+        logging.critical(training_iterative_apath+'/control/path not found and deepmd_iterative_apath not defined.')
         logging.critical('Aborting...')
         sys.exit(1)
-sys.path.insert(0, deepmd_iterative_path+'/scripts/')
+sys.path.insert(0, deepmd_iterative_apath+'/scripts/')
 import common_functions as cf
 
 ### Read what is needed (json files)
@@ -83,7 +83,7 @@ if arch_name == 'cpu':
 slurm_email = '' if 'slurm_email' not in globals() else slurm_email
 
 ### Checks
-cf.check_file(deepmd_iterative_path+'/jobs/exploration/job_deepmd_lammps_'+arch_type+'_'+cluster+'.sh',0,True,'No SLURM file present for the exploration phase on this cluster.')
+cf.check_file(deepmd_iterative_apath+'/jobs/exploration/job_deepmd_lammps_'+arch_type+'_'+cluster+'.sh',0,True,'No SLURM file present for the exploration phase on this cluster.')
 
 ### Preparation of the exploration
 if previous_iteration > 0:
@@ -116,7 +116,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
         del starting_point_list_path
 
     exploration_json['subsys_nr'][it_subsys_nr]['exploration_type'] = exploration_type
-    slurm_file_master = cf.read_file(deepmd_iterative_path+'/jobs/exploration/job_deepmd_'+exploration_type+'_'+arch_type+'_'+cluster+'.sh')
+    slurm_file_master = cf.read_file(deepmd_iterative_apath+'/jobs/exploration/job_deepmd_'+exploration_type+'_'+arch_type+'_'+cluster+'.sh')
     for it_nnp in range(1, config_json['nb_nnp'] + 1 ):
         cf.create_dir('./'+it_subsys_nr+'/'+str(it_nnp))
         for it_number in range(1, nb_traj + 1):
@@ -141,7 +141,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
 
             if exploration_type == 'lammps':
                 lammps_input = cf.read_file(training_iterative_apath+'/inputs/'+it_subsys_nr+'.in')
-                #lammps_input = cf.read_file(deepmd_iterative_path+'/inputs/exploration/'+it_subsys_nr+'.in')
+                #lammps_input = cf.read_file(deepmd_iterative_apath+'/inputs/exploration/'+it_subsys_nr+'.in')
                 RAND = random.randrange(0,1000)
                 lammps_input = cf.replace_in_list(lammps_input,'_SEED_VEL_',str(it_nnp)+str(RAND)+str(it_number)+previous_iteration_zfill)
                 RAND = random.randrange(0,1000)
@@ -321,7 +321,7 @@ if 'print_freq' in globals():
     del print_freq
 
 del exploration_json, exploration_json_fpath
-del deepmd_iterative_path, nb_traj, exploration_type
+del deepmd_iterative_apath, nb_traj, exploration_type
 
 del project_name, allocation_name, arch_name, slurm_email, temperature, timestep, nb_steps_exploration_initial, arch_type, training_iterative_apath, current_iteration, current_iteration_zfill, deepmd_model_version, deepmd_model_type_descriptor
 del cluster, it_subsys_nr, it_nnp, it_number, local_path, reorder_nnp_list, models_list, RAND, nb_steps, data_file_name, print_freq_local, n, string, approx_time, models_list_job, list_plumed_files, plumed_input, it_plumed_input, prev_plumed

@@ -29,8 +29,8 @@ import common_functions as cf
 ### Create the config.json
 config_json_fpath = training_iterative_apath+'/control/config.json'
 config_json = {}
-config_json['training_iterative_path'] = training_iterative_apath
-config_json['deepmd_iterative_path'] = deepmd_iterative_apath
+config_json['training_iterative_apath'] = training_iterative_apath
+config_json['deepmd_iterative_apath'] = deepmd_iterative_apath
 config_json['system'] = sys_name
 config_json['nb_nnp'] = int(nb_nnp)
 config_json['current_iteration'] = 0
