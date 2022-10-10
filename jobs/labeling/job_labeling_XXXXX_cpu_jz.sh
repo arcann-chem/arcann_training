@@ -7,9 +7,9 @@
 # Queue
 #SBATCH --qos=qos_cpu-t3
 # Number of nodes/processes/tasksperprocess
-#SBATCH --nodes 1
-#SBATCH --ntasks-per-node _NUMBER_OF_MPI_PROCESSES_PER_NODE_
-#SBATCH --cpus-per-task 1
+#SBATCH --nodes _nb_NODES_
+#SBATCH --ntasks-per-node _nb_MPI_per_NODE_
+#SBATCH --cpus-per-task _nb_OPENMP_per_MPI_
 #SBATCH --hint=nomultithread
 # Wall-time
 #SBATCH -t _WALLTIME_
@@ -70,7 +70,7 @@ export EXIT_CODE="0"
 ${SRUN_CP2K_EXE} -i "${CP2K_INPUT_F1}".inp > "${CP2K_INPUT_F1}".out || export EXIT_CODE="1"
 cp ${CP2K_WFRST_F}.wfn 1_${CP2K_WFRST_F}.wfn
 ${SRUN_CP2K_EXE} -i "${CP2K_INPUT_F2}".inp > "${CP2K_INPUT_F2}".out || export EXIT_CODE="1"
-mv ${CP2K_WFRST_F}.wfn 2_${CP2K_WFRST_F}.wfn
+cp ${CP2K_WFRST_F}.wfn 2_${CP2K_WFRST_F}.wfn
 echo "# [$(date)] Ended"
 
 # Move back data from the temporary work directory and scratch, and clean-up

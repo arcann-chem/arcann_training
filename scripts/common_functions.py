@@ -8,40 +8,40 @@ import logging
 
 #### TODO Better descriptions
 
-def check_file(file_path:str,status:int,abort:int,error_msg='None'):
+def check_file(file_path:str,status:int,abort:bool,error_msg='None'):
     """Check if a file exists or not, abort or not
 
     Args:
         file_path (str): full path of the file
         status (int): 0 to check if it is present, 1 to check if it isn't
-        abort (int): 0 to abort, 1 to print only
+        abort (bool): True to abort, False to log only
         error_msg (str, optional): To override default error message.
     """
     if status == 0 and not Path(file_path).is_file():
-        if abort == 0:
-            logging.critical(file_path+' does not exist.') if error_msg is 'None' else logging.critical(error_msg)
+        if abort:
+            logging.critical(file_path+' does not exist.') if error_msg == 'None' else logging.critical(error_msg)
             logging.critical('Aborting...')
             sys.exit(1)
         else:
-            logging.warning(file_path+' does not exist.') if error_msg is 'None' else logging.warning(error_msg)
+            logging.warning(file_path+' does not exist.') if error_msg == 'None' else logging.warning(error_msg)
     elif status == 1 and Path(file_path).is_file():
-        if abort == 0:
-            logging.critical(file_path+' exists.') if error_msg is 'None' else logging.critical(error_msg)
+        if abort:
+            logging.critical(file_path+' exists.') if error_msg == 'None' else logging.critical(error_msg)
             logging.critical('Aborting...')
             sys.exit(1)
         else:
-            logging.warning(file_path+' exists.') if error_msg is 'None' else logging.warning(error_msg)
+            logging.warning(file_path+' exists.') if error_msg == 'None' else logging.warning(error_msg)
 
-def check_dir(directory_path:str,abort:int,error_msg='None'):
+def check_dir(directory_path:str,abort:bool,error_msg='None'):
     """Check if directory exists
 
     Args:
         directory_path (str):  full path of the directory to check
-        abort (int): 0 to abort, 1 to log only
+        abort (bool): True to abort, False to log only
         error_msg (str, optional): override default error message
     """
     if Path(directory_path).is_dir() is False:
-        if abort == 0:
+        if abort:
             if error_msg == 'data':
                 logging.critical('No data folder to search for initial sets: '+directory_path)
                 logging.critical('Aborting...')
@@ -176,7 +176,7 @@ def json_dump(json_dict:dict,output_file_path:str,print_log=False,name=None):
         print_log (bool): log the action
         name (str): JSON fancy name for logging
     """
-    if name is 'None':
+    if name == 'None':
         name = json_dict
     with open(output_file_path, 'w') as f:
         json.dump(json_dict, f)
@@ -317,6 +317,11 @@ def remove_tree(pth:Path):
         else:
             remove_tree(child)
     pth.rmdir()
+
+def seconds_to_walltime(seconds):
+    min, sec = divmod(seconds, 60)
+    hour, min = divmod(min, 60)
+    return '%d:%02d:%02d' % (hour, min, sec)
 
 def import_xyz(file_path:str):
     """_summary_

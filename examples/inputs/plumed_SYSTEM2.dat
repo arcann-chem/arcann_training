@@ -1,7 +1,7 @@
 UNITS LENGTH=A ENERGY=kcal/mol
 
-INCLUDE FILE=plumed_atomdef_h3o.dat
-INCLUDE FILE=plumed_colvars_h3o.dat
+INCLUDE FILE=plumed_atomdef_SYSTEM2.dat
+INCLUDE FILE=plumed_colvars_SYSTEM2.dat
 
 ABMD: ABMD ...
 ARG=CV_d_O1O2

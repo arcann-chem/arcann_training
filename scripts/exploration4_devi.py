@@ -1,50 +1,54 @@
-####### Override / Read from config.json (local subsys)
-#nb_candidates_max=[500, 500]
-#s_low=[0.1, 0.1]
-#s_high=[0.8, 0.8]
-#s_high_max=[1.0, 1.0]
-#skip_frames=[10, 10]
+## deepmd_iterative_apath
+# deepmd_iterative_apath = ''
+## These are the default
+# nb_candidates_max = [500, 500]
+# s_low = [0.1, 0.1]
+# s_high = [0.8, 0.8]
+# s_high_max = [1.0, 1.0]
+# skip_frames = [10, 10]
 
 ###################################### No change past here
 import sys
 from pathlib import Path
-import numpy as np
 import logging
 logging.basicConfig(level = logging.INFO,format='%(levelname)s: %(message)s')
 
-training_iterative_apath = str(Path('..').resolve())
+import numpy as np
 
-### Check if the DeePMD Iterative PY path is defined
-if Path(training_iterative_apath+'/control/path').is_file():
+training_iterative_apath = str(Path('..').resolve())
+### Check if the deepmd_iterative_apath is defined
+if 'deepmd_iterative_apath' in globals():
+    True
+elif Path(training_iterative_apath+'/control/path').is_file():
     with open(training_iterative_apath+'/control/path', "r") as f:
-        deepmd_iterative_path = f.read()
+        deepmd_iterative_apath = f.read()
     f.close()
     del f
 else:
-    if 'deepmd_iterative_path' not in globals() :
-        logging.critical(training_iterative_apath+'/control/path not found and deepmd_iterative_path not defined.')
+    if 'deepmd_iterative_apath' not in globals() :
+        logging.critical(training_iterative_apath+'/control/path not found and deepmd_iterative_apath not defined.')
         logging.critical('Aborting...')
         sys.exit(1)
-sys.path.insert(0, deepmd_iterative_path+'/scripts/')
+sys.path.insert(0, deepmd_iterative_apath+'/scripts/')
 import common_functions as cf
-del deepmd_iterative_path
 
-### Read what is needed
+### Read what is needed (json files)
 config_json_fpath = training_iterative_apath+'/control/config.json'
 config_json = cf.json_read(config_json_fpath, abort = True)
 
-config_json['current_iteration'] = current_iteration if 'current_iteration' in globals() else cf.check_if_in_dict(config_json,'current_iteration',False,0)
-current_iteration = config_json['current_iteration']
+current_iteration = current_iteration if 'current_iteration' in globals() else config_json['current_iteration']
 current_iteration_zfill = str(current_iteration).zfill(3)
 
 exploration_json_fpath = training_iterative_apath+'/control/exploration_'+current_iteration_zfill+'.json'
 exploration_json = cf.json_read(exploration_json_fpath, abort = True)
 
+### Checks
 if exploration_json['is_checked'] is False:
     logging.critical('Lock found. Run/Check first: exploration3_check.py')
     logging.critical('Aborting...')
     sys.exit(1)
 
+### Running the Query-by-commitee
 for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
     cf.change_dir('./'+str(it_subsys_nr))
 
@@ -145,7 +149,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
     exploration_json['subsys_nr'][it_subsys_nr]['average_max_devi'] =  exploration_json['subsys_nr'][it_subsys_nr]['average_max_devi'] / ( exploration_json['nb_nnp'] +  len(range(1, exploration_json['nb_traj'] + 1)) - full_skip )
     exploration_json['subsys_nr'][it_subsys_nr]['standard_dev_max_devi'] =  exploration_json['subsys_nr'][it_subsys_nr]['standard_dev_max_devi'] / ( exploration_json['nb_nnp'] +  len(range(1, exploration_json['nb_traj'] + 1)) - full_skip )
 
-del it_subsys_nr, config_json, config_json_fpath, training_iterative_apath
+del it_subsys_nr
 
 for it0_subsys_nr,it_subsys_nr in enumerate(exploration_json['subsys_nr']):
     cf.change_dir('./'+str(it_subsys_nr))
@@ -218,23 +222,19 @@ for it0_subsys_nr,it_subsys_nr in enumerate(exploration_json['subsys_nr']):
 del it0_subsys_nr,it_subsys_nr
 
 exploration_json['is_deviated'] = True
-cf.json_dump(exploration_json,exploration_json_fpath, True, 'exploration file')
+cf.json_dump(exploration_json,exploration_json_fpath,True,'exploration.json')
 
-if 's_low' in globals():
-    del s_low
-if 's_high' in globals():
-    del s_high
-if 's_high_max' in globals():
-    del s_high_max
-if 'nb_candidates_max' in globals():
-    del nb_candidates_max
-if 'skip_frames' in globals():
-    del skip_frames
-del full_skip, current_iteration_zfill, current_iteration
+del full_skip
+
+logging.info('The exploration deviation phase is a success!')
+
+### Cleaning
+del config_json, config_json_fpath, training_iterative_apath
+del current_iteration, current_iteration_zfill
 del exploration_json, exploration_json_fpath
+del deepmd_iterative_apath
 
-logging.info('Deviation selection success')
-
-del sys, Path, np, logging, cf
+del sys, Path, logging, cf
+del np
 import gc; gc.collect(); del gc
 exit()
