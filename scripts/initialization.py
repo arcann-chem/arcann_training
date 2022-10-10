@@ -4,7 +4,6 @@ deepmd_iterative_apath='/gpfs7kw/linkhome/rech/gennsp01/ucf13sj/code/deepmd_iter
 sys_name='NAME'
 subsys_name = ['SYSTEM1','SYSTEM2']
 nb_nnp = 3
-## Set where deepmd_iterative_py is 'installed'
 ## These are the default
 # temperature_K = [300, 300]
 # timestep_ps = [0.0005, 0.0005]

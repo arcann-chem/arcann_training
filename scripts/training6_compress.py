@@ -16,7 +16,9 @@ import subprocess
 
 training_iterative_apath = str(Path('..').resolve())
 ### Check if the deepmd_iterative_apath is defined
-if Path(training_iterative_apath+'/control/path').is_file():
+if 'deepmd_iterative_path' in globals():
+    True
+elif Path(training_iterative_apath+'/control/path').is_file():
     with open(training_iterative_apath+'/control/path', 'r') as f:
         deepmd_iterative_apath = f.read()
     f.close()
@@ -55,13 +57,14 @@ if training_json['is_frozen'] is False:
 cluster = cf.check_cluster()
 cf.check_file(deepmd_iterative_apath+'/jobs/training/job_deepmd_freeze_'+arch_type+'_'+cluster+'.sh',0,True,'No SLURM file present for the compressing step on this cluster.')
 
-### Prep and launch the jobs
+### Prep and launch DP Compress
 slurm_file_master = cf.read_file(deepmd_iterative_apath+'/jobs/training/job_deepmd_compress_'+arch_type+'_'+cluster+'.sh')
 slurm_email = '' if 'slurm_email' not in globals() else slurm_email
 
+check = 0
 for it_nnp in range(1, config_json['nb_nnp'] + 1):
     cf.change_dir('./'+str(it_nnp))
-    cf.check_file('graph_'+str(it_nnp)+'_'+current_iteration_zfill+'.pb',0,0)
+    cf.check_file('graph_'+str(it_nnp)+'_'+current_iteration_zfill+'.pb',0,True,'./'+str(it_nnp)+'/graph_'+str(it_nnp)+'_'+current_iteration_zfill+'.pb not present.')
     slurm_file = slurm_file_master
     slurm_file = cf.replace_in_list(slurm_file,'_PROJECT_',project_name)
     slurm_file = cf.replace_in_list(slurm_file,'_WALLTIME_','02:00:00')
@@ -88,12 +91,19 @@ for it_nnp in range(1, config_json['nb_nnp'] + 1):
     cf.write_file('job_deepmd_compress_'+arch_type+'_'+cluster+'.sh',slurm_file)
     if Path('job_deepmd_compress_'+arch_type+'_'+cluster+'.sh').is_file():
         subprocess.call(['sbatch','./job_deepmd_compress_'+arch_type+'_'+cluster+'.sh'])
-        logging.info('Compressing of NNP '+str(it_nnp)+' was lauched.')
+        logging.info('DP Compress - ./'+str(it_nnp)+' launched')
+        check = check + 1
     else:
-        logging.warning('Compressing of NNP '+str(it_nnp)+' was not lauched. No job file found.')
-
+        logging.warning('DP Compress - ./'+str(it_nnp)+' NOT launched')
     cf.change_dir('..')
 del it_nnp, slurm_file, slurm_file_master
+
+if check == config_json['nb_nnp']:
+    logging.info('Slurm launch of DP Compress is a success!')
+else:
+    logging.critical('Some DP Compress did not launched correctly')
+    logging.critical('Please launch manually before continuing to the next step')
+del check
 
 ### Cleaning
 del config_json, config_json_fpath, training_iterative_apath

@@ -19,18 +19,18 @@ def check_file(file_path:str,status:int,abort:bool,error_msg='None'):
     """
     if status == 0 and not Path(file_path).is_file():
         if abort:
-            logging.critical(file_path+' does not exist.') if error_msg is 'None' else logging.critical(error_msg)
+            logging.critical(file_path+' does not exist.') if error_msg == 'None' else logging.critical(error_msg)
             logging.critical('Aborting...')
             sys.exit(1)
         else:
-            logging.warning(file_path+' does not exist.') if error_msg is 'None' else logging.warning(error_msg)
+            logging.warning(file_path+' does not exist.') if error_msg == 'None' else logging.warning(error_msg)
     elif status == 1 and Path(file_path).is_file():
         if abort:
-            logging.critical(file_path+' exists.') if error_msg is 'None' else logging.critical(error_msg)
+            logging.critical(file_path+' exists.') if error_msg == 'None' else logging.critical(error_msg)
             logging.critical('Aborting...')
             sys.exit(1)
         else:
-            logging.warning(file_path+' exists.') if error_msg is 'None' else logging.warning(error_msg)
+            logging.warning(file_path+' exists.') if error_msg == 'None' else logging.warning(error_msg)
 
 def check_dir(directory_path:str,abort:bool,error_msg='None'):
     """Check if directory exists
@@ -317,7 +317,7 @@ def remove_tree(pth:Path):
         else:
             remove_tree(child)
     pth.rmdir()
-    
+
 def seconds_to_walltime(seconds):
     min, sec = divmod(seconds, 60)
     hour, min = divmod(min, 60)

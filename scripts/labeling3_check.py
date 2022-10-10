@@ -6,7 +6,9 @@ logging.basicConfig(level=logging.INFO,format='%(levelname)s: %(message)s')
 
 training_iterative_apath = str(Path('..').resolve())
 ### Check if the deepmd_iterative_apath is defined
-if Path(training_iterative_apath+'/control/path').is_file():
+if 'deepmd_iterative_path' in globals():
+    True
+elif Path(training_iterative_apath+'/control/path').is_file():
     with open(training_iterative_apath+'/control/path', "r") as f:
         deepmd_iterative_apath = f.read()
     f.close()
@@ -35,12 +37,12 @@ if labeling_json['is_launched'] is False:
     logging.critical('Aborting...')
     sys.exit(1)
 
-### Check normal termination of the labeling phase
-count = 0
+### Check the normal termination of the labeling phase
+total_steps = 0
 step_1 = 0
 step_2 = 0
 for it_subsys_nr in labeling_json['subsys_nr']:
-    count = count + labeling_json['subsys_nr'][it_subsys_nr]['standard'] + labeling_json['subsys_nr'][it_subsys_nr]['disturbed']
+    total_steps = total_steps + labeling_json['subsys_nr'][it_subsys_nr]['standard'] + labeling_json['subsys_nr'][it_subsys_nr]['disturbed']
     average_per_step = 0
     timings_sum_1 = 0
     timings_1 = []
@@ -97,10 +99,10 @@ for it_subsys_nr in labeling_json['subsys_nr']:
     timings_2 = timings_sum_2/step_2
     labeling_json['subsys_nr'][it_subsys_nr]['timing_s'] = [timings_1, timings_2]
 
-if count != step_1:
+if total_steps != step_1:
     logging.warning('Some jobs have failed/not converged/still running (first step). Check manually.')
 
-if count != step_2:
+if total_steps != step_2:
     logging.critical('Some jobs have failed/not converged/still running (second step). Check manually.')
     logging.critical('Aborting...')
     sys.exit(1)
@@ -113,7 +115,7 @@ else:
             it_step_zfill = str(it_step).zfill(5)
             cf.remove_file_glob('./'+it_subsys_nr+'/'+it_step_zfill+'/','CP2K.*')
 
-logging.info('Labeling success')
+logging.info('The labeling job phase is a success!')
 
 ### Cleaning
 del config_json, config_json_fpath, training_iterative_apath

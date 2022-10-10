@@ -10,7 +10,7 @@
 #MSUB -Q normal
 # Number of nodes/processes/tasksperprocess
 #MSUB -N _nb_NODES_
-#MSUB -n _nb_MPI_per_NODE_
+#MSUB -n _nb_MPI_
 #MSUB -c _nb_OPENMP_per_MPI_
 # Wall-time
 #MSUB -T _WALLTIME_
@@ -34,9 +34,8 @@ CP2K_XYZ_F="labeling_XXXXX.xyz"
 # Load the environment depending on the version
 module purge
 module switch dfldatadir/_PROJECT_
-module load flavor/buildcompiler/intel/19
-module load module load libint/1.1.4
-module load cp2k/6.1
+module load flavor/buildcompiler/intel/20 flavor/buildmpi/openmpi/4.0 flavor/cp2k/xc
+module load cp2k/7.1
 CP2K_EXE=$(which cp2k.popt) || ( echo "Executable not found. Aborting..."; exit 1 )
 
 # Go where the job has been launched
@@ -66,13 +65,13 @@ export TASKS_PER_NODE=$(( SLURM_NTASKS / SLURM_NNODES ))
 echo "Running ${SLURM_NTASKS} task(s), with ${TASKS_PER_NODE} task(s) per node."
 echo "Running with ${SLURM_CPUS_PER_TASK} thread(s) per task."
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
-MPIRUN_CP2K_EXE="mpirun -n ${SLURM_NTASKS} ${CP2K_EXE}"
+CCC_MPRUN_CP2K_EXE="ccc_mprun ${CP2K_EXE}"
 
 # Launch command
 export EXIT_CODE="0"
-${MPIRUN_CP2K_EXE} -i "${CP2K_INPUT_F1}".inp > "${CP2K_INPUT_F1}".out || export EXIT_CODE="1"
+${CCC_MPRUN_CP2K_EXE} -i "${CP2K_INPUT_F1}".inp > "${CP2K_INPUT_F1}".out || export EXIT_CODE="1"
 cp ${CP2K_WFRST_F}.wfn 1_${CP2K_WFRST_F}.wfn
-${MPIRUN_CP2K_EXE} -i "${CP2K_INPUT_F2}".inp > "${CP2K_INPUT_F2}".out || export EXIT_CODE="1"
+${CCC_MPRUN_CP2K_EXE} -i "${CP2K_INPUT_F2}".inp > "${CP2K_INPUT_F2}".out || export EXIT_CODE="1"
 cp ${CP2K_WFRST_F}.wfn 2_${CP2K_WFRST_F}.wfn
 echo "# [$(date)] Ended"
 

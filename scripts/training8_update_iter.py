@@ -8,7 +8,9 @@ import subprocess
 
 training_iterative_apath = str(Path('..').resolve())
 ### Check if the deepmd_iterative_apath is defined
-if Path(training_iterative_apath+'/control/path').is_file():
+if 'deepmd_iterative_path' in globals():
+    True
+elif Path(training_iterative_apath+'/control/path').is_file():
     with open(training_iterative_apath+'/control/path', 'r') as f:
         deepmd_iterative_apath = f.read()
     f.close()
@@ -76,7 +78,7 @@ cf.json_dump(config_json,config_json_fpath, True, 'config file')
 if Path('data').is_dir():
     cf.remove_tree(Path('data'))
 
-logging.info('Update Iter success')
+logging.info('Updating the iteration is a success!')
 
 ### Cleaning
 del config_json, config_json_fpath, training_iterative_apath

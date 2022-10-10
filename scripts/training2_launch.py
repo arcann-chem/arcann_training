@@ -8,7 +8,9 @@ import subprocess
 
 training_iterative_apath = str(Path('..').resolve())
 ### Check if the deepmd_iterative_apath is defined
-if Path(training_iterative_apath+'/control/path').is_file():
+if 'deepmd_iterative_path' in globals():
+    True
+elif Path(training_iterative_apath+'/control/path').is_file():
     with open(training_iterative_apath+'/control/path', 'r') as f:
         deepmd_iterative_apath = f.read()
     f.close()
@@ -59,18 +61,23 @@ for it_nnp in range(1, config_json['nb_nnp'] + 1):
     cf.change_dir('./'+str(it_nnp))
     if Path('job_deepmd_train_'+arch_type+'_'+cluster+'.sh').is_file():
         subprocess.call(['sbatch','./job_deepmd_train_'+arch_type+'_'+cluster+'.sh'])
-        logging.info('Training of NNP '+str(it_nnp)+' lauched.')
+        logging.info('DP Train - ./'+str(it_nnp)+' launched')
         check = check + 1
     else:
-        logging.warning('Training of NNP '+str(it_nnp)+' was not lauched. No job file found.')
+        logging.critical('DP Train - ./'+str(it_nnp)+' NOT launched')
     cf.change_dir('..')
 del it_nnp
 
 if check == config_json['nb_nnp']:
     training_json['is_launched'] = True
+    logging.info('Slurm launch of the training is a success!')
+else:
+    logging.critical('Some DP Train did not launched correctly')
+    logging.critical('Please launch manually before continuing to the next step')
+    logging.critical('And replace the key \'is_launched\' to True in the corresponding training.json.')
 del check
 
-cf.json_dump(training_json,training_json_fpath,print_log=True,name='training config file')
+cf.json_dump(training_json,training_json_fpath,print_log=True,name='training.json')
 
 del config_json, config_json_fpath, training_iterative_apath
 del current_iteration, current_iteration_zfill

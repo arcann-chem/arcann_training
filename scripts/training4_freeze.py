@@ -16,7 +16,9 @@ import subprocess
 
 training_iterative_apath = str(Path('..').resolve())
 ### Check if the deepmd_iterative_apath is defined
-if Path(training_iterative_apath+'/control/path').is_file():
+if 'deepmd_iterative_path' in globals():
+    True
+elif Path(training_iterative_apath+'/control/path').is_file():
     with open(training_iterative_apath+'/control/path', 'r') as f:
         deepmd_iterative_apath = f.read()
     f.close()
@@ -40,28 +42,29 @@ training_json_fpath = training_iterative_apath+'/control/training_'+current_iter
 training_json = cf.json_read(training_json_fpath, abort=True)
 
 ### Set needed variables
-project_name = project_name if 'project_name' in globals() else training_json['project_name'] 
-allocation_name = allocation_name if 'allocation_name' in globals() else training_json['allocation_name'] 
+project_name = project_name if 'project_name' in globals() else training_json['project_name']
+allocation_name = allocation_name if 'allocation_name' in globals() else training_json['allocation_name']
 arch_name = arch_name if 'arch_name' in globals() else training_json['arch_name']
 if arch_name == 'v100' or arch_name == 'a100':
     arch_type ='gpu'
-    
+
 ### Checks
 if training_json['is_checked'] is False:
     logging.critical('Maybe check the training before freezing?')
     logging.critical('Aborting...')
     sys.exit(1)
-    
+
 cluster = cf.check_cluster()
 cf.check_file(deepmd_iterative_apath+'/jobs/training/job_deepmd_freeze_'+arch_type+'_'+cluster+'.sh',0,True,'No SLURM file present for the freezing step on this cluster.')
 
-### Prep and launch the jobs
+### Prep and launch DP Freeze
 slurm_file_master = cf.read_file(deepmd_iterative_apath+'/jobs/training/job_deepmd_freeze_'+arch_type+'_'+cluster+'.sh')
 slurm_email = '' if 'slurm_email' not in globals() else slurm_email
 
+check = 0
 for it_nnp in range(1, config_json['nb_nnp'] + 1):
     cf.change_dir('./'+str(it_nnp))
-    cf.check_file('./model.ckpt.index',0,0)
+    cf.check_file('./model.ckpt.index',0,True,'./'+str(it_nnp)+'/model.ckpt.index not present.')
     slurm_file = slurm_file_master
     slurm_file = cf.replace_in_list(slurm_file,'_PROJECT_',project_name)
     slurm_file = cf.replace_in_list(slurm_file,'_WALLTIME_','01:00:00')
@@ -93,11 +96,19 @@ for it_nnp in range(1, config_json['nb_nnp'] + 1):
     del f
     if Path('job_deepmd_freeze_'+arch_type+'_'+cluster+'.sh').is_file():
         subprocess.call(['sbatch','./job_deepmd_freeze_'+arch_type+'_'+cluster+'.sh'])
-        logging.info('Freezing of NNP '+str(it_nnp)+' was lauched.')
+        logging.info('DP Freeze - ./'+str(it_nnp)+' launched')
+        check = check + 1
     else:
-        logging.warning('Freezing of NNP '+str(it_nnp)+' was not lauched. No job file found.')
+        logging.critical('DP Freeze - ./'+str(it_nnp)+' NOT launched')
     cf.change_dir('..')
 del it_nnp, slurm_file, slurm_file_master
+
+if check == config_json['nb_nnp']:
+    logging.info('Slurm launch of DP Freeze is a success!')
+else:
+    logging.critical('Some DP Freeze did not launched correctly')
+    logging.critical('Please launch manually before continuing to the next step')
+del check
 
 ### Cleaning
 del config_json, config_json_fpath, training_iterative_apath

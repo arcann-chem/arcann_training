@@ -1,19 +1,20 @@
-####### Override / Read from config.json (local subsys)
+## deepmd_iterative_apath
+# deepmd_iterative_apath = ''
+## These are the default
 atomsk_fpath='/gpfswork/rech/nvs/commun/programs/apps/atomsk/0.11.2/bin/atomsk'
-#vmd_fpath=''
-disturb=[0.1,0.1]
-disturb_devi=[0.1,0.1]
-### WOLOLO
+# vmd_fpath=''
+# disturb=[0.0, 0.0]
+# disturb_devi=[0.0, 0.0]
 
 ###################################### No change past here
 import sys
-import os
 from pathlib import Path
+import logging
+logging.basicConfig(level = logging.INFO,format='%(levelname)s: %(message)s')
+
+import os
 import subprocess
 import numpy as np
-import logging
-
-logging.basicConfig(level = logging.INFO,format='%(levelname)s: %(message)s')
 
 if 'atomsk_fpath' not in globals():
     atomsk = subprocess.call(['command','-v','atomsk'])
@@ -52,48 +53,49 @@ else:
 del vmd
 
 training_iterative_apath = str(Path('..').resolve())
-### Check if the DeePMD Iterative PY path is defined
-if Path(training_iterative_apath+'/control/path').is_file():
+### Check if the deepmd_iterative_apath is defined
+if 'deepmd_iterative_path' in globals():
+    True
+elif Path(training_iterative_apath+'/control/path').is_file():
     with open(training_iterative_apath+'/control/path', "r") as f:
-        deepmd_iterative_path = f.read()
+        deepmd_iterative_apath = f.read()
     f.close()
     del f
 else:
-    if 'deepmd_iterative_path' not in globals() :
-        logging.critical(training_iterative_apath+'/control/path not found and deepmd_iterative_path not defined.')
+    if 'deepmd_iterative_apath' not in globals() :
+        logging.critical(training_iterative_apath+'/control/path not found and deepmd_iterative_apath not defined.')
         logging.critical('Aborting...')
         sys.exit(1)
-sys.path.insert(0, deepmd_iterative_path+'/scripts/')
+sys.path.insert(0, deepmd_iterative_apath+'/scripts/')
 import common_functions as cf
 
-### Read what is needed
+### Read what is needed (json files)
 config_json_fpath = training_iterative_apath+'/control/config.json'
 config_json = cf.json_read(config_json_fpath, abort = True)
 
-config_json['current_iteration'] = current_iteration if 'current_iteration' in globals() else cf.check_if_in_dict(config_json,'current_iteration',False,0)
-current_iteration = config_json['current_iteration']
+current_iteration = current_iteration if 'current_iteration' in globals() else config_json['current_iteration']
 current_iteration_zfill = str(current_iteration).zfill(3)
-
-del current_iteration
 
 exploration_json_fpath = training_iterative_apath+'/control/exploration_'+current_iteration_zfill+'.json'
 exploration_json = cf.json_read(exploration_json_fpath, abort = True)
 
-cf.check_file(deepmd_iterative_path+'/scripts/vmd_dcd_selection_index.tcl',0,0)
-master_vmd_tcl = cf.read_file(deepmd_iterative_path+'/scripts/vmd_dcd_selection_index.tcl')
-
+### Checks
 if exploration_json['is_deviated'] is False:
     logging.critical('Lock found. Run/Check first: exploration4_devi.py')
     logging.critical('Aborting...')
     sys.exit(1)
 
+cf.check_file(deepmd_iterative_apath+'/scripts/vmd_dcd_selection_index.tcl',0,True,'The vmd_dcd_selection_index.tcl file is missing')
+master_vmd_tcl = cf.read_file(deepmd_iterative_apath+'/scripts/vmd_dcd_selection_index.tcl')
+
 cf.create_dir(training_iterative_apath+'/starting_structures')
 
+### Extract for labeling
 for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
     cf.change_dir('./'+str(it_subsys_nr))
     print_freq = exploration_json['subsys_nr'][it_subsys_nr]['print_freq']
     if 'lammps' in exploration_json['subsys_nr'][it_subsys_nr]['exploration_type']:
-        cf.check_file(training_iterative_apath+'/inputs/'+it_subsys_nr+'.lmp',0,0)
+        cf.check_file(training_iterative_apath+'/inputs/'+it_subsys_nr+'.lmp',0,True)
         subprocess.call([atomsk_bin,training_iterative_apath+'/inputs/'+it_subsys_nr+'.lmp','pdb',training_iterative_apath+'/inputs/'+it_subsys_nr,'-ow'])
         topo_file=training_iterative_apath+'/inputs/'+it_subsys_nr+'.pdb'
 
@@ -136,7 +138,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                             '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][2]), 'H3',\
                             '-disturb', str(disturb[it0_subsys_nr]),\
                             'xyz'])
-                    
+
                         # subprocess.call([atomsk_bin, '-ow', min_file_name+'.xyz',\
                         #     '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][0]), 'H1',\
                         #     '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][1]), 'H2',\
@@ -176,7 +178,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                     del candidates_index, vmd_tcl, traj_file
 
                    #TODO Replace with either subprocess call or read python
-                   
+
                     cf.remove_file('./candidates_'+str(it_subsys_nr)+'_'+str(it_nnp)+'_'+current_iteration_zfill+'.xyz')
                     os.system('cat vmd_*.xyz >> temp_candidates_'+str(it_subsys_nr)+'_'+str(it_nnp)+'_'+current_iteration_zfill+'.xyz')
 
@@ -219,18 +221,17 @@ exploration_json['is_extracted'] = True
 cf.json_dump(exploration_json,exploration_json_fpath, True, 'exploration file')
 
 del it0_subsys_nr, it_subsys_nr, topo_file, print_freq
-del current_iteration_zfill, master_vmd_tcl, config_json_fpath, config_json, exploration_json, exploration_json_fpath
-del atomsk_bin, vmd_bin, deepmd_iterative_path, training_iterative_apath
+del master_vmd_tcl, atomsk_bin, vmd_bin
 
-if 'disturb' in globals():
-    del disturb
-if 'atomsk_fpath' in globals():
-    del atomsk_fpath
-if 'vmd_fpath' in globals():
-    del vmd_fpath
+logging.info('The exploration extraction phase is a success!')
 
-logging.info('Extraction success')
+### Cleaning
+del config_json, config_json_fpath, training_iterative_apath
+del current_iteration, current_iteration_zfill
+del exploration_json, exploration_json_fpath
+del deepmd_iterative_apath
 
-del sys, os, Path, np, subprocess, logging, cf
+del sys, os, Path, logging, cf
+del os, np, subprocess
 import gc; gc.collect(); del gc
 exit()

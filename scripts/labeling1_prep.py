@@ -8,7 +8,7 @@
 # cp2k_1_walltime_h = [0.5, 0.5]
 # cp2k_2_walltime_h = [1.0, 1.0]
 # nb_NODES = [1, 1]
-# nb_MPI_per_NODE = 10, 10]
+# nb_MPI_per_NODE = [10, 10]
 # nb_OPENMP_per_MPI = [1, 1]
 
 ###################################### No change past here
@@ -21,7 +21,9 @@ import subprocess
 
 training_iterative_apath = str(Path('..').resolve())
 ### Check if the deepmd_iterative_apath is defined
-if Path(training_iterative_apath+'/control/path').is_file():
+if 'deepmd_iterative_path' in globals():
+    True
+elif Path(training_iterative_apath+'/control/path').is_file():
     with open(training_iterative_apath+'/control/path', "r") as f:
         deepmd_iterative_apath = f.read()
     f.close()
@@ -66,7 +68,6 @@ labeling_json['cluster'] = cluster
 labeling_json['project_name'] = project_name if 'project_name' in globals() else 'nvs'
 labeling_json['allocation_name'] = allocation_name if 'allocation_name' in globals() else 'cpu'
 labeling_json['arch_name'] = arch_name if 'arch_name' in globals() else 'cpu'
-
 project_name = labeling_json['project_name']
 allocation_name = labeling_json['allocation_name']
 arch_name = labeling_json['arch_name']
@@ -78,7 +79,7 @@ slurm_email = '' if 'slurm_email' not in globals() else slurm_email
 cf.check_file(deepmd_iterative_apath+'/jobs/labeling/job_labeling_XXXXX_'+arch_type+'_'+cluster+'.sh',0,True,'No SLURM file present for the labeling phase on this cluster.')
 cf.check_file(deepmd_iterative_apath+'/jobs/labeling/job_labeling_array_'+arch_type+'_'+cluster+'.sh',0,True,'No SLURM Array file present for the labeling phase on this cluster.')
 
-### Prep the labeling phase
+### Preparation of the labeling
 slurm_file_master = cf.read_file(deepmd_iterative_apath+'/jobs/labeling/job_labeling_XXXXX_'+arch_type+'_'+cluster+'.sh')
 slurm_file_master = cf.replace_in_list(slurm_file_master,'_PROJECT_',project_name)
 slurm_file_master = cf.replace_in_list(slurm_file_master,'_ALLOC_',allocation_name)
@@ -107,12 +108,18 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
     labeling_json['subsys_nr'][it_subsys_nr]['nb_OPENMP_per_MPI'] = nb_OPENMP_per_MPI[it0_subsys_nr] if 'nb_OPENMP_per_MPI' in globals() else 1
 
     slurm_file_subsys = cf.replace_in_list(slurm_file_master,'_nb_NODES_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_NODES']))
-    slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,'_nb_MPI_per_NODE_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_MPI_per_NODE']))
+    if cluster == 'jz':
+        slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,'_nb_MPI_per_NODE_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_MPI_per_NODE']))
+    elif cluster == 'ir':
+        slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,'_nb_MPI_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_MPI_per_NODE'] * labeling_json['subsys_nr'][it_subsys_nr]['nb_NODES'] ))
     slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,'_nb_OPENMP_per_MPI_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_OPENMP_per_MPI']))
 
     slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_master,'_nb_NODES_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_NODES']))
     slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_nb_MPI_per_NODE_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_MPI_per_NODE']))
-    slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_nb_OPENMP_per_MPI_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_OPENMP_per_MPI']))
+    if cluster == 'jz':
+        slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_nb_OPENMP_per_MPI_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_OPENMP_per_MPI']))
+    elif cluster == 'ir':
+         slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,'_nb_MPI_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_MPI_per_NODE'] * labeling_json['subsys_nr'][it_subsys_nr]['nb_NODES'] ))
     slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_CP2K_JOBNAME_','CP2K_'+it_subsys_nr+'_'+current_iteration_zfill)
 
     slurm_walltime_s = (labeling_json['subsys_nr'][it_subsys_nr]['cp2k_1_walltime_h'] + labeling_json['subsys_nr'][it_subsys_nr]['cp2k_2_walltime_h']) * 3600
@@ -215,6 +222,9 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
     cf.json_dump(labeling_json,labeling_json_fpath,True,'labeling file')
 
     cf.change_dir('../')
+
+logging.info('Preparation of the labeling is a success!')
+
 del it0_subsys_nr, it_subsys_nr
 del xyz_file, xyz_file_disturbed
 del cp2k_input_file_1, cp2k_input_file_2, cp2k_input_file_t1, cp2k_input_file_t2

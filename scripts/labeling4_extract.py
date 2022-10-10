@@ -14,7 +14,9 @@ eV_per_A3_to_GPa=np.float64(160.21766208)
 
 training_iterative_apath = str(Path('..').resolve())
 ### Check if the deepmd_iterative_apath is defined
-if Path(training_iterative_apath+'/control/path').is_file():
+if 'deepmd_iterative_path' in globals():
+    True
+elif Path(training_iterative_apath+'/control/path').is_file():
     with open(training_iterative_apath+'/control/path', "r") as f:
         deepmd_iterative_apath = f.read()
     f.close()
@@ -118,7 +120,7 @@ for it_subsys_nr in labeling_json['subsys_nr']:
 
         del coord_xyz, energy_cp2k, force_cp2k, stress_xyz, check_path, it_step_zfill
     del it_step
-    
+
     np.savetxt('./'+str(it_subsys_nr)+'/box.raw',box_array_raw,delimiter=' ')
     np.save(training_iterative_apath+'/data/'+it_subsys_nr+'_'+current_iteration_zfill+'/set.000/box',box_array_raw)
     np.savetxt('./'+str(it_subsys_nr)+'/virial.raw',virial_array_raw,delimiter=' ')
@@ -129,7 +131,7 @@ for it_subsys_nr in labeling_json['subsys_nr']:
     np.save(training_iterative_apath+'/data/'+it_subsys_nr+'_'+current_iteration_zfill+'/set.000/energy',energy_array_raw)
     np.savetxt('./'+str(it_subsys_nr)+'/coord.raw',coord_array_raw,delimiter=' ')
     np.save(training_iterative_apath+'/data/'+it_subsys_nr+'_'+current_iteration_zfill+'/set.000/coord',coord_array_raw)
-    
+
     del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw
 
     if labeling_json['subsys_nr'][it_subsys_nr]['disturbed'] != 0 :
@@ -221,7 +223,7 @@ for it_subsys_nr in labeling_json['subsys_nr']:
 labeling_json['is_extracted'] = True
 cf.json_dump(labeling_json,labeling_json_fpath,True,'labeling file')
 
-logging.info('Labeling extraction success')
+logging.info('The labeling extraction phase is a success!')
 
 ### Cleaning
 del config_json, config_json_fpath, training_iterative_apath

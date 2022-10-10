@@ -6,7 +6,9 @@ logging.basicConfig(level=logging.INFO,format='%(levelname)s: %(message)s')
 
 training_iterative_apath = str(Path('..').resolve())
 ### Check if the deepmd_iterative_apath is defined
-if Path(training_iterative_apath+'/control/path').is_file():
+if 'deepmd_iterative_path' in globals():
+    True
+elif Path(training_iterative_apath+'/control/path').is_file():
     with open(training_iterative_apath+'/control/path', 'r') as f:
         deepmd_iterative_apath = f.read()
     f.close()
@@ -35,17 +37,29 @@ if training_json['is_checked'] is False:
     logging.critical('Aborting...')
     sys.exit(1)
 
-### Check normal termination of the freezing step
+### Check normal termination of DP Freeze
+check = 0
 for it_nnp in range(1, config_json['nb_nnp'] + 1):
     cf.change_dir('./'+str(it_nnp))
-    cf.check_file('graph_'+str(it_nnp)+'_'+current_iteration_zfill+'.pb',0,True)
+    if Path('graph_'+str(it_nnp)+'_'+current_iteration_zfill+'.pb').is_file():
+        check = check + 1
+    else:
+        logging.critical('DP Freeze - ./'+str(it_nnp)+' not finished/failed')
     cf.change_dir('../')
 del it_nnp
-training_json['is_frozen'] = True
 
-cf.json_dump(training_json,training_json_fpath,True,'training config file')
+if check == config_json['nb_nnp']:
+    training_json['is_frozen'] = True
+else:
+    logging.critical('Some DP Freeze did not finished correctly')
+    logging.critical('Please check manually before relaunching this step')
+    logging.critical('Aborting...')
+    sys.exit(1)
+del check
 
-logging.info('DP Freeze success')
+cf.json_dump(training_json,training_json_fpath,print_log=True,name='training.json')
+
+logging.info('DP Freeze is a success!')
 
 ### Cleaning
 del config_json, config_json_fpath, training_iterative_apath

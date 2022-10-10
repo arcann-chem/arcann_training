@@ -8,7 +8,9 @@ import subprocess
 
 training_iterative_apath = str(Path('..').resolve())
 ### Check if the deepmd_iterative_apath is defined
-if Path(training_iterative_apath+'/control/path').is_file():
+if 'deepmd_iterative_path' in globals():
+    True
+elif Path(training_iterative_apath+'/control/path').is_file():
     with open(training_iterative_apath+'/control/path', "r") as f:
         deepmd_iterative_apath = f.read()
     f.close()
@@ -53,28 +55,42 @@ if labeling_json['cluster'] != cluster:
 if labeling_json['arch_name'] == 'cpu':
     arch_type='cpu'
 
-### Launch the jobs
+### Launch of the labeling
+check = 0
 for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
     cf.change_dir('./'+str(it_subsys_nr))
     if cluster == 'jz':
-        subprocess.call(['sbatch','./job_labeling_array_'+arch_type+'_'+cluster+'.sh'])
-        logging.info('Labeling Array - '+str(it_subsys_nr)+' lauched.')
+        if Path('job_labeling_array_'+arch_type+'_'+cluster+'.sh').is_file():
+            subprocess.call(['sbatch','./job_labeling_array_'+arch_type+'_'+cluster+'.sh'])
+            logging.info('Labeling Array - '+str(it_subsys_nr)+' launched')
+            check = check + 1
+        else:
+            logging.critical('Labeling Array - '+str(it_subsys_nr)+' NOT launched')
     elif cluster == 'ir':
         if it0_subsys_nr == 0:
             if Path('job_labeling_array_'+arch_type+'_'+cluster+'.sh').is_file():
-                subprocess.call(['sbatch','./job_labeling_array_'+arch_type+'_'+cluster+'.sh'])
-                logging.warning('Labeling Array - '+str(it_subsys_nr)+' lauched.')
+                subprocess.call(['ccc_msub','./job_labeling_array_'+arch_type+'_'+cluster+'.sh'])
+                logging.info('Labeling Array - '+str(it_subsys_nr)+' launched')
             elif Path('job_labeling_array_'+arch_type+'_'+cluster+'_0.sh').is_file():
-                subprocess.call(['sbatch','./job_labeling_array_'+arch_type+'_'+cluster+'_0.sh'])
-                logging.warning('Labeling Array - '+str(it_subsys_nr)+', first batch _0 lauched.')
-                logging.warning('Since Irene-Rome does not supports more than 1000 jobs array. Only the first one has been launched.')
-                logging.warning('Good luck launching the rest...')
+                subprocess.call(['ccc_msub','./job_labeling_array_'+arch_type+'_'+cluster+'_0.sh'])
+                logging.info('Labeling Array - '+str(it_subsys_nr)+' - 0 launched')
+            else:
+                logging.warning('Labeling Array - '+str(it_subsys_nr)+' NOT launched')
+            logging.critical('Since Irene-Rome does not support more than 1000 jobs array. Only the first one has been launched.')
+            logging.critical('Good luck launching the rest...')
         else:
             True
     cf.change_dir('..')
 del it_subsys_nr, it0_subsys_nr, config_json, cluster
 
-labeling_json['is_launched'] = True
+if check == config_json['nb_nnp']:
+    labeling_json['is_launched'] = True
+    logging.info('The labeling job launch phase is a success!')
+else:
+    logging.critical('Some labeling array did not launched correctly or you are on Irene')
+    logging.critical('Please launch manually before continuing to the next step')
+    logging.critical('And replace the key \'is_launched\' to True in the corresponding labeling.json.')
+del check
 
 cf.json_dump(labeling_json,labeling_json_fpath,True,'labeling config file')
 

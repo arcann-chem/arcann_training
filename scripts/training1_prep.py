@@ -22,16 +22,18 @@ deepmd_iterative_apath='/gpfs7kw/linkhome/rech/gennsp01/ucf13sj/code/deepmd_iter
 ###################################### No change past here
 import sys
 from pathlib import Path
-import json
-import subprocess
-import numpy as np
-import random
 import logging
 logging.basicConfig(level=logging.INFO,format='%(levelname)s: %(message)s')
 
+import subprocess
+import numpy as np
+import random
+
 training_iterative_apath = str(Path('..').resolve())
-### Check if the DeePMD Iterative PY path is defined
-if Path(training_iterative_apath+'/control/path').is_file():
+### Check if the deepmd_iterative_apath is defined
+if 'deepmd_iterative_path' in globals():
+    True
+elif Path(training_iterative_apath+'/control/path').is_file():
     with open(training_iterative_apath+'/control/path', 'r') as f:
         deepmd_iterative_apath = f.read()
     f.close()
@@ -408,6 +410,9 @@ for it_nnp in range(1,config_json['nb_nnp'] + 1):
 
     cf.write_file(str(it_nnp)+'/job_deepmd_train_'+arch_type+'_'+cluster+'.sh',slurm_file)
 
-del sys, Path, json, subprocess, np, random, logging, cf
+logging.info('Preparation of the training is a success!')
+
+del sys, Path, logging, cf
+del subprocess, np, random
 import gc; gc.collect(); del gc
 exit()
