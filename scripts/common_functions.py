@@ -176,7 +176,7 @@ def json_dump(json_dict:dict,output_file_path:str,print_log=False,name=None):
         print_log (bool): log the action
         name (str): JSON fancy name for logging
     """
-    if name is 'None':
+    if name == 'None':
         name = json_dict
     with open(output_file_path, 'w') as f:
         json.dump(json_dict, f)
