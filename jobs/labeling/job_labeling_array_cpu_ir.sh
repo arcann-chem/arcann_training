@@ -9,9 +9,9 @@
 #MSUB -m scratch,work,store
 #MSUB -Q normal
 # Number of nodes/processes/tasksperprocess
-#MSUB -N 1
-#MSUB -n _NUMBER_OF_MPI_PROCESSES_PER_NODE_
-#MSUB -c 1
+#MSUB -N _nb_NODES_
+#MSUB -n _nb_MPI_per_NODE_
+#MSUB -c _nb_OPENMP_per_MPI_
 # Wall-time
 #MSUB -T _WALLTIME_
 # Merge Output/Error
@@ -80,7 +80,7 @@ export EXIT_CODE="0"
 ${MPIRUN_CP2K_EXE} -i "${CP2K_INPUT_F1}".inp > "${CP2K_INPUT_F1}".out || export EXIT_CODE="1"
 cp ${CP2K_WFRST_F}.wfn 1_${CP2K_WFRST_F}.wfn
 ${MPIRUN_CP2K_EXE} -i "${CP2K_INPUT_F2}".inp > "${CP2K_INPUT_F2}".out || export EXIT_CODE="1"
-mv ${CP2K_WFRST_F}.wfn 2_${CP2K_WFRST_F}.wfn
+cp ${CP2K_WFRST_F}.wfn 2_${CP2K_WFRST_F}.wfn
 echo "# [$(date)] Ended"
 
 # Move back data from the temporary work directory and scratch, and clean-up
