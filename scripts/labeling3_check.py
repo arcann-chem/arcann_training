@@ -48,63 +48,88 @@ for it_subsys_nr in labeling_json['subsys_nr']:
     timings_1 = []
     timings_sum_2 = 0
     timings_2 = []
+    not_converged_list_1 = []
+    not_converged_list_2 = []
+    failed_list_1 = []
+    failed_list_2 = []
     for it_step in range(1, labeling_json['subsys_nr'][it_subsys_nr]['standard'] + 1):
         it_step_zfill = str(it_step).zfill(5)
         check_path='./'+str(it_subsys_nr)+'/'+it_step_zfill
+
         cp2k_output_file_1 = check_path+'/1_labeling_'+it_step_zfill+'.out'
-        cf.check_file(cp2k_output_file_1,0,False,cp2k_output_file_1+' not present. Check manually.')
         if Path(cp2k_output_file_1).is_file():
             cp2k_output_1 = cf.read_file(cp2k_output_file_1)
             if any('SCF run converged in ' in f for f in cp2k_output_1):
                 step_1 = step_1 + 1
                 timings_1 = [zzz for zzz in cp2k_output_1 if 'CP2K                                 1  1.0' in zzz]
                 timings_sum_1 = timings_sum_1 + float(timings_1[0].split(' ')[-1])
+            elif any('SCF run NOT converged in ' in f for f in cp2k_output_1):
+                not_converged_list_1.append(cp2k_output_file_1)
             else:
-                logging.warning(cp2k_output_file_1+' not converged/failed. Check manually.')
+                failed_list_1.append(cp2k_output_file_1)
+        else:
+            failed_list_1.append(cp2k_output_file_1)
+
         cp2k_output_file_2 = check_path+'/2_labeling_'+it_step_zfill+'.out'
-        cf.check_file(cp2k_output_file_2,0,False,cp2k_output_file_2+' not present. Check manually.')
         if Path(cp2k_output_file_2).is_file():
             cp2k_output_2 = cf.read_file(cp2k_output_file_2)
             if any('SCF run converged in ' in f for f in cp2k_output_2):
                 step_2 = step_2 + 1
                 timings_2 = [zzz for zzz in cp2k_output_2 if 'CP2K                                 1  1.0' in zzz]
                 timings_sum_2 = timings_sum_2 + float(timings_2[0].split(' ')[-1])
+            elif any('SCF run NOT converged in ' in f for f in cp2k_output_2):
+                not_converged_list_2.append(cp2k_output_file_2)
             else:
-                logging.critical(cp2k_output_file_2+' not converged/failed. Check manually.')
+                failed_list_2.append(cp2k_output_file_2)
+        else:
+            failed_list_2.append(cp2k_output_file_2)
 
     for it_step in range(labeling_json['subsys_nr'][it_subsys_nr]['standard'] + 1, labeling_json['subsys_nr'][it_subsys_nr]['standard'] + labeling_json['subsys_nr'][it_subsys_nr]['disturbed'] + 1):
         it_step_zfill = str(it_step).zfill(5)
         check_path='./'+str(it_subsys_nr)+'/'+it_step_zfill
+
         cp2k_output_file_1 = check_path+'/1_labeling_'+it_step_zfill+'.out'
-        cf.check_file(cp2k_output_file_1,0,False,cp2k_output_file_1+' not present. Check manually.')
         if Path(cp2k_output_file_1).is_file():
             cp2k_output_1 = cf.read_file(cp2k_output_file_1)
             if any('SCF run converged in ' in f for f in cp2k_output_1):
                 step_1 = step_1 + 1
                 timings_1 = [zzz for zzz in cp2k_output_1 if 'CP2K                                 1  1.0' in zzz]
                 timings_sum_1 = timings_sum_1 + float(timings_1[0].split(' ')[-1])
+            elif any('SCF run NOT converged in ' in f for f in cp2k_output_1):
+                not_converged_list_1.append(cp2k_output_file_1+'\n')
             else:
-                logging.warning(cp2k_output_file_1+' not converged/failed. Check manually.')
+                failed_list_1.append(cp2k_output_file_1+'\n')
+        else:
+            failed_list_1.append(cp2k_output_file_1+'\n')
+
         cp2k_output_file_2 = check_path+'/2_labeling_'+it_step_zfill+'.out'
-        cf.check_file(cp2k_output_file_2,0,False,cp2k_output_file_2+' not present. Check manually.')
         if Path(cp2k_output_file_2).is_file():
             cp2k_output_2 = cf.read_file(cp2k_output_file_2)
             if any('SCF run converged in ' in f for f in cp2k_output_2):
                 step_2 = step_2 + 1
                 timings_2 = [zzz for zzz in cp2k_output_2 if 'CP2K                                 1  1.0' in zzz]
                 timings_sum_2 = timings_sum_2 + float(timings_2[0].split(' ')[-1])
+            elif any('SCF run NOT converged in ' in f for f in cp2k_output_2):
+                not_converged_list_2.append(cp2k_output_file_2+'\n')
             else:
-                logging.critical(cp2k_output_file_2+' not converged/failed. Check manually.')
+                failed_list_2.append(cp2k_output_file_2+'\n')
+        else:
+            failed_list_2.append(cp2k_output_file_2+'\n')
+
     timings_1 = timings_sum_1/step_1
     timings_2 = timings_sum_2/step_2
     labeling_json['subsys_nr'][it_subsys_nr]['timing_s'] = [timings_1, timings_2]
+    cf.write_file('./'+str(it_subsys_nr)+'_1_not_converged.txt',not_converged_list_1) if len(not_converged_list_1) != 0 else True
+    cf.write_file('./'+str(it_subsys_nr)+'_2_not_converged.txt',not_converged_list_2) if len(not_converged_list_2) != 0 else True
+    cf.write_file('./'+str(it_subsys_nr)+'_1_failed.txt',failed_list_1) if len(failed_list_1) != 0 else True
+    cf.write_file('./'+str(it_subsys_nr)+'_2_failed.txt',failed_list_2) if len(failed_list_2) != 0 else True
 
 if total_steps != step_1:
-    logging.warning('Some jobs have failed/not converged/still running (first step). Check manually.')
-
+    logging.warning('Some jobs have failed/not converged/still running (first step). Check manually')
+    logging.warning('See 1_not_converged.txt / 1_failed.txt')
 if total_steps != step_2:
-    logging.critical('Some jobs have failed/not converged/still running (second step). Check manually.')
-    logging.critical('Aborting...')
+    logging.critical('Some jobs have failed/not converged/still running (second step). Check manually')
+    logging.critical('See 2_not_converged.txt / 2_failed.txt')
     sys.exit(1)
 else:
      labeling_json['is_checked'] = True
