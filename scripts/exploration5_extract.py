@@ -3,8 +3,8 @@
 ## These are the default
 atomsk_fpath='/gpfswork/rech/nvs/commun/programs/apps/atomsk/0.11.2/bin/atomsk'
 # vmd_fpath=''
-# disturb=[0.0, 0.0]
-# disturb_devi=[0.0, 0.0]
+# disturb_min_value = [0.0, 0.0]
+# disturb_candidates_value = [0.0, 0.0]
 
 ###################################### No change past here
 import sys
@@ -71,13 +71,20 @@ import common_functions as cf
 
 ### Read what is needed (json files)
 config_json_fpath = training_iterative_apath+'/control/config.json'
-config_json = cf.json_read(config_json_fpath, abort = True)
+config_json = cf.json_read(config_json_fpath,True,True)
 
 current_iteration = current_iteration if 'current_iteration' in globals() else config_json['current_iteration']
 current_iteration_zfill = str(current_iteration).zfill(3)
 
 exploration_json_fpath = training_iterative_apath+'/control/exploration_'+current_iteration_zfill+'.json'
-exploration_json = cf.json_read(exploration_json_fpath, abort = True)
+exploration_json = cf.json_read(exploration_json_fpath,True,True)
+
+if current_iteration > 1:
+    previous_iteration = current_iteration - 1
+    previous_iteration_zfill = str(previous_iteration).zfill(3)
+
+    prevexploration_json_fpath = training_iterative_apath+'/control/exploration_'+previous_iteration_zfill+'.json'
+    prevexploration_json = cf.json_read(prevexploration_json_fpath,True,True)
 
 ### Checks
 if exploration_json['is_deviated'] is False:
@@ -107,8 +114,8 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
             for it_each in range(1, exploration_json['nb_traj']+1):
                 cf.change_dir('./'+str(it_each).zfill(5))
 
-                devi_json = cf.json_read('./selection_candidates.json', abort = False)
-                devi_json_index = cf.json_read('./selection_candidates_index.json', abort = False)
+                devi_json = cf.json_read('./selection_candidates.json',False,False)
+                devi_json_index = cf.json_read('./selection_candidates_index.json',False,False)
 
                 ### Selection of the min for the next iteration starting point
                 min_index = devi_json['min_index']
@@ -132,18 +139,10 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                 cf.remove_file('min.vmd')
                 del vmd_tcl, traj_file, min_index
 
+                ### Get the min
                 if Path('vmd_00000.xyz').is_file():
                     min_file_name=current_iteration_zfill+'_'+str(it_subsys_nr)+'_'+str(it_nnp)+'_'+str(it_each).zfill(5)
                     Path('vmd_00000.xyz').rename(min_file_name+'.xyz')
-                    if 'disturb' in globals() and disturb[it0_subsys_nr] != 0:
-                        subprocess.call([atomsk_bin, '-ow', min_file_name+'.xyz',\
-                            '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][0]), 'H1',\
-                            '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][1]), 'H2',\
-                            '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][2]), 'H3',\
-                            '-disturb', str(disturb[it0_subsys_nr]),\
-                            'xyz'],\
-                            stdout=subprocess.DEVNULL,\
-                            stderr=subprocess.STDOUT)
 
                     subprocess.call([atomsk_bin, '-ow', min_file_name+'.xyz',\
                         '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][0]), 'H1',\
@@ -155,9 +154,35 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
 
                     Path(min_file_name+'.xyz').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'.xyz')
                     Path(min_file_name+'.lmp').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'.lmp')
+
+                    if ('disturb_min_value' in globals() and disturb_min_value[it0_subsys_nr] != 0) \
+                        or (current_iteration > 1 and prevexploration_json['subsys_nr'][it_subsys_nr]['disturbed_min']):
+
+                        Path(min_file_name+'_disturbed.xyz').write_text(Path(min_file_name+'.xyz').read_text())
+
+                        subprocess.call([atomsk_bin, '-ow', min_file_name+'_disturbed.xyz',\
+                            '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][0]), 'H1',\
+                            '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][1]), 'H2',\
+                            '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][2]), 'H3',\
+                            '-disturb', str(disturb_min_value[it0_subsys_nr]),\
+                            'xyz'],\
+                            stdout=subprocess.DEVNULL,\
+                            stderr=subprocess.STDOUT)
+
+                        subprocess.call([atomsk_bin, '-ow', min_file_name+'_disturbed.xyz',\
+                            '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][0]), 'H1',\
+                            '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][1]), 'H2',\
+                            '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][2]), 'H3',\
+                            'lmp'],\
+                            stdout=subprocess.DEVNULL,\
+                            stderr=subprocess.STDOUT)
+
+                        Path(min_file_name+'_disturbed.xyz').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'_disturbed.xyz')
+                        Path(min_file_name+'_disturbed.lmp').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'_disturbed.lmp')
+
                     del min_file_name
                 else:
-                    logging.warning('Problem on preparing the min for: '+str(it_subsys_nr)+' / '+str(it_nnp)+' / '+str(it_each) )\
+                    logging.warning('Problem preparing the min for: '+str(it_subsys_nr)+' / '+str(it_nnp)+' / '+str(it_each) )\
 
                 ### Selection of labeling XYZ
                 if len(devi_json_index['candidates_kept_ind']) != 0:
@@ -186,14 +211,14 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                     cf.remove_file('./candidates_'+str(it_subsys_nr)+'_'+str(it_nnp)+'_'+current_iteration_zfill+'.xyz')
                     os.system('cat vmd_*.xyz >> temp_candidates_'+str(it_subsys_nr)+'_'+str(it_nnp)+'_'+current_iteration_zfill+'.xyz')
 
-                    if 'disturb_devi' in globals() and disturb_devi[it0_subsys_nr] != 0:
+                    if 'disturb_candidates_value' in globals() and disturb_candidates_value[it0_subsys_nr] != 0:
                         vmd_xyz_files=[zzz for zzz in Path('.').glob('vmd_*')]
                         for it_vmd_xyz_files in vmd_xyz_files:
                             subprocess.call([atomsk_bin, '-ow', str(it_vmd_xyz_files),\
                                 '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][0]), 'H1',\
                                 '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][1]), 'H2',\
                                 '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][2]), 'H3',\
-                                '-disturb', str(disturb_devi[it0_subsys_nr]),\
+                                '-disturb', str(disturb_candidates_value[it0_subsys_nr]),\
                                 'xyz', str(it_vmd_xyz_files)+'_disturbed'],\
                                 stdout=subprocess.DEVNULL,\
                                 stderr=subprocess.STDOUT)
@@ -211,13 +236,22 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
 
         #TODO Replace with either subprocess call or read python
 
-        if 'disturb_devi' in globals() and disturb_devi[it0_subsys_nr] != 0:
+        if 'disturb_candidates_value' in globals() and disturb_candidates_value[it0_subsys_nr] != 0:
             cf.remove_file('candidates_'+str(it_subsys_nr)+'_'+current_iteration_zfill+'_disturbed.xyz')
             os.system('cat ./*/*/temp_candidates_*_disturbed.xyz >> candidates_'+str(it_subsys_nr)+'_'+current_iteration_zfill+'_disturbed.xyz')
             os.system('rm -rf ./*/*/temp_candidates_*_disturbed.xyz')
-            exploration_json['subsys_nr'][it_subsys_nr]['disturbed'] = True
+            exploration_json['subsys_nr'][it_subsys_nr]['disturbed_candidates'] = True
+            exploration_json['subsys_nr'][it_subsys_nr]['disturb_candidates_value'] = disturb_candidates_value[it0_subsys_nr]
         else:
-            exploration_json['subsys_nr'][it_subsys_nr]['disturbed'] = False
+            exploration_json['subsys_nr'][it_subsys_nr]['disturbed_candidates'] = False
+            exploration_json['subsys_nr'][it_subsys_nr]['disturb_candidates_value'] = 0
+
+        if 'disturb_min_value' in globals() and disturb_min_value[it0_subsys_nr] != 0:
+            exploration_json['subsys_nr'][it_subsys_nr]['disturbed_min'] = True
+            exploration_json['subsys_nr'][it_subsys_nr]['disturbed_min_value'] = disturb_min_value[it0_subsys_nr]
+        else:
+            exploration_json['subsys_nr'][it_subsys_nr]['disturbed_min'] = False
+            exploration_json['subsys_nr'][it_subsys_nr]['disturbed_min_value'] = 0
 
         cf.remove_file('candidates_'+str(it_subsys_nr)+'_'+current_iteration_zfill+'.xyz')
         os.system('cat ./*/*/temp_candidates_*.xyz >> candidates_'+str(it_subsys_nr)+'_'+current_iteration_zfill+'.xyz')
@@ -226,7 +260,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
         cf.change_dir('..')
 
 exploration_json['is_extracted'] = True
-cf.json_dump(exploration_json,exploration_json_fpath, True, 'exploration file')
+cf.json_dump(exploration_json,exploration_json_fpath,True,'exploration.json')
 
 del it0_subsys_nr, it_subsys_nr, topo_file, print_freq
 del master_vmd_tcl, atomsk_bin, vmd_bin
@@ -234,6 +268,9 @@ del master_vmd_tcl, atomsk_bin, vmd_bin
 logging.info('The exploration extraction phase is a success!')
 
 ### Cleaning
+if current_iteration > 1:
+    del previous_iteration, previous_iteration_zfill
+    del prevexploration_json, prevexploration_json_fpath
 del config_json, config_json_fpath, training_iterative_apath
 del current_iteration, current_iteration_zfill
 del exploration_json, exploration_json_fpath

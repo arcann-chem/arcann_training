@@ -25,13 +25,13 @@ import common_functions as cf
 
 ### Read what is needed (json files)
 config_json_fpath = training_iterative_apath+'/control/config.json'
-config_json = cf.json_read(config_json_fpath,abort=True)
+config_json = cf.json_read(config_json_fpath,True,True)
 
 current_iteration = current_iteration if 'current_iteration' in globals() else config_json['current_iteration']
 current_iteration_zfill = str(current_iteration).zfill(3)
 
 exploration_json_fpath = training_iterative_apath+'/control/exploration_'+current_iteration_zfill+'.json'
-exploration_json = cf.json_read(exploration_json_fpath, abort=True)
+exploration_json = cf.json_read(exploration_json_fpath,True,True)
 
 ### Checks
 if exploration_json['is_locked'] is False:

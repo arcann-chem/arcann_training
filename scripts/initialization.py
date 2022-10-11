@@ -39,13 +39,13 @@ del sys_name, nb_nnp
 
 for it0_subsys_nr,it_subsys_nr in enumerate(subsys_name):
     config_json['subsys_nr'][it_subsys_nr] = {}
-    config_json['subsys_nr'][it_subsys_nr]['temperature_K'] = 300.0  if 'temperature_K' not in globals() else temperature_K[it0_subsys_nr]
-    config_json['subsys_nr'][it_subsys_nr]['timestep_ps'] = 0.0005  if 'timestep_ps' not in globals() else timestep_ps[it0_subsys_nr]
+    config_json['subsys_nr'][it_subsys_nr]['temperature_K'] = 300.0 if 'temperature_K' not in globals() else temperature_K[it0_subsys_nr]
+    config_json['subsys_nr'][it_subsys_nr]['timestep_ps'] = 0.0005 if 'timestep_ps' not in globals() else timestep_ps[it0_subsys_nr]
     config_json['subsys_nr'][it_subsys_nr]['nb_candidates_max'] = 500 if 'nb_candidates_max' not in globals() else nb_candidates_max[it0_subsys_nr]
-    config_json['subsys_nr'][it_subsys_nr]['s_low'] = 0.1  if 's_low' not in globals() else s_low[it0_subsys_nr]
-    config_json['subsys_nr'][it_subsys_nr]['s_high'] = 0.8  if 'temperature' not in globals() else s_high[it0_subsys_nr]
-    config_json['subsys_nr'][it_subsys_nr]['s_high_max'] = 1.0  if 's_high_max' not in globals() else s_high_max[it0_subsys_nr]
-    config_json['subsys_nr'][it_subsys_nr]['skip_frames'] = 10  if 'skip_frames' not in globals() else skip_frames[it0_subsys_nr]
+    config_json['subsys_nr'][it_subsys_nr]['s_low'] = 0.1 if 's_low' not in globals() else s_low[it0_subsys_nr]
+    config_json['subsys_nr'][it_subsys_nr]['s_high'] = 0.8 if 'temperature' not in globals() else s_high[it0_subsys_nr]
+    config_json['subsys_nr'][it_subsys_nr]['s_high_max'] = 1.0 if 's_high_max' not in globals() else s_high_max[it0_subsys_nr]
+    config_json['subsys_nr'][it_subsys_nr]['skip_frames'] = 10 if 'skip_frames' not in globals() else skip_frames[it0_subsys_nr]
 del it0_subsys_nr, it_subsys_nr, subsys_name
 
 ### Create the directories

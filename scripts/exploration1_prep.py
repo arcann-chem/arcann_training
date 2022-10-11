@@ -12,8 +12,9 @@
 ## These are the default
 # nb_steps_exploration = [20000, 20000]
 # print_freq = [200, 200]
-# nb_steps_exploration_initial = 20000
+# nb_steps_initial = 20000
 # nb_traj = 2
+# disturbed_start = False
 
 ###################################### No change past here
 import sys
@@ -44,19 +45,20 @@ import common_functions as cf
 
 ### Read what is needed (json files)
 config_json_fpath = training_iterative_apath+'/control/config.json'
-config_json = cf.json_read(config_json_fpath, abort=True)
+config_json = cf.json_read(config_json_fpath,True,True)
 
 current_iteration = current_iteration if 'current_iteration' in globals() else config_json['current_iteration']
 current_iteration_zfill = str(current_iteration).zfill(3)
+exploration_json_fpath = training_iterative_apath+'/control/exploration_'+current_iteration_zfill+'.json'
+exploration_json = cf.json_read(exploration_json_fpath,False,True)
 
 previous_iteration = current_iteration-1
 previous_iteration_zfill = str(previous_iteration).zfill(3)
-
 prevtraining_json_fpath = training_iterative_apath+'/control/training_'+previous_iteration_zfill+'.json'
-prevtraining_json = cf.json_read(prevtraining_json_fpath,abort=True)
-
-exploration_json_fpath = training_iterative_apath+'/control/exploration_'+current_iteration_zfill+'.json'
-exploration_json = cf.json_read(exploration_json_fpath,abort=False)
+prevtraining_json = cf.json_read(prevtraining_json_fpath,True,True)
+if previous_iteration > 0:
+    prevexploration_json_fpath = training_iterative_apath+'/control/exploration_'+previous_iteration_zfill+'.json'
+    prevexploration_json = cf.json_read(prevexploration_json_fpath,True,True)
 
 ### Checks
 if prevtraining_json['is_frozen'] is False:
@@ -72,7 +74,6 @@ exploration_json['project_name'] = project_name if 'project_name' in globals() e
 exploration_json['allocation_name'] = allocation_name if 'allocation_name' in globals() else 'v100'
 exploration_json['arch_name'] = arch_name if 'arch_name' in globals() else 'v100'
 exploration_json['deepmd_model_version'] = prevtraining_json['deepmd_model_version']
-exploration_json['nb_subsys_nr'] = len(config_json['subsys_nr'])
 exploration_json['nb_nnp'] = config_json['nb_nnp']
 project_name = exploration_json['project_name']
 allocation_name = exploration_json['allocation_name']
@@ -86,15 +87,10 @@ slurm_email = '' if 'slurm_email' not in globals() else slurm_email
 cf.check_file(deepmd_iterative_apath+'/jobs/exploration/job_deepmd_lammps_'+arch_type+'_'+cluster+'.sh',0,True,'No SLURM file present for the exploration phase on this cluster.')
 
 ### Preparation of the exploration
-if previous_iteration > 0:
-    prevexploration_json_fpath = training_iterative_apath+'/control/exploration_'+previous_iteration_zfill+'.json'
-    prevexploration_json = cf.json_read(prevexploration_json_fpath,abort=True)
-    prevdeepmd_model_version = prevexploration_json['deepmd_model_version']
 
-nb_steps_exploration_initial = 20000 if 'nb_steps_exploration_initial' not in globals() else nb_steps_exploration_initial
+nb_steps_initial = 20000 if 'nb_steps_initial' not in globals() else nb_steps_initial
 nb_traj = 2 if 'nb_traj' not in globals() else int(nb_traj)
 exploration_json['nb_traj'] = int(nb_traj)
-slurm_email = '' if 'slurm_email' not in globals() else slurm_email
 
 exploration_json['subsys_nr']={}
 for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
@@ -110,13 +106,30 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
             exploration_type = 'lammps'
     else:
         exploration_type = config_json['subsys_nr'][it_subsys_nr]['exploration_type']
+
         starting_point_list_path = [zzz for zzz in Path(training_iterative_apath+'/starting_structures').glob(previous_iteration_zfill+'_'+it_subsys_nr+'_*.lmp')]
-        starting_point_list = [str(zzz).split('/')[-1] for zzz in starting_point_list_path]
+        starting_point_list_all = [str(zzz).split('/')[-1] for zzz in starting_point_list_path]
+        starting_point_list = [zzz for zzz in starting_point_list_all if 'disturbed' not in zzz]
+        starting_point_list_disturbed = [zzz for zzz in starting_point_list_all if zzz not in starting_point_list]
+        starting_point_list_disturbed_bckp = starting_point_list_disturbed
         starting_point_list_bckp = starting_point_list
-        del starting_point_list_path
+
+        if 'disturbed_start' not in globals():
+            if (current_exploration > 1 and prevexploration_json['subsys_nr'][it_subsys_nr]['disturbed_min']):
+                starting_point_list = starting_point_list_disturbed
+                starting_point_list_bckp = starting_point_list_disturbed_bckp
+                exploration_json['subsys_nr'][it_subsys_nr]['disturbed_start'] = True
+        elif disturbed_start:
+            starting_point_list = starting_point_list_disturbed
+            starting_point_list_bckp = starting_point_list_disturbed_bckp
+            exploration_json['subsys_nr'][it_subsys_nr]['disturbed_start'] = True
+        else:
+            exploration_json['subsys_nr'][it_subsys_nr]['disturbed_start'] = False
+        del starting_point_list_path, starting_point_list_all
 
     exploration_json['subsys_nr'][it_subsys_nr]['exploration_type'] = exploration_type
     slurm_file_master = cf.read_file(deepmd_iterative_apath+'/jobs/exploration/job_deepmd_'+exploration_type+'_'+arch_type+'_'+cluster+'.sh')
+
     for it_nnp in range(1, config_json['nb_nnp'] + 1 ):
         cf.create_dir('./'+it_subsys_nr+'/'+str(it_nnp))
         for it_number in range(1, nb_traj + 1):
@@ -125,18 +138,27 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
             list_nnp = [zzz for zzz in range(1, config_json['nb_nnp'] + 1)]
             reorder_nnp_list = list_nnp[list_nnp.index(it_nnp):] + list_nnp[:list_nnp.index(it_nnp)]
             del list_nnp
-            if prevtraining_json['is_compressed'] == True:
-                models_list=['graph_'+str(f)+'_'+previous_iteration_zfill+'_compressed.pb' for f in reorder_nnp_list]
-                for it_sub_nnp in range(1, config_json['nb_nnp'] + 1 ):
-                    nnp_apath = Path(training_iterative_apath+'/NNP/graph_'+str(it_sub_nnp)+'_'+previous_iteration_zfill+'_compressed.pb').resolve()
-                    subprocess.call(['ln','-s', str(nnp_apath), local_path+'/'])
-                del it_sub_nnp,nnp_apath
-            else:
-                models_list=['graph_'+str(f)+'_'+previous_iteration_zfill+'.pb' for f in reorder_nnp_list]
-                for it_sub_nnp in range(1, config_json['nb_nnp'] + 1 ):
-                    nnp_apath = Path(training_iterative_apath+'/NNP/graph_'+str(it_sub_nnp)+'_'+previous_iteration_zfill+'.pb').resolve()
-                    subprocess.call(['ln','-s', str(nnp_apath), local_path+'/'])
-                del it_sub_nnp,nnp_apath
+
+            compress_str = '_compressed' if prevtraining_json['is_compressed'] else ''
+            models_list=['graph_'+str(f)+'_'+previous_iteration_zfill+compress_str+'.pb' for f in reorder_nnp_list]
+            for it_sub_nnp in range(1, config_json['nb_nnp'] + 1 ):
+                nnp_apath = Path(training_iterative_apath+'/NNP/graph_'+str(it_sub_nnp)+'_'+previous_iteration_zfill+compress_str+'.pb').resolve()
+                subprocess.call(['ln','-s', str(nnp_apath), local_path+'/'])
+            del it_sub_nnp,nnp_apath, compress_str
+
+            # if prevtraining_json['is_compressed']:
+            #     models_list=['graph_'+str(f)+'_'+previous_iteration_zfill+'_compressed.pb' for f in reorder_nnp_list]
+            #     for it_sub_nnp in range(1, config_json['nb_nnp'] + 1 ):
+            #         nnp_apath = Path(training_iterative_apath+'/NNP/graph_'+str(it_sub_nnp)+'_'+previous_iteration_zfill+'_compressed.pb').resolve()
+            #         subprocess.call(['ln','-s', str(nnp_apath), local_path+'/'])
+            #     del it_sub_nnp,nnp_apath
+            # else:
+            #     models_list=['graph_'+str(f)+'_'+previous_iteration_zfill+'.pb' for f in reorder_nnp_list]
+            #     for it_sub_nnp in range(1, config_json['nb_nnp'] + 1 ):
+            #         nnp_apath = Path(training_iterative_apath+'/NNP/graph_'+str(it_sub_nnp)+'_'+previous_iteration_zfill+'.pb').resolve()
+            #         subprocess.call(['ln','-s', str(nnp_apath), local_path+'/'])
+            #     del it_sub_nnp,nnp_apath
+
             models_list=" ".join(models_list)
 
             if exploration_type == 'lammps':
@@ -157,13 +179,9 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                 if current_iteration == 1:
                     lammps_data = cf.read_file(training_iterative_apath+'/inputs/'+it_subsys_nr+'.lmp')
                     lammps_input = cf.replace_in_list(lammps_input,'_DATA_FILE_',it_subsys_nr+'.lmp')
-                    nb_steps = nb_steps_exploration_initial
+                    nb_steps = nb_steps_initial
                     lammps_input = cf.replace_in_list(lammps_input,'_NUMBER_OF_STEPS_',str(nb_steps))
                     data_file_name = it_subsys_nr+'.lmp'
-                # elif ( prevexploration_json['percent_of_bad'] + prevexploration_json['percent_of_new'] ) > 0.75:
-                #     lammps_input = cf.replace_in_list(lammps_input,'_DATA_FILE_',it_subsys_nr+'.lmp')
-                #     nb_steps = nb_steps_exploration_initial
-                #     lammps_input = cf.replace_in_list(lammps_input,'_NUMBER_OF_STEPS_',str(nb_steps))
                 else:
                     if len(starting_point_list) == 0:
                         starting_point_list = starting_point_list_bckp
@@ -171,6 +189,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                     previous_data_file = starting_point_list[RAND]
                     del starting_point_list[RAND]
                     lammps_data = cf.read_file(training_iterative_apath+'/starting_structures/'+previous_data_file)
+
                     data_file_name = previous_data_file
                     ratio_ill_described = (prevexploration_json['subsys_nr'][it_subsys_nr]['nb_candidates'] + prevexploration_json['subsys_nr'][it_subsys_nr]['nb_rejected']) / prevexploration_json['subsys_nr'][it_subsys_nr]['nb_total']
 
@@ -299,20 +318,20 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
     config_json['subsys_nr'][it_subsys_nr]['nb_atm'] = nb_atm
     config_json['subsys_nr'][it_subsys_nr]['exploration_type'] = exploration_type
     del cell,nb_atm
-    cf.json_dump(config_json,config_json_fpath, True, 'configuration file')
+    cf.json_dump(config_json,config_json_fpath,True,'config.json')
     exploration_json['is_locked'] = True
     exploration_json['is_launched'] = False
     exploration_json['is_checked'] = False
     exploration_json['is_deviated'] = False
     exploration_json['is_extracted'] = False
 
-    cf.json_dump(exploration_json,exploration_json_fpath, True, 'exploration file')
+    cf.json_dump(exploration_json,exploration_json_fpath,True,'exploration.json')
 
 del it_list_plumed_files,it0_subsys_nr
 
 del slurm_file_master, slurm_file, lammps_data, lammps_input
 del nb_traj, exploration_type
-del temperature, timestep, nb_steps_exploration_initial
+del temperature, timestep, nb_steps_initial
 del it_subsys_nr, it_nnp, it_number, local_path, reorder_nnp_list, models_list, RAND, nb_steps, data_file_name, print_freq_local, n, string, approx_time, models_list_job, list_plumed_files, plumed_input, it_plumed_input, prev_plumed
 
 ### Cleaning

@@ -183,7 +183,7 @@ def json_dump(json_dict:dict,output_file_path:str,print_log=False,name=None):
         if print_log:
             logging.info('Writing '+name+' in: '+output_file_path)
 
-def json_read(json_file_path,abort=True):
+def json_read(json_file_path,should_abort=True,should_print=True):
     """Read json file
 
     Args:
@@ -194,15 +194,17 @@ def json_read(json_file_path,abort=True):
         (dict): json as a dict
     """
     if Path(json_file_path).is_file():
-        logging.info('Loading: '+json_file_path)
+        if should_print:
+            logging.info('Loading: '+json_file_path)
         return json.load(open(json_file_path,))
     else:
-        if abort:
+        if should_abort:
             logging.critical('Config not found: '+json_file_path)
             logging.critical('Aborting...')
             sys.exit(1)
         else:
-            logging.info('No '+json_file_path+' file found, creating a new one...')
+            if should_print:
+                logging.info('No '+json_file_path+' file found, creating a new one...')
             return {}
 
 def write_file(output_file_path:str,list_of_string:list):

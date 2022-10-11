@@ -23,13 +23,13 @@ import common_functions as cf
 
 ### Read what is needed (json files)
 config_json_fpath = training_iterative_apath+'/control/config.json'
-config_json = cf.json_read(config_json_fpath, abort=True)
+config_json = cf.json_read(config_json_fpath,True,True)
 
 current_iteration = current_iteration if 'current_iteration' in globals() else config_json['current_iteration']
 current_iteration_zfill = str(current_iteration).zfill(3)
 
 labeling_json_fpath = training_iterative_apath+'/control/labeling_'+current_iteration_zfill+'.json'
-labeling_json = cf.json_read(labeling_json_fpath, abort=True)
+labeling_json = cf.json_read(labeling_json_fpath,True,True)
 
 ### Checks
 if labeling_json['is_launched'] is False:
@@ -42,7 +42,7 @@ total_steps = 0
 step_1 = 0
 step_2 = 0
 for it_subsys_nr in labeling_json['subsys_nr']:
-    total_steps = total_steps + labeling_json['subsys_nr'][it_subsys_nr]['standard'] + labeling_json['subsys_nr'][it_subsys_nr]['disturbed']
+    total_steps = total_steps + labeling_json['subsys_nr'][it_subsys_nr]['standard'] + labeling_json['subsys_nr'][it_subsys_nr]['disturbed_candidates']
     average_per_step = 0
     timings_sum_1 = 0
     timings_1 = []
@@ -84,7 +84,7 @@ for it_subsys_nr in labeling_json['subsys_nr']:
         else:
             failed_list_2.append(cp2k_output_file_2)
 
-    for it_step in range(labeling_json['subsys_nr'][it_subsys_nr]['standard'] + 1, labeling_json['subsys_nr'][it_subsys_nr]['standard'] + labeling_json['subsys_nr'][it_subsys_nr]['disturbed'] + 1):
+    for it_step in range(labeling_json['subsys_nr'][it_subsys_nr]['standard'] + 1, labeling_json['subsys_nr'][it_subsys_nr]['standard'] + labeling_json['subsys_nr'][it_subsys_nr]['disturbed_candidates'] + 1):
         it_step_zfill = str(it_step).zfill(5)
         check_path='./'+str(it_subsys_nr)+'/'+it_step_zfill
 
@@ -133,10 +133,10 @@ if total_steps != step_2:
     sys.exit(1)
 else:
      labeling_json['is_checked'] = True
-     cf.json_dump(labeling_json,labeling_json_fpath,True,'labeling file')
+     cf.json_dump(labeling_json,labeling_json_fpath,True,'labeling.json')
      for it_subsys_nr in labeling_json['subsys_nr']:
         cf.remove_file_glob('./'+it_subsys_nr+'/','CP2K.*')
-        for it_step in range(1, labeling_json['subsys_nr'][it_subsys_nr]['standard'] + labeling_json['subsys_nr'][it_subsys_nr]['disturbed'] + 1):
+        for it_step in range(1, labeling_json['subsys_nr'][it_subsys_nr]['standard'] + labeling_json['subsys_nr'][it_subsys_nr]['disturbed_candidates'] + 1):
             it_step_zfill = str(it_step).zfill(5)
             cf.remove_file_glob('./'+it_subsys_nr+'/'+it_step_zfill+'/','CP2K.*')
 
