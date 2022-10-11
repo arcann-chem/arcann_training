@@ -25,13 +25,13 @@ import common_functions as cf
 
 ### Read what is needed (json files)
 config_json_fpath = training_iterative_apath+'/control/config.json'
-config_json = cf.json_read(config_json_fpath,abort=True)
+config_json = cf.json_read(config_json_fpath,True,True)
 
 current_iteration = current_iteration if 'current_iteration' in globals() else config_json['current_iteration']
 current_iteration_zfill = str(current_iteration).zfill(3)
 
 labeling_json_fpath = training_iterative_apath+'/control/labeling_'+current_iteration_zfill+'.json'
-labeling_json = cf.json_read(labeling_json_fpath,abort=True)
+labeling_json = cf.json_read(labeling_json_fpath,True,True)
 
 ### Checks
 if labeling_json['is_launched'] is True:
@@ -81,7 +81,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
         else:
             True
     cf.change_dir('..')
-del it_subsys_nr, it0_subsys_nr, config_json, cluster
+del it_subsys_nr, it0_subsys_nr
 
 if check == config_json['nb_nnp']:
     labeling_json['is_launched'] = True
@@ -92,7 +92,7 @@ else:
     logging.critical('And replace the key \'is_launched\' to True in the corresponding labeling.json.')
 del check
 
-cf.json_dump(labeling_json,labeling_json_fpath,True,'labeling config file')
+cf.json_dump(labeling_json,labeling_json_fpath,True,'labeling.json')
 
 ### Clean
 del config_json, config_json_fpath, training_iterative_apath

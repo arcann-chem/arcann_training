@@ -38,16 +38,16 @@ import common_functions as cf
 
 ### Read what is needed (json files)
 config_json_fpath = training_iterative_apath+'/control/config.json'
-config_json = cf.json_read(config_json_fpath, abort=True)
+config_json = cf.json_read(config_json_fpath,True,True)
 
 current_iteration = current_iteration if 'current_iteration' in globals() else config_json['current_iteration']
 current_iteration_zfill = str(current_iteration).zfill(3)
 
 exploration_json_fpath = training_iterative_apath+'/control/exploration_'+current_iteration_zfill+'.json'
-exploration_json = cf.json_read(exploration_json_fpath,abort=True)
+exploration_json = cf.json_read(exploration_json_fpath,True,True)
 
 labeling_json_fpath = training_iterative_apath+'/control/labeling_'+current_iteration_zfill+'.json'
-labeling_json = cf.json_read(labeling_json_fpath,abort=False)
+labeling_json = cf.json_read(labeling_json_fpath,False,True)
 
 ### Checks
 if exploration_json['is_extracted'] is False:
@@ -94,10 +94,12 @@ if slurm_email != '':
         slurm_file_array_master = cf.replace_in_list(slurm_file_array_master,'##MSUB -@ _EMAIL_','##SUB -@ '+slurm_email)
 
 labeling_json['subsys_nr'] = {}
+subsys_list=list(config_json['subsys_nr'].keys())
 
-for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
-    nb_standard = int(exploration_json['subsys_nr'][it_subsys_nr]['nb_candidates_kept'])
-    nb_disturbed = int(exploration_json['subsys_nr'][it_subsys_nr]['nb_candidates_kept']) if exploration_json['subsys_nr'][it_subsys_nr] == 'disturbed' else 0
+for it0_subsys_nr, it_subsys_nr in enumerate(config_json['subsys_nr']):
+    nb_candidates = int(exploration_json['subsys_nr'][it_subsys_nr]['nb_candidates_kept'])
+    nb_candidates_disturbed = int(exploration_json['subsys_nr'][it_subsys_nr]['nb_candidates_kept']) if exploration_json['subsys_nr'][it_subsys_nr]['disturbed_candidates'] is True else 0
+    nb_steps = nb_candidates + nb_candidates_disturbed
 
     cf.create_dir(it_subsys_nr)
     cf.change_dir('./'+str(it_subsys_nr))
@@ -110,18 +112,19 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
     labeling_json['subsys_nr'][it_subsys_nr]['nb_OPENMP_per_MPI'] = nb_OPENMP_per_MPI[it0_subsys_nr] if 'nb_OPENMP_per_MPI' in globals() else 1
 
     slurm_file_subsys = cf.replace_in_list(slurm_file_master,'_nb_NODES_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_NODES']))
+    slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,'_nb_OPENMP_per_MPI_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_OPENMP_per_MPI']))
     if cluster == 'jz':
         slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,'_nb_MPI_per_NODE_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_MPI_per_NODE']))
     elif cluster == 'ir':
         slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,'_nb_MPI_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_MPI_per_NODE'] * labeling_json['subsys_nr'][it_subsys_nr]['nb_NODES'] ))
-    slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,'_nb_OPENMP_per_MPI_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_OPENMP_per_MPI']))
 
     slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_master,'_nb_NODES_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_NODES']))
-    slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_nb_MPI_per_NODE_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_MPI_per_NODE']))
+    slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_nb_OPENMP_per_MPI_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_OPENMP_per_MPI']))
     if cluster == 'jz':
-        slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_nb_OPENMP_per_MPI_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_OPENMP_per_MPI']))
+            slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_nb_MPI_per_NODE_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_MPI_per_NODE']))
     elif cluster == 'ir':
-         slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,'_nb_MPI_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_MPI_per_NODE'] * labeling_json['subsys_nr'][it_subsys_nr]['nb_NODES'] ))
+         slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_nb_MPI_',str(labeling_json['subsys_nr'][it_subsys_nr]['nb_MPI_per_NODE'] * labeling_json['subsys_nr'][it_subsys_nr]['nb_NODES'] ))
+
     slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_CP2K_JOBNAME_','CP2K_'+it_subsys_nr+'_'+current_iteration_zfill)
 
     slurm_walltime_s = (labeling_json['subsys_nr'][it_subsys_nr]['cp2k_1_walltime_h'] + labeling_json['subsys_nr'][it_subsys_nr]['cp2k_2_walltime_h']) * 3600
@@ -129,30 +132,84 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
 
     if cluster == 'jz':
         slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_WALLTIME_',cf.seconds_to_walltime(slurm_walltime_s))
-        slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_ARRAYCOUNT_',str(int(nb_standard + nb_disturbed)))
+        slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_ARRAYCOUNT_',str(nb_steps))
         cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'.sh',slurm_file_array_subsys)
         slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,'_WALLTIME_',cf.seconds_to_walltime(slurm_walltime_s))
 
     elif cluster == 'ir':
-        slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_WALLTIME_',slurm_walltime_s)
-        if int(nb_standard + nb_disturbed) <= 1000:
-            slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_ARRAYCOUNT_',str(int(nb_standard + nb_disturbed)))
-            slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_NEW_START_','0')
-            cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'.sh',slurm_file_array_subsys)
+        slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_WALLTIME_',str(slurm_walltime_s))
+        if nb_steps <= 1000:
+            if nb_steps <= 250:
+                slurm_file_array_subsys_t = cf.replace_in_list(slurm_file_array_subsys,'_ARRAY_START_',str(1))
+                slurm_file_array_subsys_t = cf.replace_in_list(slurm_file_array_subsys_t,'_ARRAY_END_',str(nb_steps))
+                cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'_0.sh',slurm_file_array_subsys_t)
+            else:
+                slurm_file_array_subsys_list_250={}
+                quotient = nb_steps // 250
+                remainder = nb_steps % 250
+                slurm_file_array_subsys_t = cf.replace_in_list(slurm_file_array_subsys,'_NEW_START_','0')
+                for i in range(0,quotient+1):
+                    if i < quotient:
+                        slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys_t,'_ARRAY_START_',str(250*i + 1))
+                        slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(i)],'_ARRAY_END_',str(250 * (i+1)))
+                        slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(i)],'_LAUNCHNEXT_','1')
+                        slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(i)],'_NEXT_JOB_FILE_',str(i+1))
+                        slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(i)],'_CD_WHERE_','${SLURM_SUBMIT_DIR}')
+                        cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'_'+str(i)+'.sh',slurm_file_array_subsys_list_250[str(i)])
+                    else:
+                        slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys,'_ARRAY_START_',str(250*i + 1))
+                        slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(i)],'_ARRAY_END_',str(250*i + remainder ))
+                        if it0_subsys_nr != len(config_json['subsys_nr']) - 1:
+                            slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(i)],'_LAUNCHNEXT_','1')
+                            slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(i)],'_NEXT_JOB_FILE_','0')
+                            slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(i)],'_CD_WHERE_','${SLURM_SUBMIT_DIR}/../'+subsys_list[it0_subsys_nr+1])
+                        else:
+                            True
+                        cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'_'+str(i)+'.sh',slurm_file_array_subsys_list_250[str(i)])
         else:
             slurm_file_array_subsys_list={}
-            quotient = int( int(nb_standard + nb_disturbed) / 1000 )
-            remainder = int( int(nb_standard + nb_disturbed) % 1000 )
-            for i in range(0,quotient+1):
-                slurm_file_array_subsys_list[str(i)]  = cf.replace_in_list(slurm_file_array_subsys ,'_NEW_START_',str(i*1000))
+            quotient = nb_steps // 1000
+            remainder = nb_steps % 1000
+            m = 0
+            for i in range(0, quotient + 1):
                 if i < quotient:
-                    slurm_file_array_subsys_list[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list[str(i)],'_ARRAYCOUNT_','1000')
+                    for j in range(0,4):
+                        slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys ,'_NEW_START_',str(i*1000))
+                        slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_ARRAY_START_',str(250*j + 1))
+                        slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_ARRAY_END_',str(250 * (j+1)))
+                        slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_LAUNCHNEXT_','1')
+                        slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_NEXT_JOB_FILE_',str(m+1))
+                        slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_CD_WHERE_','${SLURM_SUBMIT_DIR}')
+                        cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'_'+str(m)+'.sh',slurm_file_array_subsys_list[str(m)])
+                        m = m + 1
                 else:
-                    slurm_file_array_subsys_list[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list[str(i)],'_ARRAYCOUNT_',str(remainder))
-                cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'_'+str(i)+'.sh',slurm_file_array_subsys)
+                    quotient2 = remainder // 250
+                    remainder2 = remainder % 250
+                    for j in range(0, quotient2 + 1):
+                        if j < quotient2:
+                            slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys ,'_NEW_START_',str(i*1000))
+                            slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_ARRAY_START_',str(250*j + 1))
+                            slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_ARRAY_END_',str(250 * (j+1)))
+                            slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_LAUNCHNEXT_','1')
+                            slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_NEXT_JOB_FILE_',str(m+1))
+                            slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_CD_WHERE_','${SLURM_SUBMIT_DIR}')
+                            cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'_'+str(m)+'.sh',slurm_file_array_subsys_list[str(m)])
+                            m = m + 1
+                        else:
+                            slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys ,'_NEW_START_',str(i*1000))
+                            slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_ARRAY_START_',str(250*j + 1))
+                            slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_ARRAY_END_',str(250*j + remainder2))
+                            if it0_subsys_nr != len(config_json['subsys_nr']) - 1:
+                                slurm_file_array_subsys_list_250[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(m)],'_LAUNCHNEXT_','1')
+                                slurm_file_array_subsys_list_250[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(m)],'_NEXT_JOB_FILE_','0')
+                                slurm_file_array_subsys_list_250[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(m)],'_CD_WHERE_','${SLURM_SUBMIT_DIR}/../'+subsys_list[it0_subsys_nr+1])
+                            else:
+                                True
+                            cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'_'+str(m)+'.sh',slurm_file_array_subsys_list[str(m)])
+                            m = m + 1
             del slurm_file_array_subsys_list
-        slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,'_WALLTIME_',slurm_walltime_s)
 
+        slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,'_WALLTIME_',str(slurm_walltime_s))
 
     xyz_file=training_iterative_apath+'/'+current_iteration_zfill+'-exploration/'+it_subsys_nr+'/candidates_'+str(it_subsys_nr)+'_'+current_iteration_zfill+'.xyz'
     if Path(training_iterative_apath+'/'+current_iteration_zfill+'-exploration/'+it_subsys_nr+'/candidates_'+str(it_subsys_nr)+'_'+current_iteration_zfill+'_disturbed.xyz').is_file():
@@ -161,10 +218,10 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
     cp2k_input_file_1 = cf.read_file(training_iterative_apath+'/inputs/1_'+str(it_subsys_nr)+'_labeling_XXXXX_'+cluster+'.inp')
     cp2k_input_file_2 = cf.read_file(training_iterative_apath+'/inputs/2_'+str(it_subsys_nr)+'_labeling_XXXXX_'+cluster+'.inp')
 
-    cp2k_input_file_1 = cf.replace_in_list(cp2k_input_file_1,'_CELL_',' '.join([str(v) for v in config_json['subsys_nr'][it_subsys_nr]['cell']]))
-    cp2k_input_file_2 = cf.replace_in_list(cp2k_input_file_2,'_CELL_',' '.join([str(v) for v in config_json['subsys_nr'][it_subsys_nr]['cell']]))
-    cp2k_input_file_1 = cf.replace_in_list(cp2k_input_file_1,'_WALLTIME_',cf.seconds_to_walltime(int(round(labeling_json['subsys_nr'][it_subsys_nr]['cp2k_1_walltime_h'],2) * 3600)))
-    cp2k_input_file_2 = cf.replace_in_list(cp2k_input_file_2,'_WALLTIME_',cf.seconds_to_walltime(int(round(labeling_json['subsys_nr'][it_subsys_nr]['cp2k_2_walltime_h'],2) * 3600)))
+    cp2k_input_file_1 = cf.replace_in_list(cp2k_input_file_1,'_CELL_',' '.join([str(zzz) for zzz in config_json['subsys_nr'][it_subsys_nr]['cell']]))
+    cp2k_input_file_2 = cf.replace_in_list(cp2k_input_file_2,'_CELL_',' '.join([str(zzz) for zzz in config_json['subsys_nr'][it_subsys_nr]['cell']]))
+    cp2k_input_file_1 = cf.replace_in_list(cp2k_input_file_1,'_WALLTIME_',str(round(labeling_json['subsys_nr'][it_subsys_nr]['cp2k_1_walltime_h'],2) * 3600))
+    cp2k_input_file_2 = cf.replace_in_list(cp2k_input_file_2,'_WALLTIME_',str(round(labeling_json['subsys_nr'][it_subsys_nr]['cp2k_2_walltime_h'],2) * 3600))
 
     n_atom, step_atoms, step_coordinates, blank = cf.import_xyz(xyz_file)
 
@@ -187,7 +244,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
         end_step = step_iter
 
     del n_atom, step_atoms, step_coordinates, blank, step_iter, step_iter_str
-    labeling_json['subsys_nr'][it_subsys_nr]['standard'] = end_step
+    labeling_json['subsys_nr'][it_subsys_nr]['candidates'] = end_step
 
     if Path(training_iterative_apath+'/'+current_iteration_zfill+'-exploration/'+it_subsys_nr+'/candidates_'+str(it_subsys_nr)+'_'+current_iteration_zfill+'_disturbed.xyz').is_file():
         n_atom, step_atoms, step_coordinates, blank = cf.import_xyz(xyz_file_disturbed)
@@ -211,17 +268,17 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
 
             end_step_disturbed=d_step_iter
 
-        labeling_json['subsys_nr'][it_subsys_nr]['disturbed'] = d_step_iter-end_step
+        labeling_json['subsys_nr'][it_subsys_nr]['candidates_disturbed'] = d_step_iter-end_step
         del n_atom, step_atoms, step_coordinates, blank, d_step_iter, d_step_iter_str, end_step, end_step_disturbed
     else:
-        labeling_json['subsys_nr'][it_subsys_nr]['disturbed'] = 0
+        labeling_json['subsys_nr'][it_subsys_nr]['candidates_disturbed'] = 0
 
     labeling_json['is_locked'] = True
     labeling_json['is_launched'] = False
     labeling_json['is_checked'] = False
     labeling_json['is_extracted'] = False
 
-    cf.json_dump(labeling_json,labeling_json_fpath,True,'labeling file')
+    cf.json_dump(labeling_json,labeling_json_fpath,True,'labeling.json')
 
     cf.change_dir('../')
 

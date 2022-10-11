@@ -23,13 +23,13 @@ import common_functions as cf
 
 ### Read what is needed (json files)
 config_json_fpath = training_iterative_apath+'/control/config.json'
-config_json = cf.json_read(config_json_fpath, abort=True)
+config_json = cf.json_read(config_json_fpath,True,True)
 
 current_iteration = current_iteration if 'current_iteration' in globals() else config_json['current_iteration']
 current_iteration_zfill = str(current_iteration).zfill(3)
 
 exploration_json_fpath = training_iterative_apath+'/control/exploration_'+current_iteration_zfill+'.json'
-exploration_json = cf.json_read(exploration_json_fpath, abort=True)
+exploration_json = cf.json_read(exploration_json_fpath,True,True)
 
 ### Checks
 if exploration_json['is_launched'] is False:
@@ -64,7 +64,7 @@ for it_subsys_nr in exploration_json['subsys_nr']:
             del lammps_output_file, check_path
     timings = timings_sum/subsys_count
     average_per_step = timings/exploration_json['subsys_nr'][it_subsys_nr]['nb_steps']
-    exploration_json['subsys_nr'][it_subsys_nr]['avg_seconds_per_step']=average_per_step
+    exploration_json['subsys_nr'][it_subsys_nr]['avg_seconds_per_step'] = average_per_step
     del timings,average_per_step,subsys_count,timings_sum
 
 del it_subsys_nr, it_nnp, it_each, it_each_zfill,  current_iteration_zfill
@@ -78,7 +78,7 @@ else:
     exploration_json['is_checked'] = True
     cf.json_dump(exploration_json,exploration_json_fpath,True,'exploration.json')
     for it_subsys_nr in exploration_json['subsys_nr']:
-        for it_nnp in range(1, exploration_json['nb_nnp'] +1):
+        for it_nnp in range(1, exploration_json['nb_nnp'] + 1):
             for it_each in range(1, exploration_json['nb_traj'] + 1):
                 it_each_zfill = str(it_each).zfill(5)
                 check_path='./'+str(it_subsys_nr)+'/'+str(it_nnp)+'/'+it_each_zfill

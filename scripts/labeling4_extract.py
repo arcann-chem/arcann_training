@@ -31,13 +31,13 @@ import common_functions as cf
 
 ### Read what is needed (json files)
 config_json_fpath = training_iterative_apath+'/control/config.json'
-config_json = cf.json_read(config_json_fpath, abort=True)
+config_json = cf.json_read(config_json_fpath,True,True)
 
 current_iteration = current_iteration if 'current_iteration' in globals() else config_json['current_iteration']
 current_iteration_zfill = str(current_iteration).zfill(3)
 
 labeling_json_fpath = training_iterative_apath+'/control/labeling_'+current_iteration_zfill+'.json'
-labeling_json = cf.json_read(labeling_json_fpath, abort=True)
+labeling_json = cf.json_read(labeling_json_fpath,True,True)
 
 ### Checks
 if labeling_json['is_checked'] is False:
@@ -51,20 +51,20 @@ cf.create_dir(training_iterative_apath+'/data/')
 for it_subsys_nr in labeling_json['subsys_nr']:
     cf.create_dir(training_iterative_apath+'/data/'+it_subsys_nr+'_'+current_iteration_zfill)
     cf.create_dir(training_iterative_apath+'/data/'+it_subsys_nr+'_'+current_iteration_zfill+'/set.000')
-    force_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['standard'], config_json['subsys_nr'][it_subsys_nr]['nb_atm'] * 3 ))
-    energy_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['standard']))
-    coord_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['standard'], config_json['subsys_nr'][it_subsys_nr]['nb_atm'] * 3 ))
-    box_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['standard'], 9))
-    virial_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['standard'], 9))
+    force_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['candidates'], config_json['subsys_nr'][it_subsys_nr]['nb_atm'] * 3 ))
+    energy_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['candidates']))
+    coord_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['candidates'], config_json['subsys_nr'][it_subsys_nr]['nb_atm'] * 3 ))
+    box_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['candidates'], 9))
+    virial_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['candidates'], 9))
 
     box_array_raw[:,0] = config_json['subsys_nr'][it_subsys_nr]['cell'][0]
     box_array_raw[:,4] = config_json['subsys_nr'][it_subsys_nr]['cell'][1]
     box_array_raw[:,8] = config_json['subsys_nr'][it_subsys_nr]['cell'][2]
 
-    volume = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['standard']))
+    volume = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['candidates']))
     volume = box_array_raw[:,0] * box_array_raw[:,4] * box_array_raw[:,8]
 
-    for it_step in range(1, labeling_json['subsys_nr'][it_subsys_nr]['standard'] + 1):
+    for it_step in range(1, labeling_json['subsys_nr'][it_subsys_nr]['candidates'] + 1):
         it_step_zfill = str(it_step).zfill(5)
         check_path='./'+str(it_subsys_nr)+'/'+it_step_zfill
         if it_step == 1:
@@ -134,16 +134,16 @@ for it_subsys_nr in labeling_json['subsys_nr']:
 
     del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw
 
-    if labeling_json['subsys_nr'][it_subsys_nr]['disturbed'] != 0 :
+    if labeling_json['subsys_nr'][it_subsys_nr]['candidates_disturbed'] != 0 :
         cf.create_dir(training_iterative_apath+'/data/'+it_subsys_nr+'-disturbed_'+current_iteration_zfill)
         cf.create_dir(training_iterative_apath+'/data/'+it_subsys_nr+'-disturbed_'+current_iteration_zfill+'/set.000')
-        force_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['disturbed'], config_json['subsys_nr'][it_subsys_nr]['nb_atm'] * 3 ))
-        energy_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['disturbed']))
-        coord_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['disturbed'], config_json['subsys_nr'][it_subsys_nr]['nb_atm'] * 3 ))
-        box_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['disturbed'], 9))
-        virial_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['standard'], 9))
+        force_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['candidates_disturbed'], config_json['subsys_nr'][it_subsys_nr]['nb_atm'] * 3 ))
+        energy_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['candidates_disturbed']))
+        coord_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['candidates_disturbed'], config_json['subsys_nr'][it_subsys_nr]['nb_atm'] * 3 ))
+        box_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['candidates_disturbed'], 9))
+        virial_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['candidates_disturbed'], 9))
 
-        for count,it_step in enumerate(range(labeling_json['subsys_nr'][it_subsys_nr]['standard'] + 1, labeling_json['subsys_nr'][it_subsys_nr]['standard'] + labeling_json['subsys_nr'][it_subsys_nr]['disturbed'] + 1 )):
+        for count,it_step in enumerate(range(labeling_json['subsys_nr'][it_subsys_nr]['candidates'] + 1, labeling_json['subsys_nr'][it_subsys_nr]['candidates'] + labeling_json['subsys_nr'][it_subsys_nr]['candidates_disturbed'] + 1 )):
             it_step_zfill = str(it_step).zfill(5)
             check_path='./'+str(it_subsys_nr)+'/'+it_step_zfill
             if count == 0:
@@ -221,7 +221,7 @@ for it_subsys_nr in labeling_json['subsys_nr']:
         del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw
 
 labeling_json['is_extracted'] = True
-cf.json_dump(labeling_json,labeling_json_fpath,True,'labeling file')
+cf.json_dump(labeling_json,labeling_json_fpath,True,'labeling.json')
 
 logging.info('The labeling extraction phase is a success!')
 

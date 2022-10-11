@@ -1,5 +1,5 @@
 ## deepmd_iterative_apath
-deepmd_iterative_apath='/gpfs7kw/linkhome/rech/gennsp01/ucf13sj/code/deepmd_iterative_py'
+# deepmd_iterative_apath = ''
 ## Project name / allocation / arch (nvs/v100/a100 or gen7156/rome/cpu)
 # project_name = 'nvs'
 # allocation_name = 'v100'
@@ -48,7 +48,7 @@ import common_functions as cf
 
 ### Read the config file
 config_json_fpath = training_iterative_apath+'/control/config.json'
-config_json = cf.json_read(config_json_fpath, abort=True)
+config_json = cf.json_read(config_json_fpath,True,True)
 
 ### Get current iteration
 config_json['current_iteration'] = training_iterative_apath if 'current_iteration' in globals() else cf.check_if_in_dict(config_json,'current_iteration',False,0)
@@ -62,7 +62,7 @@ if 'arch_name' in globals() and ( arch_name != 'v100' or arch_name != 'a100' ):
 
 if current_iteration > 0:
     labeling_json_fpath = training_iterative_apath+'/control/labeling_'+current_iteration_zfill+'.json'
-    labeling_json = cf.json_read(labeling_json_fpath, abort=True)
+    labeling_json = cf.json_read(labeling_json_fpath,True,True)
     if labeling_json['is_extracted'] is False:
         logging.critical('Lock found. Run/Check first: labeling4_extract.py')
         logging.critical('Aborting...')
@@ -73,7 +73,7 @@ cluster = cf.check_cluster()
 
 ### Get/Create training parameters
 training_json_path = training_iterative_apath+'/control/training_'+current_iteration_zfill+'.json'
-training_json = cf.json_read(training_json_path, abort = False)
+training_json = cf.json_read(training_json_path,False,True)
 #TODO Is check in dict really needed?
 training_json['start_lr'] = start_lr if 'start_lr' in globals() else cf.check_if_in_dict(training_json,'start_lr',0.001,1)
 training_json['stop_lr'] = stop_lr if 'stop_lr' in globals() else cf.check_if_in_dict(training_json,'stop_lr',1e-06,1)
@@ -143,7 +143,7 @@ elif ((training_json['deepmd_model_type_descriptor'] == 'se_e2_a') and ( trainin
 
 ### Check if the default input json file exists
 input_file_fpath = str(Path(training_iterative_apath+'/inputs/'+str(training_json['deepmd_model_version'])+'_'+str(training_json['deepmd_model_type_descriptor'])+'.json').resolve())
-training_input_json = cf.json_read(input_file_fpath, abort = False)
+training_input_json = cf.json_read(input_file_fpath,True,True)
 
 ### Check the initial sets json file
 datasets_initial_json = cf.check_datasets_initial(training_iterative_apath)
@@ -339,15 +339,15 @@ if training_json['deepmd_model_version'] < 2.0:
     training_input_json['training']['load_ckpt']='model.ckpt'
 
 ## Dump the config/training
-cf.json_dump(config_json,config_json_fpath, True, 'config file')
-cf.json_dump(training_json,training_json_path, True, 'training config file')
+cf.json_dump(config_json,config_json_fpath,True,'config.json')
+cf.json_dump(training_json,training_json_path,True,'training.json')
 
 ### Create the inputs/jobfiles for each NNP with random SEED inf the form of NNP_number + random(0,1000) + current_iteration.zfil(3) so between 10000 and unlimited1000999 (at iteration 999 !!)
 if current_iteration > 0:
     previous_iteration = current_iteration - 1
     previous_iteration_zfill = str(previous_iteration).zfill(3)
     prevtraining_json_fpath = training_iterative_apath+'/control/training_'+previous_iteration_zfill+'.json'
-    prevtraining_json = cf.json_read(prevtraining_json_fpath, abort=True)
+    prevtraining_json = cf.json_read(prevtraining_json_fpath,True,True)
     approx_time = int(np.ceil((stop_batch*(prevtraining_json['avg_seconds_per_step']+0.25*prevtraining_json['avg_seconds_per_step'])/3600)))
     del previous_iteration, previous_iteration_zfill, prevtraining_json_fpath, prevtraining_json
 else:
@@ -371,7 +371,7 @@ for it_nnp in range(1,config_json['nb_nnp'] + 1):
     training_input_json['training']['seed'] = int(str(it_nnp)+str(RAND)+current_iteration_zfill)
 
     training_input_json_fpath = str(Path(str(it_nnp)+'/training.json').resolve())
-    cf.json_dump(training_input_json,training_input_json_fpath, True, 'deepmd training input file')
+    cf.json_dump(training_input_json,training_input_json_fpath,True,'training.json (DeepMD Input)')
 
     slurm_file = slurm_file_master
     slurm_file = cf.replace_in_list(slurm_file,'_PROJECT_',project_name)

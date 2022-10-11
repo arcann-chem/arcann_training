@@ -25,13 +25,13 @@ import common_functions as cf
 
 ### Read what is needed (json files)
 config_json_fpath = training_iterative_apath+'/control/config.json'
-config_json = cf.json_read(config_json_fpath, abort=True)
+config_json = cf.json_read(config_json_fpath,True,True)
 
 current_iteration = current_iteration if 'current_iteration' in globals() else config_json['current_iteration']
 current_iteration_zfill = str(current_iteration).zfill(3)
 
 training_json_fpath = training_iterative_apath+'/control/training_'+current_iteration_zfill+'.json'
-training_json = cf.json_read(training_json_fpath, abort=True)
+training_json = cf.json_read(training_json_fpath,True,True)
 
 ### Checks
 if training_json['is_frozen'] is False:
@@ -73,7 +73,7 @@ cf.create_dir('../'+current_iteration_zfill+'-reactive')
 cf.create_dir('../'+current_iteration_zfill+'-labeling')
 cf.create_dir('../'+current_iteration_zfill+'-training')
 
-cf.json_dump(config_json,config_json_fpath, True, 'config file')
+cf.json_dump(config_json,config_json_fpath,True,'config file')
 
 if Path('data').is_dir():
     cf.remove_tree(Path('data'))

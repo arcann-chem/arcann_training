@@ -22,7 +22,7 @@
 # Email (Remove the space between # and SBATCH on the next two lines)
 ##MSUB -@ _EMAIL_:begin,end
 #
-#MSUB -E "--array=1-ARRAYCOUNT%300"
+#MSUB -E "--array=_ARRAY_START_-_ARRAY_END_%250"
 #
 
 echo "${SLURM_ARRAY_TASK_ID}"
@@ -90,6 +90,13 @@ rmdir "${TEMPWORKDIR}" 2> /dev/null || echo "Leftover files on ${TEMPWORKDIR}"
 
 # Done
 echo "Have a nice day !"
+
+if [ "${SLURM_ARRAY_TASK_ID}" == "_ARRAY_END_" ]; then
+    if [ "_LAUNCHNEXT_" == "1" ]; then
+        cd "_CD_WHERE_" || exit 1
+        ccc_msub job_labeling_array_cpu_ir__NEXT_JOB_FILE_.sh
+    fi
+fi
 
 # A small pause before SLURM savage clean-up
 sleep 5
