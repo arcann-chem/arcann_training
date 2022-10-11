@@ -1,5 +1,5 @@
 ## deepmd_iterative_apath
-deepmd_iterative_apath='/gpfs7kw/linkhome/rech/gennsp01/ucf13sj/code/deepmd_iterative_py'
+# deepmd_iterative_apath = ''
 ## Project name / allocation / arch (nvs/v100/a100 or gen7156/rome/cpu)
 # project_name = 'nvs'
 # allocation_name = 'v100'

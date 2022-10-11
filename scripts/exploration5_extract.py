@@ -96,7 +96,9 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
     print_freq = exploration_json['subsys_nr'][it_subsys_nr]['print_freq']
     if 'lammps' in exploration_json['subsys_nr'][it_subsys_nr]['exploration_type']:
         cf.check_file(training_iterative_apath+'/inputs/'+it_subsys_nr+'.lmp',0,True)
-        subprocess.call([atomsk_bin,training_iterative_apath+'/inputs/'+it_subsys_nr+'.lmp','pdb',training_iterative_apath+'/inputs/'+it_subsys_nr,'-ow'])
+        subprocess.call([atomsk_bin,training_iterative_apath+'/inputs/'+it_subsys_nr+'.lmp','pdb',training_iterative_apath+'/inputs/'+it_subsys_nr,'-ow'],\
+            stdout=subprocess.DEVNULL,\
+            stderr=subprocess.STDOUT)
         topo_file=training_iterative_apath+'/inputs/'+it_subsys_nr+'.pdb'
 
         for it_nnp in range(1,  exploration_json['nb_nnp'] + 1):

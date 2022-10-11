@@ -136,23 +136,77 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
     elif cluster == 'ir':
         slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_WALLTIME_',slurm_walltime_s)
         if int(nb_standard + nb_disturbed) <= 1000:
-            slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_ARRAYCOUNT_',str(int(nb_standard + nb_disturbed)))
-            slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,'_NEW_START_','0')
-            cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'.sh',slurm_file_array_subsys)
+            if int(nb_standard + nb_disturbed) <= 250:
+                slurm_file_array_subsys_t = cf.replace_in_list(slurm_file_array_subsys,'_ARRAY_START_',str(1))
+                slurm_file_array_subsys_t = cf.replace_in_list(slurm_file_array_subsys_t,'_ARRAY_END_',str(int(nb_standard + nb_disturbed)))
+                cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'_0.sh',slurm_file_array_subsys_t)
+            else:
+                slurm_file_array_subsys_list_250={}
+                quotient = int( int(nb_standard + nb_disturbed) / 250 )
+                remainder = int( int(nb_standard + nb_disturbed) % 250 )
+                slurm_file_array_subsys_t = cf.replace_in_list(slurm_file_array_subsys,'_NEW_START_','0')
+                for i in range(0,quotient+1):
+                    if i < quotient:
+                        slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys_t,'_ARRAY_START_',str(250*i + 1))
+                        slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(i)],'_ARRAY_END_',str(250 * (i+1)))
+                        slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(i)],'_LAUNCHNEXT_','1')
+                        slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(i)],'_NEXT_JOB_FILE_',str(i+1))
+                        slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(i)],'_CD_WHERE_','${SLURM_SUBMIT_DIR}')
+                        cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'_'+str(i)+'.sh',slurm_file_array_subsys_list_250[str(i)])
+                    else:
+                        slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys,'_ARRAY_START_',str(250*i + 1))
+                        slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(i)],'_ARRAY_END_',str(250*i + remainder ))
+                        if it0_subsys_nr != len(config_json['subsys_nr']) - 1:
+                            slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(i)],'_LAUNCHNEXT_','1')
+                            slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(i)],'_NEXT_JOB_FILE_','0')
+                            slurm_file_array_subsys_list_250[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(i)],'_CD_WHERE_','${SLURM_SUBMIT_DIR}/../'+config_json['subsys_nr'][it0_subsys_nr+1])
+                        else:
+                            True
+                        cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'_'+str(i)+'.sh',slurm_file_array_subsys_list_250[str(i)])
         else:
             slurm_file_array_subsys_list={}
             quotient = int( int(nb_standard + nb_disturbed) / 1000 )
             remainder = int( int(nb_standard + nb_disturbed) % 1000 )
-            for i in range(0,quotient+1):
-                slurm_file_array_subsys_list[str(i)]  = cf.replace_in_list(slurm_file_array_subsys ,'_NEW_START_',str(i*1000))
+            m = 0
+            for i in range(0, quotient + 1):
                 if i < quotient:
-                    slurm_file_array_subsys_list[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list[str(i)],'_ARRAYCOUNT_','1000')
+                    for j in range(0,4):
+                        slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys ,'_NEW_START_',str(i*1000))
+                        slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_ARRAY_START_',str(250*j + 1))
+                        slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_ARRAY_END_',str(250 * (j+1)))
+                        slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_LAUNCHNEXT_','1')
+                        slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_NEXT_JOB_FILE_',str(m+1))
+                        slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_CD_WHERE_','${SLURM_SUBMIT_DIR}')
+                        cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'_'+str(m)+'.sh',slurm_file_array_subsys_list[str(m)])
+                        m = m + 1
                 else:
-                    slurm_file_array_subsys_list[str(i)] = cf.replace_in_list(slurm_file_array_subsys_list[str(i)],'_ARRAYCOUNT_',str(remainder))
-                cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'_'+str(i)+'.sh',slurm_file_array_subsys)
+                    quotient2 = int( remainder // 250)
+                    remainder2 = int( remainder % 250)
+                    for j in range(0, quotient2 + 1):
+                        if j < quotient2:
+                            slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys ,'_NEW_START_',str(i*1000))
+                            slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_ARRAY_START_',str(250*j + 1))
+                            slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_ARRAY_END_',str(250 * (j+1)))
+                            slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_LAUNCHNEXT_','1')
+                            slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_NEXT_JOB_FILE_',str(m+1))
+                            slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_CD_WHERE_','${SLURM_SUBMIT_DIR}')
+                            cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'_'+str(m)+'.sh',slurm_file_array_subsys_list[str(m)])
+                            m = m + 1
+                        else:
+                            slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys ,'_NEW_START_',str(i*1000))
+                            slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_ARRAY_START_',str(250*j + 1))
+                            slurm_file_array_subsys_list[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list[str(m)],'_ARRAY_END_',str(250*j + remainder2))
+                            if it0_subsys_nr != len(config_json['subsys_nr']) - 1:
+                                slurm_file_array_subsys_list_250[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(m)],'_LAUNCHNEXT_','1')
+                                slurm_file_array_subsys_list_250[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(m)],'_NEXT_JOB_FILE_','0')
+                                slurm_file_array_subsys_list_250[str(m)] = cf.replace_in_list(slurm_file_array_subsys_list_250[str(m)],'_CD_WHERE_','${SLURM_SUBMIT_DIR}/../'+config_json['subsys_nr'][it0_subsys_nr+1])
+                            else:
+                                True
+                            cf.write_file('./job_labeling_array_'+arch_type+'_'+cluster+'_'+str(m)+'.sh',slurm_file_array_subsys_list[str(m)])
+                            m = m + 1
             del slurm_file_array_subsys_list
-        slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,'_WALLTIME_',slurm_walltime_s)
 
+        slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,'_WALLTIME_',slurm_walltime_s)
 
     xyz_file=training_iterative_apath+'/'+current_iteration_zfill+'-exploration/'+it_subsys_nr+'/candidates_'+str(it_subsys_nr)+'_'+current_iteration_zfill+'.xyz'
     if Path(training_iterative_apath+'/'+current_iteration_zfill+'-exploration/'+it_subsys_nr+'/candidates_'+str(it_subsys_nr)+'_'+current_iteration_zfill+'_disturbed.xyz').is_file():
