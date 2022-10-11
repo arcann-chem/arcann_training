@@ -81,7 +81,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
         else:
             True
     cf.change_dir('..')
-del it_subsys_nr, it0_subsys_nr, config_json, cluster
+del it_subsys_nr, it0_subsys_nr
 
 if check == config_json['nb_nnp']:
     labeling_json['is_launched'] = True

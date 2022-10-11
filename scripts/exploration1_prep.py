@@ -115,7 +115,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
         starting_point_list_bckp = starting_point_list
 
         if 'disturbed_start' not in globals():
-            if (current_exploration > 1 and prevexploration_json['subsys_nr'][it_subsys_nr]['disturbed_min']):
+            if (current_iteration > 1 and prevexploration_json['subsys_nr'][it_subsys_nr]['disturbed_min']):
                 starting_point_list = starting_point_list_disturbed
                 starting_point_list_bckp = starting_point_list_disturbed_bckp
                 exploration_json['subsys_nr'][it_subsys_nr]['disturbed_start'] = True

@@ -98,7 +98,7 @@ subsys_list=list(config_json['subsys_nr'].keys())
 
 for it0_subsys_nr, it_subsys_nr in enumerate(config_json['subsys_nr']):
     nb_candidates = int(exploration_json['subsys_nr'][it_subsys_nr]['nb_candidates_kept'])
-    nb_candidates_disturbed = int(exploration_json['subsys_nr'][it_subsys_nr]['nb_candidates_kept']) if exploration_json['subsys_nr'][it_subsys_nr]['disturbed'] is True else 0
+    nb_candidates_disturbed = int(exploration_json['subsys_nr'][it_subsys_nr]['nb_candidates_kept']) if exploration_json['subsys_nr'][it_subsys_nr]['disturbed_candidates'] is True else 0
     nb_steps = nb_candidates + nb_candidates_disturbed
 
     cf.create_dir(it_subsys_nr)
@@ -220,8 +220,8 @@ for it0_subsys_nr, it_subsys_nr in enumerate(config_json['subsys_nr']):
 
     cp2k_input_file_1 = cf.replace_in_list(cp2k_input_file_1,'_CELL_',' '.join([str(zzz) for zzz in config_json['subsys_nr'][it_subsys_nr]['cell']]))
     cp2k_input_file_2 = cf.replace_in_list(cp2k_input_file_2,'_CELL_',' '.join([str(zzz) for zzz in config_json['subsys_nr'][it_subsys_nr]['cell']]))
-    cp2k_input_file_1 = cf.replace_in_list(cp2k_input_file_1,'_WALLTIME_',round(labeling_json['subsys_nr'][it_subsys_nr]['cp2k_1_walltime_h'],2) * 3600)
-    cp2k_input_file_2 = cf.replace_in_list(cp2k_input_file_2,'_WALLTIME_',round(labeling_json['subsys_nr'][it_subsys_nr]['cp2k_2_walltime_h'],2) * 3600)
+    cp2k_input_file_1 = cf.replace_in_list(cp2k_input_file_1,'_WALLTIME_',str(round(labeling_json['subsys_nr'][it_subsys_nr]['cp2k_1_walltime_h'],2) * 3600))
+    cp2k_input_file_2 = cf.replace_in_list(cp2k_input_file_2,'_WALLTIME_',str(round(labeling_json['subsys_nr'][it_subsys_nr]['cp2k_2_walltime_h'],2) * 3600))
 
     n_atom, step_atoms, step_coordinates, blank = cf.import_xyz(xyz_file)
 

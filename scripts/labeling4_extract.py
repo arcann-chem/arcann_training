@@ -134,16 +134,16 @@ for it_subsys_nr in labeling_json['subsys_nr']:
 
     del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw
 
-    if labeling_json['subsys_nr'][it_subsys_nr]['disturbed_candidates'] != 0 :
+    if labeling_json['subsys_nr'][it_subsys_nr]['candidates_disturbed'] != 0 :
         cf.create_dir(training_iterative_apath+'/data/'+it_subsys_nr+'-disturbed_'+current_iteration_zfill)
         cf.create_dir(training_iterative_apath+'/data/'+it_subsys_nr+'-disturbed_'+current_iteration_zfill+'/set.000')
-        force_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['disturbed_candidates'], config_json['subsys_nr'][it_subsys_nr]['nb_atm'] * 3 ))
-        energy_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['disturbed_candidates']))
-        coord_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['disturbed_candidates'], config_json['subsys_nr'][it_subsys_nr]['nb_atm'] * 3 ))
-        box_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['disturbed_candidates'], 9))
-        virial_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['disturbed_candidates'], 9))
+        force_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['candidates_disturbed'], config_json['subsys_nr'][it_subsys_nr]['nb_atm'] * 3 ))
+        energy_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['candidates_disturbed']))
+        coord_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['candidates_disturbed'], config_json['subsys_nr'][it_subsys_nr]['nb_atm'] * 3 ))
+        box_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['candidates_disturbed'], 9))
+        virial_array_raw = np.zeros((labeling_json['subsys_nr'][it_subsys_nr]['candidates_disturbed'], 9))
 
-        for count,it_step in enumerate(range(labeling_json['subsys_nr'][it_subsys_nr]['candidates'] + 1, labeling_json['subsys_nr'][it_subsys_nr]['candidates'] + labeling_json['subsys_nr'][it_subsys_nr]['disturbed_candidates'] + 1 )):
+        for count,it_step in enumerate(range(labeling_json['subsys_nr'][it_subsys_nr]['candidates'] + 1, labeling_json['subsys_nr'][it_subsys_nr]['candidates'] + labeling_json['subsys_nr'][it_subsys_nr]['candidates_disturbed'] + 1 )):
             it_step_zfill = str(it_step).zfill(5)
             check_path='./'+str(it_subsys_nr)+'/'+it_step_zfill
             if count == 0:

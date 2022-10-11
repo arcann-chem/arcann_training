@@ -3,8 +3,8 @@
 ## These are the default
 atomsk_fpath='/gpfswork/rech/nvs/commun/programs/apps/atomsk/0.11.2/bin/atomsk'
 # vmd_fpath=''
-# disturb_min_value = [0.0, 0.0]
-# disturb_candidates_value = [0.0, 0.0]
+# disturbed_min_value = [0.0, 0.0]
+# disturbed_candidates_value = [0.0, 0.0]
 
 ###################################### No change past here
 import sys
@@ -152,10 +152,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                         stdout=subprocess.DEVNULL,\
                         stderr=subprocess.STDOUT)
 
-                    Path(min_file_name+'.xyz').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'.xyz')
-                    Path(min_file_name+'.lmp').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'.lmp')
-
-                    if ('disturb_min_value' in globals() and disturb_min_value[it0_subsys_nr] != 0) \
+                    if ('disturbed_min_value' in globals() and disturbed_min_value[it0_subsys_nr] != 0) \
                         or (current_iteration > 1 and prevexploration_json['subsys_nr'][it_subsys_nr]['disturbed_min']):
 
                         Path(min_file_name+'_disturbed.xyz').write_text(Path(min_file_name+'.xyz').read_text())
@@ -164,7 +161,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                             '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][0]), 'H1',\
                             '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][1]), 'H2',\
                             '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][2]), 'H3',\
-                            '-disturb', str(disturb_min_value[it0_subsys_nr]),\
+                            '-disturb', str(disturbed_min_value[it0_subsys_nr]),\
                             'xyz'],\
                             stdout=subprocess.DEVNULL,\
                             stderr=subprocess.STDOUT)
@@ -180,9 +177,11 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                         Path(min_file_name+'_disturbed.xyz').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'_disturbed.xyz')
                         Path(min_file_name+'_disturbed.lmp').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'_disturbed.lmp')
 
+                    Path(min_file_name+'.xyz').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'.xyz')
+                    Path(min_file_name+'.lmp').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'.lmp')
                     del min_file_name
                 else:
-                    logging.warning('Problem preparing the min for: '+str(it_subsys_nr)+' / '+str(it_nnp)+' / '+str(it_each) )\
+                    logging.warning('Problem preparing the min for: '+str(it_subsys_nr)+' / '+str(it_nnp)+' / '+str(it_each) )
 
                 ### Selection of labeling XYZ
                 if len(devi_json_index['candidates_kept_ind']) != 0:
@@ -211,14 +210,14 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                     cf.remove_file('./candidates_'+str(it_subsys_nr)+'_'+str(it_nnp)+'_'+current_iteration_zfill+'.xyz')
                     os.system('cat vmd_*.xyz >> temp_candidates_'+str(it_subsys_nr)+'_'+str(it_nnp)+'_'+current_iteration_zfill+'.xyz')
 
-                    if 'disturb_candidates_value' in globals() and disturb_candidates_value[it0_subsys_nr] != 0:
+                    if 'disturbed_candidates_value' in globals() and disturbed_candidates_value[it0_subsys_nr] != 0:
                         vmd_xyz_files=[zzz for zzz in Path('.').glob('vmd_*')]
                         for it_vmd_xyz_files in vmd_xyz_files:
                             subprocess.call([atomsk_bin, '-ow', str(it_vmd_xyz_files),\
                                 '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][0]), 'H1',\
                                 '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][1]), 'H2',\
                                 '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][2]), 'H3',\
-                                '-disturb', str(disturb_candidates_value[it0_subsys_nr]),\
+                                '-disturb', str(disturbed_candidates_value[it0_subsys_nr]),\
                                 'xyz', str(it_vmd_xyz_files)+'_disturbed'],\
                                 stdout=subprocess.DEVNULL,\
                                 stderr=subprocess.STDOUT)
@@ -231,24 +230,26 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
 
                 cf.change_dir('..')
 
+                logging.info(str(it_subsys_nr)+' / '+str(it_nnp)+' / '+str(it_each)+' has been processed')
+
             del it_each
             cf.change_dir('..')
 
         #TODO Replace with either subprocess call or read python
 
-        if 'disturb_candidates_value' in globals() and disturb_candidates_value[it0_subsys_nr] != 0:
+        if 'disturbed_candidates_value' in globals() and disturbed_candidates_value[it0_subsys_nr] != 0:
             cf.remove_file('candidates_'+str(it_subsys_nr)+'_'+current_iteration_zfill+'_disturbed.xyz')
             os.system('cat ./*/*/temp_candidates_*_disturbed.xyz >> candidates_'+str(it_subsys_nr)+'_'+current_iteration_zfill+'_disturbed.xyz')
             os.system('rm -rf ./*/*/temp_candidates_*_disturbed.xyz')
             exploration_json['subsys_nr'][it_subsys_nr]['disturbed_candidates'] = True
-            exploration_json['subsys_nr'][it_subsys_nr]['disturb_candidates_value'] = disturb_candidates_value[it0_subsys_nr]
+            exploration_json['subsys_nr'][it_subsys_nr]['disturbed_candidates_value'] = disturbed_candidates_value[it0_subsys_nr]
         else:
             exploration_json['subsys_nr'][it_subsys_nr]['disturbed_candidates'] = False
-            exploration_json['subsys_nr'][it_subsys_nr]['disturb_candidates_value'] = 0
+            exploration_json['subsys_nr'][it_subsys_nr]['disturbed_candidates_value'] = 0
 
-        if 'disturb_min_value' in globals() and disturb_min_value[it0_subsys_nr] != 0:
+        if 'disturbed_min_value' in globals() and disturbed_min_value[it0_subsys_nr] != 0:
             exploration_json['subsys_nr'][it_subsys_nr]['disturbed_min'] = True
-            exploration_json['subsys_nr'][it_subsys_nr]['disturbed_min_value'] = disturb_min_value[it0_subsys_nr]
+            exploration_json['subsys_nr'][it_subsys_nr]['disturbed_min_value'] = disturbed_min_value[it0_subsys_nr]
         else:
             exploration_json['subsys_nr'][it_subsys_nr]['disturbed_min'] = False
             exploration_json['subsys_nr'][it_subsys_nr]['disturbed_min_value'] = 0
