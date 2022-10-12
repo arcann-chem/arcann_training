@@ -155,14 +155,16 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
 
                         if ('disturbed_min_value' in globals() and disturbed_min_value[it0_subsys_nr] != 0) \
                             or (current_iteration > 1 and prevexploration_json['subsys_nr'][it_subsys_nr]['disturbed_min']):
-
+                            
+                            disturbed_min_value_subsys = disturbed_min_value[it0_subsys_nr] if 'disturbed_min_value' in globals() else prevexploration_json['subsys_nr'][it_subsys_nr]['disturbed_min']
+                                
                             Path(min_file_name+'_disturbed.xyz').write_text(Path(min_file_name+'.xyz').read_text())
 
                             subprocess.call([atomsk_bin, '-ow', min_file_name+'_disturbed.xyz',\
                                 '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][0]), 'H1',\
                                 '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][1]), 'H2',\
                                 '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][2]), 'H3',\
-                                '-disturb', str(disturbed_min_value[it0_subsys_nr]),\
+                                '-disturb', str(disturbed_min_value_subsys),\
                                 'xyz'],\
                                 stdout=subprocess.DEVNULL,\
                                 stderr=subprocess.STDOUT)
@@ -227,14 +229,14 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                         os.system('cat vmd_*_disturbed.xyz >> temp_candidates_'+str(it_subsys_nr)+'_'+str(it_nnp)+'_'+current_iteration_zfill+'_disturbed.xyz')
 
                     cf.remove_file_glob('.','vmd_*.xyz')
-                del devi_json, devi_json_index
-
-                cf.change_dir('..')
 
                 if devi_json['min_index'] == -1:
                     logging.warning(str(it_subsys_nr)+' / '+str(it_nnp)+' / '+str(it_each)+' has been processed but no candidates or minimum')
                 else:
                     logging.info(str(it_subsys_nr)+' / '+str(it_nnp)+' / '+str(it_each)+' has been processed')
+
+                del devi_json, devi_json_index
+                cf.change_dir('..')
 
             del it_each
             cf.change_dir('..')
@@ -251,9 +253,9 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
             exploration_json['subsys_nr'][it_subsys_nr]['disturbed_candidates'] = False
             exploration_json['subsys_nr'][it_subsys_nr]['disturbed_candidates_value'] = 0
 
-        if 'disturbed_min_value' in globals() and disturbed_min_value[it0_subsys_nr] != 0:
+        if 'disturbed_min_value_subsys' in globals():
             exploration_json['subsys_nr'][it_subsys_nr]['disturbed_min'] = True
-            exploration_json['subsys_nr'][it_subsys_nr]['disturbed_min_value'] = disturbed_min_value[it0_subsys_nr]
+            exploration_json['subsys_nr'][it_subsys_nr]['disturbed_min_value'] = disturbed_min_value_subsys
         else:
             exploration_json['subsys_nr'][it_subsys_nr]['disturbed_min'] = False
             exploration_json['subsys_nr'][it_subsys_nr]['disturbed_min_value'] = 0
