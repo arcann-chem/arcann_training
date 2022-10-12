@@ -75,19 +75,25 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                 subprocess.call(['ccc_msub','./job_labeling_array_'+arch_type+'_'+cluster+'_0.sh'])
                 logging.info('Labeling Array - '+str(it_subsys_nr)+' - 0 launched')
             else:
-                logging.warning('Labeling Array - '+str(it_subsys_nr)+' NOT launched')
-            logging.critical('Since Irene-Rome does not support more than 1000 jobs array. Only the first one has been launched.')
-            logging.critical('Good luck launching the rest...')
+                logging.critical('Labeling Array - '+str(it_subsys_nr)+' NOT launched')
+
+            logging.warning('Since Irene-Rome does not support more than 300 jobs at a time')
+            logging.warning('and SLURM arrays not larger than 1000')
+            logging.warning('the labeling array have been split into several jobs')
+            logging.warning('and should launch itself automagically until the labeling is complete')
+            logging.warning('The labeling job launch phase is a semi-success! (You are on Irene-Rome so who knows what can happen...)')
         else:
             True
     cf.change_dir('..')
 del it_subsys_nr, it0_subsys_nr
 
-if check == config_json['nb_nnp']:
+if check == len(config_json['subsys_nr']):
     labeling_json['is_launched'] = True
     logging.info('The labeling job launch phase is a success!')
+elif cluster == 'ir':
+    True
 else:
-    logging.critical('Some labeling array did not launched correctly or you are on Irene')
+    logging.critical('Some labeling arrays did not launched correctly')
     logging.critical('Please launch manually before continuing to the next step')
     logging.critical('And replace the key \'is_launched\' to True in the corresponding labeling.json.')
 del check
