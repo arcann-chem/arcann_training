@@ -36,7 +36,7 @@ import common_functions as cf
 config_json_fpath = training_iterative_apath+'/control/config.json'
 config_json = cf.json_read(config_json_fpath,True,True)
 
-current_iteration_zfill=Path().resolve().parts[-1].split('-')[-1]
+current_iteration_zfill=Path().resolve().parts[-1].split('-')[0]
 current_iteration=int(current_iteration_zfill)
 
 training_json_fpath = training_iterative_apath+'/control/training_'+current_iteration_zfill+'.json'
@@ -62,11 +62,13 @@ slurm_file_master = cf.read_file(deepmd_iterative_apath+'/jobs/test/job_deepmd_t
 for it_nnp in range(1,config_json['nb_nnp'] + 1):
     slurm_file = slurm_file_master
     if training_json['is_compressed'] is True:
-        subprocess.call(['rsync','-a', '../NNP/'+str(it_nnp)+'/graph_'+str(it_nnp)+'_'+current_iteration_zfill+'_compressed.pb', './'])
-        slurm_file = cf.replace_in_list(slurm_file,'DeepMD_PB_F','graph_'+str(it_nnp)+'_'+current_iteration_zfill+'_compressed')
+        subprocess.call(['rsync','-a', '../NNP/graph_'+str(it_nnp)+'_'+current_iteration_zfill+'_compressed.pb', './'])
+        slurm_file = cf.replace_in_list(slurm_file,'_DEEPMD_PB_','graph_'+str(it_nnp)+'_'+current_iteration_zfill+'_compressed')
     else:
-        subprocess.call(['rsync','-a', '../NNP/'+str(it_nnp)+'/graph_'+str(it_nnp)+'_'+current_iteration_zfill+'.pb', './'])
-        slurm_file = cf.replace_in_list(slurm_file,'DeepMD_PB_F','graph_'+str(it_nnp)+'_'+current_iteration_zfill+'')
+        subprocess.call(['rsync','-a', '../NNP/graph_'+str(it_nnp)+'_'+current_iteration_zfill+'.pb', './'])
+        slurm_file = cf.replace_in_list(slurm_file,'_DEEPMD_PB_','graph_'+str(it_nnp)+'_'+current_iteration_zfill+'')
+    
+    slurm_file = cf.replace_in_list(slurm_file,'_NNPNB_','NNP'+str(it_nnp))
     slurm_file = cf.replace_in_list(slurm_file,'_PROJECT_',project_name)
     slurm_file = cf.replace_in_list(slurm_file,'_WALLTIME_','04:00:00')
     slurm_file = cf.replace_in_list(slurm_file,'_DEEPMD_MODEL_VERSION_',str(training_json['deepmd_model_version']))
@@ -92,7 +94,7 @@ for it_nnp in range(1,config_json['nb_nnp'] + 1):
     if slurm_email != '':
         slurm_file = cf.replace_in_list(slurm_file,'##SBATCH --mail-type','#SBATCH --mail-type')
         slurm_file = cf.replace_in_list(slurm_file,'##SBATCH --mail-user _EMAIL_','#SBATCH --mail-user '+slurm_email)
-    cf.write_file('./job_deepmd_test_'+arch_type+'_'+cluster+'_'+str(it_nnp).zfill(3)+'.sh',slurm_file)
+    cf.write_file('./job_deepmd_test_'+arch_type+'_'+cluster+'_NNP'+str(it_nnp)+'.sh',slurm_file)
 
 logging.info('Preparation of the training is a success!')
 

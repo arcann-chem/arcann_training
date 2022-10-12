@@ -20,7 +20,7 @@
 #SBATCH -o DeepMD_Test.%j
 #SBATCH -e DeepMD_Test.%j
 # Name of job
-#SBATCH -J DeepMD_Test_XXX
+#SBATCH -J DeepMD_Test__NNPNB_
 # Email (Remove the space between # and SBATCH on the next two lines)
 ##SBATCH --mail-type FAIL,BEGIN,END,ALL
 ##SBATCH --mail-user _EMAIL_
@@ -107,17 +107,17 @@ rm -rf "${TEMPWORKDIR}"/data
 find ./ -type l -delete
 mv ./* "${SLURM_SUBMIT_DIR}"
 cd "${SLURM_SUBMIT_DIR}" || exit 1
-if [ ! -d logs_XXX ]; then
-    mkdir logs_XXX || exit 1
+if [ ! -d logs__NNPNB_ ]; then
+    mkdir logs__NNPNB_ || exit 1
 fi
-if [ ! -d out_XXX ]; then
-    mkdir out_XXX || exit 1
+if [ ! -d out__NNPNB_ ]; then
+    mkdir out__NNPNB_ || exit 1
 fi
 if [ "${DeepMD_MODEL_VERSION}" = "2.0" ] || [ "${DeepMD_MODEL_VERSION}" = "2.1" ] ;then
     for f in "${DeepMD_PB}"*.err ; do grep 'DEEPMD INFO' "${f}" > "${f/.err/.log}" ; done
 fi
-mv ./*.log ./*.err logs_XXX/
-mv ./*.out out_XXX/
+mv ./*.log ./*.err logs__NNPNB_/
+mv ./*.out out__NNPNB_/
 rmdir "${TEMPWORKDIR}" 2> /dev/null || echo "Leftover files on ${TEMPWORKDIR}"
 [ ! -d "${TEMPWORKDIR}" ] && { [ -h JOB-"${SLURM_JOBID}" ] && rm JOB-"${SLURM_JOBID}"; }
 
