@@ -96,7 +96,7 @@ if slurm_email != '':
 labeling_json['subsys_nr'] = {}
 subsys_list=list(config_json['subsys_nr'].keys())
 
-for it0_subsys_nr, it_subsys_nr in enumerate(config_json['subsys_nr']):
+for it0_subsys_nr, it_subsys_nr in enumerate(subsys_list):
     nb_candidates = int(exploration_json['subsys_nr'][it_subsys_nr]['nb_candidates_kept'])
     nb_candidates_disturbed = int(exploration_json['subsys_nr'][it_subsys_nr]['nb_candidates_kept']) if exploration_json['subsys_nr'][it_subsys_nr]['disturbed_candidates'] is True else 0
     nb_steps = nb_candidates + nb_candidates_disturbed
