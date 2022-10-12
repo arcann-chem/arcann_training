@@ -100,6 +100,7 @@ cf.create_dir(training_iterative_apath+'/starting_structures')
 ### Extract for labeling
 for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
     cf.change_dir('./'+str(it_subsys_nr))
+
     print_freq = exploration_json['subsys_nr'][it_subsys_nr]['print_freq']
     if 'lammps' in exploration_json['subsys_nr'][it_subsys_nr]['exploration_type']:
         cf.check_file(training_iterative_apath+'/inputs/'+it_subsys_nr+'.lmp',0,True)
@@ -116,6 +117,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
 
                 devi_json = cf.json_read('./selection_candidates.json',False,False)
                 devi_json_index = cf.json_read('./selection_candidates_index.json',False,False)
+
                 if devi_json['min_index'] != -1:
 
                     ### Selection of the min for the next iteration starting point
@@ -155,9 +157,8 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
 
                         if ('disturbed_min_value' in globals() and disturbed_min_value[it0_subsys_nr] != 0) \
                             or (current_iteration > 1 and prevexploration_json['subsys_nr'][it_subsys_nr]['disturbed_min']):
-                            
+
                             disturbed_min_value_subsys = disturbed_min_value[it0_subsys_nr] if 'disturbed_min_value' in globals() else prevexploration_json['subsys_nr'][it_subsys_nr]['disturbed_min']
-                                
                             Path(min_file_name+'_disturbed.xyz').write_text(Path(min_file_name+'.xyz').read_text())
 
                             subprocess.call([atomsk_bin, '-ow', min_file_name+'_disturbed.xyz',\
@@ -210,7 +211,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
 
                    #TODO Replace with either subprocess call or read python
 
-                    cf.remove_file('./candidates_'+str(it_subsys_nr)+'_'+str(it_nnp)+'_'+current_iteration_zfill+'.xyz')
+                    cf.remove_file('./temp_candidates_'+str(it_subsys_nr)+'_'+str(it_nnp)+'_'+current_iteration_zfill+'.xyz')
                     os.system('cat vmd_*.xyz >> temp_candidates_'+str(it_subsys_nr)+'_'+str(it_nnp)+'_'+current_iteration_zfill+'.xyz')
 
                     if 'disturbed_candidates_value' in globals() and disturbed_candidates_value[it0_subsys_nr] != 0:
@@ -226,6 +227,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                                 stderr=subprocess.STDOUT)
 
                         del it_vmd_xyz_files, vmd_xyz_files
+                        cf.remove_file('./temp_candidates_'+str(it_subsys_nr)+'_'+str(it_nnp)+'_'+current_iteration_zfill+'_disturbed.xyz')
                         os.system('cat vmd_*_disturbed.xyz >> temp_candidates_'+str(it_subsys_nr)+'_'+str(it_nnp)+'_'+current_iteration_zfill+'_disturbed.xyz')
 
                     cf.remove_file_glob('.','vmd_*.xyz')
