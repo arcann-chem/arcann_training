@@ -67,7 +67,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
     s_low_local = exploration_json['subsys_nr'][it_subsys_nr]['s_low']
     s_high_local = exploration_json['subsys_nr'][it_subsys_nr]['s_high']
     s_high_max_local =  exploration_json['subsys_nr'][it_subsys_nr]['s_high_max']
-    ignore_first_n_frames_local = exploration_json['subsys_nr'][it_subsys_nr]['ignore_first_n_frames'] 
+    ignore_first_n_frames_local = exploration_json['subsys_nr'][it_subsys_nr]['ignore_first_n_frames']
 
     for it_nnp in range(1, exploration_json['nb_nnp'] + 1):
         cf.change_dir('./'+str(it_nnp))
