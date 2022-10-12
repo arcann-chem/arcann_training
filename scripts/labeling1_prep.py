@@ -259,7 +259,7 @@ for it0_subsys_nr, it_subsys_nr in enumerate(subsys_list):
             cf.write_file('./'+d_step_iter_str+'/1_labeling_'+d_step_iter_str+'.inp',cp2k_input_file_t1)
             cf.write_file('./'+d_step_iter_str+'/2_labeling_'+d_step_iter_str+'.inp',cp2k_input_file_t2)
 
-            slurm_file=cf.replace_in_list(slurm_file_master,'XXXXX',d_step_iter_str)
+            slurm_file=cf.replace_in_list(slurm_file_subsys,'XXXXX',d_step_iter_str)
             slurm_file=cf.replace_in_list(slurm_file,'_CP2K_JOBNAME_','CP2K_'+it_subsys_nr+'_'+current_iteration_zfill)
 
             cf.write_file('./'+d_step_iter_str+'/job_labeling_'+d_step_iter_str+'_'+arch_type+'_'+cluster+'.sh',slurm_file)
