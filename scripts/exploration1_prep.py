@@ -111,17 +111,17 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
         starting_point_list_all = [str(zzz).split('/')[-1] for zzz in starting_point_list_path]
         starting_point_list = [zzz for zzz in starting_point_list_all if 'disturbed' not in zzz]
         starting_point_list_disturbed = [zzz for zzz in starting_point_list_all if zzz not in starting_point_list]
-        starting_point_list_disturbed_bckp = starting_point_list_disturbed
-        starting_point_list_bckp = starting_point_list
+        starting_point_list_disturbed_bckp = starting_point_list_disturbed.copy()
+        starting_point_list_bckp = starting_point_list.copy()
 
         if 'disturbed_start' not in globals():
             if (current_iteration > 1 and prevexploration_json['subsys_nr'][it_subsys_nr]['disturbed_min']):
-                starting_point_list = starting_point_list_disturbed
-                starting_point_list_bckp = starting_point_list_disturbed_bckp
+                starting_point_list = starting_point_list_disturbed.copy()
+                starting_point_list_bckp = starting_point_list_disturbed_bckp.copy()
                 exploration_json['subsys_nr'][it_subsys_nr]['disturbed_start'] = True
         elif disturbed_start:
-            starting_point_list = starting_point_list_disturbed
-            starting_point_list_bckp = starting_point_list_disturbed_bckp
+            starting_point_list = starting_point_list_disturbed.copy()
+            starting_point_list_bckp = starting_point_list_disturbed_bckp.copy()
             exploration_json['subsys_nr'][it_subsys_nr]['disturbed_start'] = True
         else:
             exploration_json['subsys_nr'][it_subsys_nr]['disturbed_start'] = False
@@ -129,7 +129,6 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
 
     exploration_json['subsys_nr'][it_subsys_nr]['exploration_type'] = exploration_type
     slurm_file_master = cf.read_file(deepmd_iterative_apath+'/jobs/exploration/job_deepmd_'+exploration_type+'_'+arch_type+'_'+cluster+'.sh')
-
     for it_nnp in range(1, config_json['nb_nnp'] + 1 ):
         cf.create_dir('./'+it_subsys_nr+'/'+str(it_nnp))
         for it_number in range(1, nb_traj + 1):
@@ -184,7 +183,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                     data_file_name = it_subsys_nr+'.lmp'
                 else:
                     if len(starting_point_list) == 0:
-                        starting_point_list = starting_point_list_bckp
+                        starting_point_list = starting_point_list_bckp.copy()
                     RAND = random.randrange(0,len(starting_point_list))
                     previous_data_file = starting_point_list[RAND]
                     del starting_point_list[RAND]
