@@ -116,57 +116,36 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
 
                 devi_json = cf.json_read('./selection_candidates.json',False,False)
                 devi_json_index = cf.json_read('./selection_candidates_index.json',False,False)
+                if devi_json['min_index'] != -1:
 
-                ### Selection of the min for the next iteration starting point
-                min_index = devi_json['min_index']
-                min_index = int(min_index / print_freq)
-                with open('min.vmd', 'w') as f:
-                    f.write(str(min_index))
-                f.close()
-                del f
-                vmd_tcl = master_vmd_tcl
-                vmd_tcl = cf.replace_in_list(vmd_tcl,'_TOPO_FILE_',topo_file)
-                if 'lammps' in exploration_json['subsys_nr'][it_subsys_nr]['exploration_type']:
-                    traj_file = str(it_subsys_nr)+'_'+str(it_nnp)+'_'+current_iteration_zfill+'.dcd'
+                    ### Selection of the min for the next iteration starting point
+                    min_index = devi_json['min_index']
+                    min_index = int(min_index / print_freq)
+                    with open('min.vmd', 'w') as f:
+                        f.write(str(min_index))
+                    f.close()
+                    del f
+                    vmd_tcl = master_vmd_tcl
+                    vmd_tcl = cf.replace_in_list(vmd_tcl,'_TOPO_FILE_',topo_file)
+                    if 'lammps' in exploration_json['subsys_nr'][it_subsys_nr]['exploration_type']:
+                        traj_file = str(it_subsys_nr)+'_'+str(it_nnp)+'_'+current_iteration_zfill+'.dcd'
 
-                vmd_tcl = cf.replace_in_list(vmd_tcl,'_DCD_FILE_',traj_file)
-                vmd_tcl = cf.replace_in_list(vmd_tcl,'_SELECTION_FILE_','min.vmd')
-                cf.write_file('vmd.tcl',vmd_tcl)
-                subprocess.call([vmd_bin,'-e','vmd.tcl','-dispdev', 'text'],\
-                    stdout=subprocess.DEVNULL,\
-                    stderr=subprocess.STDOUT)
-                cf.remove_file('vmd.tcl')
-                cf.remove_file('min.vmd')
-                del vmd_tcl, traj_file, min_index
-
-                ### Get the min
-                if Path('vmd_00000.xyz').is_file():
-                    min_file_name=current_iteration_zfill+'_'+str(it_subsys_nr)+'_'+str(it_nnp)+'_'+str(it_each).zfill(5)
-                    Path('vmd_00000.xyz').rename(min_file_name+'.xyz')
-
-                    subprocess.call([atomsk_bin, '-ow', min_file_name+'.xyz',\
-                        '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][0]), 'H1',\
-                        '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][1]), 'H2',\
-                        '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][2]), 'H3',\
-                        'lmp'],\
+                    vmd_tcl = cf.replace_in_list(vmd_tcl,'_DCD_FILE_',traj_file)
+                    vmd_tcl = cf.replace_in_list(vmd_tcl,'_SELECTION_FILE_','min.vmd')
+                    cf.write_file('vmd.tcl',vmd_tcl)
+                    subprocess.call([vmd_bin,'-e','vmd.tcl','-dispdev', 'text'],\
                         stdout=subprocess.DEVNULL,\
                         stderr=subprocess.STDOUT)
+                    cf.remove_file('vmd.tcl')
+                    cf.remove_file('min.vmd')
+                    del vmd_tcl, traj_file, min_index
 
-                    if ('disturbed_min_value' in globals() and disturbed_min_value[it0_subsys_nr] != 0) \
-                        or (current_iteration > 1 and prevexploration_json['subsys_nr'][it_subsys_nr]['disturbed_min']):
+                    ### Get the min
+                    if Path('vmd_00000.xyz').is_file():
+                        min_file_name=current_iteration_zfill+'_'+str(it_subsys_nr)+'_'+str(it_nnp)+'_'+str(it_each).zfill(5)
+                        Path('vmd_00000.xyz').rename(min_file_name+'.xyz')
 
-                        Path(min_file_name+'_disturbed.xyz').write_text(Path(min_file_name+'.xyz').read_text())
-
-                        subprocess.call([atomsk_bin, '-ow', min_file_name+'_disturbed.xyz',\
-                            '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][0]), 'H1',\
-                            '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][1]), 'H2',\
-                            '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][2]), 'H3',\
-                            '-disturb', str(disturbed_min_value[it0_subsys_nr]),\
-                            'xyz'],\
-                            stdout=subprocess.DEVNULL,\
-                            stderr=subprocess.STDOUT)
-
-                        subprocess.call([atomsk_bin, '-ow', min_file_name+'_disturbed.xyz',\
+                        subprocess.call([atomsk_bin, '-ow', min_file_name+'.xyz',\
                             '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][0]), 'H1',\
                             '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][1]), 'H2',\
                             '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][2]), 'H3',\
@@ -174,14 +153,36 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
                             stdout=subprocess.DEVNULL,\
                             stderr=subprocess.STDOUT)
 
-                        Path(min_file_name+'_disturbed.xyz').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'_disturbed.xyz')
-                        Path(min_file_name+'_disturbed.lmp').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'_disturbed.lmp')
+                        if ('disturbed_min_value' in globals() and disturbed_min_value[it0_subsys_nr] != 0) \
+                            or (current_iteration > 1 and prevexploration_json['subsys_nr'][it_subsys_nr]['disturbed_min']):
 
-                    Path(min_file_name+'.xyz').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'.xyz')
-                    Path(min_file_name+'.lmp').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'.lmp')
-                    del min_file_name
-                else:
-                    logging.warning('Problem preparing the min for: '+str(it_subsys_nr)+' / '+str(it_nnp)+' / '+str(it_each) )
+                            Path(min_file_name+'_disturbed.xyz').write_text(Path(min_file_name+'.xyz').read_text())
+
+                            subprocess.call([atomsk_bin, '-ow', min_file_name+'_disturbed.xyz',\
+                                '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][0]), 'H1',\
+                                '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][1]), 'H2',\
+                                '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][2]), 'H3',\
+                                '-disturb', str(disturbed_min_value[it0_subsys_nr]),\
+                                'xyz'],\
+                                stdout=subprocess.DEVNULL,\
+                                stderr=subprocess.STDOUT)
+
+                            subprocess.call([atomsk_bin, '-ow', min_file_name+'_disturbed.xyz',\
+                                '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][0]), 'H1',\
+                                '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][1]), 'H2',\
+                                '-cell', 'set', str(config_json['subsys_nr'][it_subsys_nr]['cell'][2]), 'H3',\
+                                'lmp'],\
+                                stdout=subprocess.DEVNULL,\
+                                stderr=subprocess.STDOUT)
+
+                            Path(min_file_name+'_disturbed.xyz').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'_disturbed.xyz')
+                            Path(min_file_name+'_disturbed.lmp').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'_disturbed.lmp')
+
+                        Path(min_file_name+'.xyz').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'.xyz')
+                        Path(min_file_name+'.lmp').rename(training_iterative_apath+'/starting_structures/'+min_file_name+'.lmp')
+                        del min_file_name
+                    else:
+                        logging.warning('Problem preparing the min for: '+str(it_subsys_nr)+' / '+str(it_nnp)+' / '+str(it_each) )
 
                 ### Selection of labeling XYZ
                 if len(devi_json_index['candidates_kept_ind']) != 0:
@@ -230,7 +231,10 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
 
                 cf.change_dir('..')
 
-                logging.info(str(it_subsys_nr)+' / '+str(it_nnp)+' / '+str(it_each)+' has been processed')
+                if devi_json['min_index'] == -1:
+                    logging.warning(str(it_subsys_nr)+' / '+str(it_nnp)+' / '+str(it_each)+' has been processed but no candidates or minimum')
+                else:
+                    logging.info(str(it_subsys_nr)+' / '+str(it_nnp)+' / '+str(it_each)+' has been processed')
 
             del it_each
             cf.change_dir('..')

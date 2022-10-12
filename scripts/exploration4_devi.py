@@ -204,7 +204,6 @@ for it0_subsys_nr,it_subsys_nr in enumerate(exploration_json['subsys_nr']):
             devi_json['nb_candidates_discarded'] = candidates_ind_disc.shape[0]
             devi_json_index['candidates_discarded_ind'] = candidates_ind_disc.tolist()
 
-
             if candidates_ind_kept.shape[0] > 0:
                 filename_str = it_subsys_nr+'_'+str(it_nnp)+'_'+current_iteration_zfill
                 devi = np.genfromtxt('model_devi_'+filename_str+'.out')
@@ -216,8 +215,10 @@ for it0_subsys_nr,it_subsys_nr in enumerate(exploration_json['subsys_nr']):
                         min_index = it_ind_kept
                 devi_json['min_index'] = it_ind_kept
                 del filename_str, devi, min_val, min_index, it_ind_kept, temp_min
-            else:
+            elif len(devi_json_index['good_ind']) > 0:
                 devi_json['min_index'] = devi_json_index['good_ind'][-1]
+            else:
+                devi_json['min_index'] = -1
 
 
             cf.json_dump(devi_json,'./selection_candidates.json',False,'selection_candidates.json')
