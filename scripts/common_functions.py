@@ -68,7 +68,7 @@ def create_dir(directory_path:str):
     """
     if Path(directory_path).is_dir() is False:
         try:
-            Path(directory_path).mkdir()
+            Path(directory_path).mkdir(parents=True)
         except(FileExistsError):
             pass
         except:
