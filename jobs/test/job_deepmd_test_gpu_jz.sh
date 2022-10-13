@@ -105,7 +105,7 @@ echo "# [$(date)] Ended"
 # Move back data from the temporary work directory and scratch, and clean-up
 rm -rf "${TEMPWORKDIR}"/data
 find ./ -type l -delete
-mv ./* "${SLURM_SUBMIT_DIR}"
+rm -r "${TEMPWORKDIR}"/${DeepMD_PB}.pb
 cd "${SLURM_SUBMIT_DIR}" || exit 1
 if [ ! -d logs__NNPNB_ ]; then
     mkdir logs__NNPNB_ || exit 1
@@ -113,11 +113,14 @@ fi
 if [ ! -d out__NNPNB_ ]; then
     mkdir out__NNPNB_ || exit 1
 fi
+mv "${TEMPWORKDIR}"/*.log logs__NNPNB_/
+mv "${TEMPWORKDIR}"/*.err logs__NNPNB_/
+mv "${TEMPWORKDIR}"/*.out out__NNPNB_/
+cd logs__NNPNB_ || exit 1
 if [ "${DeepMD_MODEL_VERSION}" = "2.0" ] || [ "${DeepMD_MODEL_VERSION}" = "2.1" ] ;then
     for f in "${DeepMD_PB}"*.err ; do grep 'DEEPMD INFO' "${f}" > "${f/.err/.log}" ; done
 fi
-mv ./*.log ./*.err logs__NNPNB_/
-mv ./*.out out__NNPNB_/
+cd "${SLURM_SUBMIT_DIR}" || exit 1
 rmdir "${TEMPWORKDIR}" 2> /dev/null || echo "Leftover files on ${TEMPWORKDIR}"
 [ ! -d "${TEMPWORKDIR}" ] && { [ -h JOB-"${SLURM_JOBID}" ] && rm JOB-"${SLURM_JOBID}"; }
 

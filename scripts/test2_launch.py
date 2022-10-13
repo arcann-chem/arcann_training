@@ -59,8 +59,8 @@ if test_json['cluster'] != cluster:
     sys.exit(1)
 
 ### Set needed variables
-if test_json['arch_name'] == 'cpu':
-    arch_type='cpu'
+if test_json['arch_name'] == 'v100' or test_json['arch_name'] == 'a100':
+    arch_type ='gpu'
 
 ### Launch the jobs
 check = 0
@@ -71,19 +71,18 @@ for it_nnp in range(1, test_json['nb_nnp'] + 1):
         check = check + 1
     else:
         logging.warning('DP Test - ./'+str(it_nnp)+' NOT launched')
-    cf.change_dir('..')
 del it_nnp
 
 if check == config_json['nb_nnp']:
     test_json['is_launched'] = True
-    logging.info('Slurm launch of the training is a success!')
+    logging.info('The DP-Test: SLURM phase is a success!')
 else:
-    logging.critical('Some DP Test did not launched correctly')
+    logging.critical('Some DP-Test did not launched correctly')
     logging.critical('Please launch manually before continuing to the next step')
     logging.critical('And replace the key \'is_launched\' to True in the corresponding training.json.')
 del check
 
-cf.json_dump(test_json,test_json_fpath,True,'training.json')
+cf.json_dump(test_json,test_json_fpath,True,'test.json')
 
 del config_json, config_json_fpath, training_iterative_apath
 del current_iteration, current_iteration_zfill

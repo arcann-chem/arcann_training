@@ -175,13 +175,14 @@ for it_data_folders in Path(training_iterative_apath+'/data').iterdir():
 
 ### Training sets list construction
 datasets_training=[]
-
+datasets_training_json=[]
 ### Initial
 structures_initial_total = 0
 if training_json['use_datasets_initial']:
     for it_datasets_initial_json in datasets_initial_json.keys():
         if Path(training_iterative_apath+'/data/'+it_datasets_initial_json).is_dir():
             datasets_training.append('data/'+it_datasets_initial_json+'/')
+            datasets_training_json.append(it_datasets_initial_json)
             structures_initial_total = structures_initial_total+datasets_initial_json[it_datasets_initial_json]
 
 ### Non-Reactive (aka subsys_nr in the initialization first) && all the others are REACTIVE !
@@ -204,6 +205,7 @@ if current_iteration > 0:
             for system_it in config_json['subsys_nr']:
                 if Path(training_iterative_apath+'/data/'+system_it+'_'+str(it_iteration).zfill(3)).is_dir():
                     datasets_training.append('data/'+system_it+'_'+str(it_iteration).zfill(3)+'/')
+                    datasets_training_json.append(system_it+'_'+str(it_iteration).zfill(3))
                     structures_added_nr_total = structures_added_nr_total+np.load(training_iterative_apath+'/data/'+system_it+'_'+str(it_iteration).zfill(3)+'/set.000/box.npy').shape[0]
                     if it_iteration == current_iteration:
                         structures_added_nr_iter = structures_added_nr_iter+np.load(training_iterative_apath+'/data/'+system_it+'_'+str(it_iteration).zfill(3)+'/set.000/box.npy').shape[0]
@@ -213,6 +215,7 @@ if current_iteration > 0:
             for system_it in [zzz + '-disturbed' for zzz in config_json['subsys_nr']]:
                 if Path(training_iterative_apath+'/data/'+system_it+'_'+str(it_iteration).zfill(3)).is_dir():
                     datasets_training.append('data/'+system_it+'_'+str(it_iteration).zfill(3)+'/')
+                    datasets_training_json.append(system_it+'_'+str(it_iteration).zfill(3))
                     structures_added_nr_total = structures_added_nr_total+np.load(training_iterative_apath+'/data/'+system_it+'_'+str(it_iteration).zfill(3)+'/set.000/box.npy').shape[0]
                     if it_iteration == current_iteration:
                         structures_added_nr_iter = structures_added_nr_iter+np.load(training_iterative_apath+'/data/'+system_it+'_'+str(it_iteration).zfill(3)+'/set.000/box.npy').shape[0]
@@ -222,6 +225,7 @@ if current_iteration > 0:
             for system_it in config_json['subsys_r']:
                 if Path(training_iterative_apath+'/data/'+system_it+'_'+str(it_iteration).zfill(3)).is_dir():
                     datasets_training.append('data/'+system_it+'_'+str(it_iteration).zfill(3)+'/')
+                    datasets_training_json.append(system_it+'_'+str(it_iteration).zfill(3))
                     structures_added_r_total = structures_added_r_total+np.load(training_iterative_apath+'/data/'+system_it+'_'+str(it_iteration).zfill(3)+'/set.000/box.npy').shape[0]
                     if it_iteration == current_iteration:
                         structures_added_r_iter = structures_added_r_iter+np.load(training_iterative_apath+'/data/'+system_it+'_'+str(it_iteration).zfill(3)+'/set.000/box.npy').shape[0]
@@ -234,6 +238,7 @@ if training_json['use_datasets_extra']:
     config_json['datasets_extra'] = datasets_extra
     for it_datasets_extra in config_json['datasets_extra']:
         datasets_training.append('data/'+it_datasets_extra+'/')
+        datasets_training_json.append(it_datasets_extra)
         structures_extra_total = structures_extra_total+np.load(training_iterative_apath+'/data/'+it_datasets_extra+'/set.000/box.npy').shape[0]
 
 ### Total
@@ -252,6 +257,7 @@ if ( training_json['deepmd_model_version'] >= 2.0 ):
 else:
     training_input_json['training']['systems'] = datasets_training
 
+training_json['training_data'] = datasets_training_json
 training_json['structures_trained_total'] = structures_trained_total
 training_json['structures_initial_total'] = structures_initial_total
 training_json['structures_added_nr_total'] = structures_added_nr_total

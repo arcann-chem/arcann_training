@@ -52,6 +52,7 @@ cluster = cf.check_cluster()
 
 ### Set needed variables
 test_json['nb_nnp'] = config_json['nb_nnp']
+test_json['is_compressed'] = training_json['is_compressed']
 test_json['cluster'] = cluster
 test_json['project_name'] = project_name if 'project_name' in globals() else 'nvs'
 test_json['allocation_name'] = allocation_name if 'allocation_name' in globals() else 'v100'
@@ -66,9 +67,10 @@ slurm_email = '' if 'slurm_email' not in globals() else slurm_email
 cf.check_file(deepmd_iterative_apath+'/jobs/test/job_deepmd_test_'+arch_type+'_'+cluster+'.sh',0,True,'No SLURM file present for the exploration phase on this cluster.')
 slurm_file_master = cf.read_file(deepmd_iterative_apath+'/jobs/test/job_deepmd_test_'+arch_type+'_'+cluster+'.sh')
 
+###
 for it_nnp in range(1, test_json['nb_nnp'] + 1):
     slurm_file = slurm_file_master
-    if training_json['is_compressed'] is True:
+    if test_json['is_compressed'] is True:
         subprocess.call(['rsync','-a', '../NNP/graph_'+str(it_nnp)+'_'+current_iteration_zfill+'_compressed.pb', './'])
         slurm_file = cf.replace_in_list(slurm_file,'_DEEPMD_PB_','graph_'+str(it_nnp)+'_'+current_iteration_zfill+'_compressed')
     else:
@@ -105,14 +107,16 @@ for it_nnp in range(1, test_json['nb_nnp'] + 1):
     cf.write_file('./job_deepmd_test_'+arch_type+'_'+cluster+'_NNP'+str(it_nnp)+'.sh',slurm_file)
 
     del slurm_file
+del it_nnp
 
 test_json['is_locked'] = True
 test_json['is_launched'] = False
 test_json['is_checked'] = False
-test_json['is_concatened'] = False
-test_json['is_graphed'] = False
+test_json['is_concatenated'] = False
+test_json['is_plotted'] = False
 
-logging.info('Preparation of the training is a success!')
+cf.json_dump(test_json,test_json_fpath,True,'test.json')
+logging.info('The DP-Test: prep phase is a success!')
 
 del slurm_file_master
 
