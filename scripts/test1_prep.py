@@ -68,15 +68,12 @@ cf.check_file(deepmd_iterative_apath+'/jobs/test/job_deepmd_test_'+arch_type+'_'
 slurm_file_master = cf.read_file(deepmd_iterative_apath+'/jobs/test/job_deepmd_test_'+arch_type+'_'+cluster+'.sh')
 
 ###
+compressed = '_compressed' if test_json['is_compressed'] else ''
 for it_nnp in range(1, test_json['nb_nnp'] + 1):
     slurm_file = slurm_file_master
-    if test_json['is_compressed'] is True:
-        subprocess.call(['rsync','-a', '../NNP/graph_'+str(it_nnp)+'_'+current_iteration_zfill+'_compressed.pb', './'])
-        slurm_file = cf.replace_in_list(slurm_file,'_DEEPMD_PB_','graph_'+str(it_nnp)+'_'+current_iteration_zfill+'_compressed')
-    else:
-        subprocess.call(['rsync','-a', '../NNP/graph_'+str(it_nnp)+'_'+current_iteration_zfill+'.pb', './'])
-        slurm_file = cf.replace_in_list(slurm_file,'_DEEPMD_PB_','graph_'+str(it_nnp)+'_'+current_iteration_zfill+'')
-
+    cf.check_file('../NNP/graph_'+str(it_nnp)+'_'+current_iteration_zfill+compressed+'.pb',0,True)
+    subprocess.call(['rsync','-a', '../NNP/graph_'+str(it_nnp)+'_'+current_iteration_zfill+compressed+'.pb', './'])
+    slurm_file = cf.replace_in_list(slurm_file,'_DEEPMD_PB_','graph_'+str(it_nnp)+'_'+current_iteration_zfill+compressed)
     slurm_file = cf.replace_in_list(slurm_file,'_NNPNB_','NNP'+str(it_nnp))
     slurm_file = cf.replace_in_list(slurm_file,'_PROJECT_',project_name)
     slurm_file = cf.replace_in_list(slurm_file,'_WALLTIME_','04:00:00')
