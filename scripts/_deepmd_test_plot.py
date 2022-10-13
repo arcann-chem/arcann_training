@@ -55,7 +55,7 @@ props = dict(boxstyle='round', facecolor='grey', alpha=0.2)
 test_json['results']={}
 for f in energy.keys():
     for g in energy[f].keys():
-        test_json['results']['g']={}
+        test_json['results'][g]={}
         fig,ax=plt.subplots(nrows=1,ncols=2,dpi=dpi/2,figsize=figsize_ratio*sizemult)
         print(f,g,flush=True)
         gc.collect()
@@ -85,10 +85,10 @@ for f in energy.keys():
         r'MSE = %.2e' % (MSE_val, )+ r' eV/atom',
         r'RMSE = %.2e' % (RMSE_val, )+ r' eV/atom',
         r'MAXE = %.2e' % (MAXE_val, )+ r' eV/atom',))
-        test_json['results']['g']['MAE Energy (eV/atom)'] = MAE_val
-        test_json['results']['g']['MSE Energy (eV/atom)'] = MSE_val
-        test_json['results']['g']['RMSE Energy (eV/atom)'] = RMSE_val
-        test_json['results']['g']['Max Error Energy (eV/atom)'] = MAXE_val
+        test_json['results'][g]['MAE_e_atm'] = MAE_val
+        test_json['results'][g]['MSE_e_atm'] = MSE_val
+        test_json['results'][g]['RMSE_e_atm'] = RMSE_val
+        test_json['results'][g]['MAXE_e_atm'] = MAXE_val
         ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=sizemult*14,
             verticalalignment='top',bbox=props)
         if energy[f][g].ndim > 1:
@@ -116,10 +116,10 @@ for f in energy.keys():
         r'MSE = %.2e' % (MSE_val, )+ r' eV/Å',
         r'RMSE = %.2e' % (RMSE_val, )+ r' eV/Å',
         r'MAXE = %.2e' % (MAXE_val, )+ r' eV/Å',))
-        test_json['results']['g']['MAE Forces (eV/Å)'] = MAE_val
-        test_json['results']['g']['MSE Forces (eV/Å)'] = MSE_val
-        test_json['results']['g']['RMSE Forces (eV/Å)'] = RMSE_val
-        test_json['results']['g']['Max Error Forces (eV/Å)'] = MAXE_val
+        test_json['results'][g]['MAE_f'] = MAE_val
+        test_json['results'][g]['MSE_f'] = MSE_val
+        test_json['results'][g]['RMSE_f'] = RMSE_val
+        test_json['results'][g]['MaXE_f'] = MAXE_val
         ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=sizemult*14,
             verticalalignment='top',bbox=props)
         ax.plot(force[f][g][:,0],force[f][g][:,1],linestyle='None',marker="x",color=colors[0])
@@ -136,7 +136,7 @@ for f in energy.keys():
         name=current_iteration_zfill+'_'+g+'_'+f
         fig.savefig(str(fig_path)+'/'+name+'.png',dpi=300,bbox_inches='tight',transparent=True)
         del ax, fig, name
-        del min_all, max_all, max_uall, MAE_val, MSE_val, RMSE_val, MAXE_val, textstr, range_val, nb_atom, title, inter
+        del min_all, max_all, max_uall, MAE_val, MSE_val, RMSE_val, MAXE_val, textstr, range_val, nb_atom, title, inter, min_ref
         pf.close_graph()
     del g
 del f
@@ -158,6 +158,5 @@ del deepmd_iterative_apath
 del sys, Path, logging, cf, pf
 del np, gc, AutoMinorLocator, plt, matplotlib
 del MAE, MSE, MAXE
-print(globals())
 import gc; gc.collect(); del gc
 exit()
