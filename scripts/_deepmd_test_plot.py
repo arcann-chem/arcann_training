@@ -87,8 +87,8 @@ for f in energy.keys():
         r'MAE = %.2e' % (MAE_val, )+ r' eV/atom',
         r'MSE = %.2e' % (MSE_val, )+ r' eV/atom',
         r'RMSE = %.2e' % (RMSE_val, )+ r' eV/atom',
-        r'MAXE = %.2e' % (MAXE_val, )+ r' eV/atom',
-        r'RMSE / σ = %.2e' % (RMSErel_val, ),))
+        r'RMSE / σ = %.2e' % (RMSErel_val, ),
+        r'MAXE = %.2e' % (MAXE_val, )+ r' eV/atom',))
         test_json['results'][g]['MAE_e_atm'] = MAE_val
         test_json['results'][g]['MSE_e_atm'] = MSE_val
         test_json['results'][g]['RMSE_e_atm'] = RMSE_val
@@ -122,8 +122,8 @@ for f in energy.keys():
         r'MAE = %.2e' % (MAE_val, )+ r' eV/Å',
         r'MSE = %.2e' % (MSE_val, )+ r' eV/Å',
         r'RMSE = %.2e' % (RMSE_val, )+ r' eV/Å',
-        r'MAXE = %.2e' % (MAXE_val, )+ r' eV/Å',
-        r'RMSE / σ = %.2e' % (RMSErel_val, ),))
+        r'RMSE / σ = %.2e' % (RMSErel_val, ),
+        r'MAXE = %.2e' % (MAXE_val, )+ r' eV/atom',))
         test_json['results'][g]['MAE_f'] = MAE_val
         test_json['results'][g]['MSE_f'] = MSE_val
         test_json['results'][g]['RMSE_f'] = RMSE_val
