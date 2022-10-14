@@ -5,7 +5,7 @@
 # s_low = [0.1, 0.1]
 # s_high = [0.8, 0.8]
 # s_high_max = [1.0, 1.0]
-# ignore_first_x_ps = [0.2, 0.2]
+# ignore_first_x_ps = [0.5, 0.5]
 
 ###################################### No change past here
 import sys
