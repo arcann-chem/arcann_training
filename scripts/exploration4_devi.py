@@ -84,8 +84,17 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
             devi_json['s_high_max'] = s_high_max_local
 
             devi = np.genfromtxt('model_devi_'+filename_str+'.out')
-            devi_json['nb_total'] = devi.shape[0]-ignore_first_n_frames_local
-
+            expected =  int( exploration_json['subsys_nr'][it_subsys_nr]['nb_steps'] / exploration_json['subsys_nr'][it_subsys_nr]['print_freq'] + 1 ) - ignore_first_n_frames_local
+            if expected > ( devi.shape[0] - ignore_first_n_frames_local ):
+                devi_json['nb_total'] = expected
+                logging.warning('Exploration '+ str(it_subsys_nr)+' / '+str(it_nnp)+' / '+str(it_each))
+                logging.warning('mismatch between expected and actual number in the deviation file')
+            elif expected == ( devi.shape[0] - ignore_first_n_frames_local ):
+                devi_json['nb_total'] = devi.shape[0] - ignore_first_n_frames_local
+            else:
+                logging.critical('Unknown error. Please BUG REPORT')
+                logging.critical('Aborting...')
+                sys.exit(1)
             # Skip the first frame if from disturbed
             if current_iteration == 1 :
                 start = 0
@@ -135,6 +144,8 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
             devi_json_index['rejected_ind'] = rejected_ind.tolist()
             devi_json['nb_candidates'] = candidates_ind.shape[0]
             devi_json_index['candidates_ind'] = candidates_ind.tolist()
+            if ( devi_json['nb_good'] + devi_json['nb_rejected'] + devi_json['nb_candidates'] ) < expected:
+                devi_json['nb_rejected'] = devi_json['nb_rejected'] + expected - ( devi_json['nb_good'] + devi_json['nb_rejected'] + devi_json['nb_candidates'] )
 
             if  (end > ignore_first_n_frames_local) or (end == -1) :
                 exploration_json['subsys_nr'][it_subsys_nr]['avg_max_devi_f'] = exploration_json['subsys_nr'][it_subsys_nr]['avg_max_devi_f'] + devi_json['avg_max_devi_f']
