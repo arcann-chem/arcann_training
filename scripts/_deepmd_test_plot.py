@@ -72,6 +72,7 @@ for f in energy.keys():
             MSE_val=np.round(MSE(energy[f][g][:,0]/nb_atom,energy[f][g][:,1]/nb_atom),10)
             RMSE_val=np.round(MSE(energy[f][g][:,0]/nb_atom,energy[f][g][:,1]/nb_atom,squared=False),10)
             MAXE_val=np.round(MAXE(energy[f][g][:,0]/nb_atom,energy[f][g][:,1]/nb_atom),10)
+            RMSErel_val = np.round( ( RMSE_val / np.std(energy[f][g][0]) ), 10 )
         else:
             min_ref=np.min(energy[f][g][0])
             min_all=np.min((np.min(energy[f][g][0]),np.min(energy[f][g][1])))
@@ -80,15 +81,19 @@ for f in energy.keys():
             MSE_val=np.round(MSE(energy[f][g][0]/nb_atom,energy[f][g][1]/nb_atom),10)
             RMSE_val=np.round(MSE(energy[f][g][0]/nb_atom,energy[f][g][1]/nb_atom,squared=False),10)
             MAXE_val=np.round(MAXE(energy[f][g][0]/nb_atom,energy[f][g][1]/nb_atom),10)
+            RMSErel_val = np.round( ( RMSE_val / np.std(energy[f][g][0]) ), 10)
+            
         textstr = '\n'.join((
         r'MAE = %.2e' % (MAE_val, )+ r' eV/atom',
         r'MSE = %.2e' % (MSE_val, )+ r' eV/atom',
         r'RMSE = %.2e' % (RMSE_val, )+ r' eV/atom',
-        r'MAXE = %.2e' % (MAXE_val, )+ r' eV/atom',))
+        r'MAXE = %.2e' % (MAXE_val, )+ r' eV/atom',
+        r'RMSE / σ = %.2e' % (RMSErel_val, ),))
         test_json['results'][g]['MAE_e_atm'] = MAE_val
         test_json['results'][g]['MSE_e_atm'] = MSE_val
         test_json['results'][g]['RMSE_e_atm'] = RMSE_val
         test_json['results'][g]['MAXE_e_atm'] = MAXE_val
+        test_json['results'][g]['RMSE_rel_e_atm'] = RMSErel_val
         ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=sizemult*14,
             verticalalignment='top',bbox=props)
         if energy[f][g].ndim > 1:
@@ -111,15 +116,19 @@ for f in energy.keys():
         MSE_val=np.round(MSE(force[f][g][:,0],force[f][g][:,1]),3)
         RMSE_val=np.round(MSE(force[f][g][:,0],force[f][g][:,1],squared=False),3)
         MAXE_val=np.round(MAXE(force[f][g][:,0],force[f][g][:,1]),3)
+        RMSErel_val = np.round( ( RMSE_val / np.std(force[f][g][:,0]) ),3)
+
         textstr = '\n'.join((
         r'MAE = %.2e' % (MAE_val, )+ r' eV/Å',
         r'MSE = %.2e' % (MSE_val, )+ r' eV/Å',
         r'RMSE = %.2e' % (RMSE_val, )+ r' eV/Å',
-        r'MAXE = %.2e' % (MAXE_val, )+ r' eV/Å',))
+        r'MAXE = %.2e' % (MAXE_val, )+ r' eV/Å',
+        r'RMSE / σ = %.2e' % (RMSErel_val, ),))
         test_json['results'][g]['MAE_f'] = MAE_val
         test_json['results'][g]['MSE_f'] = MSE_val
         test_json['results'][g]['RMSE_f'] = RMSE_val
-        test_json['results'][g]['MaXE_f'] = MAXE_val
+        test_json['results'][g]['MAXE_f'] = MAXE_val
+        test_json['results'][g]['RMSE_rel_f'] = RMSErel_val
         ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=sizemult*14,
             verticalalignment='top',bbox=props)
         ax.plot(force[f][g][:,0],force[f][g][:,1],linestyle='None',marker="x",color=colors[0])
