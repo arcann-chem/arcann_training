@@ -11,7 +11,7 @@ nb_nnp = 3
 # s_low = [0.1, 0.1]
 # s_high = [0.8, 0.8]
 # s_high_max = [1.0, 1.0]
-# ignore_first_n_frames = [10, 10]
+# ignore_first_x_ps = [0.5, 0.5]
 
 ###################################### No change past here
 import sys
@@ -45,7 +45,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(subsys_name):
     config_json['subsys_nr'][it_subsys_nr]['s_low'] = 0.1 if 's_low' not in globals() else s_low[it0_subsys_nr]
     config_json['subsys_nr'][it_subsys_nr]['s_high'] = 0.8 if 'temperature' not in globals() else s_high[it0_subsys_nr]
     config_json['subsys_nr'][it_subsys_nr]['s_high_max'] = 1.0 if 's_high_max' not in globals() else s_high_max[it0_subsys_nr]
-    config_json['subsys_nr'][it_subsys_nr]['ignore_first_n_frames'] = 10 if 'ignore_first_n_frames' not in globals() else ignore_first_n_frames[it0_subsys_nr]
+    config_json['subsys_nr'][it_subsys_nr]['ignore_first_x_ps'] = 0.5 if 'ignore_first_x_ps' not in globals() else ignore_first_x_ps[it0_subsys_nr]
 del it0_subsys_nr, it_subsys_nr, subsys_name
 
 ### Create the directories

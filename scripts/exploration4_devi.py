@@ -5,7 +5,7 @@
 # s_low = [0.1, 0.1]
 # s_high = [0.8, 0.8]
 # s_high_max = [1.0, 1.0]
-# ignore_first_n_frames = [10, 10]
+# ignore_first_x_ps = [0.5, 0.5]
 
 ###################################### No change past here
 import sys
@@ -56,7 +56,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
     exploration_json['subsys_nr'][it_subsys_nr]['s_low'] = s_low[it0_subsys_nr] if 's_low' in globals() else config_json['subsys_nr'][it_subsys_nr]['s_low']
     exploration_json['subsys_nr'][it_subsys_nr]['s_high'] = s_high[it0_subsys_nr] if 's_high' in globals() else config_json['subsys_nr'][it_subsys_nr]['s_high']
     exploration_json['subsys_nr'][it_subsys_nr]['s_high_max'] = s_high_max[it0_subsys_nr] if 's_high_max' in globals() else config_json['subsys_nr'][it_subsys_nr]['s_high_max']
-    exploration_json['subsys_nr'][it_subsys_nr]['ignore_first_n_frames'] = ignore_first_n_frames[it0_subsys_nr] if 'ignore_first_n_frames' in globals() else config_json['subsys_nr'][it_subsys_nr]['ignore_first_n_frames']
+    exploration_json['subsys_nr'][it_subsys_nr]['ignore_first_x_ps'] = ignore_first_x_ps[it0_subsys_nr] if 'ignore_first_x_ps' in globals() else config_json['subsys_nr'][it_subsys_nr]['ignore_first_x_ps']
     exploration_json['subsys_nr'][it_subsys_nr]['avg_max_devi_f'] = 0
     exploration_json['subsys_nr'][it_subsys_nr]['std_max_devi_f'] = 0
     exploration_json['subsys_nr'][it_subsys_nr]['nb_total'] = 0
@@ -66,8 +66,13 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
 
     s_low_local = exploration_json['subsys_nr'][it_subsys_nr]['s_low']
     s_high_local = exploration_json['subsys_nr'][it_subsys_nr]['s_high']
-    s_high_max_local =  exploration_json['subsys_nr'][it_subsys_nr]['s_high_max']
-    ignore_first_n_frames_local = exploration_json['subsys_nr'][it_subsys_nr]['ignore_first_n_frames']
+    s_high_max_local = exploration_json['subsys_nr'][it_subsys_nr]['s_high_max']
+
+    ignore_first_n_frames_local = 0
+    while ignore_first_n_frames_local * exploration_json['subsys_nr'][it_subsys_nr]['print_freq'] * exploration_json['subsys_nr'][it_subsys_nr]['timestep_ps'] < exploration_json['subsys_nr'][it_subsys_nr]['ignore_first_x_ps']:
+        ignore_first_n_frames_local = ignore_first_n_frames_local + 1
+
+    exploration_json['subsys_nr'][it_subsys_nr]['ignore_first_n_frames'] = ignore_first_n_frames_local
 
     for it_nnp in range(1, exploration_json['nb_nnp'] + 1):
         cf.change_dir('./'+str(it_nnp))
