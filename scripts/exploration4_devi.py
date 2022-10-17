@@ -275,12 +275,13 @@ for it0_subsys_nr,it_subsys_nr in enumerate(exploration_json['subsys_nr']):
                 del nb_candidates_max_weighted, nb_selection_factor, candidates_ind_kept, candidates_ind, candidates_ind_disc
 
             else:
+
                 devi_json['nb_selection_factor'] = 0
                 devi_json['nb_candidates_max_weighted'] = 0
                 devi_json['nb_candidates_kept'] = 0
-                devi_json['candidates_kept_ind'] = []
+                devi_json_index['candidates_kept_ind'] = []
                 devi_json['nb_candidates_discarded'] = 0
-                devi_json['candidates_discarded_ind'] = []
+                devi_json_index['candidates_discarded_ind'] = []
                 devi_json['min_index'] = -1
 
             cf.json_dump(devi_json,'./selection_candidates.json',False,'selection_candidates.json')
