@@ -48,6 +48,8 @@ if exploration_json['is_launched'] is False:
 
 ### Check the normal termination of the exploration phase
 check = 0
+skiped = 0
+forced = 0
 for it_subsys_nr in exploration_json['subsys_nr']:
     average_per_step = 0
     subsys_count = 0
@@ -65,9 +67,18 @@ for it_subsys_nr in exploration_json['subsys_nr']:
                     check = check + 1
                     timings=[zzz for zzz in lammps_output if 'Loop time of' in zzz]
                     timings_sum = timings_sum+float(timings[0].split(' ')[3])
+                elif ( Path(check_path+'/skip').is_file() ):
+                    skiped = skiped + 1
+                    logging.warning(lammps_output_file+' skipped')
+                elif ( Path(check_path+'/force').is_file() ):
+                    forced = forced + 1
+                    logging.warning(lammps_output_file+' forced')
                 else:
                     logging.critical(lammps_output_file+' failed. Check manually')
                 del lammps_output
+            elif ( Path(check_path+'/skip').is_file() ):
+                    skiped = skiped + 1
+                    logging.warning(lammps_output_file+' skipped')
             else:
                 logging.critical(lammps_output_file+' not found. Check manually')
             del lammps_output_file, check_path
@@ -78,9 +89,10 @@ for it_subsys_nr in exploration_json['subsys_nr']:
 
 del it_subsys_nr, it_nnp, it_each, it_each_zfill,  current_iteration_zfill
 
-if check != (len( exploration_json['subsys_nr']) * exploration_json['nb_nnp'] * exploration_json['nb_traj'] ):
+if (check + skiped + forced) != (len( exploration_json['subsys_nr']) * exploration_json['nb_nnp'] * exploration_json['nb_traj'] ):
     logging.critical('Some jobs failed or are still running.')
     logging.critical('Please check manually before relaunching this step')
+    logging.critical('Or create files named \'skip\' or \'force\' to skip or force')
     logging.critical('Aborting...')
     sys.exit(1)
 else:
@@ -98,7 +110,9 @@ else:
         del it_nnp
     del it_subsys_nr
 del check, exploration_json, exploration_json_fpath
-
+if (skiped + forced) != 0:
+    logging.warning(skiped+' systems were skipped')
+    logging.warning(forced+' systems were forced')
 logging.info('The exploration phase is a success!')
 
 ### Cleaning
