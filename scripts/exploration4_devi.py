@@ -97,10 +97,11 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
             devi_json['s_high'] = s_high_local
             devi_json['s_high_max'] = s_high_max_local
 
-            devi = np.genfromtxt('model_devi_'+filename_str+'.out')
             expected =  int( exploration_json['subsys_nr'][it_subsys_nr]['nb_steps'] / exploration_json['subsys_nr'][it_subsys_nr]['print_freq'] + 1 ) - ignore_first_n_frames_local
 
             if Path('./skip').is_file() is False:
+                devi = np.genfromtxt('model_devi_'+filename_str+'.out')
+
                 if expected > ( devi.shape[0] - ignore_first_n_frames_local ):
                     devi_json['nb_total'] = expected
                     logging.warning('Exploration '+ str(it_subsys_nr)+' / '+str(it_nnp)+' / '+str(it_each))
@@ -176,6 +177,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
 
                 if  (end > ignore_first_n_frames_local) or (end == -1) :
                     del filter_candidates, filter_good, filter_rejected
+                del devi, end, candidates_ind, good_ind, rejected_ind
 
             else:
                 devi_json['avg_max_devi_f'] = 999
@@ -194,7 +196,8 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json['subsys_nr']):
 
             cf.json_dump(devi_json,'./selection_candidates.json',False,'selection_candidates.json')
             cf.json_dump(devi_json_index,'./selection_candidates_index.json',False,'selection_candidates_index.json')
-            del filename_str, devi, end, devi_json, devi_json_index, candidates_ind, good_ind, rejected_ind
+
+            del filename_str, devi_json, devi_json_index, expected
 
             cf.change_dir('..')
 
@@ -269,7 +272,8 @@ for it0_subsys_nr,it_subsys_nr in enumerate(exploration_json['subsys_nr']):
 
                 exploration_json['subsys_nr'][it_subsys_nr]['nb_candidates_kept'] = exploration_json['subsys_nr'][it_subsys_nr]['nb_candidates_kept'] + candidates_ind_kept.shape[0]
                 exploration_json['subsys_nr'][it_subsys_nr]['nb_candidates_discarded'] = exploration_json['subsys_nr'][it_subsys_nr]['nb_candidates_discarded'] + candidates_ind_disc.shape[0]
-                del nb_candidates_max_weighted
+                del nb_candidates_max_weighted, nb_selection_factor, candidates_ind_kept, candidates_ind, candidates_ind_disc
+
             else:
                 devi_json['nb_selection_factor'] = 0
                 devi_json['nb_candidates_max_weighted'] = 0
@@ -282,7 +286,8 @@ for it0_subsys_nr,it_subsys_nr in enumerate(exploration_json['subsys_nr']):
             cf.json_dump(devi_json,'./selection_candidates.json',False,'selection_candidates.json')
             cf.json_dump(devi_json_index,'./selection_candidates_index.json',False,'selection_candidates_index.json')
 
-            del devi_json, devi_json_index, nb_selection_factor, candidates_ind_kept, candidates_ind, candidates_ind_disc
+            del devi_json, devi_json_index
+
             cf.change_dir('..')
         del it_each
         cf.change_dir('..')

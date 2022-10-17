@@ -111,8 +111,8 @@ else:
     del it_subsys_nr
 del check, exploration_json, exploration_json_fpath
 if (skiped + forced) != 0:
-    logging.warning(skiped+' systems were skipped')
-    logging.warning(forced+' systems were forced')
+    logging.warning(str(skiped)+' systems were skipped')
+    logging.warning(str(forced)+' systems were forced')
 logging.info('The exploration phase is a success!')
 
 ### Cleaning
