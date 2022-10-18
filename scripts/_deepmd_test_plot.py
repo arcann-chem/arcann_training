@@ -54,8 +54,9 @@ props = dict(boxstyle='round', facecolor='grey', alpha=0.2)
 
 test_json['results']={}
 for f in energy.keys():
+    test_json['results'][f]={}
     for g in energy[f].keys():
-        test_json['results'][g]={}
+        test_json['results'][f][g]={}
         fig,ax=plt.subplots(nrows=1,ncols=2,dpi=dpi/2,figsize=figsize_ratio*sizemult)
         print(f,g,flush=True)
         gc.collect()
@@ -89,11 +90,11 @@ for f in energy.keys():
         r'RMSE = %.2e' % (RMSE_val, )+ r' eV/atom',
         r'RMSE / σ = %.2e' % (RMSErel_val, ),
         r'MAXE = %.2e' % (MAXE_val, )+ r' eV/atom',))
-        test_json['results'][g]['MAE_e_atm'] = MAE_val
-        test_json['results'][g]['MSE_e_atm'] = MSE_val
-        test_json['results'][g]['RMSE_e_atm'] = RMSE_val
-        test_json['results'][g]['MAXE_e_atm'] = MAXE_val
-        test_json['results'][g]['RMSE_rel_e_atm'] = RMSErel_val
+        test_json['results'][f][g]['MAE_e_atm'] = MAE_val
+        test_json['results'][f][g]['MSE_e_atm'] = MSE_val
+        test_json['results'][f][g]['RMSE_e_atm'] = RMSE_val
+        test_json['results'][f][g]['MAXE_e_atm'] = MAXE_val
+        test_json['results'][f][g]['RMSE_rel_e_atm'] = RMSErel_val
         ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=sizemult*14,
             verticalalignment='top',bbox=props)
         if energy[f][g].ndim > 1:
@@ -124,11 +125,11 @@ for f in energy.keys():
         r'RMSE = %.2e' % (RMSE_val, )+ r' eV/Å',
         r'RMSE / σ = %.2e' % (RMSErel_val, ),
         r'MAXE = %.2e' % (MAXE_val, )+ r' eV/atom',))
-        test_json['results'][g]['MAE_f'] = MAE_val
-        test_json['results'][g]['MSE_f'] = MSE_val
-        test_json['results'][g]['RMSE_f'] = RMSE_val
-        test_json['results'][g]['MAXE_f'] = MAXE_val
-        test_json['results'][g]['RMSE_rel_f'] = RMSErel_val
+        test_json['results'][f][g]['MAE_f'] = MAE_val
+        test_json['results'][f][g]['MSE_f'] = MSE_val
+        test_json['results'][f][g]['RMSE_f'] = RMSE_val
+        test_json['results'][f][g]['MAXE_f'] = MAXE_val
+        test_json['results'][f][g]['RMSE_rel_f'] = RMSErel_val
         ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=sizemult*14,
             verticalalignment='top',bbox=props)
         ax.plot(force[f][g][:,0],force[f][g][:,1],linestyle='None',marker="x",color=colors[0])
