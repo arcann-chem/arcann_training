@@ -73,11 +73,11 @@ for it_subsys_nr in labeling_json['subsys_nr']:
                 timings_1 = [zzz for zzz in cp2k_output_1 if 'CP2K                                 1  1.0' in zzz]
                 timings_sum_1 = timings_sum_1 + float(timings_1[0].split(' ')[-1])
             elif any('SCF run NOT converged in ' in f for f in cp2k_output_1):
-                not_converged_list_1.append(cp2k_output_file_1)
+                not_converged_list_1.append(cp2k_output_file_1+'\n')
             else:
-                failed_list_1.append(cp2k_output_file_1)
+                failed_list_1.append(cp2k_output_file_1+'\n')
         else:
-            failed_list_1.append(cp2k_output_file_1)
+            failed_list_1.append(cp2k_output_file_1+'\n')
 
         cp2k_output_file_2 = check_path+'/2_labeling_'+it_step_zfill+'.out'
         if Path(cp2k_output_file_2).is_file():
@@ -87,11 +87,11 @@ for it_subsys_nr in labeling_json['subsys_nr']:
                 timings_2 = [zzz for zzz in cp2k_output_2 if 'CP2K                                 1  1.0' in zzz]
                 timings_sum_2 = timings_sum_2 + float(timings_2[0].split(' ')[-1])
             elif any('SCF run NOT converged in ' in f for f in cp2k_output_2):
-                not_converged_list_2.append(cp2k_output_file_2)
+                not_converged_list_2.append(cp2k_output_file_2+'\n')
             else:
-                failed_list_2.append(cp2k_output_file_2)
+                failed_list_2.append(cp2k_output_file_2+'\n')
         else:
-            failed_list_2.append(cp2k_output_file_2)
+            failed_list_2.append(cp2k_output_file_2+'\n')
 
     for it_step in range(labeling_json['subsys_nr'][it_subsys_nr]['candidates'] + 1, labeling_json['subsys_nr'][it_subsys_nr]['candidates'] + labeling_json['subsys_nr'][it_subsys_nr]['candidates_disturbed'] + 1):
         it_step_zfill = str(it_step).zfill(5)
