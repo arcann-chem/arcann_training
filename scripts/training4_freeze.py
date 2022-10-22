@@ -10,6 +10,7 @@
 import sys
 from pathlib import Path
 import logging
+
 logging.basicConfig(level=logging.INFO,format="%(levelname)s: %(message)s")
 
 import subprocess
@@ -36,44 +37,38 @@ sys.path.insert(0, str(Path(deepmd_iterative_apath)/"scripts"))
 del deepmd_iterative_apath_error
 import common_functions as cf
 
-### Temp fix before Path/Str pass
-training_iterative_apath = str(training_iterative_apath)
-deepmd_iterative_apath = str(deepmd_iterative_apath)
-
 ### Read what is needed (json files)
-config_json_fpath = training_iterative_apath+"/control/config.json"
-config_json = cf.json_read(config_json_fpath,True,True)
-
+control_apath = training_iterative_apath/"control"
+config_json = cf.json_read((control_apath/"config.json"),True,True)
 current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
 current_iteration = int(current_iteration_zfill)
+training_json = cf.json_read((control_apath/("training_"+current_iteration_zfill+".json")),True,True)
+jobs_apath = deepmd_iterative_apath/"jobs"/"training"
 
-training_json_fpath = training_iterative_apath+"/control/training_"+current_iteration_zfill+".json"
-training_json = cf.json_read(training_json_fpath,True,True)
-
-### Set needed variables
-project_name = project_name if "project_name" in globals() else training_json["project_name"]
-allocation_name = allocation_name if "allocation_name" in globals() else training_json["allocation_name"]
-arch_name = arch_name if "arch_name" in globals() else training_json["arch_name"]
+### Set needed variables issue#35
+project_name = training_json["project_name"] if "project_name" not in globals() else project_name
+allocation_name = training_json["allocation_name"] if "allocation_name" not in globals() else allocation_name
+arch_name = training_json["arch_name"] if "arch_name" not in globals() else arch_name
 if arch_name == "v100" or arch_name == "a100":
     arch_type ="gpu"
 
 ### Checks
-if training_json["is_checked"] is False:
+if not training_json["is_checked"]:
     logging.critical("Maybe check the training before freezing?")
     logging.critical("Aborting...")
     sys.exit(1)
 
+### issue#35
 cluster = cf.check_cluster()
-cf.check_file(deepmd_iterative_apath+"/jobs/training/job_deepmd_freeze_"+arch_type+"_"+cluster+".sh",True,True,"No SLURM file present for the freezing step on this cluster.")
-
-### Prep and launch DP Freeze
-slurm_file_master = cf.read_file(deepmd_iterative_apath+"/jobs/training/job_deepmd_freeze_"+arch_type+"_"+cluster+".sh")
+cf.check_file(jobs_apath/("job_deepmd_freeze_"+arch_type +"_"+cluster+".sh"),True,True,"No SLURM file present for the freezing step on this cluster.")
+slurm_file_master = cf.read_file(jobs_apath/("job_deepmd_freeze_"+arch_type +"_"+cluster+".sh"))
 slurm_email = "" if "slurm_email" not in globals() else slurm_email
 
+### Prep and launch DP Freeze
 check = 0
 for it_nnp in range(1, config_json["nb_nnp"] + 1):
-    cf.change_dir("./"+str(it_nnp))
-    cf.check_file("./model.ckpt.index",True,True,"./"+str(it_nnp)+"/model.ckpt.index not present.")
+    local_apath = Path(".").resolve()/str(it_nnp)
+    cf.check_file(local_apath/"model.ckpt.index",True,True)
     slurm_file = slurm_file_master
     slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",project_name)
     slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_","01:00:00")
@@ -96,19 +91,20 @@ for it_nnp in range(1, config_json["nb_nnp"] + 1):
         slurm_file = cf.replace_in_list(slurm_file,"_R_SUBPARTITION_","a100")
     else:
         sys.exit("Unknown error. Please BUG REPORT.\n Aborting...")
-    cf.write_file("job_deepmd_freeze_"+arch_type+"_"+cluster+".sh",slurm_file)
-    with open("checkpoint", "w") as f:
+    cf.write_file(local_apath/("job_deepmd_freeze_"+arch_type+"_"+cluster+".sh"),slurm_file)
+    with (local_apath/"checkpoint").open("w") as f:
         f.write("model_checkpoint_path: \"model.ckpt\"\n")
         f.write("all_model_checkpoint_paths: \"model.ckpt\"\n")
-        f.close()
     del f
-    if Path("job_deepmd_freeze_"+arch_type+"_"+cluster+".sh").is_file():
+    if (local_apath/("job_deepmd_freeze_"+arch_type+"_"+cluster+".sh")).is_file():
+        cf.change_dir(local_apath)
         subprocess.call(["sbatch","./job_deepmd_freeze_"+arch_type+"_"+cluster+".sh"])
-        logging.info("DP Freeze - ./"+str(it_nnp)+" launched")
+        cf.change_dir(local_apath.parent)
+        logging.info("DP Freeze - "+str(it_nnp)+" launched")
         check = check + 1
     else:
-        logging.critical("DP Freeze - ./"+str(it_nnp)+" NOT launched")
-    cf.change_dir("..")
+        logging.critical("DP Freeze - "+str(it_nnp)+" NOT launched")
+    del local_apath
 del it_nnp, slurm_file, slurm_file_master
 
 if check == config_json["nb_nnp"]:
@@ -119,9 +115,9 @@ else:
 del check
 
 ### Cleaning
-del config_json, config_json_fpath, training_iterative_apath
+del config_json, training_iterative_apath, control_apath, jobs_apath
 del current_iteration, current_iteration_zfill
-del training_json, training_json_fpath
+del training_json
 del cluster, arch_type
 del deepmd_iterative_apath
 del project_name, allocation_name, arch_name

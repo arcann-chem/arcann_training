@@ -1,4 +1,5 @@
 ###################################### No change past here
+from genericpath import exists
 import sys
 from pathlib import Path
 import logging
@@ -28,74 +29,73 @@ sys.path.insert(0, str(Path(deepmd_iterative_apath)/"scripts"))
 del deepmd_iterative_apath_error
 import common_functions as cf
 
-### Temp fix before Path/Str pass
-training_iterative_apath = str(training_iterative_apath)
-deepmd_iterative_apath = str(deepmd_iterative_apath)
-
 ### Read what is needed (json files)
-config_json_fpath = training_iterative_apath+"/control/config.json"
-config_json = cf.json_read(config_json_fpath,True,True)
-
+control_apath = training_iterative_apath/"control"
+config_json = cf.json_read((control_apath/"config.json"),True,True)
 current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
 current_iteration = int(current_iteration_zfill)
-
-training_json_fpath = training_iterative_apath+"/control/training_"+current_iteration_zfill+".json"
-training_json = cf.json_read(training_json_fpath,True,True)
+training_json = cf.json_read((control_apath/("training_"+current_iteration_zfill+".json")),True,True)
 
 ### Checks
-if training_json["is_frozen"] is False:
+if not training_json["is_frozen"]:
     logging.critical("Maybe freeze the NNPs before updating the iteration?")
     logging.critical("Aborting...")
     sys.exit(1)
 
 ### Prep the next iteration
 for it_nnp in range(1, config_json["nb_nnp"] + 1):
-    cf.change_dir("./"+str(it_nnp))
-    cf.check_file("graph_"+str(it_nnp)+"_"+current_iteration_zfill+".pb",True,True)
+    local_apath = Path(".").resolve()/str(it_nnp)
+    cf.check_file(local_apath/("graph_"+str(it_nnp)+"_"+current_iteration_zfill+".pb"),True,True)
     if training_json["is_compressed"] is True:
-        cf.check_file("graph_"+str(it_nnp)+"_"+current_iteration_zfill+"_compressed.pb",True,True)
-    cf.remove_file_glob(".","DeepMD_*")
-    cf.remove_file_glob(".","model.ckpt-*")
-    cf.remove_file("checkpoint")
-    cf.remove_file("input_v2_compat.json")
-    if Path("model-compression").is_dir():
-        cf.remove_tree(Path("model-compression"))
-    cf.change_dir("../")
+        cf.check_file(local_apath/("graph_"+str(it_nnp)+"_"+current_iteration_zfill+"_compressed.pb"),True,True)
+    cf.remove_file(local_apath/("checkpoint"))
+    cf.remove_file(local_apath/("input_v2_compat"))
+    cf.remove_file_glob(local_apath,"DeepMD_*")
+    cf.remove_file_glob(local_apath,"model.ckpt-*")
+    if (local_apath/"model-compression").is_dir():
+        cf.remove_tree(local_apath/"model-compression")
 
-cf.create_dir("../"+current_iteration_zfill+"-test")
-subprocess.call(["rsync","-a", training_iterative_apath+"/data", "../"+current_iteration_zfill+"-test/"])
+(training_iterative_apath/(current_iteration_zfill+"-test")).mkdir(exist_ok=True)
+cf.check_dir((training_iterative_apath/(current_iteration_zfill+"-test")),True)
 
-cf.create_dir("../NNP")
+subprocess.call(["rsync","-a", str(training_iterative_apath/"data"), str(training_iterative_apath/(current_iteration_zfill+"-test"))])
+
+(training_iterative_apath/"NNP").mkdir(exist_ok=True)
+cf.check_dir(training_iterative_apath/"NNP",True)
+
+local_apath = Path(".").resolve()
+
 for it_nnp in range(1, config_json["nb_nnp"] + 1):
     if training_json["is_compressed"] is True:
-        subprocess.call(["rsync","-a", "./"+str(it_nnp)+"/graph_"+str(it_nnp)+"_"+current_iteration_zfill+"_compressed.pb", "../NNP/"])
-    else:
-        subprocess.call(["rsync","-a", "./"+str(it_nnp)+"/graph_"+str(it_nnp)+"_"+current_iteration_zfill+".pb", "../NNP/"])
+        subprocess.call(["rsync","-a", str(local_apath/(str(it_nnp)+"/graph_"+str(it_nnp)+"_"+current_iteration_zfill+"_compressed.pb")), str((training_iterative_apath/"NNP"))])
+    subprocess.call(["rsync","-a", str(local_apath/(str(it_nnp)+"/graph_"+str(it_nnp)+"_"+current_iteration_zfill+".pb")), str((training_iterative_apath/"NNP"))])
 del it_nnp
 
 current_iteration = current_iteration+1
 config_json["current_iteration"] = current_iteration
 current_iteration_zfill = str(current_iteration).zfill(3)
 
-cf.create_dir("../"+current_iteration_zfill+"-exploration")
-cf.create_dir("../"+current_iteration_zfill+"-reactive")
-cf.create_dir("../"+current_iteration_zfill+"-labeling")
-cf.create_dir("../"+current_iteration_zfill+"-training")
+for it_steps in ["exploration","reactive","labeling","training"]:
+    (training_iterative_apath/(current_iteration_zfill+"-"+it_steps)).mkdir(exist_ok=True)
+    cf.check_dir(training_iterative_apath/(current_iteration_zfill+"-"+it_steps),True)
+del it_steps
 
-cf.json_dump(config_json,config_json_fpath,True,"config file")
+cf.json_dump(config_json,(control_apath/"config.json"),True)
 
-if Path("data").is_dir():
-    cf.remove_tree(Path("data"))
+if (local_apath/"data").is_dir():
+    cf.remove_tree(local_apath/"data")
+del local_apath
 
 logging.info("Updating the iteration is a success!")
 
 ### Cleaning
-del config_json, config_json_fpath, training_iterative_apath
+del config_json, training_iterative_apath, control_apath
 del current_iteration, current_iteration_zfill
-del training_json, training_json_fpath
+del training_json
 del deepmd_iterative_apath
 
 del sys, Path, logging, cf
 del subprocess
 import gc; gc.collect(); del gc
+print(globals())
 exit()

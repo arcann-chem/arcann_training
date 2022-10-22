@@ -28,22 +28,15 @@ sys.path.insert(0, str(Path(deepmd_iterative_apath)/"scripts"))
 del deepmd_iterative_apath_error
 import common_functions as cf
 
-### Temp fix before Path/Str pass
-training_iterative_apath = str(training_iterative_apath)
-deepmd_iterative_apath = str(deepmd_iterative_apath)
-
 ### Read what is needed (json files)
-config_json_fpath = training_iterative_apath+"/control/config.json"
-config_json = cf.json_read(config_json_fpath,True,True)
-
+control_apath = training_iterative_apath/"control"
+config_json = cf.json_read((control_apath/"config.json"),True,True)
 current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
 current_iteration = int(current_iteration_zfill)
-
-training_json_fpath = training_iterative_apath+"/control/training_"+current_iteration_zfill+".json"
-training_json = cf.json_read(training_json_fpath,True,True)
+training_json = cf.json_read((control_apath/("training_"+current_iteration_zfill+".json")),True,True)
 
 ### Checks
-if training_json["is_launched"] is False:
+if not training_json["is_launched"]:
     logging.critical("Maybe launch the training before checking?")
     logging.critical("Aborting")
     sys.exit(1)
@@ -52,30 +45,30 @@ if training_json["is_launched"] is False:
 time_per_step=[]
 check = 0
 for it_nnp in range(1, config_json["nb_nnp"] + 1):
-    cf.change_dir("./"+str(it_nnp))
-    if Path("training.out").is_file():
-        training_out = cf.read_file("training.out")
+    local_apath = Path(".").resolve()/str(it_nnp)
+    if (local_apath/"training.out").is_file():
+        training_out = cf.read_file((local_apath/"training.out"))
         if any("finished training" in s for s in training_out):
             training_out_time=[s for s in training_out if "training time" in s]
             training_out_time_split=[]
             for n in range(0,len(training_out_time)):
                 training_out_time_split.append(training_out_time[n].split(" "))
                 training_out_time_split[n]=" ".join(training_out_time_split[n]).split()
-            if Path("model.ckpt-"+str(training_out_time_split[-1][3])+".index").is_file():
-                Path("model.ckpt-"+str(training_out_time_split[-1][3])+".index").rename("model.ckpt.index")
-                Path("model.ckpt-"+str(training_out_time_split[-1][3])+".meta").rename("model.ckpt.meta")
-                Path("model.ckpt-"+str(training_out_time_split[-1][3])+".data-00000-of-00001").rename("model.ckpt.data-00000-of-00001")
+            if (local_apath/("model.ckpt-"+str(training_out_time_split[-1][3])+".index")).is_file():
+                (local_apath/("model.ckpt-"+str(training_out_time_split[-1][3])+".index")).rename(local_apath/"model.ckpt.index")
+                (local_apath/("model.ckpt-"+str(training_out_time_split[-1][3])+".meta")).rename(local_apath/"model.ckpt.meta")
+                (local_apath/("model.ckpt-"+str(training_out_time_split[-1][3])+".meta")).rename(local_apath/"model.ckpt.meta")
             for n in range(0,len(training_out_time_split)):
                 time_per_step.append(float(training_out_time_split[n][6]))
             del n
             step_size = float(training_out_time_split[-1][3])-float(training_out_time_split[-2][3])
             check = check + 1
         else:
-            logging.critical("DP Train - ./"+str(it_nnp)+" not finished/failed")
+            logging.critical("DP Train - "+str(it_nnp)+" not finished/failed")
         del training_out, training_out_time, training_out_time_split
     else:
-        logging.critical("DP Train - ./"+str(it_nnp)+" still running/no outfile")
-    cf.change_dir("..")
+        logging.critical("DP Train - "+str(it_nnp)+" still running/no outfile")
+    del local_apath
 del it_nnp
 
 if check == config_json["nb_nnp"]:
@@ -88,17 +81,17 @@ else:
 del check
 
 if ( "time_per_step" in globals() ) and ( "step_size" in globals() ):
-    training_json["avg_seconds_per_step"]=np.average(time_per_step)/(step_size)
+    training_json["s_per_step"]=np.average(time_per_step)/(step_size)
     del time_per_step, step_size
 
-cf.json_dump(training_json,training_json_fpath,True,"training.json")
+cf.json_dump(training_json,(control_apath/("training_"+current_iteration_zfill+".json")),True)
 
 logging.info("The training phase is a success!")
 
 ### Cleaning
-del config_json, config_json_fpath, training_iterative_apath
+del config_json, training_iterative_apath, control_apath
 del current_iteration, current_iteration_zfill
-del training_json, training_json_fpath
+del training_json
 del deepmd_iterative_apath
 
 del sys, Path, logging, cf

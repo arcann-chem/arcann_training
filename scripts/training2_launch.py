@@ -2,6 +2,7 @@
 import sys
 from pathlib import Path
 import logging
+
 logging.basicConfig(level=logging.INFO,format="%(levelname)s: %(message)s")
 
 import subprocess
@@ -28,31 +29,25 @@ sys.path.insert(0, str(Path(deepmd_iterative_apath)/"scripts"))
 del deepmd_iterative_apath_error
 import common_functions as cf
 
-### Temp fix before Path/Str pass
-training_iterative_apath = str(training_iterative_apath)
-deepmd_iterative_apath = str(deepmd_iterative_apath)
-
 ### Read what is needed (json files)
-config_json_fpath = training_iterative_apath+"/control/config.json"
-config_json = cf.json_read(config_json_fpath,True,True)
-
+control_apath = training_iterative_apath/"control"
+config_json = cf.json_read((control_apath/"config.json"),True,True)
 current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
 current_iteration = int(current_iteration_zfill)
-
-training_json_fpath = str(Path(training_iterative_apath+"/control/training_"+current_iteration_zfill+".json").resolve())
-training_json = cf.json_read(training_json_fpath,True,True)
+training_json = cf.json_read((control_apath/("training_"+current_iteration_zfill+".json")),True,True)
 
 ### Checks
-if training_json["is_launched"] is True:
+if training_json["is_launched"]:
     logging.critical("Already launched.")
     logging.critical("Aborting...")
     sys.exit(1)
 
-if training_json["is_locked"] is False:
+if not training_json["is_locked"]:
     logging.critical("Lock found. Run/Check first: training1_prep.py")
     logging.critical("Aborting...")
     sys.exit(1)
 
+### issue#35
 cluster = cf.check_cluster()
 
 if training_json["cluster"] != cluster:
@@ -60,37 +55,39 @@ if training_json["cluster"] != cluster:
     logging.critical("Aborting...")
     sys.exit(1)
 
-### Set needed variables
+### Set needed variables issue#35
 if training_json["arch_name"] == "v100" or training_json["arch_name"] == "a100":
     arch_type="gpu"
 
 ### Launch the jobs
 check = 0
 for it_nnp in range(1, config_json["nb_nnp"] + 1):
-    cf.change_dir("./"+str(it_nnp))
-    if Path("job_deepmd_train_"+arch_type+"_"+cluster+".sh").is_file():
+    local_apath = Path(".").resolve()/str(it_nnp)
+    if (local_apath/("job_deepmd_train_"+arch_type+"_"+cluster+".sh")).is_file():
+        cf.change_dir(local_apath)
         subprocess.call(["sbatch","./job_deepmd_train_"+arch_type+"_"+cluster+".sh"])
-        logging.info("DP Train - ./"+str(it_nnp)+" launched")
+        cf.change_dir(local_apath.parent)
+        logging.info("DP Train - "+str(it_nnp)+" launched")
         check = check + 1
     else:
-        logging.critical("DP Train - ./"+str(it_nnp)+" NOT launched")
-    cf.change_dir("..")
+        logging.critical("DP Train - "+str(it_nnp)+" NOT launched")
+    del local_apath
 del it_nnp
 
 if check == config_json["nb_nnp"]:
     training_json["is_launched"] = True
-    logging.info("Slurm launch of the training is a success!")
+    logging.info("Slurm Launch of DP Train is a success!")
 else:
     logging.critical("Some DP Train did not launched correctly")
     logging.critical("Please launch manually before continuing to the next step")
     logging.critical("And replace the key \"is_launched\" to True in the corresponding training.json.")
 del check
 
-cf.json_dump(training_json,training_json_fpath,True,"training.json")
+cf.json_dump(training_json,(control_apath/("training_"+current_iteration_zfill+".json")),True)
 
-del config_json, config_json_fpath, training_iterative_apath
+del config_json, training_iterative_apath, control_apath
 del current_iteration, current_iteration_zfill
-del training_json, training_json_fpath
+del training_json
 del cluster, arch_type
 del deepmd_iterative_apath
 

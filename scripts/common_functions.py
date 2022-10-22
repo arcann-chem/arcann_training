@@ -6,91 +6,149 @@ from pathlib import Path
 import socket
 import logging
 
-#### TODO Better descriptions
 
-def check_file(file_path: str,status: bool,abort: bool,error_msg: str="None"):
-    """Check if a file exists or not, abort or not
+#### Path friendly
+def json_read(file_path: Path,abort: bool=True,is_logged: bool=False) -> dict:
+    """Read a JSON file to a JSON dict
 
     Args:
-        file_path (str): full path of the file
-        status (bool): True to check if it is present, False to check if it isn"t
-        abort (bool): True to abort, False to log only
-        error_msg (str, optional): To override default error message.
-    """
-    if not status and not Path(file_path).is_file():
-        if abort:
-            logging.critical(file_path+" does not exist.") if error_msg == "None" else logging.critical(error_msg)
-            logging.critical("Aborting...")
-            sys.exit(1)
-        else:
-            logging.warning(file_path+" does not exist.") if error_msg == "None" else logging.warning(error_msg)
-    elif not status and Path(file_path).is_file():
-        if abort:
-            logging.critical(file_path+" exists.") if error_msg == "None" else logging.critical(error_msg)
-            logging.critical("Aborting...")
-            sys.exit(1)
-        else:
-            logging.warning(file_path+" exists.") if error_msg == "None" else logging.warning(error_msg)
+        file_path (Path): Path object to the file
+        abort (bool, optional): True to abort, False create a new dict. Defaults to True.
+        is_logged (bool, optional): Logging. Defaults to False.
 
-def check_dir(directory_path:str,abort:bool,error_msg="None"):
+    Returns:
+        dict: JSON dictionary
+    """
+    if file_path.is_file():
+        if is_logged:
+            logging.info("Loading: "+file_path.name+" from "+str(file_path.parent))
+        return json.load(file_path.open())
+    else:
+        if abort:
+            logging.critical("File not found: "+file_path.name+" not in "+str(file_path.parent))
+            logging.critical("Aborting...")
+            sys.exit(1)
+        else:
+            if is_logged:
+                logging.info("File not found: "+file_path.name)
+                logging.info("Creating a new one...")
+            return {}
+
+
+def json_dump(json_dict: dict,file_path: Path,is_logged: bool=False):
+    """Write a JSON dict to a JSON file
+
+    Args:
+        json_dict (dict): JSON dictionary
+        file_path (Path): Path object to the file
+        is_logged (bool, optional): Logging. Defaults to False.
+    """
+    with file_path.open("w", encoding="UTF-8") as f:
+        json.dump(json_dict, f)
+        if is_logged:
+            logging.info("Writing "+file_path.name+" in "+str(file_path.parent))
+
+
+def check_file(file_path: Path,exists: bool,abort: bool,error_msg: str="default"):
+    """Check if a file exists or not, abort or not
+        exists/abort:
+        True/True: if the file does't exist, abort
+        False/True: if the file does exist, abort
+        True/False: if the file does't exist, log only
+        False/False: if the file does exist, log only
+
+    Args:
+        file_path (Path): Path object to the file
+        exists (bool):  True to check if it should exists, False to check if it shouldn't
+        abort (bool): True to abort, False to log only
+        error_msg (str, optional): To override default error message. Defaults to "default".
+    """
+    if not exists and not file_path.is_file():
+        if abort:
+            logging.critical("File not found: "+file_path.name+" not in "+str(file_path.parent)) if error_msg == "default" else logging.critical(error_msg)
+            logging.critical("Aborting...")
+            sys.exit(1)
+        else:
+            logging.warning("File not found: "+file_path.name+" not in "+str(file_path.parent)) if error_msg == "default" else logging.warning(error_msg)
+    elif not exists and file_path.is_file():
+        if abort:
+            logging.critical("File found: "+file_path.name+" in "+str(file_path.parent)) if error_msg == "default" else logging.critical(error_msg)
+            logging.critical("Aborting...")
+            sys.exit(1)
+        else:
+            logging.warning("File found: "+file_path.name+" in "+str(file_path.parent))if error_msg == "default" else logging.warning(error_msg)
+
+
+def check_dir(directory_path: Path, abort: bool,error_msg: str="default"):
     """Check if directory exists
 
     Args:
-        directory_path (str):  full path of the directory to check
+        directory_path (Path): Path object to the directory
         abort (bool): True to abort, False to log only
-        error_msg (str, optional): override default error message
+        error_msg (str, optional): To override default error message. Defaults to "default".
     """
-    if Path(directory_path).is_dir() is False:
+    if not directory_path.is_dir():
         if abort:
             if error_msg == "data":
-                logging.critical("No data folder to search for initial sets: "+directory_path)
-                logging.critical("Aborting...")
-                sys.exit(1)
-            elif error_msg == "None":
-                logging.critical("No existing folder: "+directory_path)
+                logging.critical("No data folder to search for initial sets: "+str(directory_path))
                 logging.critical("Aborting...")
                 sys.exit(1)
             else:
-                logging.critical(error_msg)
+                logging.critical("Directory not found: "+str(directory_path)) if error_msg == "default" else logging.critical(error_msg)
                 logging.critical("Aborting...")
                 sys.exit(1)
         else:
-            if error_msg == "None":
-                logging.warning("No existing folder: "+directory_path)
-            else:
-                logging.warning(error_msg)
+            logging.warning("Directory not found: "+str(directory_path)) if error_msg == "default" else logging.critical(error_msg)
 
-def create_dir(directory_path:str):
-    """Create directory
+
+def check_initial_datasets(training_iterative_apath: Path) -> dict:
+    """Check the initial datastes
 
     Args:
-        directory_path (str): full path of the directory to create
-    """
-    if Path(directory_path).is_dir() is False:
-        try:
-            Path(directory_path).mkdir(parents=True)
-        except(FileExistsError):
-            pass
-        except:
-            logging.critical("Could not create "+directory_path)
-            logging.critical("Aborting...")
-            sys.exit(1)
+        training_iterative_apath (Path): Path object to the root training folder
 
-def change_dir(directory_path:str):
-    if Path(directory_path).is_dir() is False:
-        logging.critical("No existing folder: "+directory_path)
+    Returns:
+        dict: JSON dictionary
+    """
+    if (training_iterative_apath/"control"/"initial_datasets.json").is_file():
+        logging.info("Loading: "+str((training_iterative_apath/"control"/"initial_datasets.json")))
+        initial_datasets_json = json.load((training_iterative_apath/"control"/"initial_datasets.json").open())
+        for f in initial_datasets_json:
+            if not (training_iterative_apath/"data"/f).is_dir():
+                logging.critical("Initial set not found in data: "+f)
+                logging.critical("Aborting...")
+                sys.exit(1)
+            else:
+                if np.load(str(training_iterative_apath/"data"/f/"set.000"/"box.npy")).shape[0] != initial_datasets_json[f]:
+                    logging.critical("Missmatch in count for the set: "+f)
+                    logging.critical("Aborting...")
+                    sys.exit(1)
+        return initial_datasets_json
+    else:
+        logging.critical("datasets_initial.json not present in: "+str(training_iterative_apath/"control"))
+        logging.critical("Aborting...")
+        sys.exit(1)
+
+
+def read_file(file_path: Path) -> list:
+    """Read a file as a list of strings (one line, one string)
+
+    Args:
+        file_path (Path): Path object to the file
+
+    Returns:
+        list: list of strings
+    """
+    if not file_path.is_file():
+        logging.critical("File not found: "+file_path.name+" not in "+str(file_path.parent))
         logging.critical("Aborting...")
         sys.exit(1)
     else:
-        try:
-            os.chdir(directory_path)
-        except:
-            logging.critical("Error changing dir: "+directory_path)
-            logging.critical("Aborting...")
-            sys.exit(1)
+        with file_path.open() as f:
+            return f.readlines()
 
-def check_cluster():
-    """_summary_
+def check_cluster() -> str:
+    """Get the cluster name
 
     Returns:
         str: The short string name for the cluster: jz, oc, pc, ir
@@ -115,7 +173,87 @@ def check_cluster():
         logging.warning("Not on a known cluster, some features will not work.")
         return "0"
 
-def get_decay_steps(total_trained:int,min=5000):
+def write_file(file_path: Path, list_of_string: list):
+    """_summary_
+
+    Args:
+        file_path (Path): _description_
+        list_of_string (list): _description_
+    """
+    file_path.write_text("".join(list_of_string))
+
+
+def replace_in_list(input_list: list,substring_in: str,substring_out: str) -> list:
+    """_summary_
+
+    Args:
+        input_list (list): input list of string
+        substring_in (str): string to replace
+        substring_out (str): desired string
+
+    Returns:
+        list: output list of string
+    """
+    output_list = [f.replace(substring_in,substring_out) for f in input_list]
+    return output_list
+
+
+def change_dir(directory_path: Path):
+    """_summary_
+
+    Args:
+        directory_path (Path): Path to the new directory
+    """
+    if not directory_path.is_dir():
+        logging.critical("Directory not found: "+str(directory_path))
+        logging.critical("Aborting...")
+        sys.exit(1)
+    else:
+        try:
+            os.chdir(directory_path)
+        except:
+            logging.critical("Error in changing dir: "+str(directory_path))
+            logging.critical("Aborting...")
+            sys.exit(1)
+
+
+def remove_file(file_path: Path):
+    """_summary_
+
+    Args:
+        file_path (Path): _description_
+    """
+    if file_path.is_file():
+        file_path.unlink()
+
+
+def remove_file_glob(directory_path: Path,file_glob: str):
+    """_summary_
+
+    Args:
+        directory_path (Path): _description_
+        file_glob (str): _description_
+    """
+    for f in directory_path.glob(file_glob):
+        f.unlink()
+
+
+def remove_tree(directory_path: Path):
+    """_summary_
+
+    Args:
+        pth (Path): _description_
+    """
+    for child in directory_path.iterdir():
+        if child.is_file():
+            child.unlink()
+        else:
+            remove_tree(child)
+    directory_path.rmdir()
+
+
+#### Training only
+def get_decay_steps(total_trained: int,min: int=5000) -> int:
     """Calculate decay steps if not defined:
         Floor the number of total trained structures to nearest 10000
         If < 20 000, decay_steps = 5 000
@@ -139,7 +277,8 @@ def get_decay_steps(total_trained:int,min=5000):
          decay_steps = 20000 + (( total_trained_floored - 50000 )/100000)*10000
     return int(decay_steps)
 
-def get_decay_rate(stop_batch:int,start_lr:float,stop_lr:float,decay_steps:int):
+
+def get_decay_rate(stop_batch :int,start_lr: float,stop_lr: float,decay_steps: int) -> float:
     """Get the decay rate (lambda)
 
     Args:
@@ -153,7 +292,8 @@ def get_decay_rate(stop_batch:int,start_lr:float,stop_lr:float,decay_steps:int):
     """
     return np.exp(np.log(stop_lr / start_lr) / (stop_batch /  decay_steps))
 
-def get_learning_rate(training_step:int,start_lr:float,decay_rate:float,decay_steps:int):
+
+def get_learning_rate(training_step: int,start_lr: float,decay_rate: float,decay_steps: int) -> float:
     """Get the learning rate at step t
 
     Args:
@@ -167,87 +307,6 @@ def get_learning_rate(training_step:int,start_lr:float,decay_rate:float,decay_st
     """
     return (start_lr*decay_rate**(training_step/decay_steps))
 
-def json_dump(json_dict:dict,output_file_path:str,print_log=False,name=None):
-    """Dump json file
-
-    Args:
-        json_dict (dict): JSON dictionary
-        output_file_path (str): full path of the output json file
-        print_log (bool): log the action
-        name (str): JSON fancy name for logging
-    """
-    if name == "None":
-        name = json_dict
-    with open(output_file_path, "w") as f:
-        json.dump(json_dict, f)
-        if print_log:
-            logging.info("Writing "+name+" in: "+output_file_path)
-
-def json_read(json_file_path,should_abort=True,should_print=True):
-    """Read json file
-
-    Args:
-        input_file (str): full path of json file
-        abort (bool): if True then abort if the file is not found; else create empty dict
-
-    Returns:
-        (dict): json as a dict
-    """
-    if Path(json_file_path).is_file():
-        if should_print:
-            logging.info("Loading: "+json_file_path)
-        return json.load(open(json_file_path,))
-    else:
-        if should_abort:
-            logging.critical("Config not found: "+json_file_path)
-            logging.critical("Aborting...")
-            sys.exit(1)
-        else:
-            if should_print:
-                logging.info("No "+json_file_path+" file found, creating a new one...")
-            return {}
-
-def write_file(output_file_path:str,list_of_string:list):
-
-    """Write a file as a list of string (each string must end with \n for new lines)
-
-    Args:
-        output_file_path (str): full path of output file
-        list_of_string (list): list of strings to write (one string per line)
-    """
-    with open(output_file_path,"w") as f:
-         f.writelines(list_of_string)
-
-def read_file(input_file_path:str):
-    """_summary_
-
-    Args:
-        input_file (str): full path of input file
-
-    Returns:
-        list: the file as a list of strings (one string per line)
-    """
-    if Path(input_file_path).is_file() is False:
-        logging.critical("File not found: "+input_file_path)
-        logging.critical("Aborting...")
-        sys.exit(1)
-    with open(input_file_path) as f:
-        OUT_output_list_strings = f.readlines()
-    return OUT_output_list_strings
-
-def replace_in_list(input_list,substring_in,substring_out):
-    """_summary_
-
-    Args:
-        input_list (list): input list of string
-        substring_in (str): string to replace
-        substring_out (str): desired string
-
-    Returns:
-        list: output list of string
-    """
-    output_list = [f.replace(substring_in,substring_out) for f in input_list]
-    return output_list
 
 def check_if_in_dict(params_f,key_f,default_f,error_f):
     """
@@ -260,65 +319,8 @@ def check_if_in_dict(params_f,key_f,default_f,error_f):
         else:
             sys.exit("Error: "+key_f+" not found.\n Aborting...")
 
-def check_datasets_initial(current_path):
-    """_summary_
 
-    Args:
-        current_path (str): current path
-
-    Returns:
-        dict: Initial set dict
-    """
-    if Path(current_path+"/control/datasets_initial.json").is_file():
-        logging.info("Loading: "+current_path+"/control/datasets_initial.json")
-        initial_sets_json_f = json.load(open(current_path+"/control/datasets_initial.json",))
-        for f in initial_sets_json_f:
-            if Path(current_path+"/data/"+f).is_dir() is False:
-                logging.critical("Initial set not found in data: "+f)
-                logging.critical("Aborting...")
-                sys.exit(1)
-            else:
-                if np.load(current_path+"/data/"+f+"/set.000/box.npy").shape[0] != initial_sets_json_f[f]:
-                    logging.critical("Missmatch in count for : "+f)
-                    logging.critical("Aborting...")
-                    sys.exit(1)
-        return initial_sets_json_f
-    else:
-        logging.critical("datasets_initial.json not present in: "+current_path+"/control/")
-        logging.critical("Aborting...")
-        sys.exit(1)
-
-def remove_file(file_path:str):
-    """_summary_
-
-    Args:
-        file_path (_type_): _description_
-    """
-    if Path(file_path).is_file():
-        Path(file_path).unlink()
-
-def remove_file_glob(file_path:str,file_glob:str):
-    """_summary_
-
-    Args:
-        file_path (str): _description_
-        file_glob (str): _description_
-    """
-    for f in Path(file_path).glob(file_glob):
-        f.unlink()
-
-def remove_tree(pth:Path):
-    """_summary_
-
-    Args:
-        pth (Path): _description_
-    """
-    for child in pth.iterdir():
-        if child.is_file():
-            child.unlink()
-        else:
-            remove_tree(child)
-    pth.rmdir()
+### Not clean
 
 def seconds_to_walltime(seconds):
     min, sec = divmod(seconds, 60)

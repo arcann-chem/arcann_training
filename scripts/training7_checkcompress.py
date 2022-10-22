@@ -26,35 +26,28 @@ sys.path.insert(0, str(Path(deepmd_iterative_apath)/"scripts"))
 del deepmd_iterative_apath_error
 import common_functions as cf
 
-### Temp fix before Path/Str pass
-training_iterative_apath = str(training_iterative_apath)
-deepmd_iterative_apath = str(deepmd_iterative_apath)
-
 ### Read what is needed (json files)
-config_json_fpath = training_iterative_apath+"/control/config.json"
-config_json = cf.json_read(config_json_fpath,True,True)
-
+control_apath = training_iterative_apath/"control"
+config_json = cf.json_read((control_apath/"config.json"),True,True)
 current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
 current_iteration = int(current_iteration_zfill)
-
-training_json_fpath = training_iterative_apath+"/control/training_"+current_iteration_zfill+".json"
-training_json = cf.json_read(training_json_fpath,True,True)
+training_json = cf.json_read((control_apath/("training_"+current_iteration_zfill+".json")),True,True)
 
 ### Checks
-if training_json["is_frozen"] is False:
+if not training_json["is_frozen"]:
     logging.critical("Maybe check the freezing before checking the compressing?")
     logging.critical("Aborting...")
     sys.exit(1)
 
 ### Check normal termination of DP Compress
 check = 0
-for it_nnp in range(1, config_json["nb_nnp"] + 1 ):
-    cf.change_dir("./"+str(it_nnp))
-    if Path("graph_"+str(it_nnp)+"_"+current_iteration_zfill+"_compressed.pb").is_file():
+for it_nnp in range(1, config_json["nb_nnp"] + 1):
+    local_apath = Path(".").resolve()/str(it_nnp)
+    if (local_apath/("graph_"+str(it_nnp)+"_"+current_iteration_zfill+"_compressed.pb")).is_file():
         check = check + 1
     else:
-        logging.critical("DP Compress - ./"+str(it_nnp)+" not finished/failed")
-    cf.change_dir("../")
+        logging.critical("DP Compress - "+str(it_nnp)+" not finished/failed")
+    del local_apath
 del it_nnp
 
 if check == config_json["nb_nnp"]:
@@ -68,14 +61,14 @@ del check
 
 training_json["is_compressed"] = True
 
-cf.json_dump(training_json,training_json_fpath,True,"training.json")
+cf.json_dump(training_json,(control_apath/("training_"+current_iteration_zfill+".json")),True)
 
 logging.info("DP Compress is a success!")
 
 ### Cleaning
-del config_json, config_json_fpath, training_iterative_apath
+del config_json, training_iterative_apath, control_apath
 del current_iteration, current_iteration_zfill
-del training_json, training_json_fpath
+del training_json
 del deepmd_iterative_apath
 
 del sys, Path, logging, cf
