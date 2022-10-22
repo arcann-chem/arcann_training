@@ -3,11 +3,11 @@
 # Date: 2021/03/16
 # Modified: 2022/10/08
 # Account
-#SBATCH --account=_PROJECT_@_ALLOC_
+#SBATCH --account=_R_PROJECT_@_R_ALLOC_
 # Queue
-#SBATCH --qos=_QOS_
-#SBATCH --partition=_PARTITION_
-#SBATCH -C _SUBPARTITION_
+#SBATCH --qos=_R_QOS_
+#SBATCH --partition=_R_PARTITION_
+#SBATCH -C _R_SUBPARTITION_
 # Number of nodes/processes/tasksperprocess
 #SBATCH --nodes 1
 #SBATCH --ntasks-per-node 1
@@ -15,7 +15,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --hint=nomultithread
 # Wall-time
-#SBATCH -t _WALLTIME_
+#SBATCH -t _R_WALLTIME_
 # Merge Output/Error
 #SBATCH -o DeepMD_Train.%j
 #SBATCH -e DeepMD_Train.%j
@@ -23,13 +23,13 @@
 #SBATCH -J DeepMD_Train
 # Email (Remove the space between # and SBATCH on the next two lines)
 ##SBATCH --mail-type FAIL,BEGIN,END,ALL
-##SBATCH --mail-user _EMAIL_
+##SBATCH --mail-user _R_EMAIL_
 #
 
 # Input files
-DeepMD_MODEL_VERSION="SET_DEEPMD_MODEL_VERSION"
-DeepMD_INPUT_F="training"
-DeepMD_CHKPT_F="CHKPT.ext"
+DeepMD_MODEL_VERSION="_R_DEEPMD_MODEL_VERSION_"
+DeepMD_INPUT="training"
+DeepMD_CHKPT="_R_CHECKPOINT_"
 DeepMD_DATA_DIR="../data"
 
 #----------------------------------------------
@@ -44,12 +44,12 @@ if [ "${SLURM_JOB_QOS:4:3}" == "gpu" ]; then
         module purge
         . /gpfswork/rech/nvs/commun/programs/apps/deepmd-kit/2.1.4-cuda11.6_plumed-2.8.0/etc/profile.d/conda.sh
         conda activate /gpfswork/rech/nvs/commun/programs/apps/deepmd-kit/2.1.4-cuda11.6_plumed-2.8.0
-        log="--log-path ${DeepMD_INPUT_F}.log"
+        log="--log-path ${DeepMD_INPUT}.log"
     elif [ "${DeepMD_MODEL_VERSION}" = "2.0" ]; then
         module purge
         . /gpfswork/rech/nvs/commun/programs/apps/deepmd-kit/2.0.3-cuda10.1_plumed-2.7.4/etc/profile.d/conda.sh
         conda activate /gpfswork/rech/nvs/commun/programs/apps/deepmd-kit/2.0.3-cuda10.1_plumed-2.7.4
-        log="--log-path ${DeepMD_INPUT_F}.log"
+        log="--log-path ${DeepMD_INPUT}.log"
      elif [ "${DeepMD_MODEL_VERSION}" = "1.3" ]; then
         module purge
         . /gpfswork/rech/nvs/commun/programs/apps/deepmd-kit/1.3.3-cuda10.1_plumed-2.6.2/etc/profile.d/conda.sh
@@ -71,7 +71,7 @@ fi
 DeepMD_EXE=$(which dp) || ( echo "Executable not found. Aborting..."; exit 1 )
 
 # Test if input file is present
-if [ ! -f ${DeepMD_INPUT_F}.json ]; then echo "No input file found. Aborting..."; exit 1; fi
+if [ ! -f ${DeepMD_INPUT}.json ]; then echo "No input file found. Aborting..."; exit 1; fi
 
 # Set the temporary work directory
 export TEMPWORKDIR=${SCRATCH}/JOB-${SLURM_JOBID}
@@ -79,8 +79,8 @@ mkdir -p "${TEMPWORKDIR}"
 ln -s "${TEMPWORKDIR}" "${SLURM_SUBMIT_DIR}"/JOB-"${SLURM_JOBID}"
 
 # Copy files to the temporary work directory
-cp ${DeepMD_INPUT_F}.json "${TEMPWORKDIR}" && echo "${DeepMD_INPUT_F}.json copied successfully"
-for f in "${DeepMD_CHKPT_F}"* ; do [ -f "${f}" ] && cp "${f}" "${TEMPWORKDIR}" && echo "${f} copied successfully"; done
+cp ${DeepMD_INPUT}.json "${TEMPWORKDIR}" && echo "${DeepMD_INPUT}.json copied successfully"
+for f in "${DeepMD_CHKPT}"* ; do [ -f "${f}" ] && cp "${f}" "${TEMPWORKDIR}" && echo "${f} copied successfully"; done
 [ -d ${DeepMD_DATA_DIR} ] && mkdir -p "${TEMPWORKDIR}"/data && cp -r ${DeepMD_DATA_DIR}/* "${TEMPWORKDIR}"/data && echo "${DeepMD_DATA_DIR} copied successfully"
 cd "${TEMPWORKDIR}" || exit 1
 
@@ -96,17 +96,17 @@ export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 SRUN_DeepMD_EXE="srun --export=ALL --mpi=pmix --ntasks=${SLURM_NTASKS} --nodes=${SLURM_NNODES} --ntasks-per-node=${TASKS_PER_NODE} --cpus-per-task=${SLURM_CPUS_PER_TASK} ${DeepMD_EXE}"
 
 # Launch command
-if [ -f ${DeepMD_CHKPT_F}.index ]
+if [ -f ${DeepMD_CHKPT}.index ]
 then
-    LAUNCH_CMD="${SRUN_DeepMD_EXE} train ${DeepMD_INPUT_F}.json --restart ${DeepMD_CHKPT_F} ${log}"
+    LAUNCH_CMD="${SRUN_DeepMD_EXE} train ${DeepMD_INPUT}.json --restart ${DeepMD_CHKPT} ${log}"
     echo "${LAUNCH_CMD}"
     export EXIT_CODE="0"
-    ${LAUNCH_CMD} > ${DeepMD_INPUT_F}.out 2>&1 || export EXIT_CODE="1"
+    ${LAUNCH_CMD} > ${DeepMD_INPUT}.out 2>&1 || export EXIT_CODE="1"
 else
-    LAUNCH_CMD="${SRUN_DeepMD_EXE} train ${DeepMD_INPUT_F}.json ${log}"
+    LAUNCH_CMD="${SRUN_DeepMD_EXE} train ${DeepMD_INPUT}.json ${log}"
     echo "${LAUNCH_CMD}"
     export EXIT_CODE="0"
-    ${LAUNCH_CMD} > ${DeepMD_INPUT_F}.out 2>&1 || export EXIT_CODE="1"
+    ${LAUNCH_CMD} > ${DeepMD_INPUT}.out 2>&1 || export EXIT_CODE="1"
 fi
 echo "# [$(date)] Ended"
 

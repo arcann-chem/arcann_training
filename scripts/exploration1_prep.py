@@ -173,22 +173,22 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                 lammps_input = cf.read_file(training_iterative_apath+"/inputs/"+it_subsys_nr+".in")
                 #lammps_input = cf.read_file(deepmd_iterative_apath+"/inputs/exploration/"+it_subsys_nr+".in")
                 RAND = random.randrange(0,1000)
-                lammps_input = cf.replace_in_list(lammps_input,"_SEED_VEL_",str(it_nnp)+str(RAND)+str(it_number)+previous_iteration_zfill)
+                lammps_input = cf.replace_in_list(lammps_input,"_R_SEED_VEL_",str(it_nnp)+str(RAND)+str(it_number)+previous_iteration_zfill)
                 RAND = random.randrange(0,1000)
-                lammps_input = cf.replace_in_list(lammps_input,"_SEED_THER_",str(it_nnp)+str(RAND)+str(it_number)+previous_iteration_zfill)
-                lammps_input = cf.replace_in_list(lammps_input,"_DCD_OUT_",str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".dcd")
-                lammps_input = cf.replace_in_list(lammps_input,"_RESTART_OUT_",str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".restart")
-                lammps_input = cf.replace_in_list(lammps_input,"_MODELS_LIST_",models_list)
-                lammps_input = cf.replace_in_list(lammps_input,"_DEVI_OUT_","model_devi_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".out")
-                lammps_input = cf.replace_in_list(lammps_input,"_TEMPERATURE_",str(temperature))
-                lammps_input = cf.replace_in_list(lammps_input,"_TIMESTEP_",str(timestep))
+                lammps_input = cf.replace_in_list(lammps_input,"_R_SEED_THER_",str(it_nnp)+str(RAND)+str(it_number)+previous_iteration_zfill)
+                lammps_input = cf.replace_in_list(lammps_input,"_R_DCD_OUT_",str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".dcd")
+                lammps_input = cf.replace_in_list(lammps_input,"_R_RESTART_OUT_",str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".restart")
+                lammps_input = cf.replace_in_list(lammps_input,"_R_MODELS_LIST_",models_list)
+                lammps_input = cf.replace_in_list(lammps_input,"_R_DEVI_OUT_","model_devi_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".out")
+                lammps_input = cf.replace_in_list(lammps_input,"_R_TEMPERATURE_",str(temperature))
+                lammps_input = cf.replace_in_list(lammps_input,"_R_TIMESTEP_",str(timestep))
 
             #### Get DATA files and number of steps
                 if current_iteration == 1:
                     lammps_data = cf.read_file(training_iterative_apath+"/inputs/"+it_subsys_nr+".lmp")
-                    lammps_input = cf.replace_in_list(lammps_input,"_DATA_FILE_",it_subsys_nr+".lmp")
+                    lammps_input = cf.replace_in_list(lammps_input,"_R_DATA_FILE_",it_subsys_nr+".lmp")
                     nb_steps = nb_steps_initial
-                    lammps_input = cf.replace_in_list(lammps_input,"_NUMBER_OF_STEPS_",str(nb_steps))
+                    lammps_input = cf.replace_in_list(lammps_input,"_R_NUMBER_OF_STEPS_",str(nb_steps))
                     data_file_name = it_subsys_nr+".lmp"
                 else:
                     if len(starting_point_list) == 0:
@@ -202,25 +202,25 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     ratio_ill_described = (prevexploration_json["subsys_nr"][it_subsys_nr]["nb_candidates"] + prevexploration_json["subsys_nr"][it_subsys_nr]["nb_rejected"]) / prevexploration_json["subsys_nr"][it_subsys_nr]["nb_total"]
 
                     if ( ratio_ill_described ) < 0.10:
-                        lammps_input = cf.replace_in_list(lammps_input,"_DATA_FILE_",previous_data_file)
-                        nb_steps = nb_steps_exploration[it0_subsys_nr] if "nb_steps_exploration" in globals() else prevexploration_json["subsys_nr"][it_subsys_nr]["nb_steps"]
+                        lammps_input = cf.replace_in_list(lammps_input,"_R_DATA_FILE_",previous_data_file)
+                        nb_steps = nb_steps_exploration[it0_subsys_nr] if "nb_steps_exploration" in globals() else prevexploration_jsont["subsys_nr"][it_subsys_nr]["nb_steps"]
                         nb_steps = nb_steps * 4
                         if nb_steps > 400/timestep:
                             nb_steps = int(400/timestep)
-                        lammps_input = cf.replace_in_list(lammps_input,"_NUMBER_OF_STEPS_",str(nb_steps))
+                        lammps_input = cf.replace_in_list(lammps_input,"_R_NUMBER_OF_STEPS_",str(nb_steps))
                     elif ( ratio_ill_described ) < 0.20:
-                        lammps_input = cf.replace_in_list(lammps_input,"_DATA_FILE_",previous_data_file)
+                        lammps_input = cf.replace_in_list(lammps_input,"_R_DATA_FILE_",previous_data_file)
                         nb_steps = nb_steps_exploration[it0_subsys_nr] if "nb_steps_exploration" in globals() else prevexploration_json["subsys_nr"][it_subsys_nr]["nb_steps"]
                         nb_steps = nb_steps * 2
                         if nb_steps > 400/timestep:
                             nb_steps = int(400/timestep)
-                        lammps_input = cf.replace_in_list(lammps_input,"_NUMBER_OF_STEPS_",str(nb_steps))
+                        lammps_input = cf.replace_in_list(lammps_input,"_R_NUMBER_OF_STEPS_",str(nb_steps))
                     else:
-                        lammps_input = cf.replace_in_list(lammps_input,"_DATA_FILE_",previous_data_file)
+                        lammps_input = cf.replace_in_list(lammps_input,"_R_DATA_FILE_",previous_data_file)
                         nb_steps = nb_steps_exploration[it0_subsys_nr] if "nb_steps_exploration" in globals() else prevexploration_json["subsys_nr"][it_subsys_nr]["nb_steps"]
                         if nb_steps > 400/timestep:
                             nb_steps = int(400/timestep)
-                        lammps_input = cf.replace_in_list(lammps_input,"_NUMBER_OF_STEPS_",str(nb_steps))
+                        lammps_input = cf.replace_in_list(lammps_input,"_R_NUMBER_OF_STEPS_",str(nb_steps))
                 exploration_json["subsys_nr"][it_subsys_nr]["nb_steps"] = nb_steps
 
                 #### Write DATA file
@@ -228,7 +228,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
 
                 #### Get print freq
                 print_freq_local = print_freq[it0_subsys_nr] if "print_freq" in globals() else int(nb_steps*0.01)
-                lammps_input = cf.replace_in_list(lammps_input,"_PRINT_FREQ_",str(print_freq_local))
+                lammps_input = cf.replace_in_list(lammps_input,"_R_PRINT_FREQ_",str(print_freq_local))
                 exploration_json["subsys_nr"][it_subsys_nr]["print_freq"] = print_freq_local
 
                 if any("plumed" in f for f in lammps_input):
@@ -241,10 +241,10 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     for it_list_plumed_files in list_plumed_files:
                         plumed_input[it_list_plumed_files.name] = cf.read_file(str(it_list_plumed_files))
 
-                    lammps_input = cf.replace_in_list(lammps_input,"_PLUMED_IN_","plumed_"+str(it_subsys_nr)+".dat")
-                    lammps_input = cf.replace_in_list(lammps_input,"_PLUMED_OUT_","plumed_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".log")
+                    lammps_input = cf.replace_in_list(lammps_input,"_R_PLUMED_IN_","plumed_"+str(it_subsys_nr)+".dat")
+                    lammps_input = cf.replace_in_list(lammps_input,"_R_PLUMED_OUT_","plumed_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".log")
                     for it_plumed_input in plumed_input:
-                        plumed_input[it_plumed_input] = cf.replace_in_list(plumed_input[it_plumed_input],"_PRINT_FREQ_",str(print_freq_local))
+                        plumed_input[it_plumed_input] = cf.replace_in_list(plumed_input[it_plumed_input],"_R_PRINT_FREQ_",str(print_freq_local))
                         cf.write_file(local_path+"/"+it_plumed_input,plumed_input[it_plumed_input])
 
                 cf.write_file(local_path+"/"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".in",lammps_input)
@@ -270,55 +270,55 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     approx_time = int(np.ceil(approx_time))
 
                 slurm_file = slurm_file_master
-                slurm_file = cf.replace_in_list(slurm_file,"_PROJECT_",project_name)
-                slurm_file = cf.replace_in_list(slurm_file,"_WALLTIME_",str(approx_time)+":00:00")
-                slurm_file = cf.replace_in_list(slurm_file,"SET_DEEPMD_MODEL_VERSION",str(exploration_json["deepmd_model_version"]))
+                slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",project_name)
+                slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(approx_time)+":00:00")
+                slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_MODEL_VERSION_",str(exploration_json["deepmd_model_version"]))
                 if allocation_name == "v100":
-                    slurm_file = cf.replace_in_list(slurm_file,"_ALLOC_",allocation_name)
+                    slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",allocation_name)
                     if approx_time <= 20:
                         if arch_name == "v100":
-                            slurm_file = cf.replace_in_list(slurm_file,"_QOS_","qos_gpu-t3")
-                            slurm_file = cf.replace_in_list(slurm_file,"_PARTITION_","gpu_p13")
-                            slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _SUBPARTITION_","##SBATCH -C _SUBPARTITION_")
+                            slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t3")
+                            slurm_file = cf.replace_in_list(slurm_file,"_R_PARTITION_","gpu_p13")
+                            slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _R_SUBPARTITION_","##SBATCH -C _R_SUBPARTITION_")
                         elif arch_name == "a100":
-                            slurm_file = cf.replace_in_list(slurm_file,"_QOS_","qos_gpu-t3")
-                            slurm_file = cf.replace_in_list(slurm_file,"_PARTITION_","gpu_p4")
-                            slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _SUBPARTITION_","##SBATCH -C _SUBPARTITION_")
+                            slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t3")
+                            slurm_file = cf.replace_in_list(slurm_file,"_R_PARTITION_","gpu_p4")
+                            slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _R_SUBPARTITION_","##SBATCH -C _R_SUBPARTITION_")
                     else:
-                        slurm_file = cf.replace_in_list(slurm_file,"_QOS_","qos_gpu-t4")
-                        slurm_file = cf.replace_in_list(slurm_file,"_PARTITION_","gpu_p13")
-                        slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _SUBPARTITION_","##SBATCH -C _SUBPARTITION_")
+                        slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t4")
+                        slurm_file = cf.replace_in_list(slurm_file,"_R_PARTITION_","gpu_p13")
+                        slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _R_SUBPARTITION_","##SBATCH -C _R_RSUBPARTITION_")
                 elif allocation_name == "a100":
-                    slurm_file = cf.replace_in_list(slurm_file,"_ALLOC_",allocation_name)
+                    slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",allocation_name)
                     if approx_time <= 20:
-                        slurm_file = cf.replace_in_list(slurm_file,"_QOS_","qos_gpu-t3")
+                        slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t3")
                     else:
-                        slurm_file = cf.replace_in_list(slurm_file,"_QOS_","qos_gpu-t4")
-                    slurm_file = cf.replace_in_list(slurm_file,"_PARTITION_","gpu_p5")
-                    slurm_file = cf.replace_in_list(slurm_file,"_SUBPARTITION_",arch_name)
+                        slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t4")
+                    slurm_file = cf.replace_in_list(slurm_file,"_R_PARTITION_","gpu_p5")
+                    slurm_file = cf.replace_in_list(slurm_file,"_R_SUBPARTITION_",arch_name)
                 else:
                     logging.critical("Unknown error. Please BUG REPORT")
                     logging.critical("Aborting...")
                     sys.exit(1)
                 if slurm_email != "":
                     slurm_file = cf.replace_in_list(slurm_file,"##SBATCH --mail-type","#SBATCH --mail-type")
-                    slurm_file = cf.replace_in_list(slurm_file,"##SBATCH --mail-user _EMAIL_","#SBATCH --mail-user "+slurm_email)
+                    slurm_file = cf.replace_in_list(slurm_file,"##SBATCH --mail-user _R_EMAIL_","#SBATCH --mail-user "+slurm_email)
 
-                slurm_file = cf.replace_in_list(slurm_file,"\"_INPUT_\"","\""+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+"\"")
-                slurm_file = cf.replace_in_list(slurm_file,"_DATA_FILE_",data_file_name)
+                slurm_file = cf.replace_in_list(slurm_file,"_R_INPUT_",str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill)
+                slurm_file = cf.replace_in_list(slurm_file,"_R_DATA_FILE_",data_file_name)
                 if any("plumed" in f for f in lammps_input):
                     for n,it_plumed_input in enumerate(plumed_input):
                         if n == 0:
-                            slurm_file = cf.replace_in_list(slurm_file,"_PLUMED_FILES_LIST_",it_plumed_input)
+                            slurm_file = cf.replace_in_list(slurm_file,"_R_PLUMED_FILES_LIST_",it_plumed_input)
                         else:
                             slurm_file = cf.replace_in_list(slurm_file,prev_plumed,prev_plumed+"\" \""+it_plumed_input)
                         prev_plumed = it_plumed_input
 
                 else:
-                    slurm_file = cf.replace_in_list(slurm_file,"\"_PLUMED_FILES_LIST_\"","")
+                    slurm_file = cf.replace_in_list(slurm_file,"_R_PLUMED_FILES_LIST_","")
 
                 models_list_job = models_list.replace(" ","\" \"")
-                slurm_file = cf.replace_in_list(slurm_file, "_MODELS_LIST_", models_list_job)
+                slurm_file = cf.replace_in_list(slurm_file, "_R_MODELS_LIST_", models_list_job)
 
                 cf.write_file(local_path+"/job_deepmd_"+exploration_type+"_"+arch_type+"_"+cluster+".sh",slurm_file)
 

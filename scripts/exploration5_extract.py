@@ -137,12 +137,12 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     f.close()
                     del f
                     vmd_tcl = master_vmd_tcl
-                    vmd_tcl = cf.replace_in_list(vmd_tcl,"_TOPO_FILE_",topo_file)
+                    vmd_tcl = cf.replace_in_list(vmd_tcl,"_R_PDB_FILE_",topo_file)
                     if "lammps" in exploration_json["subsys_nr"][it_subsys_nr]["exploration_type"]:
                         traj_file = str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".dcd"
 
-                    vmd_tcl = cf.replace_in_list(vmd_tcl,"_DCD_FILE_",traj_file)
-                    vmd_tcl = cf.replace_in_list(vmd_tcl,"_SELECTION_FILE_","min.vmd")
+                    vmd_tcl = cf.replace_in_list(vmd_tcl,"_R_DCD_FILE_",traj_file)
+                    vmd_tcl = cf.replace_in_list(vmd_tcl,"_R_SELECTION_FILE_","min.vmd")
                     cf.write_file("vmd.tcl",vmd_tcl)
                     subprocess.call([vmd_bin,"-e","vmd.tcl","-dispdev", "text"],\
                         stdout=subprocess.DEVNULL,\
@@ -205,11 +205,11 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     candidates_index = [ zzz + "\n" for zzz in candidates_index]
                     cf.write_file("label.vmd", candidates_index)
                     vmd_tcl = master_vmd_tcl
-                    vmd_tcl = cf.replace_in_list(vmd_tcl,"_TOPO_FILE_",topo_file)
+                    vmd_tcl = cf.replace_in_list(vmd_tcl,"_R_PDB_FILE_",topo_file)
                     if "lammps" in exploration_json["subsys_nr"][it_subsys_nr]["exploration_type"]:
                         traj_file=str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".dcd"
-                    vmd_tcl = cf.replace_in_list(vmd_tcl,"_DCD_FILE_",traj_file)
-                    vmd_tcl = cf.replace_in_list(vmd_tcl,"_SELECTION_FILE_","label.vmd")
+                    vmd_tcl = cf.replace_in_list(vmd_tcl,"_R_DCD_FILE_",traj_file)
+                    vmd_tcl = cf.replace_in_list(vmd_tcl,"_R_SELECTION_FILE_","label.vmd")
                     cf.write_file("vmd.tcl",vmd_tcl)
                     subprocess.call([vmd_bin,"-e","vmd.tcl","-dispdev", "text"],\
                                     stdout=subprocess.DEVNULL,\

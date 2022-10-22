@@ -3,24 +3,24 @@
 # Date: 2021/03/18
 # Modified: 2022/10/08
 # Account
-#SBATCH --account=_PROJECT_@_ALLOC_
+#SBATCH --account=_R_PROJECT_@_R_ALLOC_
 # Queue
 #SBATCH --qos=qos_cpu-t3
 # Number of nodes/processes/tasksperprocess
-#SBATCH --nodes _nb_NODES_
-#SBATCH --ntasks-per-node _nb_MPI_per_NODE_
-#SBATCH --cpus-per-task _nb_OPENMP_per_MPI_
+#SBATCH --nodes _R_nb_NODES_
+#SBATCH --ntasks-per-node _R_nb_MPI_per_NODE_
+#SBATCH --cpus-per-task _R_nb_OPENMP_per_MPI_
 #SBATCH --hint=nomultithread
 # Wall-time
-#SBATCH -t _WALLTIME_
+#SBATCH -t _R_WALLTIME_
 # Merge Output/Error
 #SBATCH -o CP2K.%j
 #SBATCH -e CP2K.%j
 # Name of job
-#SBATCH -J _CP2K_JOBNAME_
+#SBATCH -J _R_CP2K_JOBNAME_
 # Email (Remove the space between # and SBATCH on the next two lines)
 ##SBATCH --mail-type FAIL,BEGIN,END,ALL
-##SBATCH --mail-user _EMAIL_
+##SBATCH --mail-user _R_EMAIL_
 #
 
 # Input file (extension is automatically added as .inp for INPUT, wfn for WFRST, restart for MDRST)

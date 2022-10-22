@@ -70,30 +70,30 @@ slurm_email = "" if "slurm_email" not in globals() else slurm_email
 
 cf.check_file(deepmd_iterative_apath+"/jobs/test/job_deepmd_test_concatenation_"+arch_type+"_"+cluster+".sh",0,True,"No SLURM file present for the concatenation phase on this cluster.")
 slurm_file = cf.read_file(deepmd_iterative_apath+"/jobs/test/job_deepmd_test_concatenation_"+arch_type+"_"+cluster+".sh")
-slurm_file = cf.replace_in_list(slurm_file,"_PROJECT_",project_name)
-slurm_file = cf.replace_in_list(slurm_file,"_WALLTIME_","02:00:00")
+slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",project_name)
+slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_","02:00:00")
 if allocation_name == "prepost":
-    slurm_file = cf.replace_in_list(slurm_file,"_ALLOC_","cpu")
-    slurm_file = cf.replace_in_list(slurm_file,"#SBATCH --qos=_QOS_","##SBATCH --qos=_QOS_")
-    slurm_file = cf.replace_in_list(slurm_file,"_PARTITION_","prepost")
-    slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _SUBPARTITION_","##SBATCH -C _SUBPARTITION_")
+    slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_","cpu")
+    slurm_file = cf.replace_in_list(slurm_file,"#SBATCH --qos=_R_QOS_","##SBATCH --qos=_R_QOS_")
+    slurm_file = cf.replace_in_list(slurm_file,"_R_PARTITION_","prepost")
+    slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _R_SUBPARTITION_","##SBATCH -C _R_SUBPARTITION_")
 elif allocation_name == "dev":
-    slurm_file = cf.replace_in_list(slurm_file,"_ALLOC_","cpu")
-    slurm_file = cf.replace_in_list(slurm_file,"_QOS_","qos_cpu-dev")
-    slurm_file = cf.replace_in_list(slurm_file,"#SBATCH --partition=_PARTITION_","##SBATCH --partition=_PARTITION_")
-    slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _SUBPARTITION_","##SBATCH -C _SUBPARTITION_")
+    slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_","cpu")
+    slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_cpu-dev")
+    slurm_file = cf.replace_in_list(slurm_file,"#SBATCH --partition=_R_PARTITION_","##SBATCH --partition=_R_PARTITION_")
+    slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _R_SUBPARTITION_","##SBATCH -C _R_SUBPARTITION_")
 elif allocation_name == "cpu":
-    slurm_file = cf.replace_in_list(slurm_file,"_ALLOC_","cpu")
-    slurm_file = cf.replace_in_list(slurm_file,"_QOS_","qos_cpu-t3")
-    slurm_file = cf.replace_in_list(slurm_file,"#SBATCH --partition=_PARTITION_","##SBATCH --partition=_PARTITION_")
-    slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _SUBPARTITION_","##SBATCH -C _SUBPARTITION_")
+    slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_","cpu")
+    slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_cpu-t3")
+    slurm_file = cf.replace_in_list(slurm_file,"#SBATCH --partition=_R_PARTITION_","##SBATCH --partition=_R_PARTITION_")
+    slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _R_SUBPARTITION_","##SBATCH -C _R_SUBPARTITION_")
 else:
     logging.critical("Unknown error. Please BUG REPORT")
     logging.critical("Aborting...")
     sys.exit(1)
 if slurm_email != "":
     slurm_file = cf.replace_in_list(slurm_file,"##SBATCH --mail-type","#SBATCH --mail-type")
-    slurm_file = cf.replace_in_list(slurm_file,"##SBATCH --mail-user _EMAIL_","#SBATCH --mail-user "+slurm_email)
+    slurm_file = cf.replace_in_list(slurm_file,"##SBATCH --mail-user _R_EMAIL_","#SBATCH --mail-user "+slurm_email)
 cf.write_file("./job_deepmd_test_concat_"+arch_type+"_"+cluster+".sh",slurm_file)
 del slurm_file
 

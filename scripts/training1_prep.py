@@ -389,39 +389,39 @@ for it_nnp in range(1,config_json["nb_nnp"] + 1):
     cf.json_dump(training_input_json,training_input_json_fpath,True,"training.json (DeepMD Input)")
 
     slurm_file = slurm_file_master
-    slurm_file = cf.replace_in_list(slurm_file,"_PROJECT_",project_name)
-    slurm_file = cf.replace_in_list(slurm_file,"_WALLTIME_",str(approx_time)+":00:00")
-    slurm_file = cf.replace_in_list(slurm_file,"SET_DEEPMD_MODEL_VERSION",str(training_json["deepmd_model_version"]))
+    slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",project_name)
+    slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(approx_time)+":00:00")
+    slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_MODEL_VERSION_",str(training_json["deepmd_model_version"]))
     if allocation_name == "v100":
-        slurm_file = cf.replace_in_list(slurm_file,"_ALLOC_",allocation_name)
+        slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",allocation_name)
         if approx_time <= 20:
             if arch_name == "v100":
-                slurm_file = cf.replace_in_list(slurm_file,"_QOS_","qos_gpu-t3")
-                slurm_file = cf.replace_in_list(slurm_file,"_PARTITION_","gpu_p13")
-                slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _SUBPARTITION_","##SBATCH -C _SUBPARTITION_")
+                slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t3")
+                slurm_file = cf.replace_in_list(slurm_file,"_R_PARTITION_","gpu_p13")
+                slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _R_SUBPARTITION_","##SBATCH -C _R_SUBPARTITION_")
             else:
-                slurm_file = cf.replace_in_list(slurm_file,"_QOS_","qos_gpu-t3")
-                slurm_file = cf.replace_in_list(slurm_file,"_PARTITION_","gpu_p4")
-                slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _SUBPARTITION_","##SBATCH -C _SUBPARTITION_")
+                slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t3")
+                slurm_file = cf.replace_in_list(slurm_file,"_R_PARTITION_","gpu_p4")
+                slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _R_SUBPARTITION_","##SBATCH -C _R_SUBPARTITION_")
         else:
-            slurm_file = cf.replace_in_list(slurm_file,"_QOS_","qos_gpu-t4")
-            slurm_file = cf.replace_in_list(slurm_file,"_PARTITION_","gpu_p13")
-            slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _SUBPARTITION_","##SBATCH -C _SUBPARTITION_")
+            slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t4")
+            slurm_file = cf.replace_in_list(slurm_file,"_R_PARTITION_","gpu_p13")
+            slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _R_SUBPARTITION_","##SBATCH -C _R_SUBPARTITION_")
     elif allocation_name == "a100":
-        slurm_file = cf.replace_in_list(slurm_file,"_ALLOC_",allocation_name)
+        slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",allocation_name)
         if approx_time <= 20:
-            slurm_file = cf.replace_in_list(slurm_file,"_QOS_","qos_gpu-t3")
+            slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t3")
         else:
-            slurm_file = cf.replace_in_list(slurm_file,"_QOS_","qos_gpu-t4")
-        slurm_file = cf.replace_in_list(slurm_file,"_PARTITION_","gpu_p5")
-        slurm_file = cf.replace_in_list(slurm_file,"_SUBPARTITION_","a100")
+            slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t4")
+        slurm_file = cf.replace_in_list(slurm_file,"_R_PARTITION_","gpu_p5")
+        slurm_file = cf.replace_in_list(slurm_file,"_R_SUBPARTITION_","a100")
     else:
         logging.critical("Unknown error. Please BUG REPORT")
         logging.critical("Aborting")
         sys.exit(1)
     if slurm_email != "":
         slurm_file = cf.replace_in_list(slurm_file,"##SBATCH --mail-type","#SBATCH --mail-type")
-        slurm_file = cf.replace_in_list(slurm_file,"##SBATCH --mail-user _EMAIL_","#SBATCH --mail-user "+slurm_email)
+        slurm_file = cf.replace_in_list(slurm_file,"##SBATCH --mail-user _R_EMAIL_","#SBATCH --mail-user "+slurm_email)
 
     cf.write_file(str(it_nnp)+"/job_deepmd_train_"+arch_type+"_"+cluster+".sh",slurm_file)
 

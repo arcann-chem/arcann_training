@@ -3,22 +3,22 @@
 # Date: 2021/12/08
 # Modified: 2022/04/27
 # Account
-#MSUB -A _PROJECT_
+#MSUB -A _R_PROJECT_
 # Queue
-#MSUB -q _ALLOC_
+#MSUB -q _R_ALLOC_
 #MSUB -m scratch,work,store
 #MSUB -Q normal
 # Number of nodes/processes/tasksperprocess
-#MSUB -N _nb_NODES_
-#MSUB -n _nb_MPI_
-#MSUB -c _nb_OPENMP_per_MPI_
+#MSUB -N _R_nb_NODES_
+#MSUB -n _R_nb_MPI_
+#MSUB -c _R_nb_OPENMP_per_MPI_
 # Wall-time
-#MSUB -T _WALLTIME_
+#MSUB -T _R_WALLTIME_
 # Merge Output/Error
 #MSUB -o CP2K.%j
 #MSUB -e CP2K.%j
 # Name of job
-#MSUB -r _CP2K_JOBNAME_
+#MSUB -r _R_CP2K_JOBNAME_
 # Email (Remove the space between # and SBATCH on the next two lines)
 ##MSUB -@ _EMAIL_:begin,end
 #
@@ -33,7 +33,7 @@ CP2K_XYZ_F="labeling_XXXXX.xyz"
 
 # Load the environment depending on the version
 module purge
-module switch dfldatadir/_PROJECT_
+module switch dfldatadir/_R_PROJECT_
 module load flavor/buildcompiler/intel/20 flavor/buildmpi/openmpi/4.0 flavor/cp2k/xc
 module load cp2k/7.1
 CP2K_EXE=$(which cp2k.popt) || ( echo "Executable not found. Aborting..."; exit 1 )
