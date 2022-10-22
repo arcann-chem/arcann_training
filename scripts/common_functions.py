@@ -8,31 +8,31 @@ import logging
 
 #### TODO Better descriptions
 
-def check_file(file_path:str,status:int,abort:bool,error_msg='None'):
+def check_file(file_path:str,status:int,abort:bool,error_msg="None"):
     """Check if a file exists or not, abort or not
 
     Args:
         file_path (str): full path of the file
-        status (int): 0 to check if it is present, 1 to check if it isn't
+        status (int): 0 to check if it is present, 1 to check if it isn"t
         abort (bool): True to abort, False to log only
         error_msg (str, optional): To override default error message.
     """
     if status == 0 and not Path(file_path).is_file():
         if abort:
-            logging.critical(file_path+' does not exist.') if error_msg == 'None' else logging.critical(error_msg)
-            logging.critical('Aborting...')
+            logging.critical(file_path+" does not exist.") if error_msg == "None" else logging.critical(error_msg)
+            logging.critical("Aborting...")
             sys.exit(1)
         else:
-            logging.warning(file_path+' does not exist.') if error_msg == 'None' else logging.warning(error_msg)
+            logging.warning(file_path+" does not exist.") if error_msg == "None" else logging.warning(error_msg)
     elif status == 1 and Path(file_path).is_file():
         if abort:
-            logging.critical(file_path+' exists.') if error_msg == 'None' else logging.critical(error_msg)
-            logging.critical('Aborting...')
+            logging.critical(file_path+" exists.") if error_msg == "None" else logging.critical(error_msg)
+            logging.critical("Aborting...")
             sys.exit(1)
         else:
-            logging.warning(file_path+' exists.') if error_msg == 'None' else logging.warning(error_msg)
+            logging.warning(file_path+" exists.") if error_msg == "None" else logging.warning(error_msg)
 
-def check_dir(directory_path:str,abort:bool,error_msg='None'):
+def check_dir(directory_path:str,abort:bool,error_msg="None"):
     """Check if directory exists
 
     Args:
@@ -42,21 +42,21 @@ def check_dir(directory_path:str,abort:bool,error_msg='None'):
     """
     if Path(directory_path).is_dir() is False:
         if abort:
-            if error_msg == 'data':
-                logging.critical('No data folder to search for initial sets: '+directory_path)
-                logging.critical('Aborting...')
+            if error_msg == "data":
+                logging.critical("No data folder to search for initial sets: "+directory_path)
+                logging.critical("Aborting...")
                 sys.exit(1)
-            elif error_msg == 'None':
-                logging.critical('No existing folder: '+directory_path)
-                logging.critical('Aborting...')
+            elif error_msg == "None":
+                logging.critical("No existing folder: "+directory_path)
+                logging.critical("Aborting...")
                 sys.exit(1)
             else:
                 logging.critical(error_msg)
-                logging.critical('Aborting...')
+                logging.critical("Aborting...")
                 sys.exit(1)
         else:
-            if error_msg == 'None':
-                logging.warning('No existing folder: '+directory_path)
+            if error_msg == "None":
+                logging.warning("No existing folder: "+directory_path)
             else:
                 logging.warning(error_msg)
 
@@ -72,21 +72,21 @@ def create_dir(directory_path:str):
         except(FileExistsError):
             pass
         except:
-            logging.critical('Could not create '+directory_path)
-            logging.critical('Aborting...')
+            logging.critical("Could not create "+directory_path)
+            logging.critical("Aborting...")
             sys.exit(1)
 
 def change_dir(directory_path:str):
     if Path(directory_path).is_dir() is False:
-        logging.critical('No existing folder: '+directory_path)
-        logging.critical('Aborting...')
+        logging.critical("No existing folder: "+directory_path)
+        logging.critical("Aborting...")
         sys.exit(1)
     else:
         try:
             os.chdir(directory_path)
         except:
-            logging.critical('Error changing dir: '+directory_path)
-            logging.critical('Aborting...')
+            logging.critical("Error changing dir: "+directory_path)
+            logging.critical("Aborting...")
             sys.exit(1)
 
 def check_cluster():
@@ -95,25 +95,25 @@ def check_cluster():
     Returns:
         str: The short string name for the cluster: jz, oc, pc, ir
     """
-    if socket.gethostname().find('.')>=0:
+    if socket.gethostname().find(".")>=0:
         cluster_name = socket.gethostname()
     else:
         cluster_name = socket.gethostbyaddr(socket.gethostname())[0]
-    if ('jean-zay' or 'idris.fr') in cluster_name:
-        logging.info('Cluster found: Jean Zay')
-        return 'jz'
-    elif ('occigen' ) in cluster_name:
-        logging.info('Cluster found: Occigen')
-        return 'oc'
-    elif ('debye.net') in cluster_name:
-        logging.info('Cluster found: Paracelsus')
-        return 'pc'
-    elif ('irene') in cluster_name:
-        logging.info('Cluster found: Irene Rome')
-        return 'ir'
+    if ("jean-zay" or "idris.fr") in cluster_name:
+        logging.info("Cluster found: Jean Zay")
+        return "jz"
+    elif ("occigen" ) in cluster_name:
+        logging.info("Cluster found: Occigen")
+        return "oc"
+    elif ("debye.net") in cluster_name:
+        logging.info("Cluster found: Paracelsus")
+        return "pc"
+    elif ("irene") in cluster_name:
+        logging.info("Cluster found: Irene Rome")
+        return "ir"
     else:
-        logging.warning('Not on a known cluster, some features will not work.')
-        return '0'
+        logging.warning("Not on a known cluster, some features will not work.")
+        return "0"
 
 def get_decay_steps(total_trained:int,min=5000):
     """Calculate decay steps if not defined:
@@ -176,12 +176,12 @@ def json_dump(json_dict:dict,output_file_path:str,print_log=False,name=None):
         print_log (bool): log the action
         name (str): JSON fancy name for logging
     """
-    if name == 'None':
+    if name == "None":
         name = json_dict
-    with open(output_file_path, 'w') as f:
+    with open(output_file_path, "w") as f:
         json.dump(json_dict, f)
         if print_log:
-            logging.info('Writing '+name+' in: '+output_file_path)
+            logging.info("Writing "+name+" in: "+output_file_path)
 
 def json_read(json_file_path,should_abort=True,should_print=True):
     """Read json file
@@ -195,16 +195,16 @@ def json_read(json_file_path,should_abort=True,should_print=True):
     """
     if Path(json_file_path).is_file():
         if should_print:
-            logging.info('Loading: '+json_file_path)
+            logging.info("Loading: "+json_file_path)
         return json.load(open(json_file_path,))
     else:
         if should_abort:
-            logging.critical('Config not found: '+json_file_path)
-            logging.critical('Aborting...')
+            logging.critical("Config not found: "+json_file_path)
+            logging.critical("Aborting...")
             sys.exit(1)
         else:
             if should_print:
-                logging.info('No '+json_file_path+' file found, creating a new one...')
+                logging.info("No "+json_file_path+" file found, creating a new one...")
             return {}
 
 def write_file(output_file_path:str,list_of_string:list):
@@ -215,7 +215,7 @@ def write_file(output_file_path:str,list_of_string:list):
         output_file_path (str): full path of output file
         list_of_string (list): list of strings to write (one string per line)
     """
-    with open(output_file_path,'w') as f:
+    with open(output_file_path,"w") as f:
          f.writelines(list_of_string)
 
 def read_file(input_file_path:str):
@@ -228,8 +228,8 @@ def read_file(input_file_path:str):
         list: the file as a list of strings (one string per line)
     """
     if Path(input_file_path).is_file() is False:
-        logging.critical('File not found: '+input_file_path)
-        logging.critical('Aborting...')
+        logging.critical("File not found: "+input_file_path)
+        logging.critical("Aborting...")
         sys.exit(1)
     with open(input_file_path) as f:
         OUT_output_list_strings = f.readlines()
@@ -258,7 +258,7 @@ def check_if_in_dict(params_f,key_f,default_f,error_f):
         if error_f == 1:
             return default_f
         else:
-            sys.exit('Error: '+key_f+' not found.\n Aborting...')
+            sys.exit("Error: "+key_f+" not found.\n Aborting...")
 
 def check_datasets_initial(current_path):
     """_summary_
@@ -269,23 +269,23 @@ def check_datasets_initial(current_path):
     Returns:
         dict: Initial set dict
     """
-    if Path(current_path+'/control/datasets_initial.json').is_file():
-        logging.info('Loading: '+current_path+'/control/datasets_initial.json')
-        initial_sets_json_f = json.load(open(current_path+'/control/datasets_initial.json',))
+    if Path(current_path+"/control/datasets_initial.json").is_file():
+        logging.info("Loading: "+current_path+"/control/datasets_initial.json")
+        initial_sets_json_f = json.load(open(current_path+"/control/datasets_initial.json",))
         for f in initial_sets_json_f:
-            if Path(current_path+'/data/'+f).is_dir() is False:
-                logging.critical('Initial set not found in data: '+f)
-                logging.critical('Aborting...')
+            if Path(current_path+"/data/"+f).is_dir() is False:
+                logging.critical("Initial set not found in data: "+f)
+                logging.critical("Aborting...")
                 sys.exit(1)
             else:
-                if np.load(current_path+'/data/'+f+'/set.000/box.npy').shape[0] != initial_sets_json_f[f]:
-                    logging.critical('Missmatch in count for : '+f)
-                    logging.critical('Aborting...')
+                if np.load(current_path+"/data/"+f+"/set.000/box.npy").shape[0] != initial_sets_json_f[f]:
+                    logging.critical("Missmatch in count for : "+f)
+                    logging.critical("Aborting...")
                     sys.exit(1)
         return initial_sets_json_f
     else:
-        logging.critical('datasets_initial.json not present in: '+current_path+'/control/')
-        logging.critical('Aborting...')
+        logging.critical("datasets_initial.json not present in: "+current_path+"/control/")
+        logging.critical("Aborting...")
         sys.exit(1)
 
 def remove_file(file_path:str):
@@ -323,7 +323,7 @@ def remove_tree(pth:Path):
 def seconds_to_walltime(seconds):
     min, sec = divmod(seconds, 60)
     hour, min = divmod(min, 60)
-    return '%d:%02d:%02d' % (hour, min, sec)
+    return "%d:%02d:%02d" % (hour, min, sec)
 
 def import_xyz(file_path:str):
     """_summary_
@@ -335,8 +335,8 @@ def import_xyz(file_path:str):
         _type_: _description_
     """
     if Path(file_path).is_file() is False:
-        sys.exit('File not found: '+file_path+'\nAborting...')
-    xyz = open(file_path, 'r')
+        sys.exit("File not found: "+file_path+"\nAborting...")
+    xyz = open(file_path, "r")
     atoms = []
     coordinates = []
     n_atom = []
@@ -346,7 +346,7 @@ def import_xyz(file_path:str):
     c = 0
     s = 0
     line = xyz.readline()
-    while line != '':
+    while line != "":
         n_atom_iter = int(line)
         n_atom.append(n_atom_iter)
         blank.append(xyz.readline())
@@ -373,10 +373,10 @@ def import_xyz(file_path:str):
 def write_xyz_from_index(select_nb,xyz_out,n_atom,step_atoms,step_coordinates,blank):
     """
     """
-    xyz2 = open(xyz_out, 'w')
-    xyz2.write(str(n_atom[select_nb])+'\n')
+    xyz2 = open(xyz_out, "w")
+    xyz2.write(str(n_atom[select_nb])+"\n")
     xyz2.write(str(blank[select_nb]))
     x = 0
     while x < n_atom[select_nb]:
-        xyz2.write(str(step_atoms[select_nb,x])+' '+str(step_coordinates[select_nb,x,0])+' '+str(step_coordinates[select_nb,x,1])+' '+str(step_coordinates[select_nb,x,2])+'\n')
+        xyz2.write(str(step_atoms[select_nb,x])+" "+str(step_coordinates[select_nb,x,0])+" "+str(step_coordinates[select_nb,x,1])+" "+str(step_coordinates[select_nb,x,2])+"\n")
         x =  x+ 1
