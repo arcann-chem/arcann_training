@@ -1,5 +1,5 @@
- ## deepmd_iterative_apath
-# deepmd_iterative_apath = ""
+## deepmd_iterative_apath
+# deepmd_iterative_apath: str = ""
 
 ###################################### No change past here
 import sys

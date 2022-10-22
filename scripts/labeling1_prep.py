@@ -1,15 +1,15 @@
 ## deepmd_iterative_apath
-# deepmd_iterative_apath = ""
+# deepmd_iterative_apath: str = ""
 ## Project name / allocation / arch (nvs/v100/a100 or gen7156/rome/cpu)
-# project_name = "nvs"
-# allocation_name = "cpu"
-# arch_name = "cpu"
-# slurm_email = ""
-# cp2k_1_walltime_h = [0.5, 0.5]
-# cp2k_2_walltime_h = [1.0, 1.0]
-# nb_NODES = [1, 1]
-# nb_MPI_per_NODE = [10, 10]
-# nb_OPENMP_per_MPI = [1, 1]
+# project_name: str = "nvs"
+# allocation_name: str = "v100"
+# arch_name: str = "v100"
+# slurm_email: str = ""
+# cp2k_1_walltime_h: list = [0.5, 0.5]
+# cp2k_2_walltime_h: list = [1.0, 1.0]
+# nb_NODES: list = [1, 1]
+# nb_MPI_per_NODE: list = [10, 10]
+# nb_OPENMP_per_MPI: list = [1, 1]
 
 ###################################### No change past here
 import sys

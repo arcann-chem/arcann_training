@@ -1,23 +1,23 @@
 ## deepmd_iterative_apath
-# deepmd_iterative_apath = ""
+# deepmd_iterative_apath: str = ""
 ## Project name / allocation / arch (nvs/v100/a100 or gen7156/rome/cpu)
-# project_name = "nvs"
-# allocation_name = "v100"
-# arch_name = "v100"
-# slurm_email = ""
+# project_name: str = "nvs"
+# allocation_name: str = "v100"
+# arch_name: str = "v100"
+# slurm_email: str = ""
 ## Training Parameters (Here are the default defaults)
-# use_datasets_initial = True
-# use_datasets_extra = False
-# start_lr = 0.001
-# stop_lr = 1e-06
-# decay_rate = 0.90
-# decay_steps = 5000
-# stop_batch = 400000
-# numb_test = 0
-# deepmd_model_version = 2.1
-# deepmd_model_type_descriptor = "se_e2_a"
+# use_datasets_initial: bool = True
+# use_datasets_extra: bool = False
+# start_lr: float = 0.001
+# stop_lr: float = 1e-06
+# decay_rate: float = 0.90
+# decay_steps: int = 5000
+# stop_batch: int = 400000
+# numb_test: int = 0
+# deepmd_model_version: float = 2.1
+# deepmd_model_type_descriptor: str = "se_e2_a"
 ## Guess for initial training walltime
-# initial_seconds_per_1000steps = 90
+# initial_seconds_per_1000steps: float = 90
 
 ###################################### No change past here
 import sys

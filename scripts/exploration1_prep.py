@@ -1,20 +1,20 @@
 ## deepmd_iterative_apath
-# deepmd_iterative_apath = ""
+# deepmd_iterative_apath: str = ""
 ## Project name / allocation / arch (nvs/v100/a100 or gen7156/rome/cpu)
-# project_name = "nvs"
-# allocation_name = "v100"
-# arch_name = "v100"
-# slurm_email = ""
+# project_name: str = "nvs"
+# allocation_name: str = "v100"
+# arch_name: str = "v100"
+# slurm_email: str = ""
 ## These are the default
-# temperature_K = [300, 300]
-# timestep_ps = [0.0005, 0.0005]
+# temperature_K: list = [300, 300]
+# timestep_ps: list = [0.0005, 0.0005]
 ## print_freq is every 1% / nb_steps_exploration is initial/auto-calculated (local subsys)
 ## These are the default
-# nb_steps_exploration = [20000, 20000]
-# print_freq = [200, 200]
-# nb_steps_initial = 20000
-# nb_traj = 2
-# disturbed_start = False
+# nb_steps_exploration: list = [20000, 20000]
+# print_freq: list = [200, 200]
+# nb_steps_initial: list = 20000
+# nb_traj: int = 2
+# disturbed_start: bool = False
 
 ###################################### No change past here
 import sys

@@ -7,10 +7,10 @@ logging.basicConfig(level=logging.INFO,format="%(levelname)s: %(message)s")
 import numpy as np
 
 ### Constants
-Ha_to_eV=np.float64(27.211386245988)
-Bohr_to_A=np.float64(0.529177210903)
-au_to_eV_per_A=np.float64(Ha_to_eV/Bohr_to_A)
-eV_per_A3_to_GPa=np.float64(160.21766208)
+Ha_to_eV = np.float64(27.211386245988)
+Bohr_to_A = np.float64(0.529177210903)
+au_to_eV_per_A = np.float64(Ha_to_eV/Bohr_to_A)
+eV_per_A3_to_GPa = np.float64(160.21766208)
 
 training_iterative_apath = Path("..").resolve()
 ### Check if the deepmd_iterative_apath is defined

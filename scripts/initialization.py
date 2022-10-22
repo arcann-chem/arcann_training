@@ -1,17 +1,17 @@
 ## deepmd_iterative_apath
-deepmd_iterative_apath="/gpfs7kw/linkhome/rech/gennsp01/ucf13sj/code/deepmd_iterative_py"
+deepmd_iterative_apath: str = ""
 ## Set your system name, subsystem ("easy" exploration, standard TEMP, presents from the START of the iterative training) and the number of NNP you want to use
-sys_name="NAME"
-subsys_name = ["SYSTEM1","SYSTEM2"]
-nb_nnp = 3
+sys_name: str = "NAME"
+subsys_name: list = ["SYSTEM1","SYSTEM2"]
+nb_nnp: int = 3
 ## These are the default
-# temperature_K = [300, 300]
-# timestep_ps = [0.0005, 0.0005]
+# temperature_K: list = [300, 300]
+# timestep_ps: list = [0.0005, 0.0005]
 # nb_candidates_max = [500, 500]
-# s_low = [0.1, 0.1]
-# s_high = [0.8, 0.8]
-# s_high_max = [1.0, 1.0]
-# ignore_first_x_ps = [0.5, 0.5]
+# s_low: list = [0.1, 0.1]
+# s_high: list = [0.8, 0.8]
+# s_high_max: list = [1.0, 1.0]
+# ignore_first_x_ps: list = [0.5, 0.5]
 
 ###################################### No change past here
 import sys

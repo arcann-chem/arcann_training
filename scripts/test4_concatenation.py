@@ -1,10 +1,10 @@
 ## deepmd_iterative_apath
-# deepmd_iterative_apath = ""
+# deepmd_iterative_apath: str = ""
 ## Project name / allocation / arch (nvs/v100/a100 or gen7156/rome/cpu)
-# project_name = "nvs"
-# allocation_name = "dev"
-# arch_name = "cpu"
-# slurm_email = ""
+# project_name: str = "nvs"
+# allocation_name: str = "dev"
+# arch_name: str = "cpu"
+# slurm_email: str = ""
 
 ###################################### No change past here
 import sys
