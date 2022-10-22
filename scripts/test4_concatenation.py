@@ -68,7 +68,7 @@ if arch_name == "cpu":
     arch_type ="cpu"
 slurm_email = "" if "slurm_email" not in globals() else slurm_email
 
-cf.check_file(deepmd_iterative_apath+"/jobs/test/job_deepmd_test_concatenation_"+arch_type+"_"+cluster+".sh",0,True,"No SLURM file present for the concatenation phase on this cluster.")
+cf.check_file(deepmd_iterative_apath+"/jobs/test/job_deepmd_test_concatenation_"+arch_type+"_"+cluster+".sh",True,True,"No SLURM file present for the concatenation phase on this cluster.")
 slurm_file = cf.read_file(deepmd_iterative_apath+"/jobs/test/job_deepmd_test_concatenation_"+arch_type+"_"+cluster+".sh")
 slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",project_name)
 slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_","02:00:00")
@@ -97,7 +97,7 @@ if slurm_email != "":
 cf.write_file("./job_deepmd_test_concat_"+arch_type+"_"+cluster+".sh",slurm_file)
 del slurm_file
 
-cf.check_file(deepmd_iterative_apath+"/scripts/_deepmd_test_concatenation.py",0,True)
+cf.check_file(deepmd_iterative_apath+"/scripts/_deepmd_test_concatenation.py",True,True)
 python_file = cf.read_file(deepmd_iterative_apath+"/scripts/_deepmd_test_concatenation.py")
 python_file = cf.replace_in_list(python_file,"_DEEPMD_ITERATIVE_APATH_",str(deepmd_iterative_apath))
 cf.write_file("./_deepmd_test_concatenation.py",python_file)

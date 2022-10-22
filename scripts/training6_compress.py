@@ -64,7 +64,7 @@ if training_json["is_frozen"] is False:
     sys.exit(1)
 
 cluster = cf.check_cluster()
-cf.check_file(deepmd_iterative_apath+"/jobs/training/job_deepmd_freeze_"+arch_type+"_"+cluster+".sh",0,True,"No SLURM file present for the compressing step on this cluster.")
+cf.check_file(deepmd_iterative_apath+"/jobs/training/job_deepmd_freeze_"+arch_type+"_"+cluster+".sh",True,True,"No SLURM file present for the compressing step on this cluster.")
 
 ### Prep and launch DP Compress
 slurm_file_master = cf.read_file(deepmd_iterative_apath+"/jobs/training/job_deepmd_compress_"+arch_type+"_"+cluster+".sh")
@@ -73,7 +73,7 @@ slurm_email = "" if "slurm_email" not in globals() else slurm_email
 check = 0
 for it_nnp in range(1, config_json["nb_nnp"] + 1):
     cf.change_dir("./"+str(it_nnp))
-    cf.check_file("graph_"+str(it_nnp)+"_"+current_iteration_zfill+".pb",0,True,"./"+str(it_nnp)+"/graph_"+str(it_nnp)+"_"+current_iteration_zfill+".pb not present.")
+    cf.check_file("graph_"+str(it_nnp)+"_"+current_iteration_zfill+".pb",True,True,"./"+str(it_nnp)+"/graph_"+str(it_nnp)+"_"+current_iteration_zfill+".pb not present.")
     slurm_file = slurm_file_master
     slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",project_name)
     slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_","02:00:00")

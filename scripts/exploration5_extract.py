@@ -101,7 +101,7 @@ if exploration_json["is_deviated"] is False:
     logging.critical("Aborting...")
     sys.exit(1)
 
-cf.check_file(deepmd_iterative_apath+"/scripts/vmd_dcd_selection_index.tcl",0,True,"The vmd_dcd_selection_index.tcl file is missing")
+cf.check_file(deepmd_iterative_apath+"/scripts/vmd_dcd_selection_index.tcl",True,True,"The vmd_dcd_selection_index.tcl file is missing")
 master_vmd_tcl = cf.read_file(deepmd_iterative_apath+"/scripts/vmd_dcd_selection_index.tcl")
 
 cf.create_dir(training_iterative_apath+"/starting_structures")
@@ -112,7 +112,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
 
     print_freq = exploration_json["subsys_nr"][it_subsys_nr]["print_freq"]
     if "lammps" in exploration_json["subsys_nr"][it_subsys_nr]["exploration_type"]:
-        cf.check_file(training_iterative_apath+"/inputs/"+it_subsys_nr+".lmp",0,True)
+        cf.check_file(training_iterative_apath+"/inputs/"+it_subsys_nr+".lmp",True,True)
         subprocess.call([atomsk_bin,training_iterative_apath+"/inputs/"+it_subsys_nr+".lmp","pdb",training_iterative_apath+"/inputs/"+it_subsys_nr,"-ow"],\
             stdout=subprocess.DEVNULL,\
             stderr=subprocess.STDOUT)

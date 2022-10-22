@@ -64,7 +64,7 @@ if training_json["is_checked"] is False:
     sys.exit(1)
 
 cluster = cf.check_cluster()
-cf.check_file(deepmd_iterative_apath+"/jobs/training/job_deepmd_freeze_"+arch_type+"_"+cluster+".sh",0,True,"No SLURM file present for the freezing step on this cluster.")
+cf.check_file(deepmd_iterative_apath+"/jobs/training/job_deepmd_freeze_"+arch_type+"_"+cluster+".sh",True,True,"No SLURM file present for the freezing step on this cluster.")
 
 ### Prep and launch DP Freeze
 slurm_file_master = cf.read_file(deepmd_iterative_apath+"/jobs/training/job_deepmd_freeze_"+arch_type+"_"+cluster+".sh")
@@ -73,7 +73,7 @@ slurm_email = "" if "slurm_email" not in globals() else slurm_email
 check = 0
 for it_nnp in range(1, config_json["nb_nnp"] + 1):
     cf.change_dir("./"+str(it_nnp))
-    cf.check_file("./model.ckpt.index",0,True,"./"+str(it_nnp)+"/model.ckpt.index not present.")
+    cf.check_file("./model.ckpt.index",True,True,"./"+str(it_nnp)+"/model.ckpt.index not present.")
     slurm_file = slurm_file_master
     slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",project_name)
     slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_","01:00:00")

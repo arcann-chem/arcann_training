@@ -94,7 +94,7 @@ if arch_name == "v100" or arch_name == "a100":
 slurm_email = "" if "slurm_email" not in globals() else slurm_email
 
 ### Checks
-cf.check_file(deepmd_iterative_apath+"/jobs/exploration/job_deepmd_lammps_"+arch_type+"_"+cluster+".sh",0,True,"No SLURM file present for the exploration phase on this cluster.")
+cf.check_file(deepmd_iterative_apath+"/jobs/exploration/job_deepmd_lammps_"+arch_type+"_"+cluster+".sh",True,True,"No SLURM file present for the exploration phase on this cluster.")
 
 ### Preparation of the exploration
 

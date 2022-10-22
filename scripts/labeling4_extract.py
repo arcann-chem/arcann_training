@@ -77,7 +77,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
         it_step_zfill = str(it_step).zfill(5)
         check_path="./"+str(it_subsys_nr)+"/"+it_step_zfill
         if it_step == 1:
-            cf.check_file(training_iterative_apath+"/inputs/"+it_subsys_nr+".lmp",0,True,"Input data file (lmp file) not present.")
+            cf.check_file(training_iterative_apath+"/inputs/"+it_subsys_nr+".lmp",True,True,"Input data file (lmp file) not present.")
             lammps_data = cf.read_file(training_iterative_apath+"/inputs/"+it_subsys_nr+".lmp")
             index = [idx for idx, s in enumerate(lammps_data) if "Atoms" in s][0]
             del lammps_data[0:index+2]
@@ -156,7 +156,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
             it_step_zfill = str(it_step).zfill(5)
             check_path="./"+str(it_subsys_nr)+"/"+it_step_zfill
             if count == 0:
-                cf.check_file(training_iterative_apath+"/inputs/"+it_subsys_nr+".lmp",0,True,"Input data file (lmp file) not present.")
+                cf.check_file(training_iterative_apath+"/inputs/"+it_subsys_nr+".lmp",True,True,"Input data file (lmp file) not present.")
                 lammps_data = cf.read_file(training_iterative_apath+"/inputs/"+it_subsys_nr+".lmp")
                 index = [idx for idx, s in enumerate(lammps_data) if "Atoms" in s][0]
                 del lammps_data[0:index+2]

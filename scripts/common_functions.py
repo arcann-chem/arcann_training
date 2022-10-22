@@ -8,23 +8,23 @@ import logging
 
 #### TODO Better descriptions
 
-def check_file(file_path:str,status:int,abort:bool,error_msg="None"):
+def check_file(file_path: str,status: bool,abort: bool,error_msg: str="None"):
     """Check if a file exists or not, abort or not
 
     Args:
         file_path (str): full path of the file
-        status (int): 0 to check if it is present, 1 to check if it isn"t
+        status (bool): True to check if it is present, False to check if it isn"t
         abort (bool): True to abort, False to log only
         error_msg (str, optional): To override default error message.
     """
-    if status == 0 and not Path(file_path).is_file():
+    if not status and not Path(file_path).is_file():
         if abort:
             logging.critical(file_path+" does not exist.") if error_msg == "None" else logging.critical(error_msg)
             logging.critical("Aborting...")
             sys.exit(1)
         else:
             logging.warning(file_path+" does not exist.") if error_msg == "None" else logging.warning(error_msg)
-    elif status == 1 and Path(file_path).is_file():
+    elif not status and Path(file_path).is_file():
         if abort:
             logging.critical(file_path+" exists.") if error_msg == "None" else logging.critical(error_msg)
             logging.critical("Aborting...")

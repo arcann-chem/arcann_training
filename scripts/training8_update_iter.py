@@ -51,9 +51,9 @@ if training_json["is_frozen"] is False:
 ### Prep the next iteration
 for it_nnp in range(1, config_json["nb_nnp"] + 1):
     cf.change_dir("./"+str(it_nnp))
-    cf.check_file("graph_"+str(it_nnp)+"_"+current_iteration_zfill+".pb",0,True)
+    cf.check_file("graph_"+str(it_nnp)+"_"+current_iteration_zfill+".pb",True,True)
     if training_json["is_compressed"] is True:
-        cf.check_file("graph_"+str(it_nnp)+"_"+current_iteration_zfill+"_compressed.pb",0,True)
+        cf.check_file("graph_"+str(it_nnp)+"_"+current_iteration_zfill+"_compressed.pb",True,True)
     cf.remove_file_glob(".","DeepMD_*")
     cf.remove_file_glob(".","model.ckpt-*")
     cf.remove_file("checkpoint")

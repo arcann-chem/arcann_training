@@ -84,8 +84,8 @@ if arch_name == "cpu":
 slurm_email = "" if "slurm_email" not in globals() else slurm_email
 
 ### Checks
-cf.check_file(deepmd_iterative_apath+"/jobs/labeling/job_labeling_XXXXX_"+arch_type+"_"+cluster+".sh",0,True,"No SLURM file present for the labeling phase on this cluster.")
-cf.check_file(deepmd_iterative_apath+"/jobs/labeling/job_labeling_array_"+arch_type+"_"+cluster+".sh",0,True,"No SLURM Array file present for the labeling phase on this cluster.")
+cf.check_file(deepmd_iterative_apath+"/jobs/labeling/job_labeling_XXXXX_"+arch_type+"_"+cluster+".sh",True,True,"No SLURM file present for the labeling phase on this cluster.")
+cf.check_file(deepmd_iterative_apath+"/jobs/labeling/job_labeling_array_"+arch_type+"_"+cluster+".sh",True,True,"No SLURM Array file present for the labeling phase on this cluster.")
 
 ### Preparation of the labeling
 slurm_file_master = cf.read_file(deepmd_iterative_apath+"/jobs/labeling/job_labeling_XXXXX_"+arch_type+"_"+cluster+".sh")

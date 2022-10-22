@@ -73,14 +73,14 @@ if arch_name == "v100" or arch_name == "a100":
     arch_type ="gpu"
 slurm_email = "" if "slurm_email" not in globals() else slurm_email
 
-cf.check_file(deepmd_iterative_apath+"/jobs/test/job_deepmd_test_"+arch_type+"_"+cluster+".sh",0,True,"No SLURM file present for the exploration phase on this cluster.")
+cf.check_file(deepmd_iterative_apath+"/jobs/test/job_deepmd_test_"+arch_type+"_"+cluster+".sh",True,True,"No SLURM file present for the exploration phase on this cluster.")
 slurm_file_master = cf.read_file(deepmd_iterative_apath+"/jobs/test/job_deepmd_test_"+arch_type+"_"+cluster+".sh")
 
 ###
 compressed = "_compressed" if test_json["is_compressed"] else ""
 for it_nnp in range(1, test_json["nb_nnp"] + 1):
     slurm_file = slurm_file_master
-    cf.check_file("../NNP/graph_"+str(it_nnp)+"_"+current_iteration_zfill+compressed+".pb",0,True)
+    cf.check_file("../NNP/graph_"+str(it_nnp)+"_"+current_iteration_zfill+compressed+".pb",True,True)
     subprocess.call(["rsync","-a", "../NNP/graph_"+str(it_nnp)+"_"+current_iteration_zfill+compressed+".pb", "./"])
     slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_PB_","graph_"+str(it_nnp)+"_"+current_iteration_zfill+compressed)
     slurm_file = cf.replace_in_list(slurm_file,"_R_NNPNB_","NNP"+str(it_nnp))

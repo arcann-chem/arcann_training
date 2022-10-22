@@ -103,7 +103,7 @@ arch_name = training_json["arch_name"]
 if arch_name == "v100" or arch_name == "a100":
     arch_type ="gpu"
 
-cf.check_file(deepmd_iterative_apath+"/jobs/training/job_deepmd_train_"+arch_type +"_"+cluster+".sh",0,True,"No SLURM file present for the training step on this cluster.")
+cf.check_file(deepmd_iterative_apath+"/jobs/training/job_deepmd_train_"+arch_type +"_"+cluster+".sh",True,True,"No SLURM file present for the training step on this cluster.")
 slurm_file_master = cf.read_file(deepmd_iterative_apath+"/jobs/training/job_deepmd_train_"+arch_type+"_"+cluster+".sh")
 slurm_email = "" if "slurm_email" not in globals() else slurm_email
 
