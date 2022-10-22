@@ -59,10 +59,8 @@ deepmd_iterative_apath = str(deepmd_iterative_apath)
 config_json_fpath = training_iterative_apath+"/control/config.json"
 config_json = cf.json_read(config_json_fpath,True,True)
 
-### Get current iteration
-config_json["current_iteration"] = training_iterative_apath if "current_iteration" in globals() else cf.check_if_in_dict(config_json,"current_iteration",False,0)
-current_iteration = config_json["current_iteration"]
-current_iteration_zfill = str(current_iteration).zfill(3)
+current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
+current_iteration = int(current_iteration_zfill)
 
 if "arch_name" in globals() and ( arch_name != "v100" or arch_name != "a100" ):
     logging.critical("Invalid arch_name: "+ arch_name)

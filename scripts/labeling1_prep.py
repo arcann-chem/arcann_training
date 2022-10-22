@@ -49,8 +49,8 @@ deepmd_iterative_apath = str(deepmd_iterative_apath)
 config_json_fpath = training_iterative_apath+"/control/config.json"
 config_json = cf.json_read(config_json_fpath,True,True)
 
-current_iteration = current_iteration if "current_iteration" in globals() else config_json["current_iteration"]
-current_iteration_zfill = str(current_iteration).zfill(3)
+current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
+current_iteration = int(current_iteration_zfill)
 
 exploration_json_fpath = training_iterative_apath+"/control/exploration_"+current_iteration_zfill+".json"
 exploration_json = cf.json_read(exploration_json_fpath,True,True)

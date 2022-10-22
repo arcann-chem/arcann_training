@@ -6,7 +6,7 @@ logging.basicConfig(level=logging.INFO,format="%(levelname)s: %(message)s")
 
 import subprocess
 
-ttraining_iterative_apath = Path("..").resolve()
+training_iterative_apath = Path("..").resolve()
 ### Check if the deepmd_iterative_apath is defined
 deepmd_iterative_apath_error = 1
 if "deepmd_iterative_apath" in globals():
@@ -36,8 +36,8 @@ deepmd_iterative_apath = str(deepmd_iterative_apath)
 config_json_fpath = training_iterative_apath+"/control/config.json"
 config_json = cf.json_read(config_json_fpath,True,True)
 
-current_iteration = current_iteration if "current_iteration" in globals() else config_json["current_iteration"]
-current_iteration_zfill = str(current_iteration).zfill(3)
+current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
+current_iteration = int(current_iteration_zfill)
 
 training_json_fpath = training_iterative_apath+"/control/training_"+current_iteration_zfill+".json"
 training_json = cf.json_read(training_json_fpath,True,True)
