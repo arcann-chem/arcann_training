@@ -6,8 +6,8 @@
 # arch_name: str = "v100"
 # slurm_email: str = ""
 ## Training Parameters (Here are the default defaults)
-# use_datasets_initial: bool = True
-# use_datasets_extra: bool = False
+# use_initial_datasets: bool = True
+# use_extra_datasets: bool = False
 # start_lr: float = 0.001
 # stop_lr: float = 1e-06
 # decay_rate: float = 0.90
@@ -84,8 +84,8 @@ training_json["decay_rate"] = 0.90 if "decay_rate" not in globals() else decay_r
 training_json["decay_steps"] = 5000 if "decay_steps" not in globals() else decay_steps
 training_json["numb_steps"] = 400000 if "numb_steps" not in globals() else numb_steps
 training_json["numb_test"] = 0 if "numb_test" not in globals() else numb_test
-training_json["use_datasets_initial"] = True if "use_datasets_initial" not in globals() else use_datasets_initial
-training_json["use_datasets_extra"] = False if "use_datasets_extra" not in globals() else use_datasets_extra
+training_json["use_initial_datasets"] = True if "use_initial_datasets" not in globals() else use_initial_datasets
+training_json["use_extra_datasets"] = False if "use_extra_datasets" not in globals() else use_extra_datasets
 training_json["deepmd_model_version"] = 2.1 if "deepmd_model_version" not in globals() else deepmd_model_version
 training_json["deepmd_model_type_descriptor"] = "se_e2_a" if "deepmd_model_type_descriptor" not in globals() else deepmd_model_type_descriptor
 ### #35
@@ -189,23 +189,23 @@ del datasets_validation
 datasets_training=[]
 datasets_training_json=[]
 ### Initial
-structures_initial_total = 0
-if training_json["use_datasets_initial"]:
+nb_initial = 0
+if training_json["use_initial_datasets"]:
     for it_datasets_initial_json in datasets_initial_json.keys():
         if (data_apath/it_datasets_initial_json).is_dir():
             ####MAYBEFIX: Here we don't Path because too complex
             datasets_training.append("data/"+it_datasets_initial_json+"/")
             datasets_training_json.append(it_datasets_initial_json)
-            structures_initial_total = structures_initial_total+datasets_initial_json[it_datasets_initial_json]
+            nb_initial = nb_initial+datasets_initial_json[it_datasets_initial_json]
     del it_datasets_initial_json
 del datasets_initial_json
 
 ### Non-Reactive (aka subsys_nr in the initialization first) && all the others are REACTIVE !
 ### Total and what is added just for this iteration
-structures_added_nr_total = 0
-structures_added_r_total = 0
-structures_added_nr_iter = 0
-structures_added_r_iter = 0
+nb_added_nr = 0
+nb_added_r = 0
+nb_added_nr_iter = 0
+nb_added_r_iter = 0
 
 ### This trick remove duplicates from list via set
 subsys_name = list(set(subsys_name))
@@ -223,9 +223,9 @@ if current_iteration > 0:
                     ####MAYBEFIX: Here we don't Path because too complex
                     datasets_training.append("data/"+system_it+"_"+str(it_iteration).zfill(3)+"/")
                     datasets_training_json.append(system_it+"_"+str(it_iteration).zfill(3))
-                    structures_added_nr_total = structures_added_nr_total+np.load(str(data_apath/(system_it+"_"+str(it_iteration).zfill(3))/"set.000"/"box.npy")).shape[0]
+                    nb_added_nr = nb_added_nr+np.load(str(data_apath/(system_it+"_"+str(it_iteration).zfill(3))/"set.000"/"box.npy")).shape[0]
                     if it_iteration == current_iteration:
-                        structures_added_nr_iter = structures_added_nr_iter+np.load(str(data_apath/(system_it+"_"+str(it_iteration).zfill(3))/"set.000"/"box.npy")).shape[0]
+                        nb_added_nr_iter = nb_added_nr_iter+np.load(str(data_apath/(system_it+"_"+str(it_iteration).zfill(3))/"set.000"/"box.npy")).shape[0]
             del system_it
         except(KeyError,NameError):
             pass
@@ -235,9 +235,9 @@ if current_iteration > 0:
                     ####MAYBEFIX: Here we don't Path because too complex
                     datasets_training.append("data/"+system_it+"_"+str(it_iteration).zfill(3)+"/")
                     datasets_training_json.append(system_it+"_"+str(it_iteration).zfill(3))
-                    structures_added_nr_total = structures_added_nr_total+np.load(str(data_apath/(system_it+"_"+str(it_iteration).zfill(3))/"set.000"/"box.npy")).shape[0]
+                    nb_added_nr = nb_added_nr+np.load(str(data_apath/(system_it+"_"+str(it_iteration).zfill(3))/"set.000"/"box.npy")).shape[0]
                     if it_iteration == current_iteration:
-                        structures_added_nr_iter = structures_added_nr_iter+np.load(str(data_apath/(system_it+"_"+str(it_iteration).zfill(3))/"set.000"/"box.npy")).shape[0]
+                        nb_added_nr_iter = nb_added_nr_iter+np.load(str(data_apath/(system_it+"_"+str(it_iteration).zfill(3))/"set.000"/"box.npy")).shape[0]
             del system_it
         except(KeyError,NameError):
             pass
@@ -247,30 +247,30 @@ if current_iteration > 0:
                     ####MAYBEFIX: Here we don't Path because too complex
                     datasets_training.append("data/"+system_it+"_"+str(it_iteration).zfill(3)+"/")
                     datasets_training_json.append(system_it+"_"+str(it_iteration).zfill(3))
-                    structures_added_nr_total = structures_added_nr_total+np.load(str(data_apath/(system_it+"_"+str(it_iteration).zfill(3))/"set.000"/"box.npy")).shape[0]
+                    nb_added_nr = nb_added_nr+np.load(str(data_apath/(system_it+"_"+str(it_iteration).zfill(3))/"set.000"/"box.npy")).shape[0]
                     if it_iteration == current_iteration:
-                        structures_added_nr_iter = structures_added_nr_iter+np.load(str(data_apath/(system_it+"_"+str(it_iteration).zfill(3))/"set.000"/"box.npy")).shape[0]
+                        nb_added_nr_iter = nb_added_nr_iter+np.load(str(data_apath/(system_it+"_"+str(it_iteration).zfill(3))/"set.000"/"box.npy")).shape[0]
             del system_it
         except(KeyError,NameError):
             pass
     del it_iteration
 
 ### Finally the extra sets !
-structures_extra_total = 0
-if training_json["use_datasets_extra"]:
+nb_extra = 0
+if training_json["use_extra_datasets"]:
     config_json["datasets_extra"] = datasets_extra
     del datasets_extra
     for it_datasets_extra in config_json["datasets_extra"]:
         ####MAYBEFIX: Here we don't Path because too complex
         datasets_training.append("data/"+it_datasets_extra+"/")
         datasets_training_json.append(it_datasets_extra)
-        structures_extra_total = structures_extra_total+np.load(str(data_apath/it_datasets_extra/"set.000"/"box.npy")).shape[0]
+        nb_extra = nb_extra+np.load(str(data_apath/it_datasets_extra/"set.000"/"box.npy")).shape[0]
     del it_datasets_extra
 else:
     del datasets_extra
 
 ### Total
-structures_trained_total = structures_initial_total+structures_added_nr_total+structures_added_r_total+structures_extra_total
+nb_trained = nb_initial+nb_added_nr+nb_added_r+nb_extra
 
 ### Number of tests
 if ( training_json["deepmd_model_version"] < 2.0 ):
@@ -286,21 +286,21 @@ else:
     training_input_json["training"]["systems"] = datasets_training
 
 training_json["training_data"] = datasets_training_json
-training_json["structures_trained_total"] = structures_trained_total
-training_json["structures_initial_total"] = structures_initial_total
-training_json["structures_added_nr_total"] = structures_added_nr_total
-training_json["structures_added_r_total"] = structures_added_r_total
-training_json["structures_added_nr_iter"] = structures_added_nr_iter
-training_json["structures_added_r_iter"] = structures_added_r_iter
-training_json["structures_extra_total"] = structures_extra_total
+training_json["nb_trained"] = nb_trained
+training_json["nb_initial"] = nb_initial
+training_json["nb_added_nr"] = nb_added_nr
+training_json["nb_added_r"] = nb_added_r
+training_json["nb_added_nr_iter"] = nb_added_nr_iter
+training_json["nb_added_r_iter"] = nb_added_r_iter
+training_json["nb_extra"] = nb_extra
 
 del datasets_training_json
-del structures_trained_total, structures_initial_total, structures_extra_total
-del structures_added_nr_total, structures_added_r_total, structures_added_nr_iter, structures_added_r_iter
+del nb_trained, nb_initial, nb_extra
+del nb_added_nr, nb_added_r, nb_added_nr_iter, nb_added_r_iter
 
 ### If no override, get decay steps (= nb of trained floored to the nearest 10000 divided by 4)
 if "decay_steps" not in globals():
-    decay_steps = cf.get_decay_steps(training_json["structures_trained_total"])
+    decay_steps = cf.get_decay_steps(training_json["nb_trained"])
 
 training_json["decay_steps"] = int(decay_steps)
 decay_steps = int(decay_steps)
@@ -382,10 +382,6 @@ training_input_json["training"]["save_ckpt"]="model.ckpt"
 if training_json["deepmd_model_version"] < 2.0:
     training_input_json["training"]["load_ckpt"]="model.ckpt"
 
-## Dump the config/training
-cf.json_dump(config_json,(control_apath/"config.json"),True)
-cf.json_dump(training_json,(control_apath/("training_"+current_iteration_zfill+".json")),True)
-
 ### Create the inputs/jobfiles for each NNP with random SEED inf the form of NNP_number + random(0,1000) + current_iteration.zfil(3) so between 10000 and unlimited1000999 (at iteration 999 !!)
 if current_iteration > 0:
     previous_iteration = current_iteration - 1
@@ -459,6 +455,10 @@ for it_nnp in range(1,config_json["nb_nnp"] + 1):
     cf.write_file(local_apath/("job_deepmd_train_"+arch_type+"_"+cluster+".sh"),slurm_file)
     del slurm_file, local_apath, training_input_json_fpath, RAND
 del it_nnp, approx_time, training_input_json
+
+## Dump the config/training
+cf.json_dump(config_json,(control_apath/"config.json"),True)
+cf.json_dump(training_json,(control_apath/("training_"+current_iteration_zfill+".json")),True)
 
 if "initial_seconds_per_1000steps" in globals():
     del initial_seconds_per_1000steps

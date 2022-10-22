@@ -3,15 +3,17 @@
 ## Set your system name, subsystem ("easy" exploration, standard TEMP, presents from the START of the iterative training) and the number of NNP you want to use
 sys_name: str = "NAME"
 subsys_name: list = ["SYSTEM1","SYSTEM2"]
-nb_nnp: int = 3
 ## These are the default
-# temperature_K: list = [300, 300]
+# nb_nnp: int = 3
+# exploration_type: list = ["lammps", "lammps"]
+# temperature_K: list = [298.15, 298.15]
 # timestep_ps: list = [0.0005, 0.0005]
 # nb_candidates_max = [500, 500]
 # s_low: list = [0.1, 0.1]
 # s_high: list = [0.8, 0.8]
 # s_high_max: list = [1.0, 1.0]
 # ignore_first_x_ps: list = [0.5, 0.5]
+
 
 ###################################### No change past here
 import sys
@@ -46,7 +48,7 @@ config_json["training_iterative_apath"] = str(training_iterative_apath)
 config_json["deepmd_iterative_apath"] = str(deepmd_iterative_apath)
 ####
 config_json["system"] = sys_name
-config_json["nb_nnp"] = nb_nnp
+config_json["nb_nnp"] = 3 if "nb_nnp" not in globals() else nb_nnp
 config_json["current_iteration"] = 0
 config_json["subsys_nr"] = {}
 del sys_name, nb_nnp
@@ -54,13 +56,14 @@ del sys_name, nb_nnp
 ### Sets the default
 for it0_subsys_nr,it_subsys_nr in enumerate(subsys_name):
     config_json["subsys_nr"][it_subsys_nr] = {}
-    config_json["subsys_nr"][it_subsys_nr]["temperature_K"] = 300.0 if "temperature_K" not in globals() else temperature_K[it0_subsys_nr]
+    config_json["subsys_nr"][it_subsys_nr]["temperature_K"] = 298.15 if "temperature_K" not in globals() else temperature_K[it0_subsys_nr]
     config_json["subsys_nr"][it_subsys_nr]["timestep_ps"] = 0.0005 if "timestep_ps" not in globals() else timestep_ps[it0_subsys_nr]
     config_json["subsys_nr"][it_subsys_nr]["nb_candidates_max"] = 500 if "nb_candidates_max" not in globals() else nb_candidates_max[it0_subsys_nr]
     config_json["subsys_nr"][it_subsys_nr]["s_low"] = 0.1 if "s_low" not in globals() else s_low[it0_subsys_nr]
     config_json["subsys_nr"][it_subsys_nr]["s_high"] = 0.8 if "temperature" not in globals() else s_high[it0_subsys_nr]
     config_json["subsys_nr"][it_subsys_nr]["s_high_max"] = 1.0 if "s_high_max" not in globals() else s_high_max[it0_subsys_nr]
     config_json["subsys_nr"][it_subsys_nr]["ignore_first_x_ps"] = 0.5 if "ignore_first_x_ps" not in globals() else ignore_first_x_ps[it0_subsys_nr]
+    config_json["subsys_nr"][it_subsys_nr]["exploration_type"] = "lammps" if "exploration_type" not in globals() else exploration_type[it0_subsys_nr]
 del it0_subsys_nr, it_subsys_nr, subsys_name
 
 ### Create the control directory
