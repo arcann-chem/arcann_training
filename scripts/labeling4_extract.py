@@ -188,7 +188,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
                 virial_array_raw[count,:] = stress_xyz_array * volume[count] / eV_per_A3_to_GPa
             else:
                 True
-                ### TODO WRITE
+                ### TODO
 
             force_cp2k = cf.read_file(check_path+"/2_labeling_"+it_step_zfill+"-Forces.for")
             del force_cp2k[0:4]

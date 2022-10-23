@@ -6,7 +6,7 @@ set i 0
 while {[gets $selectfile line] >=0 } {
 set a [lindex $line 0  ]
 set j [format {%05g} $i]
-animate write xyz vmd_$j.xyz beg $a end $a skip 0 waitfor all
+animate write xyz _R_XYZ_OUT_ beg $a end $a skip 0 waitfor all
 incr i
 }
 quit
