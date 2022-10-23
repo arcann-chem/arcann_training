@@ -21,6 +21,7 @@ training_iterative_apath = Path("..").resolve()
 deepmd_iterative_apath_error = 1
 if "deepmd_iterative_apath" in globals():
     if (Path(deepmd_iterative_apath)/"scripts"/"common_functions.py").is_file():
+        deepmd_iterative_apath = Path(deepmd_iterative_apath)
         deepmd_iterative_apath_error = 0
 elif (Path().home()/"deepmd_iterative_py"/"scripts"/"common_functions.py").is_file():
     deepmd_iterative_apath = Path().home()/"deepmd_iterative_py"
@@ -34,7 +35,7 @@ if deepmd_iterative_apath_error == 1:
     logging.critical("deepmd_iterative_apath variable or ~/deepmd_iterative_py or in the path file in control")
     logging.critical("Aborting...")
     sys.exit(1)
-sys.path.insert(0, str(Path(deepmd_iterative_apath)/"scripts"))
+sys.path.insert(0, str(deepmd_iterative_apath/"scripts"))
 del deepmd_iterative_apath_error
 import common_functions as cf
 
@@ -150,16 +151,6 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
     np.save(str(data_apath/"set.000"/"energy"),energy_array_raw)
     np.savetxt(str(subsys_path/"coord.raw"),coord_array_raw,delimiter=" ")
     np.save(str(data_apath/"set.000"/"coord"),coord_array_raw)
-
-    # # np.savetxt("./"+str(it_subsys_nr)+"/virial.raw",virial_array_raw,delimiter=" ")
-    # #np.save(training_iterative_apath+"/data/"+it_subsys_nr+"_"+current_iteration_zfill+"/set.000/virial",virial_array_raw)
-    # np.savetxt("./"+str(it_subsys_nr)+"/force.raw",force_array_raw,delimiter=" ")
-    # #np.save(training_iterative_apath+"/data/"+it_subsys_nr+"_"+current_iteration_zfill+"/set.000/force",force_array_raw)
-    # np.savetxt("./"+str(it_subsys_nr)+"/energy.raw",energy_array_raw,delimiter=" ")
-    # #np.save(training_iterative_apath+"/data/"+it_subsys_nr+"_"+current_iteration_zfill+"/set.000/energy",energy_array_raw)
-    # np.savetxt("./"+str(it_subsys_nr)+"/coord.raw",coord_array_raw,delimiter=" ")
-    # #np.save(training_iterative_apath+"/data/"+it_subsys_nr+"_"+current_iteration_zfill+"/set.000/coord",coord_array_raw)
-
     del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw
 
     if labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"] != 0 :
@@ -251,7 +242,6 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
         np.save(str(data_apath/"set.000"/"energy"),energy_array_raw)
         np.savetxt(str(subsys_path/"coord-disturbed.raw"),coord_array_raw,delimiter=" ")
         np.save(str(data_apath/"set.000"/"coord"),coord_array_raw)
-
         del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw
 del volume, cp2k_version, count, subsys_path, data_apath, it_subsys_nr
 del Ha_to_eV, Bohr_to_A, au_to_eV_per_A,eV_per_A3_to_GPa
@@ -259,7 +249,7 @@ del Ha_to_eV, Bohr_to_A, au_to_eV_per_A,eV_per_A3_to_GPa
 labeling_json["is_extracted"] = True
 cf.json_dump(labeling_json,(control_apath/("labeling_"+current_iteration_zfill+".json")),True)
 
-logging.info("Exploration-Extraction is a success!")
+logging.info("Labeling: Extraction phase is a success!")
 
 ### Cleaning
 del config_json, training_iterative_apath, control_apath

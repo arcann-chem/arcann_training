@@ -33,6 +33,7 @@ training_iterative_apath = Path("..").resolve()
 deepmd_iterative_apath_error = 1
 if "deepmd_iterative_apath" in globals():
     if (Path(deepmd_iterative_apath)/"scripts"/"common_functions.py").is_file():
+        deepmd_iterative_apath = Path(deepmd_iterative_apath)
         deepmd_iterative_apath_error = 0
 elif (Path().home()/"deepmd_iterative_py"/"scripts"/"common_functions.py").is_file():
     deepmd_iterative_apath = Path().home()/"deepmd_iterative_py"
@@ -46,7 +47,7 @@ if deepmd_iterative_apath_error == 1:
     logging.critical("deepmd_iterative_apath variable or ~/deepmd_iterative_py or in the path file in control")
     logging.critical("Aborting...")
     sys.exit(1)
-sys.path.insert(0, str(Path(deepmd_iterative_apath)/"scripts"))
+sys.path.insert(0, str(deepmd_iterative_apath/"scripts"))
 del deepmd_iterative_apath_error
 import common_functions as cf
 
@@ -138,7 +139,6 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
     elif exploration_type == 'i-PI':
         ### #12
         True
-
 
     ### Starting structures (after first iteration)
     if current_iteration > 1:
@@ -270,7 +270,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                 slurm = slurm_master.copy()
                 slurm = cf.replace_in_list(slurm,"_R_PROJECT_",project_name)
                 slurm = cf.replace_in_list(slurm,"_R_WALLTIME_",cf.seconds_to_walltime(subsys_job_walltime_h*3600))
-                slurm = cf.replace_in_list(slurm,"_R_DEEPMD_MODEL_VERSION_",str(exploration_json["deepmd_model_version"]))
+                slurm = cf.replace_in_list(slurm,"_R_DEEPMD_VERSION_",str(exploration_json["deepmd_model_version"]))
                 if allocation_name == "v100":
                     slurm = cf.replace_in_list(slurm,"_R_ALLOC_",allocation_name)
                     if subsys_job_walltime_h <= 20:
@@ -358,7 +358,7 @@ del exploration_type
 cf.json_dump(config_json,(control_apath/"config.json"),True)
 cf.json_dump(exploration_json,(control_apath/("exploration_"+current_iteration_zfill+".json")),True)
 
-logging.info("Preparation of Exploration is a success!")
+logging.info("Exploration: Prep phase is a success!")
 
 ### Cleaning
 del config_json, training_iterative_apath, control_apath

@@ -20,6 +20,7 @@ training_iterative_apath = Path("..").resolve()
 deepmd_iterative_apath_error = 1
 if "deepmd_iterative_apath" in globals():
     if (Path(deepmd_iterative_apath)/"scripts"/"common_functions.py").is_file():
+        deepmd_iterative_apath = Path(deepmd_iterative_apath)
         deepmd_iterative_apath_error = 0
 elif (Path().home()/"deepmd_iterative_py"/"scripts"/"common_functions.py").is_file():
     deepmd_iterative_apath = Path().home()/"deepmd_iterative_py"
@@ -33,61 +34,58 @@ if deepmd_iterative_apath_error == 1:
     logging.critical("deepmd_iterative_apath variable or ~/deepmd_iterative_py or in the path file in control")
     logging.critical("Aborting...")
     sys.exit(1)
-sys.path.insert(0, str(Path(deepmd_iterative_apath)/"scripts"))
+sys.path.insert(0, str(deepmd_iterative_apath/"scripts"))
 del deepmd_iterative_apath_error
 import common_functions as cf
 
-### Temp fix before Path/Str pass
-training_iterative_apath = str(training_iterative_apath)
-deepmd_iterative_apath = str(deepmd_iterative_apath)
+slurm_email = "" if "slurm_email" not in globals() else slurm_email
 
-config_json_fpath = training_iterative_apath+"/control/config.json"
-config_json = cf.json_read(config_json_fpath,True,True)
-
+### Read what is needed (json files)
+control_apath = training_iterative_apath/"control"
+jobs_apath = deepmd_iterative_apath/"jobs"/"test"
 current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
 current_iteration = int(current_iteration_zfill)
+config_json = cf.json_read((control_apath/"config.json"),True,True)
+training_json = cf.json_read((control_apath/("training_"+current_iteration_zfill+".json")),True,True)
+test_json = cf.json_read((control_apath/("test_"+current_iteration_zfill+".json")),False,True)
+current_apath = Path(".").resolve()
 
-training_json_fpath = training_iterative_apath+"/control/training_"+current_iteration_zfill+".json"
-training_json = cf.json_read(training_json_fpath,True,True)
-
-test_json_fpath = training_iterative_apath+"/control/test_"+current_iteration_zfill+".json"
-test_json = cf.json_read(test_json_fpath,False,True)
-
-if training_json["is_frozen"] is False:
+if not training_json["is_frozen"]:
     logging.critical("Lock found. Previous NNPs aren\'t frozen")
     logging.critical("Aborting...")
     sys.exit(1)
 
-cluster = cf.check_cluster()
-
 ### Set needed variables
 test_json["nb_nnp"] = config_json["nb_nnp"]
 test_json["is_compressed"] = training_json["is_compressed"]
+
+### #35
+cluster = cf.check_cluster()
 test_json["cluster"] = cluster
-test_json["project_name"] = project_name if "project_name" in globals() else "nvs"
-test_json["allocation_name"] = allocation_name if "allocation_name" in globals() else "v100"
-test_json["arch_name"] = arch_name if "arch_name" in globals() else "v100"
+test_json["project_name"] = "nvs" if "project_name" not in globals() else project_name
+test_json["allocation_name"] = "v100" if "allocation_name" not in globals() else allocation_name
+test_json["arch_name"] = "v100" if "arch_name" not in globals() else arch_name
 project_name = test_json["project_name"]
 allocation_name = test_json["allocation_name"]
 arch_name = test_json["arch_name"]
 if arch_name == "v100" or arch_name == "a100":
     arch_type ="gpu"
-slurm_email = "" if "slurm_email" not in globals() else slurm_email
 
-cf.check_file(deepmd_iterative_apath+"/jobs/test/job_deepmd_test_"+arch_type+"_"+cluster+".sh",True,True,"No SLURM file present for the exploration phase on this cluster.")
-slurm_file_master = cf.read_file(deepmd_iterative_apath+"/jobs/test/job_deepmd_test_"+arch_type+"_"+cluster+".sh")
+### #35
+cf.check_file(jobs_apath/("job_deepmd_test_"+arch_type +"_"+cluster+".sh"),True,True)
+slurm_master = cf.read_file(jobs_apath/("job_deepmd_test_"+arch_type +"_"+cluster+".sh"))
 
 ###
 compressed = "_compressed" if test_json["is_compressed"] else ""
 for it_nnp in range(1, test_json["nb_nnp"] + 1):
-    slurm_file = slurm_file_master
-    cf.check_file("../NNP/graph_"+str(it_nnp)+"_"+current_iteration_zfill+compressed+".pb",True,True)
-    subprocess.call(["rsync","-a", "../NNP/graph_"+str(it_nnp)+"_"+current_iteration_zfill+compressed+".pb", "./"])
-    slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_PB_","graph_"+str(it_nnp)+"_"+current_iteration_zfill+compressed)
+    slurm_file = slurm_master.copy()
+    cf.check_file(training_iterative_apath/"NNP"/("graph_"+str(it_nnp)+"_"+current_iteration_zfill+compressed+".pb"),True,True)
+    subprocess.call(["rsync","-a", str(training_iterative_apath/"NNP"/("graph_"+str(it_nnp)+"_"+current_iteration_zfill+compressed+".pb")), str(current_apath)])
+    slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_MODEL_","graph_"+str(it_nnp)+"_"+current_iteration_zfill+compressed)
     slurm_file = cf.replace_in_list(slurm_file,"_R_NNPNB_","NNP"+str(it_nnp))
     slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",project_name)
     slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_","04:00:00")
-    slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_MODEL_VERSION_",str(training_json["deepmd_model_version"]))
+    slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_VERSION_",str(training_json["deepmd_model_version"]))
 
     if allocation_name == "v100":
         slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",allocation_name)
@@ -111,10 +109,10 @@ for it_nnp in range(1, test_json["nb_nnp"] + 1):
     if slurm_email != "":
         slurm_file = cf.replace_in_list(slurm_file,"##SBATCH --mail-type","#SBATCH --mail-type")
         slurm_file = cf.replace_in_list(slurm_file,"##SBATCH --mail-user _R_EMAIL_","#SBATCH --mail-user "+slurm_email)
-    cf.write_file("./job_deepmd_test_"+arch_type+"_"+cluster+"_NNP"+str(it_nnp)+".sh",slurm_file)
-
+    cf.write_file(current_apath/("job_deepmd_test_"+arch_type +"_"+cluster+"_NNP"+str(it_nnp)+".sh"),slurm_file)
     del slurm_file
 del it_nnp
+del slurm_master, compressed
 
 test_json["is_locked"] = True
 test_json["is_launched"] = False
@@ -122,15 +120,13 @@ test_json["is_checked"] = False
 test_json["is_concatenated"] = False
 test_json["is_plotted"] = False
 
-cf.json_dump(test_json,test_json_fpath,True,"test.json")
-logging.info("The DP-Test: prep phase is a success!")
-
-del slurm_file_master
+cf.json_dump(test_json,(control_apath/("test_"+current_iteration_zfill+".json")),True)
+logging.info("DP-Test: Prep phase is a success!")
 
 ### Cleaning
-del config_json, config_json_fpath, training_iterative_apath
-del training_json, training_json_fpath
-del test_json, test_json_fpath
+del config_json, training_iterative_apath, control_apath, jobs_apath, current_apath
+del training_json
+del test_json
 del current_iteration, current_iteration_zfill
 del cluster, arch_type
 del project_name, allocation_name, arch_name
@@ -140,4 +136,5 @@ del slurm_email
 del sys, Path, logging, cf
 del subprocess
 import gc; gc.collect(); del gc
+print(globals())
 exit()

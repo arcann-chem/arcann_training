@@ -67,7 +67,7 @@ training_json["is_compressed"] = True
 
 cf.json_dump(training_json,(control_apath/("training_"+current_iteration_zfill+".json")),True)
 
-logging.info("DP Compress is a success!")
+logging.info("DP-Compress: Check phase is a success!")
 
 ### Cleaning
 del config_json, training_iterative_apath, control_apath

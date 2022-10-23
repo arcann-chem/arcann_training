@@ -20,14 +20,14 @@
 #SBATCH -o DeepMD_Test.%j
 #SBATCH -e DeepMD_Test.%j
 # Name of job
-#SBATCH -J DeepMD_Test__R_NBPBN_
+#SBATCH -J DeepMD_Test__R_NNPNB_
 # Email (Remove the space between # and SBATCH on the next two lines)
 ##SBATCH --mail-type FAIL,BEGIN,END,ALL
 ##SBATCH --mail-user _R_EMAIL_
 #
 
 # Input files
-DeepMD_MODEL_VERSION="_R_DEEPMD_MODEL_VERSION_"
+DeepMD_MODEL_VERSION="_R_DEEPMD_VERSION_"
 DeepMD_MODEL="_R_DEEPMD_MODEL_"
 DeepMD_DATA_DIR="data"
 
@@ -107,16 +107,16 @@ rm -rf "${TEMPWORKDIR}"/data
 find ./ -type l -delete
 rm -r "${TEMPWORKDIR}"/${DeepMD_MODEL}.pb
 cd "${SLURM_SUBMIT_DIR}" || exit 1
-if [ ! -d logs__R_NBPBN_ ]; then
-    mkdir logs__R_NBPBN_ || exit 1
+if [ ! -d logs__R_NNPNB_ ]; then
+    mkdir logs__R_NNPNB_ || exit 1
 fi
-if [ ! -d out__R_NBPBN_ ]; then
-    mkdir out__R_NBPBN_ || exit 1
+if [ ! -d out__R_NNPNB_ ]; then
+    mkdir out__R_NNPNB_ || exit 1
 fi
-mv "${TEMPWORKDIR}"/*.log logs__R_NBPBN_/
-mv "${TEMPWORKDIR}"/*.err logs__R_NBPBN_/
-mv "${TEMPWORKDIR}"/*.out out__R_NBPBN_/
-cd logs__R_NBPBN_ || exit 1
+mv "${TEMPWORKDIR}"/*.log logs__R_NNPNB_/
+mv "${TEMPWORKDIR}"/*.err logs__R_NNPNB_/
+mv "${TEMPWORKDIR}"/*.out out__R_NNPNB_/
+cd logs__R_NNPNB_ || exit 1
 if [ "${DeepMD_MODEL_VERSION}" = "2.0" ] || [ "${DeepMD_MODEL_VERSION}" = "2.1" ] ;then
     for f in "${DeepMD_MODEL}"*.err ; do grep 'DEEPMD INFO' "${f}" > "${f/.err/.log}" ; done
 fi

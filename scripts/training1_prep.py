@@ -421,7 +421,7 @@ for it_nnp in range(1,config_json["nb_nnp"] + 1):
     slurm_file = slurm_file_master
     slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",project_name)
     slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(approx_time)+":00:00")
-    slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_MODEL_VERSION_",str(training_json["deepmd_model_version"]))
+    slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_VERSION_",str(training_json["deepmd_model_version"]))
     if allocation_name == "v100":
         slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",allocation_name)
         if approx_time <= 20:
@@ -464,7 +464,7 @@ cf.json_dump(training_json,(control_apath/("training_"+current_iteration_zfill+"
 if "initial_seconds_per_1000steps" in globals():
     del initial_seconds_per_1000steps
 
-logging.info("Preparation of DP Train is a success!")
+logging.info("DP-Train: Prep phase is a success!")
 
 ### Cleaning
 del data_apath, control_apath

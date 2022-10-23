@@ -58,6 +58,7 @@ training_iterative_apath = Path("..").resolve()
 deepmd_iterative_apath_error = 1
 if "deepmd_iterative_apath" in globals():
     if (Path(deepmd_iterative_apath)/"scripts"/"common_functions.py").is_file():
+        deepmd_iterative_apath = Path(deepmd_iterative_apath)
         deepmd_iterative_apath_error = 0
 elif (Path().home()/"deepmd_iterative_py"/"scripts"/"common_functions.py").is_file():
     deepmd_iterative_apath = Path().home()/"deepmd_iterative_py"
@@ -71,7 +72,7 @@ if deepmd_iterative_apath_error == 1:
     logging.critical("deepmd_iterative_apath variable or ~/deepmd_iterative_py or in the path file in control")
     logging.critical("Aborting...")
     sys.exit(1)
-sys.path.insert(0, str(Path(deepmd_iterative_apath)/"scripts"))
+sys.path.insert(0, str(deepmd_iterative_apath/"scripts"))
 del deepmd_iterative_apath_error
 import common_functions as cf
 
@@ -291,7 +292,7 @@ del master_vmd_tcl, atomsk_bin, vmd_bin
 exploration_json["is_extracted"] = True
 cf.json_dump(exploration_json,(control_apath/("exploration_"+current_iteration_zfill+".json")),True)
 
-logging.info("Exploration-Extraction phase is a success!")
+logging.info("Exploration: Extraction phase is a success!")
 
 ### Cleaning
 if int(current_iteration_zfill) > 1:

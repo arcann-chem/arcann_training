@@ -47,6 +47,7 @@ Very fancy DeepMD-based semi-automatic highly-customizable iterative training pr
 * numpy >= 1.15 (exploration1_prep exploration4_devi exploration5_extract labeling4_extract training1_prep training3_check initialization)
 * VMD >= 1.9.4 (exploration5_extract)
 * Atomsk >= beta-0.11.2 (exploration5_extract)
+* scipy >= ? (test5_plot)
 
 <div id="installation"></div>
 

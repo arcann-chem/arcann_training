@@ -27,7 +27,7 @@
 #
 
 # Input files
-DeepMD_MODEL_VERSION="_R_DEEPMD_MODEL_VERSION_"
+DeepMD_MODEL_VERSION="_R_DEEPMD_VERSION_"
 DeepMD_MODEL="_R_DEEPMD_MODEL_"
 
 #----------------------------------------------

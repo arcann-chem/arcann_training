@@ -27,9 +27,9 @@
 #
 
 # Input files
-DeepMD_MODEL_VERSION="_R_DEEPMD_MODEL_VERSION_"
-DeepMD_INPUT="training"
+DeepMD_MODEL_VERSION="_R_DEEPMD_VERSION_"
 DeepMD_CHKPT="_R_CHECKPOINT_"
+DeepMD_INPUT="training"
 DeepMD_DATA_DIR="../data"
 
 #----------------------------------------------

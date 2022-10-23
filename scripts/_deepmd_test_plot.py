@@ -2,6 +2,7 @@
 import sys
 from pathlib import Path
 import logging
+
 logging.basicConfig(level=logging.INFO,format="%(levelname)s: %(message)s")
 
 import numpy as np
@@ -14,23 +15,22 @@ from sklearn.metrics import mean_absolute_error as MAE
 from sklearn.metrics import mean_squared_error as MSE
 from sklearn.metrics import max_error as MAXE
 
-deepmd_iterative_apath = "_DEEPMD_ITERATIVE_APATH_"
-sys.path.insert(0, deepmd_iterative_apath+"/scripts/")
+deepmd_iterative_apath = Path("_DEEPMD_ITERATIVE_APATH_")
+sys.path.insert(0, str(deepmd_iterative_apath/"scripts"))
 import common_functions as cf
 import _plot_functions as pf
+training_iterative_apath = Path("..").resolve()
 
-training_iterative_apath = str(Path("..").resolve())
-config_json_fpath = training_iterative_apath+"/control/config.json"
-config_json = cf.json_read(config_json_fpath,True,True)
+### Read what is needed (json files)
+control_apath = training_iterative_apath/"control"
+config_json = cf.json_read((control_apath/"config.json"),True,True)
+current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
+current_iteration = int(current_iteration_zfill)
+test_json = cf.json_read((control_apath/("test_"+current_iteration_zfill+".json")),True,True)
+current_apath = Path(".").resolve()
 
-current_iteration_zfill=Path().resolve().parts[-1].split("-")[0]
-current_iteration=int(current_iteration_zfill)
-
-test_json_fpath = training_iterative_apath+"/control/test_"+current_iteration_zfill+".json"
-test_json = cf.json_read(test_json_fpath,True,True)
-
-energy_f = np.load("./energy_sys.npz",allow_pickle=True)
-force_f = np.load("./force_sys.npz",allow_pickle=True)
+energy_f = np.load(str(current_apath/"energy_sys.npz"),allow_pickle=True)
+force_f = np.load(str(current_apath/"force_sys.npz"),allow_pickle=True)
 
 energy,force={},{}
 for f in energy_f.files:
@@ -39,8 +39,10 @@ for f in energy_f.files:
 del energy_f, force_f
 gc.collect()
 
-fig_path=Path("../figures/test/"+current_iteration_zfill+"-details")
-cf.create_dir(str(fig_path))
+fig_apath = training_iterative_apath/"figures"/"test"/(current_iteration_zfill+"-details")
+
+Path("../figures/test/"+current_iteration_zfill+"-details")
+fig_apath.mkdir(exist_ok=True, parents=True)
 
 dpi = 300.0
 sizemult = 1.0
@@ -83,7 +85,7 @@ for f in energy.keys():
             RMSE_val=np.round(MSE(energy[f][g][0]/nb_atom,energy[f][g][1]/nb_atom,squared=False),10)
             MAXE_val=np.round(MAXE(energy[f][g][0]/nb_atom,energy[f][g][1]/nb_atom),10)
             RMSErel_val = np.round( ( RMSE_val / np.std(energy[f][g][0]) ), 10)
-            
+
         textstr = "\n".join((
         r"MAE = %.2e" % (MAE_val, )+ r" eV/atom",
         r"MSE = %.2e" % (MSE_val, )+ r" eV/atom",
@@ -144,24 +146,23 @@ for f in energy.keys():
         plt.tight_layout(pad=3.0)
         fig.suptitle(title,fontsize=sizemult*25,fontweight="normal",y=1.025)
         name=current_iteration_zfill+"_"+g+"_"+f
-        fig.savefig(str(fig_path)+"/"+name+".png",dpi=300,bbox_inches="tight",transparent=True)
+        fig.savefig(str(fig_apath/(name+".png")),dpi=300,bbox_inches="tight",transparent=True)
         del ax, fig, name
-        del min_all, max_all, max_uall, MAE_val, MSE_val, RMSE_val, MAXE_val, textstr, range_val, nb_atom, title, inter, min_ref
+        del min_all, max_all, max_uall, MAE_val, MSE_val, RMSE_val, MAXE_val, RMSErel_val, textstr, range_val, nb_atom, title, inter, min_ref
         pf.close_graph()
     del g
 del f
-del energy, force, fig_path
+del energy, force, fig_apath
 
 test_json["is_plotted"] = True
-cf.json_dump(test_json,test_json_fpath,True,"test.json")
-
+cf.json_dump(test_json,(control_apath/("test_"+current_iteration_zfill+".json")),True)
 logging.info("The DP-Test: plot phase is a success!")
 
 del dpi, sizemult, size, ratio, figsize_ratio, colors, linestyles, props
 
 ### Cleaning
-del config_json, config_json_fpath, training_iterative_apath
-del test_json, test_json_fpath
+del config_json, training_iterative_apath, current_apath, control_apath
+del test_json
 del current_iteration, current_iteration_zfill
 del deepmd_iterative_apath
 

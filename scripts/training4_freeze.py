@@ -74,7 +74,7 @@ for it_nnp in range(1, config_json["nb_nnp"] + 1):
     slurm_file = slurm_file_master
     slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",project_name)
     slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_","01:00:00")
-    slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_MODEL_VERSION_",str(training_json["deepmd_model_version"]))
+    slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_VERSION_",str(training_json["deepmd_model_version"]))
     slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_MODEL_","graph_"+str(it_nnp)+"_"+current_iteration_zfill)
     if allocation_name == "v100":
         slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",allocation_name)
@@ -110,7 +110,7 @@ for it_nnp in range(1, config_json["nb_nnp"] + 1):
 del it_nnp, slurm_file, slurm_file_master
 
 if check == config_json["nb_nnp"]:
-    logging.info("Slurm launch of DP Freeze is a success!")
+    logging.info("DP-Freeze: SLURM phase is a success!")
 else:
     logging.critical("Some DP Freeze did not launched correctly")
     logging.critical("Please launch manually before continuing to the next step")

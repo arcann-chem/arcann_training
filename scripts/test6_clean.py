@@ -13,6 +13,7 @@ training_iterative_apath = Path("..").resolve()
 deepmd_iterative_apath_error = 1
 if "deepmd_iterative_apath" in globals():
     if (Path(deepmd_iterative_apath)/"scripts"/"common_functions.py").is_file():
+        deepmd_iterative_apath = Path(deepmd_iterative_apath)
         deepmd_iterative_apath_error = 0
 elif (Path().home()/"deepmd_iterative_py"/"scripts"/"common_functions.py").is_file():
     deepmd_iterative_apath = Path().home()/"deepmd_iterative_py"
@@ -26,24 +27,27 @@ if deepmd_iterative_apath_error == 1:
     logging.critical("deepmd_iterative_apath variable or ~/deepmd_iterative_py or in the path file in control")
     logging.critical("Aborting...")
     sys.exit(1)
-sys.path.insert(0, str(Path(deepmd_iterative_apath)/"scripts"))
+sys.path.insert(0, str(deepmd_iterative_apath/"scripts"))
 del deepmd_iterative_apath_error
 import common_functions as cf
 
-cf.remove_file_glob(".","DeepMD_*")
-cf.remove_file_glob(".","*.npz")
-cf.remove_file_glob(".","*.pb")
-cf.remove_file_glob(".","*.sh")
-cf.remove_file_glob(".","_*.py")
-for it_data_folders in Path(".").iterdir():
+current_apath = Path(".").resolve()
+
+cf.remove_file_glob(current_apath,"DeepMD_*")
+cf.remove_file_glob(current_apath,"*.npz")
+cf.remove_file_glob(current_apath,"*.pb")
+cf.remove_file_glob(current_apath,"*.sh")
+cf.remove_file_glob(current_apath,"_*.py")
+for it_data_folders in current_apath:
     if it_data_folders.is_dir():
         if "out" in str(it_data_folders.name) or "log" in str(it_data_folders.name):
-            cf.remove_file_glob(str(it_data_folders.name)+"/","*")
+            cf.remove_file_glob(it_data_folders,"*")
             it_data_folders.rmdir()
 del it_data_folders
 
-del deepmd_iterative_apath, training_iterative_apath
+del deepmd_iterative_apath, training_iterative_apath, current_apath
 
 del sys, Path, logging, cf
 import gc; gc.collect(); del gc
+print(globals())
 exit()

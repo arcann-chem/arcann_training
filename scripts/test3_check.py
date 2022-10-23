@@ -10,6 +10,7 @@ training_iterative_apath = Path("..").resolve()
 deepmd_iterative_apath_error = 1
 if "deepmd_iterative_apath" in globals():
     if (Path(deepmd_iterative_apath)/"scripts"/"common_functions.py").is_file():
+        deepmd_iterative_apath = Path(deepmd_iterative_apath)
         deepmd_iterative_apath_error = 0
 elif (Path().home()/"deepmd_iterative_py"/"scripts"/"common_functions.py").is_file():
     deepmd_iterative_apath = Path().home()/"deepmd_iterative_py"
@@ -23,25 +24,20 @@ if deepmd_iterative_apath_error == 1:
     logging.critical("deepmd_iterative_apath variable or ~/deepmd_iterative_py or in the path file in control")
     logging.critical("Aborting...")
     sys.exit(1)
-sys.path.insert(0, str(Path(deepmd_iterative_apath)/"scripts"))
+sys.path.insert(0, str(deepmd_iterative_apath/"scripts"))
 del deepmd_iterative_apath_error
 import common_functions as cf
 
-### Temp fix before Path/Str pass
-training_iterative_apath = str(training_iterative_apath)
-deepmd_iterative_apath = str(deepmd_iterative_apath)
 ### Read what is needed (json files)
-config_json_fpath = training_iterative_apath+"/control/config.json"
-config_json = cf.json_read(config_json_fpath,True,True)
-
+control_apath = training_iterative_apath/"control"
 current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
 current_iteration = int(current_iteration_zfill)
-
-test_json_fpath = training_iterative_apath+"/control/test_"+current_iteration_zfill+".json"
-test_json = cf.json_read(test_json_fpath,True,True)
+config_json = cf.json_read((control_apath/"config.json"),True,True)
+test_json = cf.json_read((control_apath/("test_"+current_iteration_zfill+".json")),True,True)
+current_apath = Path(".").resolve()
 
 ### Checks
-if test_json["is_launched"] is False:
+if not test_json["is_launched"]:
     logging.critical("Lock found. Run/Check first: test2_launch.py")
     logging.critical("Aborting...")
     sys.exit(1)
@@ -50,12 +46,12 @@ if test_json["is_launched"] is False:
 compressed = "_compressed" if test_json["is_compressed"] else ""
 check = 0
 total = 0
-for it_data_folders in Path("./data").iterdir():
+for it_data_folders in (current_apath/"data").iterdir():
     if it_data_folders.is_dir():
         data_name_t = str(it_data_folders.name)
         for it_nnp in range(1,config_json["nb_nnp"]+1):
             total = total + 1
-            if Path("./out_NNP"+str(it_nnp)+"/graph_"+str(it_nnp)+"_"+current_iteration_zfill+compressed+"_"+data_name_t+".e.out").is_file():
+            if (current_apath/("out_NNP"+str(it_nnp)+"/graph_"+str(it_nnp)+"_"+current_iteration_zfill+compressed+"_"+data_name_t+".e.out")).is_file():
                 check = check +1
             else:
                 logging.warning("No output for NNP "+str(it_nnp)+" and dataset "+data_name_t)
@@ -71,16 +67,17 @@ else:
     test_json["is_checked"] = True
 del check, total
 
-cf.json_dump(test_json,test_json_fpath,True,"test.json")
-cf.remove_file_glob("./","DeepMD_Test.*")
-logging.info("The DP-Test: check phase is a success!")
+cf.json_dump(test_json,(control_apath/("test_"+current_iteration_zfill+".json")),True)
+cf.remove_file_glob(current_apath,"DeepMD_Test.*")
+logging.info("The DP-Test: Check phase is a success!")
 
 ### Cleaning
-del config_json, config_json_fpath, training_iterative_apath
+del config_json, training_iterative_apath, control_apath, current_apath
 del current_iteration, current_iteration_zfill
-del test_json, test_json_fpath
+del test_json
 del deepmd_iterative_apath
 
 del sys, Path, logging, cf
 import gc; gc.collect(); del gc
+print(globals())
 exit()

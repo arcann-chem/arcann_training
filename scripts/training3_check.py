@@ -90,7 +90,7 @@ if ( "time_per_step" in globals() ) and ( "step_size" in globals() ):
 
 cf.json_dump(training_json,(control_apath/("training_"+current_iteration_zfill+".json")),True)
 
-logging.info("DP Train is a success!")
+logging.info("DP-Train: Check phase is a success!")
 
 ### Cleaning
 del config_json, training_iterative_apath, control_apath

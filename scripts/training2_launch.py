@@ -76,7 +76,7 @@ del it_nnp
 
 if check == config_json["nb_nnp"]:
     training_json["is_launched"] = True
-    logging.info("Slurm Launch of DP Train is a success!")
+    logging.info("DP-Train: SLURM phase is a success!")
 else:
     logging.critical("Some DP Train did not launched correctly")
     logging.critical("Please launch manually before continuing to the next step")

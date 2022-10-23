@@ -28,10 +28,11 @@
 
 # Input file (extension is automatically added as .in for INPUT)
 # Support a list of files as a bash array
-DeepMD_MODEL_VERSION="_R_DEEPMD_MODEL_VERSION_"
+DeepMD_MODEL_VERSION="_R_DEEPMD_VERSION_"
+DeepMD_MODEL=("_R_MODELS_LIST_")
 LAMMPS_INPUT="_R_INPUT_"
 EXTRA_FILES=("_R_DATA_FILE_" "_R_PLUMED_FILES_LIST_")
-DEEPMD_MODEL=("_R_MODELS_LIST_")
+
 
 #!!Nothing needed to be changed past this point
 
@@ -70,7 +71,7 @@ ln -s "${TEMPWORKDIR}" "${SLURM_SUBMIT_DIR}"/JOB-"${SLURM_JOBID}"
 cp "${LAMMPS_INPUT}".in "${TEMPWORKDIR}" && echo "${LAMMPS_INPUT}.in copied successfully"
 cp "${LAMMPS_INPUT}".in "${LAMMPS_INPUT}".in."${SLURM_JOBID}"
 for f in "${EXTRA_FILES[@]}"; do [ -f "${f}" ] && cp "${f}" "${TEMPWORKDIR}" && echo "${f} copied successfully"; done
-for f in "${DEEPMD_MODEL[@]}"; do [ -f "${f}" ] && ln -s "$(realpath "${f}")" "${TEMPWORKDIR}" && echo "${f} linked successfully"; done
+for f in "${DeepMD_MODEL[@]}"; do [ -f "${f}" ] && ln -s "$(realpath "${f}")" "${TEMPWORKDIR}" && echo "${f} linked successfully"; done
 cd "${TEMPWORKDIR}" || exit 1
 
 # Run LAMMPS

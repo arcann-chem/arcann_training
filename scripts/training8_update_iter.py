@@ -89,7 +89,7 @@ if (local_apath/"data").is_dir():
     cf.remove_tree(local_apath/"data")
 del local_apath
 
-logging.info("Updating the iteration is a success!")
+logging.info("Iteration: Update phase is a success!")
 
 ### Cleaning
 del config_json, training_iterative_apath, control_apath

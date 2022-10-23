@@ -65,7 +65,7 @@ del check
 
 cf.json_dump(training_json,(control_apath/("training_"+current_iteration_zfill+".json")),True)
 
-logging.info("DP Freeze is a success!")
+logging.info("DP-Freeze: Check phase is a success!")
 
 ### Cleaning
 del config_json, training_iterative_apath, control_apath
