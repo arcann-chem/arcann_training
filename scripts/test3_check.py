@@ -2,6 +2,7 @@
 import sys
 from pathlib import Path
 import logging
+
 logging.basicConfig(level=logging.INFO,format="%(levelname)s: %(message)s")
 
 training_iterative_apath = Path("..").resolve()

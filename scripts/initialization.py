@@ -5,7 +5,7 @@ sys_name: str = "NAME"
 subsys_name: list = ["SYSTEM1","SYSTEM2"]
 ## These are the default
 # nb_nnp: int = 3
-# exploration_type: list = ["lammps", "lammps"]
+# exploration_type: str = "lammps"
 # temperature_K: list = [298.15, 298.15]
 # timestep_ps: list = [0.0005, 0.0005]
 # nb_candidates_max = [500, 500]
@@ -49,9 +49,10 @@ config_json["deepmd_iterative_apath"] = str(deepmd_iterative_apath)
 ####
 config_json["system"] = sys_name
 config_json["nb_nnp"] = 3 if "nb_nnp" not in globals() else nb_nnp
+config_json["exploration_type"] = "lammps" if "exploration_type" not in globals() else exploration_type
 config_json["current_iteration"] = 0
 config_json["subsys_nr"] = {}
-del sys_name, nb_nnp
+del sys_name
 
 ### Sets the default
 for it0_subsys_nr,it_subsys_nr in enumerate(subsys_name):
@@ -63,7 +64,6 @@ for it0_subsys_nr,it_subsys_nr in enumerate(subsys_name):
     config_json["subsys_nr"][it_subsys_nr]["s_high"] = 0.8 if "temperature" not in globals() else s_high[it0_subsys_nr]
     config_json["subsys_nr"][it_subsys_nr]["s_high_max"] = 1.0 if "s_high_max" not in globals() else s_high_max[it0_subsys_nr]
     config_json["subsys_nr"][it_subsys_nr]["ignore_first_x_ps"] = 0.5 if "ignore_first_x_ps" not in globals() else ignore_first_x_ps[it0_subsys_nr]
-    config_json["subsys_nr"][it_subsys_nr]["exploration_type"] = "lammps" if "exploration_type" not in globals() else exploration_type[it0_subsys_nr]
 del it0_subsys_nr, it_subsys_nr, subsys_name
 
 ### Create the control directory

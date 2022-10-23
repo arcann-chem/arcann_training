@@ -53,12 +53,14 @@ sys.path.insert(0, str(deepmd_iterative_apath/"scripts"))
 del deepmd_iterative_apath_error
 import common_functions as cf
 
+slurm_email = "" if "slurm_email" not in globals() else slurm_email
+
 ### Read the config file
 control_apath = training_iterative_apath/"control"
 config_json = cf.json_read((control_apath/"config.json"),True,True)
+jobs_apath = deepmd_iterative_apath/"jobs"/"exploration"
 current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
 current_iteration = int(current_iteration_zfill)
-jobs_apath = deepmd_iterative_apath/"jobs"/"training"
 
 ### #35
 if "arch_name" in globals() and ( arch_name != "v100" or arch_name != "a100" ):
@@ -93,7 +95,6 @@ training_json["cluster"] = cluster
 training_json["project_name"] = "nvs" if "project_name" not in globals() else project_name
 training_json["allocation_name"] = "v100" if "allocation_name" not in globals() else allocation_name
 training_json["arch_name"] = "v100" if "arch_name" not in globals() else arch_name
-
 project_name = training_json["project_name"]
 allocation_name = training_json["allocation_name"]
 arch_name = training_json["arch_name"]
@@ -103,7 +104,6 @@ if arch_name == "v100" or arch_name == "a100":
 ### #35
 cf.check_file(jobs_apath/("job_deepmd_train_"+arch_type +"_"+cluster+".sh"),True,True,"No SLURM file present for the training step on this cluster.")
 slurm_file_master = cf.read_file(jobs_apath/("job_deepmd_train_"+arch_type +"_"+cluster+".sh"))
-slurm_email = "" if "slurm_email" not in globals() else slurm_email
 del jobs_apath
 
 ### Check DeePMD version
@@ -117,6 +117,7 @@ if training_json["deepmd_model_type_descriptor"] not in ["se_a", "se_ar", "se_e2
     logging.critical("Aborting...")
     sys.exit(1)
 
+### #35
 ### Check mismatch between cluster/arch_name/arch and DeePMD
 if cluster != "jz":
     logging.critical("Only on Jean Zay !")
@@ -463,7 +464,7 @@ cf.json_dump(training_json,(control_apath/("training_"+current_iteration_zfill+"
 if "initial_seconds_per_1000steps" in globals():
     del initial_seconds_per_1000steps
 
-logging.info("Preparation of the training is a success!")
+logging.info("Preparation of DP Train is a success!")
 
 ### Cleaning
 del data_apath, control_apath

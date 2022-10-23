@@ -37,13 +37,15 @@ sys.path.insert(0, str(Path(deepmd_iterative_apath)/"scripts"))
 del deepmd_iterative_apath_error
 import common_functions as cf
 
+slurm_email = "" if "slurm_email" not in globals() else slurm_email
+
 ### Read what is needed (json files)
 control_apath = training_iterative_apath/"control"
 config_json = cf.json_read((control_apath/"config.json"),True,True)
+jobs_apath = deepmd_iterative_apath/"jobs"/"training"
 current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
 current_iteration = int(current_iteration_zfill)
 training_json = cf.json_read((control_apath/("training_"+current_iteration_zfill+".json")),True,True)
-jobs_apath = deepmd_iterative_apath/"jobs"/"training"
 
 ### Set needed variables issue#35
 project_name = training_json["project_name"] if "project_name" not in globals() else project_name
@@ -54,7 +56,7 @@ if arch_name == "v100" or arch_name == "a100":
 
 ### Checks
 if not training_json["is_checked"]:
-    logging.critical("Maybe check the training before freezing?")
+    logging.critical("Lock found. Run/Check first: training3_check.py")
     logging.critical("Aborting...")
     sys.exit(1)
 
@@ -62,7 +64,7 @@ if not training_json["is_checked"]:
 cluster = cf.check_cluster()
 cf.check_file(jobs_apath/("job_deepmd_freeze_"+arch_type +"_"+cluster+".sh"),True,True,"No SLURM file present for the freezing step on this cluster.")
 slurm_file_master = cf.read_file(jobs_apath/("job_deepmd_freeze_"+arch_type +"_"+cluster+".sh"))
-slurm_email = "" if "slurm_email" not in globals() else slurm_email
+del jobs_apath
 
 ### Prep and launch DP Freeze
 check = 0
@@ -115,7 +117,7 @@ else:
 del check
 
 ### Cleaning
-del config_json, training_iterative_apath, control_apath, jobs_apath
+del config_json, training_iterative_apath, control_apath
 del current_iteration, current_iteration_zfill
 del training_json
 del cluster, arch_type

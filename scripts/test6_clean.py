@@ -5,9 +5,8 @@
 import sys
 from pathlib import Path
 import logging
-logging.basicConfig(level=logging.INFO,format="%(levelname)s: %(message)s")
 
-import subprocess
+logging.basicConfig(level=logging.INFO,format="%(levelname)s: %(message)s")
 
 training_iterative_apath = Path("..").resolve()
 ### Check if the deepmd_iterative_apath is defined
@@ -31,10 +30,6 @@ sys.path.insert(0, str(Path(deepmd_iterative_apath)/"scripts"))
 del deepmd_iterative_apath_error
 import common_functions as cf
 
-### Temp fix before Path/Str pass
-training_iterative_apath = str(training_iterative_apath)
-deepmd_iterative_apath = str(deepmd_iterative_apath)
-
 cf.remove_file_glob(".","DeepMD_*")
 cf.remove_file_glob(".","*.npz")
 cf.remove_file_glob(".","*.pb")
@@ -45,6 +40,9 @@ for it_data_folders in Path(".").iterdir():
         if "out" in str(it_data_folders.name) or "log" in str(it_data_folders.name):
             cf.remove_file_glob(str(it_data_folders.name)+"/","*")
             it_data_folders.rmdir()
+del it_data_folders
+
+del deepmd_iterative_apath, training_iterative_apath
 
 del sys, Path, logging, cf
 import gc; gc.collect(); del gc

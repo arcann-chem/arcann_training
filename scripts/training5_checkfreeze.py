@@ -1,3 +1,6 @@
+## deepmd_iterative_apath
+# deepmd_iterative_apath: str = ""
+
 ###################################### No change past here
 import sys
 from pathlib import Path
@@ -36,7 +39,7 @@ training_json = cf.json_read((control_apath/("training_"+current_iteration_zfill
 
 ### Checks
 if not training_json["is_checked"]:
-    logging.critical("Maybe check the training before checking the freezing?")
+    logging.critical("Lock found. Run/Check first: training4_freeze.py")
     logging.critical("Aborting...")
     sys.exit(1)
 

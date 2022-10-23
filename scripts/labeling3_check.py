@@ -1,7 +1,11 @@
+## deepmd_iterative_apath
+# deepmd_iterative_apath: str = ""
+
 ###################################### No change past here
 import sys
 from pathlib import Path
 import logging
+
 logging.basicConfig(level=logging.INFO,format="%(levelname)s: %(message)s")
 
 training_iterative_apath = Path("..").resolve()

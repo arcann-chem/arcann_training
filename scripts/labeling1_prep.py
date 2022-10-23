@@ -15,6 +15,7 @@
 import sys
 from pathlib import Path
 import logging
+
 logging.basicConfig(level=logging.INFO,format="%(levelname)s: %(message)s")
 
 import subprocess
@@ -135,7 +136,7 @@ for it0_subsys_nr, it_subsys_nr in enumerate(subsys_list):
     slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_CP2K_JOBNAME_","CP2K_"+it_subsys_nr+"_"+current_iteration_zfill)
 
     slurm_walltime_s = (labeling_json["subsys_nr"][it_subsys_nr]["cp2k_1_walltime_h"] + labeling_json["subsys_nr"][it_subsys_nr]["cp2k_2_walltime_h"]) * 3600
-    slurm_walltime_s = int(slurm_walltime_s + 0.1 * slurm_walltime_s)
+    slurm_walltime_s = int(slurm_walltime_s * 1.1)
 
     if cluster == "jz":
         slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,"_R_WALLTIME_",cf.seconds_to_walltime(slurm_walltime_s))

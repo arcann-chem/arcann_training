@@ -1,3 +1,6 @@
+## deepmd_iterative_apath
+# deepmd_iterative_apath: str = ""
+
 ###################################### No change past here
 import sys
 from pathlib import Path
@@ -38,7 +41,7 @@ training_json = cf.json_read((control_apath/("training_"+current_iteration_zfill
 
 ### Checks
 if not training_json["is_launched"]:
-    logging.critical("Maybe launch the training before checking?")
+    logging.critical("Lock found. Run/Check first: training2_launch.py")
     logging.critical("Aborting")
     sys.exit(1)
 
@@ -87,7 +90,7 @@ if ( "time_per_step" in globals() ) and ( "step_size" in globals() ):
 
 cf.json_dump(training_json,(control_apath/("training_"+current_iteration_zfill+".json")),True)
 
-logging.info("The training phase is a success!")
+logging.info("DP Train is a success!")
 
 ### Cleaning
 del config_json, training_iterative_apath, control_apath

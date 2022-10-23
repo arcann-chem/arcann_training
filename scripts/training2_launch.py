@@ -1,3 +1,6 @@
+## deepmd_iterative_apath
+# deepmd_iterative_apath: str = ""
+
 ###################################### No change past here
 import sys
 from pathlib import Path
@@ -41,23 +44,20 @@ if training_json["is_launched"]:
     logging.critical("Already launched.")
     logging.critical("Aborting...")
     sys.exit(1)
-
 if not training_json["is_locked"]:
     logging.critical("Lock found. Run/Check first: training1_prep.py")
     logging.critical("Aborting...")
     sys.exit(1)
 
-### issue#35
+### #35
 cluster = cf.check_cluster()
+if training_json["arch_name"] == "v100" or training_json["arch_name"] == "a100":
+    arch_type="gpu"
 
 if training_json["cluster"] != cluster:
     logging.critical("Different cluster ("+str(cluster)+") than the one for training1_prep.py ("+str(training_json["cluster"])+")")
     logging.critical("Aborting...")
     sys.exit(1)
-
-### Set needed variables issue#35
-if training_json["arch_name"] == "v100" or training_json["arch_name"] == "a100":
-    arch_type="gpu"
 
 ### Launch the jobs
 check = 0
