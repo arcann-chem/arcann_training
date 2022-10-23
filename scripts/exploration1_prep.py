@@ -52,6 +52,7 @@ import common_functions as cf
 
 slurm_email = "" if "slurm_email" not in globals() else slurm_email
 
+### Read what is needed (json files)
 control_apath = training_iterative_apath/"control"
 jobs_apath = deepmd_iterative_apath/"jobs"/"exploration"
 current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
@@ -88,7 +89,7 @@ arch_name = exploration_json["arch_name"]
 if arch_name == "v100" or arch_name == "a100":
     arch_type ="gpu"
 
-### Checks (maybe #35)
+### #35
 cf.check_file(jobs_apath/("job_deepmd_"+exploration_type+"_"+arch_type +"_"+cluster+".sh"),True,True,"No SLURM file present for the exploration step on this cluster.")
 slurm_master = cf.read_file(jobs_apath/("job_deepmd_"+exploration_type+"_"+arch_type +"_"+cluster+".sh"))
 del jobs_apath

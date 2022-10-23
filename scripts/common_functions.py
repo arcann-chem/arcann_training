@@ -251,6 +251,19 @@ def remove_tree(directory_path: Path):
             remove_tree(child)
     directory_path.rmdir()
 
+def seconds_to_walltime(seconds: float) -> str:
+    """_summary_
+
+    Args:
+        seconds (float): Float in seconds
+
+    Returns:
+        str: A string in 00000:00:00 format
+    """
+    min, sec = divmod(seconds, 60)
+    hour, min = divmod(min, 60)
+    return "%d:%02d:%02d" % (hour, min, sec)
+
 
 #### Training only
 def get_decay_steps(total_trained: int,min: int=5000) -> int:
@@ -308,6 +321,9 @@ def get_learning_rate(training_step: int,start_lr: float,decay_rate: float,decay
     return (start_lr*decay_rate**(training_step/decay_steps))
 
 
+
+
+### Trash ?
 def check_if_in_dict(params_f,key_f,default_f,error_f):
     """
     """
@@ -320,25 +336,10 @@ def check_if_in_dict(params_f,key_f,default_f,error_f):
             sys.exit("Error: "+key_f+" not found.\n Aborting...")
 
 
-### Not clean
-
-def seconds_to_walltime(seconds):
-    min, sec = divmod(seconds, 60)
-    hour, min = divmod(min, 60)
-    return "%d:%02d:%02d" % (hour, min, sec)
-
-def import_xyz(file_path:str):
-    """_summary_
-
-    Args:
-        file_path (str): _description_
-
-    Returns:
-        _type_: _description_
-    """
-    if Path(file_path).is_file() is False:
+def import_xyz(file_path: Path):
+    if file_path.is_file() is False:
         sys.exit("File not found: "+file_path+"\nAborting...")
-    xyz = open(file_path, "r")
+    xyz = file_path.open("r")
     atoms = []
     coordinates = []
     n_atom = []
@@ -372,13 +373,14 @@ def import_xyz(file_path:str):
     xyz.close()
     return n_atom,step_atoms,step_coordinates,blank
 
-def write_xyz_from_index(select_nb,xyz_out,n_atom,step_atoms,step_coordinates,blank):
-    """
-    """
-    xyz2 = open(xyz_out, "w")
-    xyz2.write(str(n_atom[select_nb])+"\n")
-    xyz2.write(str(blank[select_nb]))
+
+def write_xyz_from_index(file_path: Path,select_nb: int,n_atom :np.ndarray,step_atoms: np.ndarray,step_coordinates: np.ndarray,blank: list):
+    xyz = file_path.open("w")
+    xyz.write(str(n_atom[select_nb])+"\n")
+    xyz.write(str(blank[select_nb]))
     x = 0
     while x < n_atom[select_nb]:
-        xyz2.write(str(step_atoms[select_nb,x])+" "+str(step_coordinates[select_nb,x,0])+" "+str(step_coordinates[select_nb,x,1])+" "+str(step_coordinates[select_nb,x,2])+"\n")
-        x =  x+ 1
+        xyz.write(str(step_atoms[select_nb,x])+" "+str(step_coordinates[select_nb,x,0])+" "+str(step_coordinates[select_nb,x,1])+" "+str(step_coordinates[select_nb,x,2])+"\n")
+        x =  x + 1
+    xyz.close()
+

@@ -311,7 +311,7 @@ cf.json_dump(exploration_json,(control_apath/("exploration_"+current_iteration_z
 
 del skipped_traj
 
-logging.info("Deviation phase is a success!")
+logging.info("Exploration-Deviation phase is a success!")
 
 ### Cleaning
 del config_json, training_iterative_apath, control_apath

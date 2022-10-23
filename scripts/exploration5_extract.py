@@ -3,8 +3,8 @@
 ## These are the default
 atomsk_fpath: str ="/gpfswork/rech/nvs/commun/programs/apps/atomsk/0.11.2/bin/atomsk"
 # vmd_fpath: str=""
-disturbed_min_value: list = [0.1, 0.1]
-disturbed_candidates_value: list = [0.1, 0.1]
+# disturbed_min_value: list = [0.0, 0.0]
+# disturbed_candidates_value: list = [0.0, 0.0]
 
 ###################################### No change past here
 import sys
@@ -291,7 +291,7 @@ del master_vmd_tcl, atomsk_bin, vmd_bin
 exploration_json["is_extracted"] = True
 cf.json_dump(exploration_json,(control_apath/("exploration_"+current_iteration_zfill+".json")),True)
 
-logging.info("Extraction phase is a success!")
+logging.info("Exploration-Extraction phase is a success!")
 
 ### Cleaning
 if int(current_iteration_zfill) > 1:
