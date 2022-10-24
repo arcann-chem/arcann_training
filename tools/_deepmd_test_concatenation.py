@@ -10,7 +10,7 @@ from collections import defaultdict
 import gc
 
 deepmd_iterative_apath = Path("_DEEPMD_ITERATIVE_APATH_")
-sys.path.insert(0, str(deepmd_iterative_apath/"scripts"))
+sys.path.insert(0, str(deepmd_iterative_apath/"tools"))
 import common_functions as cf
 training_iterative_apath = Path("..").resolve()
 

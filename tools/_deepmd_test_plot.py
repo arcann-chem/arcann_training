@@ -16,7 +16,7 @@ from sklearn.metrics import mean_squared_error as MSE
 from sklearn.metrics import max_error as MAXE
 
 deepmd_iterative_apath = Path("_DEEPMD_ITERATIVE_APATH_")
-sys.path.insert(0, str(deepmd_iterative_apath/"scripts"))
+sys.path.insert(0, str(deepmd_iterative_apath/"tools"))
 import common_functions as cf
 import _plot_functions as pf
 training_iterative_apath = Path("..").resolve()
