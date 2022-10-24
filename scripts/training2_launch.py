@@ -54,10 +54,7 @@ cluster = cf.check_cluster()
 if training_json["arch_name"] == "v100" or training_json["arch_name"] == "a100":
     arch_type="gpu"
 
-if training_json["cluster"] != cluster:
-    logging.critical("Different cluster ("+str(cluster)+") than the one for training1_prep.py ("+str(training_json["cluster"])+")")
-    logging.critical("Aborting...")
-    sys.exit(1)
+cf.check_same_cluster(cluster,training_json)
 
 ### Launch the jobs
 check = 0

@@ -55,10 +55,7 @@ cluster = cf.check_cluster()
 if exploration_json["arch_name"] == "v100" or exploration_json["arch_name"] == "a100":
     arch_type="gpu"
 
-if exploration_json["cluster"] != cluster:
-    logging.critical("Different cluster ("+str(cluster)+") than the one for exploration1_prep..py ("+str(exploration_json["cluster"])+")")
-    logging.critical("Aborting...")
-    sys.exit(1)
+cf.check_same_cluster(cluster,exploration_json)
 
 exploration_type = exploration_json['exploration_type'] 
 ### Launch the jobs

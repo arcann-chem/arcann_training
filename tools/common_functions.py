@@ -321,7 +321,11 @@ def get_learning_rate(training_step: int,start_lr: float,decay_rate: float,decay
     return (start_lr*decay_rate**(training_step/decay_steps))
 
 
-
+def check_same_cluster(cluster: str, _json: dict):
+    if _json["cluster"] != cluster:
+        logging.critical("Different cluster ("+str(cluster)+") than the one for prep ("+str(_json["cluster"])+")")
+        logging.critical("Aborting...")
+        sys.exit(1)
 
 ### Trash ?
 def check_if_in_dict(params_f,key_f,default_f,error_f):

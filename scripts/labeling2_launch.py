@@ -53,13 +53,11 @@ if not labeling_json["is_locked"]:
 
 ### #35
 cluster = cf.check_cluster()
-cluster = "ir"
-if labeling_json["cluster"] != cluster:
-    logging.critical("Different cluster ("+str(cluster)+") than the one for labeling1_prep.py ("+str(labeling_json["cluster"])+")")
-    logging.critical("Aborting...")
-    sys.exit(1)
+
 if labeling_json["arch_name"] == "cpu":
     arch_type="cpu"
+
+cf.check_same_cluster(cluster,labeling_json)
 
 ### Launch of the labeling
 check = 0
