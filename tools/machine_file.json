@@ -1,0 +1,69 @@
+{
+    "jz":
+    {
+        "v100": {
+            "project_name": "nvs",
+            "allocation_name": "v100",
+            "arch_name": "v100",
+            "arch_type": "gpu",
+            "partition": "gpu_p13",
+            "subpartition": "[v100-16g|v100-32g]",
+            "qos": {"qos_gpu-t3": 72000, "qos_gpu-t4": 360000}},
+
+        "v100_16g": {
+            "project_name": "nvs",
+            "allocation_name": "v100",
+            "arch_name": "v100",
+            "arch_type": "gpu",
+            "partition": "gpu_p13",
+            "subpartition": "v100-16g",
+            "qos": {"qos_gpu-t3": 72000, "qos_gpu-t4": 360000}},
+        
+        "v100_32g": {
+            "project_name": "nvs",
+            "allocation_name": "v100",
+            "arch_name": "v100",
+            "arch_type": "gpu",
+            "partition": "gpu_p13",
+            "subpartition": "v100-32g",
+            "qos": {"qos_gpu-t3": 72000, "qos_gpu-t4": 360000}},
+        
+        "a100_v100": {
+            "project_name": "nvs",
+            "allocation_name": "v100",
+            "arch_name": "a100",
+            "arch_type": "gpu",
+            "partition": "gpu_p4",
+            "subpartition": null,
+            "qos": {"qos_gpu-t3": 72000}},
+        
+        "a100": {
+            "project_name": "nvs",
+            "allocation_name": "a100",
+            "arch_name": "a100",
+            "arch_type": "gpu",
+            "partition": "gpu_p5",
+            "subpartition": [ "a100" ],
+            "qos": {"qos_gpu-t3": 72000, "qos_gpu-t4": 360000}},
+        
+        "cpu": {
+            "project_name": "nvs",
+            "allocation_name": "cpu",
+            "arch_name": "cpu",
+            "arch_type": "cpu",
+            "partition": "cpu_p1",
+            "subpartition": null,
+            "qos": {"qos_cpu-t3": 72000, "qos_cpu-t4": 360000}}
+    },
+    "ir":
+    {
+        "cpu": {
+            "project_name": "gen7156",
+            "allocation_name": "rome",
+            "arch_name": "cpu",
+            "arch_type": "cpu",
+            "partition": null,
+            "subpartition": null,
+            "qos": {"normal": 86400, "long": 259200}}
+    }
+}
