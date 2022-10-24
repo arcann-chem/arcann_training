@@ -251,6 +251,7 @@ def remove_tree(directory_path: Path):
             remove_tree(child)
     directory_path.rmdir()
 
+
 def seconds_to_walltime(seconds: float) -> str:
     """_summary_
 

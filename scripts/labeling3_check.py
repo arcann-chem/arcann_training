@@ -166,8 +166,10 @@ else:
     cf.json_dump(labeling_json,(control_apath/("labeling_"+current_iteration_zfill+".json")),True)
     for it_subsys_nr in labeling_json["subsys_nr"]:
         local_apath = Path(".").resolve()/str(it_subsys_nr)
+        logging.info("Deleting SLURM out/error files...")
         cf.remove_file_glob(local_apath,"**/CP2K.*")
         cf.remove_file_glob(local_apath,"CP2K.*")
+        logging.info("Cleaning done!")
     del it_subsys_nr, local_apath
 del total_steps, step_1, step_2
 

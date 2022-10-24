@@ -32,20 +32,29 @@ del deepmd_iterative_apath_error
 import common_functions as cf
 
 current_apath = Path(".").resolve()
+current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
 
+logging.info("Deleting SLURM out/error files...")
 cf.remove_file_glob(current_apath,"DeepMD_*")
+logging.info("Deleting NPZ files...")
 cf.remove_file_glob(current_apath,"*.npz")
+logging.info("Deleting NNP PB files...")
 cf.remove_file_glob(current_apath,"*.pb")
+logging.info("Deleting SLURM launch files...")
 cf.remove_file_glob(current_apath,"*.sh")
+logging.info("Deleting Python helper files...")
 cf.remove_file_glob(current_apath,"_*.py")
+logging.info("Deleting DP-Test out/log files...")
 for it_data_folders in current_apath.iterdir():
     if it_data_folders.is_dir():
         if "out" in str(it_data_folders.name) or "log" in str(it_data_folders.name):
             cf.remove_file_glob(it_data_folders,"*")
             it_data_folders.rmdir()
 del it_data_folders
+logging.info("Cleaning done!")
+logging.info("If you are done with any testing you can safely delete the "+current_iteration_zfill+"-test folder")
 
-del deepmd_iterative_apath, training_iterative_apath, current_apath
+del deepmd_iterative_apath, training_iterative_apath, current_apath, current_iteration_zfill
 
 del sys, Path, logging, cf
 import gc; gc.collect(); del gc

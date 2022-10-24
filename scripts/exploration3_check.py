@@ -105,8 +105,11 @@ else:
             for it_each in range(1, exploration_json["nb_traj"] + 1):
                 local_apath = Path(".").resolve()/str(it_subsys_nr)/str(it_nnp)/(str(it_each).zfill(5))
                 if exploration_type == "lammps":
+                    logging.info("Deleting SLURM out/error files...")
                     cf.remove_file_glob(local_apath,"LAMMPS_*")
+                    logging.info("Deleting NNP PB files...")
                     cf.remove_file_glob(local_apath,"*.pb")
+                    logging.info("Cleaning done!")
                 elif exploration_type == "i-PI":
                     ### #12
                     True

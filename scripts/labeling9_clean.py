@@ -2,11 +2,14 @@
 # deepmd_iterative_apath: str = ""
 
 ###################################### No change past here
+from asyncio import subprocess
 import sys
 from pathlib import Path
 import logging
 
 logging.basicConfig(level=logging.INFO,format="%(levelname)s: %(message)s")
+
+import subprocess
 
 training_iterative_apath = Path("..").resolve()
 ### Check if the deepmd_iterative_apath is defined
@@ -33,18 +36,20 @@ import common_functions as cf
 current_apath = Path(".").resolve()
 current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
 
-logging.info("Deleting DP-Freeze error files...")
-cf.remove_file_glob(current_apath,"**/graph*freeze.out")
-logging.info("Deleting DP-Compress error files...")
-cf.remove_file_glob(current_apath,"**/graph*compress.out")
-logging.info("Deleting DP-Train error files...")
-cf.remove_file_glob(current_apath,"**/training.out")
 logging.info("Deleting SLURM launch files...")
 cf.remove_file_glob(current_apath,"**/*.sh")
+logging.info("Deleting XYZ input files...")
+cf.remove_file_glob(current_apath,"**/*.xyz")
+logging.info("Deleting CP2K input files...")
+cf.remove_file_glob(current_apath,"**/*.inp")
+logging.info("Compressing into a compressed archive...")
+subprocess.call(["tar","-I","bzip2","--exclude={*.wfn,*.tar.bz2}","-cf","labeling_"+current_iteration_zfill+"_noWFN.tar.bz2",str(Path("."))])
 logging.info("Cleaning done!")
+logging.info("You can delete any subsys subfolders and the *.py files if the labeling_"+current_iteration_zfill+"_noWFN.tar.bz2 is ok")
 
 del deepmd_iterative_apath, training_iterative_apath, current_apath, current_iteration_zfill
 
 del sys, Path, logging, cf
+del subprocess
 import gc; gc.collect(); del gc
 exit()

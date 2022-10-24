@@ -31,19 +31,12 @@ del deepmd_iterative_apath_error
 import common_functions as cf
 
 current_apath = Path(".").resolve()
-current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
 
-logging.info("Deleting DP-Freeze error files...")
-cf.remove_file_glob(current_apath,"**/graph*freeze.out")
-logging.info("Deleting DP-Compress error files...")
-cf.remove_file_glob(current_apath,"**/graph*compress.out")
-logging.info("Deleting DP-Train error files...")
-cf.remove_file_glob(current_apath,"**/training.out")
 logging.info("Deleting SLURM launch files...")
 cf.remove_file_glob(current_apath,"**/*.sh")
 logging.info("Cleaning done!")
 
-del deepmd_iterative_apath, training_iterative_apath, current_apath, current_iteration_zfill
+del deepmd_iterative_apath, training_iterative_apath, current_apath
 
 del sys, Path, logging, cf
 import gc; gc.collect(); del gc

@@ -53,9 +53,12 @@ for it_nnp in range(1, config_json["nb_nnp"] + 1):
         cf.check_file(local_apath/("graph_"+str(it_nnp)+"_"+current_iteration_zfill+"_compressed.pb"),True,True)
     cf.remove_file(local_apath/("checkpoint"))
     cf.remove_file(local_apath/("input_v2_compat"))
+    logging.info("Deleting SLURM out/error files...")
     cf.remove_file_glob(local_apath,"DeepMD_*")
+    logging.info("Deleting the previous model.ckpt...")
     cf.remove_file_glob(local_apath,"model.ckpt-*")
     if (local_apath/"model-compression").is_dir():
+        logging.info("Deleting the temp model-compression folder...")
         cf.remove_tree(local_apath/"model-compression")
 
 (training_iterative_apath/(current_iteration_zfill+"-test")).mkdir(exist_ok=True)
@@ -86,7 +89,9 @@ del it_steps
 cf.json_dump(config_json,(control_apath/"config.json"),True)
 
 if (local_apath/"data").is_dir():
+    logging.info("Deleting the temp data folder...")
     cf.remove_tree(local_apath/"data")
+    logging.info("Cleaning done!")
 del local_apath
 
 logging.info("Iteration: Update phase is a success!")
