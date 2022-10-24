@@ -308,17 +308,23 @@ decay_steps = int(decay_steps)
 
 ### THE MAGIC IS HERE
 ### Priority is: GOOD LUCK
+
+### If the decay_rate is overridden and stop_lr is not
 if "decay_rate" in globals() and "stop_lr" not in globals():
-    if "numb_steps" not in globals():
-        numb_steps = training_json["numb_steps"]
-    stop_lr_new = cf.get_learning_rate(numb_steps,training_json["start_lr"],decay_rate,training_json["decay_steps"])
+    ### Here: playing with stop_lr and numb_steps
+    ### Calculcate the new stop_lr
+    stop_lr_new = cf.get_learning_rate(training_json["numb_steps"],training_json["start_lr"],decay_rate,training_json["decay_steps"])
+    ### If numb_steps was not overridden, recalculate stop_lr and augment numb_steps if needed to approach the default stop_lr (going up)
     if "numb_steps" not in globals():
         while stop_lr_new > training_json["stop_lr"]:
             numb_steps = numb_steps+1e5
             stop_lr_new = cf.get_learning_rate(numb_steps,training_json["start_lr"],decay_rate,training_json["decay_steps"])
-    training_json["numb_steps"] = int(numb_steps)
+        training_json["numb_steps"] = int(numb_steps)
     training_json["stop_lr"] = stop_lr_new
+
+### If the decay_rate is overridden, as well as stop_lr and numb_steps
 elif "decay_rate" in globals() and "stop_lr" in globals() and "numb_steps" in globals():
+    ### Here: playing with stop_lr, decay_steps, and decay_rate.
     stop_lr_new = cf.get_learning_rate(numb_steps,training_json["start_lr"],decay_rate,decay_steps)
     if stop_lr_new > stop_lr:
         while stop_lr_new > stop_lr:
@@ -332,9 +338,13 @@ elif "decay_rate" in globals() and "stop_lr" in globals() and "numb_steps" in gl
     decay_rate_new = cf.get_decay_rate(numb_steps,training_json["start_lr"],stop_lr,training_json["decay_steps"])
     training_json["decay_rate"] = decay_rate_new
     del decay_rate_new
+### Default case
 else:
+    ### Here: playing with decay_rate and numb_steps
+    ### Overwrite the stop_lr
     if "stop_lr" not in globals():
         stop_lr = training_json["stop_lr"]
+    ### Recalculate the decay_rate to be as close as the target (inf), and augment the numb_steps as needed
     numb_steps = training_json["numb_steps"]
     decay_rate_new = cf.get_decay_rate(numb_steps,training_json["start_lr"],stop_lr,training_json["decay_steps"])
     while decay_rate_new < training_json["decay_rate"]:
@@ -388,7 +398,7 @@ if current_iteration > 0:
     previous_iteration = current_iteration - 1
     previous_iteration_zfill = str(previous_iteration).zfill(3)
     prevtraining_json = cf.json_read((control_apath/("training_"+previous_iteration_zfill+".json")),True,True)
-    approx_time = int(np.ceil((numb_steps*(prevtraining_json["s_per_step"]+0.25*prevtraining_json["s_per_step"])/3600)))
+    approx_time = int(np.ceil((numb_steps*(prevtraining_json["s_per_step"]*1.25)/3600)))
     del previous_iteration, previous_iteration_zfill, prevtraining_json
 else:
     initial_seconds_per_1000steps = 90 if "initial_seconds_per_1000steps" not in globals() else initial_seconds_per_1000steps

@@ -6,18 +6,25 @@
 # arch_name: str = "v100"
 # slurm_email: str = ""
 ## These are the default
-# temperature_K: list = [298.15, 298.15]
-# timestep_ps: list = [0.0005, 0.0005]
-## print_freq is every 1% / nb_steps_exploration is initial/auto-calculated (local subsys)
-## These are the default
-# nb_steps_exploration: list = [20000, 20000]
-# print_freq: list = [200, 200]
-# nb_steps_initial: list = [20000, 20000]
+# temperature_K: list = [298.15, 298.15] #float
+# timestep_ps: list = [0.0005, 0.0005] #float
 # nb_traj: int = 2
-# disturbed_start: bool = [False, False]
-# job_walltime_h = [1.0, 1.0]
+# disturbed_start: list = [False, False] #bool
+## print_freq is every 1% by default
+# print_freq: list = [200, 200] #int
+
+## nb_steps_exploration / job_walltime_h are auto-calculated (local subsys)
+# nb_steps_exploration: list = [20000, 20000] #int
+# job_walltime_h: list = [10, 10] #int
+
+## Init phase:
+## These are the default
+# nb_steps_initial: list = [20000, 20000] #int
+# init_job_walltime_h: list = [10, 10] #int
+# max_exploration_time_ps: list = [400, 400] #int
 
 ###################################### No change past here
+from re import I
 import sys
 from pathlib import Path
 import logging
@@ -119,7 +126,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
             subsys_lammps_data_fn = it_subsys_nr+".lmp"
             subsys_exploration_input = cf.replace_in_list(subsys_exploration_input,"_R_DATA_FILE_",subsys_lammps_data_fn)
             subsys_lammps_data = cf.read_file(training_iterative_apath/"inputs"/subsys_lammps_data_fn)
-            subsys_job_walltime_h = 10 if "job_walltime_h" not in globals() else job_walltime_h[it0_subsys_nr]
+            subsys_job_walltime_h = 10 if "init_job_walltime_h" not in globals() else init_job_walltime_h[it0_subsys_nr]
 
             ### Get cell and number of atoms
             dim_string = ["xlo xhi", "ylo yhi", "zlo zhi"]
@@ -222,15 +229,17 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     elif ( ratio_ill_described ) < 0.20:
                         subsys_nb_steps = subsys_nb_steps * 2
 
-                    if subsys_nb_steps > 400/subsys_timestep:
-                        subsys_nb_steps = int(400/subsys_nb_steps)
+                    subsys_max_exploration_time_ps = 400 if "max_exploration_time_ps" not in globals() else max_exploration_time_ps[it0_subsys_nr]
+                    if subsys_nb_steps > subsys_max_exploration_time_ps/subsys_timestep:
+                        subsys_nb_steps = int(subsys_max_exploration_time_ps/subsys_nb_steps)
 
                     subsys_nb_steps = subsys_nb_steps if "nb_steps_exploration" not in globals() else nb_steps_exploration[it0_subsys_nr]
                     exploration_input = cf.replace_in_list(exploration_input,"_R_NUMBER_OF_STEPS_",str(subsys_nb_steps))
 
                     subsys_job_walltime_h = ( prevexploration_json["subsys_nr"][it_subsys_nr]["s_per_step"] * subsys_nb_steps ) / 3600
-                    subsys_job_walltime_h = subsys_job_walltime_h * 1.25
+                    subsys_job_walltime_h = subsys_job_walltime_h * 1.10
                     subsys_job_walltime_h = int(np.ceil(subsys_job_walltime_h))
+                    subsys_job_walltime_h = subsys_job_walltime_h  if "job_walltime_h" not in globals() else int(job_walltime_h[it0_subsys_nr])
 
                     del starting_point_list[RAND]
                     del RAND

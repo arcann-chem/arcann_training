@@ -1,11 +1,11 @@
 ## deepmd_iterative_apath
 # deepmd_iterative_apath: str = ""
 ## These are the default
-# nb_candidates_max = [500, 500]
-# s_low: list = [0.1, 0.1]
-# s_high: list = [0.8, 0.8]
-# s_high_max: list = [1.0, 1.0]
-# ignore_first_x_ps: list = [0.5, 0.5]
+# nb_candidates_max: list= [500, 500] #int
+# s_low: list = [0.1, 0.1] #float
+# s_high: list = [0.8, 0.8] #float
+# s_high_max: list = [1.0, 1.0] #float
+# ignore_first_x_ps: list = [0.5, 0.5] #float
 
 ###################################### No change past here
 import sys

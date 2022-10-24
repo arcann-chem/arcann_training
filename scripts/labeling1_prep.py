@@ -5,11 +5,11 @@
 # allocation_name: str = "v100"
 # arch_name: str = "v100"
 # slurm_email: str = ""
-# cp2k_1_walltime_h: list = [0.5, 0.5]
-# cp2k_2_walltime_h: list = [1.0, 1.0]
-# nb_NODES: list = [1, 1]
-# nb_MPI_per_NODE: list = [10, 10]
-# nb_OPENMP_per_MPI: list = [1, 1]
+# cp2k_1_walltime_h: list = [0.5, 0.5] #float
+# cp2k_2_walltime_h: list = [1.0, 1.0] #float
+# nb_NODES: list = [1, 1] #int
+# nb_MPI_per_NODE: list = [10, 10] #int
+# nb_OPENMP_per_MPI: list = [1, 1] #int
 
 ###################################### No change past here
 import sys

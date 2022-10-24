@@ -3,8 +3,8 @@
 ## These are the default
 atomsk_fpath: str ="/gpfswork/rech/nvs/commun/programs/apps/atomsk/0.11.2/bin/atomsk"
 # vmd_fpath: str=""
-# disturbed_min_value: list = [0.0, 0.0]
-# disturbed_candidates_value: list = [0.0, 0.0]
+# disturbed_min_value: list = [0.0, 0.0] #float
+# disturbed_candidates_value: list = [0.0, 0.0] #float
 
 ###################################### No change past here
 import sys
