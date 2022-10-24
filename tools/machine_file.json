@@ -18,7 +18,7 @@
             "partition": "gpu_p13",
             "subpartition": "v100-16g",
             "qos": {"qos_gpu-t3": 72000, "qos_gpu-t4": 360000}},
-        
+
         "v100_32g": {
             "project_name": "nvs",
             "allocation_name": "v100",
@@ -27,7 +27,7 @@
             "partition": "gpu_p13",
             "subpartition": "v100-32g",
             "qos": {"qos_gpu-t3": 72000, "qos_gpu-t4": 360000}},
-        
+
         "a100_v100": {
             "project_name": "nvs",
             "allocation_name": "v100",
@@ -36,7 +36,7 @@
             "partition": "gpu_p4",
             "subpartition": null,
             "qos": {"qos_gpu-t3": 72000}},
-        
+
         "a100": {
             "project_name": "nvs",
             "allocation_name": "a100",
@@ -45,7 +45,7 @@
             "partition": "gpu_p5",
             "subpartition": [ "a100" ],
             "qos": {"qos_gpu-t3": 72000, "qos_gpu-t4": 360000}},
-        
+
         "cpu": {
             "project_name": "nvs",
             "allocation_name": "cpu",
@@ -53,7 +53,25 @@
             "arch_type": "cpu",
             "partition": "cpu_p1",
             "subpartition": null,
-            "qos": {"qos_cpu-t3": 72000, "qos_cpu-t4": 360000}}
+            "qos": {"qos_cpu-t3": 72000, "qos_cpu-t4": 360000}},
+
+        "cpu-dev": {
+            "project_name": "nvs",
+            "allocation_name": "cpu",
+            "arch_name": "cpu",
+            "arch_type": "cpu",
+            "partition": "cpu_p1",
+            "subpartition": null,
+            "qos": {"qos_cpu-dev": 7200}},
+
+        "cpu-prepost": {
+            "project_name": "nvs",
+            "allocation_name": "cpu",
+            "arch_name": "cpu",
+            "arch_type": "cpu",
+            "partition": "prepost",
+            "subpartition": null,
+            "qos": {"qos_cpu-t3": 72000}}
     },
     "ir":
     {
