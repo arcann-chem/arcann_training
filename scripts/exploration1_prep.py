@@ -6,22 +6,22 @@
 # arch_name: str = "v100"
 # slurm_email: str = ""
 ## These are the default
-# temperature_K: list = [298.15, 298.15] #float
-# timestep_ps: list = [0.0005, 0.0005] #float
+# temperature_K: list = [298.15, 298.15] #float #LAMMPS,  #i-PI is from XML
+# timestep_ps: list = [0.0005, 0.0005] #float #LAMMPS
+# timestep_ps: list = [0.00025, 0.00025] #float #i-PI
 # nb_traj: int = 2
 # disturbed_start: list = [False, False] #bool
-## print_freq is every 1% by default
-# print_freq: list = [200, 200] #int
-
+# Default is every 0.01*nb_steps
+# print_every_x_steps: list = [200, 200]
+# max_exploration_time_ps: list = [400, 400] #int / LAMMPS
+# max_exploration_time_ps: list = [100, 100] #int / i-PI
 ## nb_steps_exploration / job_walltime_h are auto-calculated (local subsys)
-# nb_steps_exploration: list = [20000, 20000] #int
-# job_walltime_h: list = [10, 10] #int
-
-## Init phase:
-## These are the default
-# nb_steps_initial: list = [20000, 20000] #int
-# init_job_walltime_h: list = [10, 10] #int
-# max_exploration_time_ps: list = [400, 400] #int
+# exploration_time_ps: list = [XX, XX] #int
+# job_walltime_h: list = [XX, XX] #int
+## Init only:
+# initial_exploration_time_ps = [10, 10] #int
+# init_job_walltime_h: list = [1, 1] #int / LAMMPS
+# init_job_walltime_h: list = [10, 10] #int / LAMMPS
 
 ###################################### No change past here
 from re import I
@@ -248,8 +248,8 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                 cf.write_file(local_apath/subsys_lammps_data_fn,subsys_lammps_data)
 
                 ### Get print freq
-                it_print_freq = int(subsys_nb_steps*0.01) if "print_freq" not in globals() else print_freq[it0_subsys_nr]
-                exploration_input = cf.replace_in_list(exploration_input,"_R_PRINT_FREQ_",str(it_print_freq))
+                it_print_every_x_steps = int(subsys_nb_steps*0.01) if "print_every_x_steps" not in globals() else print_every_x_steps[it0_subsys_nr]
+                exploration_input = cf.replace_in_list(exploration_input,"_R_print_every_x_steps_",str(it_print_every_x_steps))
 
                 ### Plumed files
                 if any("plumed" in f for f in exploration_input):
@@ -264,12 +264,12 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     exploration_input = cf.replace_in_list(exploration_input,"_R_PLUMED_IN_","plumed_"+str(it_subsys_nr)+".dat")
                     exploration_input = cf.replace_in_list(exploration_input,"_R_PLUMED_OUT_","plumed_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".log")
                     for it_plumed_input in plumed_input:
-                        plumed_input[it_plumed_input] = cf.replace_in_list(plumed_input[it_plumed_input],"_R_PRINT_FREQ_",str(it_print_freq))
+                        plumed_input[it_plumed_input] = cf.replace_in_list(plumed_input[it_plumed_input],"_R_print_every_x_steps_",str(it_print_every_x_steps))
                         cf.write_file(local_apath/it_plumed_input,plumed_input[it_plumed_input])
                     del list_plumed_files, it_list_plumed_files
 
                 exploration_json["subsys_nr"][it_subsys_nr]["nb_steps"] = subsys_nb_steps
-                exploration_json["subsys_nr"][it_subsys_nr]["print_freq"] = it_print_freq
+                exploration_json["subsys_nr"][it_subsys_nr]["print_every_x_steps"] = it_print_every_x_steps
 
                 ### Write INPUT file
                 cf.write_file(local_apath/(str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".in"),exploration_input)
@@ -347,7 +347,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
     config_json["subsys_nr"][it_subsys_nr]["nb_atm"] = subsys_nb_atm
 
     del subsys_temp, subsys_cell, subsys_nb_atm, subsys_nb_steps, subsys_exploration_input
-    del subsys_lammps_data, subsys_timestep, subsys_lammps_data_fn, subsys_job_walltime_h, it_print_freq
+    del subsys_lammps_data, subsys_timestep, subsys_lammps_data_fn, subsys_job_walltime_h, it_print_every_x_steps
 
 del it0_subsys_nr, it_subsys_nr, slurm_master
 

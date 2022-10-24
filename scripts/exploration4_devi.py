@@ -76,7 +76,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
     it_s_high_max = exploration_json["subsys_nr"][it_subsys_nr]["s_high_max"]
 
     it_first_frame = 0
-    while it_first_frame * exploration_json["subsys_nr"][it_subsys_nr]["print_freq"] * exploration_json["subsys_nr"][it_subsys_nr]["timestep_ps"] < exploration_json["subsys_nr"][it_subsys_nr]["ignore_first_x_ps"]:
+    while it_first_frame * exploration_json["subsys_nr"][it_subsys_nr]["print_every_x_steps"] * exploration_json["subsys_nr"][it_subsys_nr]["timestep_ps"] < exploration_json["subsys_nr"][it_subsys_nr]["ignore_first_x_ps"]:
         it_first_frame = it_first_frame + 1
 
     for it_nnp in range(1, exploration_json["nb_nnp"] + 1):
@@ -91,7 +91,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
             devi_info_json["s_high"] = it_s_high
             devi_info_json["s_high_max"] = it_s_high_max
 
-            expected =  int( exploration_json["subsys_nr"][it_subsys_nr]["nb_steps"] / exploration_json["subsys_nr"][it_subsys_nr]["print_freq"] + 1 ) - it_first_frame
+            expected =  int( exploration_json["subsys_nr"][it_subsys_nr]["nb_steps"] / exploration_json["subsys_nr"][it_subsys_nr]["print_every_x_steps"] + 1 ) - it_first_frame
 
             if not (local_apath/"skip").is_file():
 

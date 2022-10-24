@@ -104,7 +104,7 @@ cf.check_dir(starting_structures_apath,True)
 ### Extract for labeling
 for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
 
-    print_freq = exploration_json["subsys_nr"][it_subsys_nr]["print_freq"]
+    print_every_x_steps = exploration_json["subsys_nr"][it_subsys_nr]["print_every_x_steps"]
     if exploration_json["exploration_type"] == "lammps":
         cf.check_file(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp"),True,True)
         subprocess.call([atomsk_bin,str(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp")),"pdb",str(training_iterative_apath/"inputs"/it_subsys_nr),"-ow"],\
@@ -129,7 +129,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
             ### Selection of the min for the next iteration starting point
             if devi_info_json["min_index"] != -1:
 
-                min_index = int(devi_info_json["min_index"] / print_freq)
+                min_index = int(devi_info_json["min_index"] / print_every_x_steps)
                 (local_apath/"min.vmd").write_text(str(min_index))
                 del min_index
 
@@ -198,7 +198,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
             ### Selection of labeling XYZ
             if len(devi_index_json["candidates_kept_ind"]) != 0:
                 candidates_index = np.array(devi_index_json["candidates_kept_ind"])
-                candidates_index = candidates_index / print_freq
+                candidates_index = candidates_index / print_every_x_steps
                 candidates_index = candidates_index.astype(int)
                 candidates_index = map(str, candidates_index.astype(int))
                 candidates_index = [ zzz + "\n" for zzz in candidates_index]
@@ -286,7 +286,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
     cf.remove_file_glob(subsys_apath,"**/temp_candidates_*.xyz")
 
     del it_nnp, subsys_apath, local_apath
-del it0_subsys_nr, it_subsys_nr, topo_file, print_freq
+del it0_subsys_nr, it_subsys_nr, topo_file, print_every_x_steps
 del master_vmd_tcl, atomsk_bin, vmd_bin
 
 exploration_json["is_extracted"] = True

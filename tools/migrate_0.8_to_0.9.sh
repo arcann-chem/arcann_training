@@ -55,14 +55,15 @@ for f in control/exploration*.json; do
     cp "${f}" "${f/json/json.bak}"
     sed -i "s/avg_seconds_per_step/s_per_step/g" "${f}"
     sed -i "s/\"ignore_first_n_frames\": 10/\"ignore_first_x_ps\": 0.5/g" "${f}"
+    sed -i "s/\"print_freq\"/\"print_every_x_steps\"/g" "${f}"
     sed -i "s/, \"exploration_type\": \"lammps\"//g" "${f}"
     sed -i "s/\"subsys_nr\"/\"exploration_type\": \"lammps\",  \"subsys_nr\"/g" "${f}"
 done
 
-find ./*exploration/ -name "selection_candidates.json" -print0 | 
+find ./*exploration/ -name "selection_candidates.json" -print0 |
     while IFS= read -r -d $'\0' file; do mv "$file" "${file/selection_candidates.json/devi_info.json}"; done
 
-find ./*exploration/ -name "selection_candidates_index.json" -print0 | 
+find ./*exploration/ -name "selection_candidates_index.json" -print0 |
     while IFS= read -r -d $'\0' file; do mv "$file" "${file/selection_candidates_index.json/devi_index.json}"; done
 
 find ./*exploration/ -type f -name "devi_info.json" -exec sed -i "s/nb_selection_factor/selection_factor/g" {} +
