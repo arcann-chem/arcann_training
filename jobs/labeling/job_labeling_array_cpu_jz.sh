@@ -1,7 +1,7 @@
 #!/bin/bash
 # Author: Rolf DAVID
 # Date: 2021/03/18
-# Modified: 2022/04/27
+# Modified: 2022/10/27
 # Account
 #SBATCH --account=_R_PROJECT_@_R_ALLOC_
 # Queue
