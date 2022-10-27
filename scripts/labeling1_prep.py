@@ -144,15 +144,22 @@ for it0_subsys_nr, it_subsys_nr in enumerate(subsys_list):
         slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,"_R_WALLTIME_",str(slurm_walltime_s))
         slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_WALLTIME_",str(slurm_walltime_s))
         if nb_steps <= 1000:
+            slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_NEW_START_","0")
             if nb_steps <= 250:
                 slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_ARRAY_START_",str(1))
                 slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_ARRAY_END_",str(nb_steps))
+                if it0_subsys_nr != len(config_json["subsys_nr"]) - 1:
+                    slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_LAUNCHNEXT_","1")
+                    slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_NEXT_JOB_FILE_","0")
+                    slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_CD_WHERE_","${SLURM_SUBMIT_DIR}/../"+subsys_list[it0_subsys_nr+1])
+                else:
+                    True
                 cf.write_file(subsys_apath/("job_labeling_array_"+arch_type+"_"+cluster+"_0.sh"),slurm_file_array_subsys)
             else:
                 slurm_file_array_subsys_dict={}
                 quotient = nb_steps // 250
                 remainder = nb_steps % 250
-                slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_NEW_START_","0")
+                
                 for i in range(0,quotient+1):
                     if i < quotient:
                         slurm_file_array_subsys_dict[str(i)] = cf.replace_in_list(slurm_file_array_subsys,"_R_ARRAY_START_",str(250*i + 1))
