@@ -141,7 +141,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
 
         if (local_apath/("labeling_"+it_step_zfill+"-Wannier.xyz")).is_file():
             wannier_xyz = cf.read_file(local_apath/("labeling_"+it_step_zfill+"-Wannier.xyz"))
-            del wannier_xyz[0:2+config_json["subsys_nr"][it_subsys_nr]["nb_atm"]]
+            del wannier_xyz[0:2]
             wannier_xyz = [" ".join(f.replace("\n","").split()) for f in wannier_xyz]
             wannier_xyz = [g.split(" ")[1:] for g in wannier_xyz]
             wannier_array = np.asarray(wannier_xyz,dtype=np.float64).flatten()
@@ -241,7 +241,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
 
             if (local_apath/("labeling_"+it_step_zfill+"-Wannier.xyz")).is_file():
                 wannier_xyz = cf.read_file(local_apath/("labeling_"+it_step_zfill+"-Wannier.xyz"))
-                del wannier_xyz[0:2+config_json["subsys_nr"][it_subsys_nr]["nb_atm"]]
+                del wannier_xyz[0:2]
                 wannier_xyz = [" ".join(f.replace("\n","").split()) for f in wannier_xyz]
                 wannier_xyz = [g.split(" ")[1:] for g in wannier_xyz]
                 wannier_array = np.asarray(wannier_xyz,dtype=np.float64).flatten()
