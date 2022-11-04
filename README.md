@@ -81,8 +81,8 @@ Distributed under the GNU Affero General Public License v3.0. See `LICENSE` for 
 ## Acknowledgments & Sources
 
 * [Stackoverflow](https://stackoverflow.com/)
-*
-*
+* Hirel, P. Atomsk: A Tool for Manipulating and Converting Atomic Data Files. Comput. Phys. Commun. 2015, 197, 212–219. [https://doi.org/10.1016/j.cpc.2015.07.012](https://doi.org/10.1016/j.cpc.2015.07.012).
+* Humphrey, W.; Dalke, A.; Schulten, K. VMD: Visual Molecular Dynamics. J. Mol. Graph. 1996, 14 (1), 33–38. [https://doi.org/10.1016/0263-7855(96)00018-5](https://doi.org/10.1016/0263-7855(96)00018-5).
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
