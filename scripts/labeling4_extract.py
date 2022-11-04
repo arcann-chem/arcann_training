@@ -67,6 +67,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
     coord_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"], config_json["subsys_nr"][it_subsys_nr]["nb_atm"] * 3 ))
     box_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"], 9))
     virial_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"], 9))
+    wannier_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"], config_json["subsys_nr"][it_subsys_nr]["nb_atm"] * 3 ))
 
     box_array_raw[:,0] = config_json["subsys_nr"][it_subsys_nr]["cell"][0]
     box_array_raw[:,4] = config_json["subsys_nr"][it_subsys_nr]["cell"][1]
@@ -138,6 +139,15 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
         coord_array_raw[it_step-1,:] = coord_array
         del coord_array, coord_xyz
 
+        if (local_apath/("labeling_"+it_step_zfill+"-Wannier.xyz")).is_file():
+            wannier_xyz = cf.read_file(local_apath/("labeling_"+it_step_zfill+"-Wannier.xyz"))
+            del wannier_xyz[0:2+config_json["subsys_nr"][it_subsys_nr]["nb_atm"]]
+            wannier_xyz = [" ".join(f.replace("\n","").split()) for f in wannier_xyz]
+            wannier_xyz = [g.split(" ")[1:] for g in wannier_xyz]
+            wannier_array = np.asarray(wannier_xyz,dtype=np.float64).flatten()
+            wannier_array_raw[it_step-1,:] = wannier_array
+            del wannier_array, wannier_xyz
+
         del it_step_zfill, local_apath
     del it_step
 
@@ -151,7 +161,10 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
     np.save(str(data_apath/"set.000"/"energy"),energy_array_raw)
     np.savetxt(str(subsys_path/"coord.raw"),coord_array_raw,delimiter=" ")
     np.save(str(data_apath/"set.000"/"coord"),coord_array_raw)
-    del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw
+    np.savetxt(str(subsys_path/"wannier.raw"),wannier_array_raw,delimiter=" ")
+    np.save(str(data_apath/"set.000"/"wannier"),wannier_array_raw)
+
+    del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw,wannier_array_raw
 
     if labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"] != 0 :
         data_apath = training_iterative_apath/"data"/(it_subsys_nr+"-disturbed_"+current_iteration_zfill)
@@ -163,6 +176,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
         coord_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"], config_json["subsys_nr"][it_subsys_nr]["nb_atm"] * 3 ))
         box_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"], 9))
         virial_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"], 9))
+        wannier_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"], config_json["subsys_nr"][it_subsys_nr]["nb_atm"] * 3 ))
 
         for count,it_step in enumerate(range(labeling_json["subsys_nr"][it_subsys_nr]["candidates"] + 1, labeling_json["subsys_nr"][it_subsys_nr]["candidates"] + labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"] + 1 )):
             it_step_zfill = str(it_step).zfill(5)
@@ -225,6 +239,15 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
             coord_array_raw[count,:] = coord_array
             del coord_array, coord_xyz
 
+            if (local_apath/("labeling_"+it_step_zfill+"-Wannier.xyz")).is_file():
+                wannier_xyz = cf.read_file(local_apath/("labeling_"+it_step_zfill+"-Wannier.xyz"))
+                del wannier_xyz[0:2+config_json["subsys_nr"][it_subsys_nr]["nb_atm"]]
+                wannier_xyz = [" ".join(f.replace("\n","").split()) for f in wannier_xyz]
+                wannier_xyz = [g.split(" ")[1:] for g in wannier_xyz]
+                wannier_array = np.asarray(wannier_xyz,dtype=np.float64).flatten()
+                wannier_array_raw[it_step-1,:] = wannier_array
+                del wannier_array, wannier_xyz
+
             del it_step_zfill, local_apath
         del it_step
 
@@ -242,7 +265,10 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
         np.save(str(data_apath/"set.000"/"energy"),energy_array_raw)
         np.savetxt(str(subsys_path/"coord-disturbed.raw"),coord_array_raw,delimiter=" ")
         np.save(str(data_apath/"set.000"/"coord"),coord_array_raw)
-        del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw
+        np.savetxt(str(subsys_path/"wannier-disturbed.raw"),wannier_array_raw,delimiter=" ")
+        np.save(str(data_apath/"set.000"/"wannier"),wannier_array_raw)
+
+        del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw, wannier_array_raw
 del volume, cp2k_version, count, subsys_path, data_apath, it_subsys_nr
 del Ha_to_eV, Bohr_to_A, au_to_eV_per_A,eV_per_A3_to_GPa
 
