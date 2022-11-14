@@ -6,8 +6,6 @@ from pathlib import Path
 import socket
 import logging
 
-
-#### Path friendly
 def json_read(file_path: Path,abort: bool=True,is_logged: bool=False) -> dict:
     """Read a JSON file to a JSON dict
 
@@ -147,6 +145,52 @@ def read_file(file_path: Path) -> list:
         with file_path.open() as f:
             return f.readlines()
 
+
+def clusterize(deepmd_iterative_apath: Path,training_iterative_apath: Path,step: str, cluster: str=None, user_keyword=None):
+    if cluster is None:
+        cluster = check_cluster()
+    if (training_iterative_apath / "inputs" / "machine_file.json").is_file():
+        machine_file = json_read(training_iterative_apath / "inputs" / "machine_file.json")
+    else:
+        machine_file = json_read(deepmd_iterative_apath / "tools" / "machine_file.json")
+    if user_keyword is None:
+        for zzz in machine_file[cluster].keys():
+            if "default" in machine_file[cluster][zzz].keys():
+                for yyy in machine_file[cluster][zzz]["default"]:
+                    print(zzz, yyy)
+                    if step in yyy:
+                        return cluster, machine_file[cluster][zzz], 0
+                    else:
+                        return "", [], 1
+            else:
+                return "", [], 2
+    elif type(user_keyword) == list and len(user_keyword) == 3:
+        for zzz in machine_file[cluster].keys():
+            if (
+                machine_file[cluster][zzz]["project_name"] == user_keyword[0]
+            ) and (
+                machine_file[cluster][zzz]["allocation_name"] == user_keyword[1]
+            ) and (
+                machine_file[cluster][zzz]["arch_name"] == user_keyword[2]
+            ) and (
+                step in machine_file[cluster][zzz]["valid_for"]
+            ):
+                return cluster, machine_file[cluster][zzz], 0
+        return "", [], 5
+
+    elif type(user_keyword) == str:
+        if (
+            user_keyword in machine_file[cluster].keys()
+        ) and (
+            step in machine_file[cluster][user_keyword]["valid_for"]
+        ):
+            return cluster, machine_file[cluster][user_keyword], 0
+        else:
+            return "", [], 4
+    else:
+        return "", [], 3
+
+
 def check_cluster() -> str:
     """Get the cluster name
 
@@ -173,6 +217,7 @@ def check_cluster() -> str:
         logging.warning("Not on a known cluster, some features will not work.")
         return "0"
 
+
 def write_file(file_path: Path, list_of_string: list):
     """_summary_
 
@@ -187,14 +232,28 @@ def replace_in_list(input_list: list,substring_in: str,substring_out: str) -> li
     """_summary_
 
     Args:
-        input_list (list): input list of string
+        input_list (list): input list of strings
         substring_in (str): string to replace
-        substring_out (str): desired string
+        substring_out (str): new string
 
     Returns:
-        list: output list of string
+        list: output list of strings
     """
     output_list = [f.replace(substring_in,substring_out) for f in input_list]
+    return output_list
+
+
+def delete_in_list(input_list: list, substring_in: str) -> list:
+    """_summary_
+
+    Args:
+        input_list (list): input list of strings
+        substring_in (str): substring to look for and delete the whole string
+
+    Returns:
+        list: output list of strings
+    """
+    output_list = [zzz for zzz in input_list if not substring_in in zzz]
     return output_list
 
 

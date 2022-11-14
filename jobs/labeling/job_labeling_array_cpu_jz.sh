@@ -18,9 +18,9 @@
 #SBATCH -e CP2K.%A_%a
 # Name of job
 #SBATCH -J _R_CP2K_JOBNAME_
-# Email (Remove the space between # and SBATCH on the next two lines)
-##SBATCH --mail-type FAIL,BEGIN,END,ALL
-##SBATCH --mail-user _R_EMAIL_
+# Email
+#SBATCH --mail-type FAIL,BEGIN,END,ALL
+#SBATCH --mail-user _R_EMAIL_
 #
 #SBATCH --array=1-_R_ARRAYCOUNT_%300
 #

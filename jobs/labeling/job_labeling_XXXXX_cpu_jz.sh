@@ -19,8 +19,8 @@
 # Name of job
 #SBATCH -J _R_CP2K_JOBNAME_
 # Email (Remove the space between # and SBATCH on the next two lines)
-##SBATCH --mail-type FAIL,BEGIN,END,ALL
-##SBATCH --mail-user _R_EMAIL_
+#SBATCH --mail-type FAIL,BEGIN,END,ALL
+#SBATCH --mail-user _R_EMAIL_
 #
 
 # Input file (extension is automatically added as .inp for INPUT, wfn for WFRST, restart for MDRST)

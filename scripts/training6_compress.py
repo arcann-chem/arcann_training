@@ -1,9 +1,8 @@
 ## deepmd_iterative_apath
 # deepmd_iterative_apath: str = ""
-## Project name / allocation / arch (nvs/v100/a100 or gen7156/rome/cpu)
-# project_name: str = "nvs"
-# allocation_name: str = "v100"
-# arch_name: str = "v100"
+## Either shortcut (machine_file.json) or Project name / allocation / arch
+# user_spec = "v100"
+# user_spec = ["nvs","v100","v100"]
 # slurm_email: str = ""
 
 ###################################### No change past here
@@ -47,13 +46,6 @@ current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
 current_iteration = int(current_iteration_zfill)
 training_json = cf.json_read((control_apath/("training_"+current_iteration_zfill+".json")),True,True)
 
-### Set needed variables issue#35
-project_name = training_json["project_name"] if "project_name" not in globals() else project_name
-allocation_name = training_json["allocation_name"] if "allocation_name" not in globals() else allocation_name
-arch_name = training_json["arch_name"] if "arch_name" not in globals() else arch_name
-if arch_name == "v100" or arch_name == "a100":
-    arch_type ="gpu"
-
 ### Checks
 if training_json["deepmd_model_version"] < 2.0:
     logging.critical("No compression for model < 2.0 and your model is version:"+str(training_json["deepmd_model_version"]))
@@ -64,10 +56,18 @@ if not training_json["is_frozen"]:
     logging.critical("Aborting...")
     sys.exit(1)
 
-### issue#35
-cluster = cf.check_cluster()
-cf.check_file(jobs_apath/("job_deepmd_compress_"+arch_type +"_"+cluster+".sh"),True,True,"No SLURM file present for the freezing step on this cluster.")
-slurm_file_master = cf.read_file(jobs_apath/("job_deepmd_compress_"+arch_type +"_"+cluster+".sh"))
+### Read cluster info
+if "user_spec" in globals():
+    cluster, cluster_spec, cluster_error = cf.clusterize(deepmd_iterative_apath,training_iterative_apath,step="compressing",user_keyword=user_spec)
+else:
+    cluster, cluster_spec, cluster_error = cf.clusterize(deepmd_iterative_apath,training_iterative_apath,step="compressing")
+if cluster_error != 0:
+    ###FIXME Better errors
+    sys.exit(1)
+
+
+cf.check_file(jobs_apath/("job_deepmd_compress_"+cluster_spec["arch_type"]+"_"+cluster+".sh"),True,True,"No SLURM file present for the compressing step on this cluster.")
+slurm_file_master = cf.read_file(jobs_apath/("job_deepmd_compress_"+cluster_spec["arch_type"]+"_"+cluster+".sh"))
 del jobs_apath
 
 ### Prep and launch DP Compress
@@ -76,31 +76,40 @@ for it_nnp in range(1, config_json["nb_nnp"] + 1):
     local_apath = Path(".").resolve()/str(it_nnp)
     cf.check_file(local_apath/("graph_"+str(it_nnp)+"_"+current_iteration_zfill+".pb"),True,True)
     slurm_file = slurm_file_master
-    slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",project_name)
-    slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_","02:00:00")
     slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_VERSION_",str(training_json["deepmd_model_version"]))
     slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_MODEL_","graph_"+str(it_nnp)+"_"+current_iteration_zfill)
-    if allocation_name == "v100":
-        slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_","v100")
-        if arch_name == "v100":
-            slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t3")
-            slurm_file = cf.replace_in_list(slurm_file,"_R_PARTITION_","gpu_p13")
-            slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _R_SUBPARTITION_","##SBATCH -C _R_SUBPARTITION_")
+
+    slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",cluster_spec["project_name"])
+    slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",cluster_spec["allocation_name"])
+    slurm_file = cf.delete_in_list(slurm_file,"_R_PARTITON_") if cluster_spec["partition"] is None else cf.replace_in_list(slurm_file,"_R_PARTITION_",cluster_spec["partition"])
+    slurm_file = cf.delete_in_list(slurm_file,"_R_SUBPARTITION_") if cluster_spec["subpartition"] is None else cf.replace_in_list(slurm_file,"_R_SUBPARTITION_",cluster_spec["subpartition"])
+
+    max_qos_time = 0
+    for it_qos in cluster_spec["qos"]:
+        if cluster_spec["qos"][it_qos] >= 7200:
+            slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_",it_qos)
+            qos_ok = True
         else:
-            slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t3")
-            slurm_file = cf.replace_in_list(slurm_file,"_R_PARTITION_","gpu_p4")
-            slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _R_SUBPARTITION_","##SBATCH -C _R_SUBPARTITION_")
-    elif allocation_name == "a100":
-        slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_","a100")
-        slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t3")
-        slurm_file = cf.replace_in_list(slurm_file,"_R_PARTITION_","gpu_p5")
-        slurm_file = cf.replace_in_list(slurm_file,"_R_SUBPARTITION_","a100")
+            max_qos = it_qos if cluster_spec["qos"][it_qos] > max_qos_time else max_qos
+            qos_ok = False
+    del it_qos
+    if not qos_ok:
+        logging.warning("Approximate wall time superior than the maximun time allowed by the QoS")
+        logging.warning("Settign the maximum QoS time as walltime")
+        slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",max_qos_time)
     else:
-        sys.exit("Unknown error. Please BUG REPORT.\n Aborting...")
-    cf.write_file(local_apath/("job_deepmd_compress_"+arch_type+"_"+cluster+".sh"),slurm_file)
-    if (local_apath/("job_deepmd_compress_"+arch_type+"_"+cluster+".sh")).is_file():
+        slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",7200)
+
+    if slurm_email != "":
+        slurm_file = cf.replace_in_list(slurm_file,"_R_EMAIL_",slurm_email)
+    else:
+        slurm_file = cf.delete_in_list(slurm_file,"_R_EMAIL_")
+        slurm_file = cf.delete_in_list(slurm_file,"mail")
+
+    cf.write_file(local_apath/("job_deepmd_compress_"+cluster_spec["arch_type"]+"_"+cluster+".sh"),slurm_file)
+    if (local_apath/("job_deepmd_compress_"+cluster_spec["arch_type"]+"_"+cluster+".sh")).is_file():
         cf.change_dir(local_apath)
-        subprocess.call(["sbatch","./job_deepmd_compress_"+arch_type+"_"+cluster+".sh"])
+        subprocess.call(["sbatch","./job_deepmd_compress_"+cluster_spec["arch_type"]+"_"+cluster+".sh"])
         cf.change_dir(local_apath.parent)
         logging.info("DP Compress - "+str(it_nnp)+" launched")
         check = check + 1
@@ -120,9 +129,8 @@ del check
 del config_json, training_iterative_apath, control_apath
 del current_iteration, current_iteration_zfill
 del training_json
-del cluster, arch_type
+del cluster, cluster_spec
 del deepmd_iterative_apath
-del project_name, allocation_name, arch_name
 del slurm_email
 
 del sys, Path, logging, cf

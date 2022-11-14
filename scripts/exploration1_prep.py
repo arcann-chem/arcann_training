@@ -1,9 +1,8 @@
 ## deepmd_iterative_apath
 # deepmd_iterative_apath: str = ""
-## Project name / allocation / arch (nvs/v100/a100 or gen7156/rome/cpu)
-# project_name: str = "nvs"
-# allocation_name: str = "v100"
-# arch_name: str = "v100"
+## Either shortcut (machine_file.json) or Project name / allocation / arch
+# user_spec = "v100"
+# user_spec = ["nvs","v100","v100"]
 # slurm_email: str = ""
 ## These are the default
 # temperature_K: list = [298.15, 298.15] #float #LAMMPS,  #i-PI is from XML
@@ -85,21 +84,23 @@ if not prevtraining_json["is_frozen"]:
     logging.critical("Aborting...")
     sys.exit(1)
 
-### #35
-cluster = cf.check_cluster()
-exploration_json["cluster"] = cluster
-exploration_json["project_name"] = "nvs" if "project_name" not in globals() else project_name
-exploration_json["allocation_name"] = "v100" if "allocation_name" not in globals() else allocation_name
-exploration_json["arch_name"] = "v100" if "arch_name" not in globals() else arch_name
-project_name = exploration_json["project_name"]
-allocation_name = exploration_json["allocation_name"]
-arch_name = exploration_json["arch_name"]
-if arch_name == "v100" or arch_name == "a100":
-    arch_type ="gpu"
+### Read cluster info
+if user_spec in globals():
+    cluster, cluster_spec, cluster_error = cf.clusterize(deepmd_iterative_apath,training_iterative_apath,step="exploration",user_keyword=user_spec)
+else:
+    cluster, cluster_spec, cluster_error = cf.clusterize(deepmd_iterative_apath,training_iterative_apath,step="exploration")
+if cluster_error != 0:
+    ###FIXME Better errors
+    sys.exit(1)
 
-### #35
-cf.check_file(jobs_apath/("job_deepmd_"+exploration_type+"_"+arch_type +"_"+cluster+".sh"),True,True,"No SLURM file present for the exploration step on this cluster.")
-slurm_master = cf.read_file(jobs_apath/("job_deepmd_"+exploration_type+"_"+arch_type +"_"+cluster+".sh"))
+exploration_json["cluster"] = cluster
+exploration_json["project_name"] = cluster_spec["project_name"]
+exploration_json["allocation_name"] = cluster_spec["allocation_name"]
+exploration_json["arch_name"] = cluster_spec["arch_name"]
+exploration_json["arch_type"] = cluster_spec["arch_type"]
+
+cf.check_file(jobs_apath/("job_deepmd_"+exploration_type+"_"+cluster_spec["arch_type"]+"_"+cluster+".sh"),True,True,"No SLURM file present for the exploration step on this cluster.")
+slurm_file_master = cf.read_file(jobs_apath/("job_deepmd_"+exploration_type+"_"+cluster_spec["arch_type"]+"_"+cluster+".sh"))
 del jobs_apath
 
 ### Preparation of the exploration
@@ -126,7 +127,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
             subsys_lammps_data_fn = it_subsys_nr+".lmp"
             subsys_exploration_input = cf.replace_in_list(subsys_exploration_input,"_R_DATA_FILE_",subsys_lammps_data_fn)
             subsys_lammps_data = cf.read_file(training_iterative_apath/"inputs"/subsys_lammps_data_fn)
-            subsys_job_walltime_h = 10 if "init_job_walltime_h" not in globals() else init_job_walltime_h[it0_subsys_nr]
+            subsys_walltime_approx_s = 36000 if "init_job_walltime_h" not in globals() else init_job_walltime_h[it0_subsys_nr]*3600
 
             ### Get cell and number of atoms
             dim_string = ["xlo xhi", "ylo yhi", "zlo zhi"]
@@ -236,10 +237,9 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     subsys_nb_steps = subsys_nb_steps if "nb_steps_exploration" not in globals() else nb_steps_exploration[it0_subsys_nr]
                     exploration_input = cf.replace_in_list(exploration_input,"_R_NUMBER_OF_STEPS_",str(subsys_nb_steps))
 
-                    subsys_job_walltime_h = ( prevexploration_json["subsys_nr"][it_subsys_nr]["s_per_step"] * subsys_nb_steps ) / 3600
-                    subsys_job_walltime_h = subsys_job_walltime_h * 1.10
-                    subsys_job_walltime_h = int(np.ceil(subsys_job_walltime_h))
-                    subsys_job_walltime_h = subsys_job_walltime_h  if "job_walltime_h" not in globals() else int(job_walltime_h[it0_subsys_nr])
+                    subsys_walltime_approx_s = ( prevexploration_json["subsys_nr"][it_subsys_nr]["s_per_step"] * subsys_nb_steps )
+                    subsys_walltime_approx_s = subsys_walltime_approx_s * 1.10
+                    subsys_walltime_approx_s = subsys_walltime_approx_s if "job_walltime_h" not in globals() else int(job_walltime_h[it0_subsys_nr] * 3600 )
 
                     del starting_point_list[RAND]
                     del RAND
@@ -274,45 +274,36 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                 ### Write INPUT file
                 cf.write_file(local_apath/(str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".in"),exploration_input)
 
-                ### #35
-                ### Slurm file now
-                slurm = slurm_master.copy()
-                slurm = cf.replace_in_list(slurm,"_R_PROJECT_",project_name)
-                slurm = cf.replace_in_list(slurm,"_R_WALLTIME_",cf.seconds_to_walltime(subsys_job_walltime_h*3600))
-                slurm = cf.replace_in_list(slurm,"_R_DEEPMD_VERSION_",str(exploration_json["deepmd_model_version"]))
-                if allocation_name == "v100":
-                    slurm = cf.replace_in_list(slurm,"_R_ALLOC_",allocation_name)
-                    if subsys_job_walltime_h <= 20:
-                        if arch_name == "v100":
-                            slurm = cf.replace_in_list(slurm,"_R_QOS_","qos_gpu-t3")
-                            slurm = cf.replace_in_list(slurm,"_R_PARTITION_","gpu_p13")
-                            slurm = cf.replace_in_list(slurm,"#SBATCH -C _R_SUBPARTITION_","##SBATCH -C _R_SUBPARTITION_")
-                        elif arch_name == "a100":
-                            slurm = cf.replace_in_list(slurm,"_R_QOS_","qos_gpu-t3")
-                            slurm = cf.replace_in_list(slurm,"_R_PARTITION_","gpu_p4")
-                            slurm = cf.replace_in_list(slurm,"#SBATCH -C _R_SUBPARTITION_","##SBATCH -C _R_SUBPARTITION_")
-                    else:
-                        slurm = cf.replace_in_list(slurm,"_R_QOS_","qos_gpu-t4")
-                        slurm = cf.replace_in_list(slurm,"_R_PARTITION_","gpu_p13")
-                        slurm = cf.replace_in_list(slurm,"#SBATCH -C _R_SUBPARTITION_","##SBATCH -C _R_RSUBPARTITION_")
-                elif allocation_name == "a100":
-                    slurm = cf.replace_in_list(slurm,"_R_ALLOC_",allocation_name)
-                    if subsys_job_walltime_h <= 20:
-                        slurm = cf.replace_in_list(slurm,"_R_QOS_","qos_gpu-t3")
-                    else:
-                        slurm = cf.replace_in_list(slurm,"_R_QOS_","qos_gpu-t4")
-                    slurm = cf.replace_in_list(slurm,"_R_PARTITION_","gpu_p5")
-                    slurm = cf.replace_in_list(slurm,"_R_SUBPARTITION_",arch_name)
-                else:
-                    logging.critical("Unknown error. Please BUG REPORT")
-                    logging.critical("Aborting...")
-                    sys.exit(1)
-                if slurm_email != "":
-                    slurm = cf.replace_in_list(slurm,"##SBATCH --mail-type","#SBATCH --mail-type")
-                    slurm = cf.replace_in_list(slurm,"##SBATCH --mail-user _R_EMAIL_","#SBATCH --mail-user "+slurm_email)
+                slurm_file = slurm_file_master.copy()
+                slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_VERSION_",str(exploration_json["deepmd_model_version"]))
+                slurm_file = cf.replace_in_list(slurm_file,"_R_INPUT_",str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill)
+                slurm_file = cf.replace_in_list(slurm_file,"_R_DATA_FILE_",subsys_lammps_data_fn)
 
-                slurm = cf.replace_in_list(slurm,"_R_INPUT_",str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill)
-                slurm = cf.replace_in_list(slurm,"_R_DATA_FILE_",subsys_lammps_data_fn)
+                slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",cluster_spec["project_name"])
+                slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",cluster_spec["allocation_name"])
+                slurm_file = cf.delete_in_list(slurm_file,"_R_PARTITON_") if cluster_spec["partition"] is None else cf.replace_in_list(slurm_file,"_R_PARTITION_",cluster_spec["partition"])
+                slurm_file = cf.delete_in_list(slurm_file,"_R_SUBPARTITION_") if cluster_spec["subpartition"] is None else cf.replace_in_list(slurm_file,"_R_SUBPARTITION_",cluster_spec["subpartition"])
+                max_qos_time = 0
+                for it_qos in cluster_spec["qos"]:
+                    if cluster_spec["qos"][it_qos] >= subsys_walltime_approx_s:
+                        slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_",it_qos)
+                        qos_ok = True
+                    else:
+                        max_qos = it_qos if cluster_spec["qos"][it_qos] > max_qos_time else max_qos
+                        qos_ok = False
+                del it_qos
+                if not qos_ok:
+                    logging.warning("Approximate wall time superior than the maximun time allowed by the QoS")
+                    logging.warning("Settign the maximum QoS time as walltime")
+                    slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(max_qos_time))
+                else:
+                    slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(subsys_walltime_approx_s))
+
+                if slurm_email != "":
+                    slurm_file = cf.replace_in_list(slurm_file,"_R_EMAIL_",slurm_email)
+                else:
+                    slurm_file = cf.delete_in_list(slurm_file,"_R_EMAIL_")
+                    slurm_file = cf.delete_in_list(slurm_file,"mail")
 
                 ### Add plumed files
                 if any("plumed" in f for f in exploration_input):
@@ -329,7 +320,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                 models_list_job = models_list.replace(" ","\" \"")
                 slurm = cf.replace_in_list(slurm, "_R_MODELS_LIST_", models_list_job)
 
-                cf.write_file(local_apath/("job_deepmd_"+exploration_type+"_"+arch_type+"_"+cluster+".sh"),slurm)
+                cf.write_file(local_apath/("job_deepmd_"+exploration_type+"_"+cluster_spec["arch_type"]+"_"+cluster+".sh"),slurm)
 
                 del exploration_input, slurm, models_list_job
 
@@ -347,9 +338,9 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
     config_json["subsys_nr"][it_subsys_nr]["nb_atm"] = subsys_nb_atm
 
     del subsys_temp, subsys_cell, subsys_nb_atm, subsys_nb_steps, subsys_exploration_input
-    del subsys_lammps_data, subsys_timestep, subsys_lammps_data_fn, subsys_job_walltime_h, it_print_every_x_steps
+    del subsys_lammps_data, subsys_timestep, subsys_lammps_data_fn, subsys_walltime_approx_s, it_print_every_x_steps
 
-del it0_subsys_nr, it_subsys_nr, slurm_master
+del it0_subsys_nr, it_subsys_nr, slurm_file_master
 
 exploration_json["is_locked"] = True
 exploration_json["is_launched"] = False
@@ -373,8 +364,7 @@ logging.info("Exploration: Prep phase is a success!")
 del config_json, training_iterative_apath, control_apath
 del current_iteration, current_iteration_zfill
 del exploration_json
-del cluster, arch_type
-del project_name, allocation_name, arch_name
+del cluster, cluster_spec
 del deepmd_iterative_apath
 del slurm_email
 

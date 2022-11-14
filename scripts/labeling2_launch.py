@@ -51,12 +51,8 @@ if not labeling_json["is_locked"]:
     logging.critical("Aborting...")
     sys.exit(1)
 
-### #35
+###
 cluster = cf.check_cluster()
-
-if labeling_json["arch_name"] == "cpu":
-    arch_type="cpu"
-
 cf.check_same_cluster(cluster,labeling_json)
 
 ### Launch of the labeling
@@ -64,9 +60,9 @@ check = 0
 for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
     subsys_apath = Path(".").resolve()/str(it_subsys_nr)
     if cluster == "jz":
-        if (subsys_apath/("job_labeling_array_"+arch_type+"_"+cluster+".sh")).is_file():
+        if (subsys_apath/("job_labeling_array_"+labeling_json["arch_type"]+"_"+cluster+".sh")).is_file():
             cf.change_dir(subsys_apath)
-            #subprocess.call(["sbatch","./job_labeling_array_"+arch_type+"_"+cluster+".sh"])
+            subprocess.call(["sbatch","./job_labeling_array_"+labeling_json["arch_type"]+"_"+cluster+".sh"])
             cf.change_dir(subsys_apath.parent)
             logging.info("Labeling - "+str(it_subsys_nr)+" launched")
             check = check + 1
@@ -74,15 +70,15 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
             logging.critical("Labeling - "+str(it_subsys_nr)+" NOT launched")
     elif cluster == "ir":
         if it0_subsys_nr == 0:
-            if (subsys_apath/("job_labeling_array_"+arch_type+"_"+cluster+".sh")).is_file():
+            if (subsys_apath/("job_labeling_array_"+labeling_json["arch_type"]+"_"+cluster+".sh")).is_file():
                 cf.change_dir(subsys_apath)
-                #subprocess.call(["ccc_msub","./job_labeling_array_"+arch_type+"_"+cluster+".sh"])
+                subprocess.call(["ccc_msub","./job_labeling_array_"+labeling_json["arch_type"]+"_"+cluster+".sh"])
                 cf.change_dir(subsys_apath.parent)
                 logging.info("Labeling - "+str(it_subsys_nr)+" launched")
                 check = check + 1
-            elif (subsys_apath/("job_labeling_array_"+arch_type+"_"+cluster+"_0.sh")).is_file():
+            elif (subsys_apath/("job_labeling_array_"+labeling_json["arch_type"]+"_"+cluster+"_0.sh")).is_file():
                 cf.change_dir(subsys_apath)
-                #subprocess.call(["ccc_msub","./job_labeling_array_"+arch_type+"_"+cluster+"_0.sh"])
+                subprocess.call(["ccc_msub","./job_labeling_array_"+labeling_json["arch_type"]+"_"+cluster+"_0.sh"])
                 cf.change_dir(subsys_apath.parent)
                 logging.info("Labeling - "+str(it_subsys_nr)+" - 0 launched")
                 check = check + 1
@@ -115,7 +111,7 @@ cf.json_dump(labeling_json,(control_apath/("labeling_"+current_iteration_zfill+"
 del config_json, training_iterative_apath, control_apath
 del current_iteration, current_iteration_zfill
 del labeling_json
-del cluster, arch_type
+del cluster
 del deepmd_iterative_apath
 
 del sys, Path, logging, cf

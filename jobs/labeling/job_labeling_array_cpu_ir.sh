@@ -19,8 +19,8 @@
 #MSUB -e CP2K.%A_%a
 # Name of job
 #MSUB -r _R_CP2K_JOBNAME_
-# Email (Remove the space between # and SBATCH on the next two lines)
-##MSUB -@ _EMAIL_:begin,end
+# Email
+#MSUB -@ _R_EMAIL_:begin,end
 #
 #MSUB -E "--array=_R_ARRAY_START_-_R_ARRAY_END_%250"
 #

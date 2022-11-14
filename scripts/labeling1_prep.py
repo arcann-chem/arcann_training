@@ -1,9 +1,8 @@
 ## deepmd_iterative_apath
 # deepmd_iterative_apath: str = ""
-## Project name / allocation / arch (nvs/v100/a100 or gen7156/rome/cpu)
-# project_name: str = "nvs"
-# allocation_name: str = "v100"
-# arch_name: str = "v100"
+## Either shortcut (machine_file.json) or Project name / allocation / arch
+# user_spec = "v100"
+# user_spec = ["nvs","v100","v100"]
 # slurm_email: str = ""
 # cp2k_1_walltime_h: list = [0.5, 0.5] #float
 # cp2k_2_walltime_h: list = [1.0, 1.0] #float
@@ -60,42 +59,42 @@ if not exploration_json["is_extracted"]:
     logging.critical("Aborting...")
     sys.exit(1)
 
-### #35
-cluster = cf.check_cluster()
-
-if cluster != "ir" and cluster != "jz":
-    logging.critical("Unsupported cluster.")
-    logging.critical("Aborting...")
+### Read cluster info
+if user_spec in globals():
+    cluster, cluster_spec, cluster_error = cf.clusterize(deepmd_iterative_apath,training_iterative_apath,step="exploration",user_keyword=user_spec)
+else:
+    cluster, cluster_spec, cluster_error = cf.clusterize(deepmd_iterative_apath,training_iterative_apath,step="exploration")
+if cluster_error != 0:
+    ###FIXME Better errors
     sys.exit(1)
 
-### #35
-labeling_json["cluster"] = cluster
-labeling_json["project_name"] = project_name if "project_name" in globals() else "nvs"
-labeling_json["allocation_name"] = allocation_name if "allocation_name" in globals() else "cpu"
-labeling_json["arch_name"] = arch_name if "arch_name" in globals() else "cpu"
-project_name = labeling_json["project_name"]
-allocation_name = labeling_json["allocation_name"]
-arch_name = labeling_json["arch_name"]
-if arch_name == "cpu":
-    arch_type ="cpu"
+cf.check_file(jobs_apath/("job_labeling_XXXXX_"+cluster_spec["arch_type"] +"_"+cluster+".sh"),True,True,"No SLURM file present for the exploration step on this cluster.")
+cf.check_file(jobs_apath/("job_labeling_array_"+cluster_spec["arch_type"] +"_"+cluster+".sh"),True,True,"No SLURM Array present for the exploration step on this cluster.")
 
-### #35
-cf.check_file(jobs_apath/("job_labeling_XXXXX_"+arch_type +"_"+cluster+".sh"),True,True,"No SLURM file present for the exploration step on this cluster.")
-cf.check_file(jobs_apath/("job_labeling_array_"+arch_type +"_"+cluster+".sh"),True,True,"No SLURM Array present for the exploration step on this cluster.")
+labeling_json["cluster"] = cluster
+labeling_json["project_name"] = cluster_spec["project_name"]
+labeling_json["allocation_name"] = cluster_spec["allocation_name"]
+labeling_json["arch_name"] = cluster_spec["arch_name"]
+labeling_json["arch_type"] = cluster_spec["arch_type"]
 
 ### Preparation of the labeling
-slurm_file_master = cf.read_file(jobs_apath/("job_labeling_XXXXX_"+arch_type+"_"+cluster+".sh"))
-slurm_file_master = cf.replace_in_list(slurm_file_master,"_R_PROJECT_",project_name)
-slurm_file_master = cf.replace_in_list(slurm_file_master,"_R_ALLOC_",allocation_name)
-slurm_file_array_master = cf.read_file(jobs_apath/("job_labeling_array_"+arch_type+"_"+cluster+".sh"))
-slurm_file_array_master = cf.replace_in_list(slurm_file_array_master,"_R_PROJECT_",project_name)
-slurm_file_array_master = cf.replace_in_list(slurm_file_array_master,"_R_ALLOC_",allocation_name)
+slurm_file_master = cf.read_file(jobs_apath/("job_labeling_XXXXX_"+cluster_spec["arch_type"]+"_"+cluster+".sh"))
+slurm_file_master = cf.replace_in_list(slurm_file_master,"_R_PROJECT_",cluster_spec["project_name"])
+slurm_file_master = cf.replace_in_list(slurm_file_master,"_R_ALLOC_",cluster_spec["allocation_name"])
+slurm_file_master = cf.delete_in_list(slurm_file_master,"_R_PARTITON_") if cluster_spec["partition"] is None else cf.replace_in_list(slurm_file_master,"_R_PARTITION_",cluster_spec["partition"])
+slurm_file_master = cf.delete_in_list(slurm_file_master,"_R_SUBPARTITION_") if cluster_spec["subpartition"] is None else cf.replace_in_list(slurm_file_master,"_R_SUBPARTITION_",cluster_spec["subpartition"])
+
+slurm_file_array_master = cf.read_file(jobs_apath/("job_labeling_array_"+cluster_spec["arch_type"]+"_"+cluster+".sh"))
+slurm_file_array_master = cf.replace_in_list(slurm_file_array_master,"_R_PROJECT_",cluster_spec["project_name"])
+slurm_file_array_master = cf.replace_in_list(slurm_file_array_master,"_R_ALLOC_",cluster_spec["allocation_name"])
+slurm_file_array_master = cf.delete_in_list(slurm_file_array_master,"_R_PARTITON_") if cluster_spec["partition"] is None else cf.replace_in_list(slurm_file_array_master,"_R_PARTITION_",cluster_spec["partition"])
+slurm_file_array_master = cf.delete_in_list(slurm_file_array_master,"_R_SUBPARTITION_") if cluster_spec["subpartition"] is None else cf.replace_in_list(slurm_file_array_master,"_R_SUBPARTITION_",cluster_spec["subpartition"])
+
 if slurm_email != "":
-    if cluster == "jz":
-        slurm_file_array_master = cf.replace_in_list(slurm_file_array_master,"##SBATCH --mail-type","#SBATCH --mail-type")
-        slurm_file_array_master = cf.replace_in_list(slurm_file_array_master,"##SBATCH --mail-user _R_EMAIL_","#SBATCH --mail-user "+slurm_email)
-    elif cluster == "ir":
-        slurm_file_array_master = cf.replace_in_list(slurm_file_array_master,"##MSUB -@ _R_EMAIL_","##SUB -@ "+slurm_email)
+    slurm_file_array_master = cf.replace_in_list(slurm_file_array_master,"_R_EMAIL_",slurm_email)
+else:
+    slurm_file_array_master = cf.delete_in_list(slurm_file_array_master,"_R_EMAIL_")
+    slurm_file_array_master = cf.delete_in_list(slurm_file_array_master,"mail")
 
 labeling_json["subsys_nr"] = {}
 subsys_list=list(config_json["subsys_nr"].keys())
@@ -130,19 +129,32 @@ for it0_subsys_nr, it_subsys_nr in enumerate(subsys_list):
          slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_nb_MPI_",str(labeling_json["subsys_nr"][it_subsys_nr]["nb_MPI_per_NODE"] * labeling_json["subsys_nr"][it_subsys_nr]["nb_NODES"] ))
     slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_CP2K_JOBNAME_","CP2K_"+it_subsys_nr+"_"+current_iteration_zfill)
 
-    slurm_walltime_s = (labeling_json["subsys_nr"][it_subsys_nr]["cp2k_1_walltime_h"] + labeling_json["subsys_nr"][it_subsys_nr]["cp2k_2_walltime_h"]) * 3600
-    slurm_walltime_s = int(slurm_walltime_s * 1.1)
+    subsys_walltime_approx_s = (labeling_json["subsys_nr"][it_subsys_nr]["cp2k_1_walltime_h"] + labeling_json["subsys_nr"][it_subsys_nr]["cp2k_2_walltime_h"]) * 3600
+    subsys_walltime_approx_s = int(subsys_walltime_approx_s * 1.1)
+    max_qos_time = 0
+
+    for it_qos in cluster_spec["qos"]:
+        if cluster_spec["qos"][it_qos] >= subsys_walltime_approx_s:
+            slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_QOS_",it_qos)
+            slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,"_R_QOS_",it_qos)
+            qos_ok = True
+        else:
+            max_qos = it_qos if cluster_spec["qos"][it_qos] > max_qos_time else max_qos
+            qos_ok = False
+    del it_qos
+    if not qos_ok:
+        logging.warning("Approximate wall time superior than the maximun time allowed by the QoS")
+        logging.warning("Settign the maximum QoS time as walltime")
+        slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_WALLTIME_",str(max_qos_time))
+        slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,"_R_WALLTIME_",str(max_qos_time))
+    else:
+        slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_WALLTIME_",str(subsys_walltime_approx_s))
+        slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,"_R_WALLTIME_",str(subsys_walltime_approx_s))
 
     if cluster == "jz":
-        slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,"_R_WALLTIME_",cf.seconds_to_walltime(slurm_walltime_s))
-        slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_WALLTIME_",cf.seconds_to_walltime(slurm_walltime_s))
         slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_ARRAYCOUNT_",str(nb_steps))
-        cf.write_file(subsys_apath/("job_labeling_array_"+arch_type+"_"+cluster+".sh"),slurm_file_array_subsys)
-        slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,"_R_WALLTIME_",cf.seconds_to_walltime(slurm_walltime_s))
-
+        cf.write_file(subsys_apath/("job_labeling_array_"+cluster_spec["arch_type"]+"_"+cluster+".sh"),slurm_file_array_subsys)
     elif cluster == "ir":
-        slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,"_R_WALLTIME_",str(slurm_walltime_s))
-        slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_WALLTIME_",str(slurm_walltime_s))
         if nb_steps <= 1000:
             slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_NEW_START_","0")
             if nb_steps <= 250:
@@ -154,12 +166,12 @@ for it0_subsys_nr, it_subsys_nr in enumerate(subsys_list):
                     slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_CD_WHERE_","${SLURM_SUBMIT_DIR}/../"+subsys_list[it0_subsys_nr+1])
                 else:
                     True
-                cf.write_file(subsys_apath/("job_labeling_array_"+arch_type+"_"+cluster+"_0.sh"),slurm_file_array_subsys)
+                cf.write_file(subsys_apath/("job_labeling_array_"+cluster_spec["arch_type"]+"_"+cluster+"_0.sh"),slurm_file_array_subsys)
             else:
                 slurm_file_array_subsys_dict={}
                 quotient = nb_steps // 250
                 remainder = nb_steps % 250
-                
+
                 for i in range(0,quotient+1):
                     if i < quotient:
                         slurm_file_array_subsys_dict[str(i)] = cf.replace_in_list(slurm_file_array_subsys,"_R_ARRAY_START_",str(250*i + 1))
@@ -167,7 +179,7 @@ for it0_subsys_nr, it_subsys_nr in enumerate(subsys_list):
                         slurm_file_array_subsys_dict[str(i)] = cf.replace_in_list(slurm_file_array_subsys_dict[str(i)],"_R_LAUNCHNEXT_","1")
                         slurm_file_array_subsys_dict[str(i)] = cf.replace_in_list(slurm_file_array_subsys_dict[str(i)],"_R_NEXT_JOB_FILE_",str(i+1))
                         slurm_file_array_subsys_dict[str(i)] = cf.replace_in_list(slurm_file_array_subsys_dict[str(i)],"_R_CD_WHERE_","${SLURM_SUBMIT_DIR}")
-                        cf.write_file(subsys_apath/("job_labeling_array_"+arch_type+"_"+cluster+"_"+str(i)+".sh"),slurm_file_array_subsys_dict[str(i)])
+                        cf.write_file(subsys_apath/("job_labeling_array_"+cluster_spec["arch_type"]+"_"+cluster+"_"+str(i)+".sh"),slurm_file_array_subsys_dict[str(i)])
                     else:
                         slurm_file_array_subsys_dict[str(i)] = cf.replace_in_list(slurm_file_array_subsys,"_R_ARRAY_START_",str(250*i + 1))
                         slurm_file_array_subsys_dict[str(i)] = cf.replace_in_list(slurm_file_array_subsys_dict[str(i)],"_R_ARRAY_END_",str(250*i + remainder ))
@@ -177,7 +189,7 @@ for it0_subsys_nr, it_subsys_nr in enumerate(subsys_list):
                             slurm_file_array_subsys_dict[str(i)] = cf.replace_in_list(slurm_file_array_subsys_dict[str(i)],"_R_CD_WHERE_","${SLURM_SUBMIT_DIR}/../"+subsys_list[it0_subsys_nr+1])
                         else:
                             True
-                        cf.write_file(subsys_apath/("job_labeling_array_"+arch_type+"_"+cluster+"_"+str(i)+".sh"),slurm_file_array_subsys_dict[str(i)])
+                        cf.write_file(subsys_apath/("job_labeling_array_"+cluster_spec["arch_type"]+"_"+cluster+"_"+str(i)+".sh"),slurm_file_array_subsys_dict[str(i)])
                 del quotient, remainder, i
                 del slurm_file_array_subsys_dict
         else:
@@ -194,7 +206,7 @@ for it0_subsys_nr, it_subsys_nr in enumerate(subsys_list):
                         slurm_file_array_subsys_dict[str(m)] = cf.replace_in_list(slurm_file_array_subsys_dict[str(m)],"_R_LAUNCHNEXT_","1")
                         slurm_file_array_subsys_dict[str(m)] = cf.replace_in_list(slurm_file_array_subsys_dict[str(m)],"_R_NEXT_JOB_FILE_",str(m+1))
                         slurm_file_array_subsys_dict[str(m)] = cf.replace_in_list(slurm_file_array_subsys_dict[str(m)],"_R_CD_WHERE_","${SLURM_SUBMIT_DIR}")
-                        cf.write_file(subsys_apath/("job_labeling_array_"+arch_type+"_"+cluster+"_"+str(m)+".sh"),slurm_file_array_subsys_dict[str(m)])
+                        cf.write_file(subsys_apath/("job_labeling_array_"+cluster_spec["arch_type"]+"_"+cluster+"_"+str(m)+".sh"),slurm_file_array_subsys_dict[str(m)])
                         m = m + 1
                 else:
                     quotient2 = remainder // 250
@@ -207,7 +219,7 @@ for it0_subsys_nr, it_subsys_nr in enumerate(subsys_list):
                             slurm_file_array_subsys_dict[str(m)] = cf.replace_in_list(slurm_file_array_subsys_dict[str(m)],"_R_LAUNCHNEXT_","1")
                             slurm_file_array_subsys_dict[str(m)] = cf.replace_in_list(slurm_file_array_subsys_dict[str(m)],"_R_NEXT_JOB_FILE_",str(m+1))
                             slurm_file_array_subsys_dict[str(m)] = cf.replace_in_list(slurm_file_array_subsys_dict[str(m)],"_R_CD_WHERE_","${SLURM_SUBMIT_DIR}")
-                            cf.write_file(subsys_apath/("job_labeling_array_"+arch_type+"_"+cluster+"_"+str(m)+".sh"),slurm_file_array_subsys_dict[str(m)])
+                            cf.write_file(subsys_apath/("job_labeling_array_"+cluster_spec["arch_type"]+"_"+cluster+"_"+str(m)+".sh"),slurm_file_array_subsys_dict[str(m)])
                             m = m + 1
                         else:
                             slurm_file_array_subsys_dict[str(m)] = cf.replace_in_list(slurm_file_array_subsys ,"_R_NEW_START_",str(i*1000))
@@ -220,7 +232,7 @@ for it0_subsys_nr, it_subsys_nr in enumerate(subsys_list):
                                 slurm_file_array_subsys_dict[str(m)] = cf.replace_in_list(slurm_file_array_subsys_dict[str(m)],"_R_CD_WHERE_","${SLURM_SUBMIT_DIR}/../"+subsys_list[it0_subsys_nr+1])
                             else:
                                 True
-                            cf.write_file(subsys_apath/("job_labeling_array_"+arch_type+"_"+cluster+"_"+str(m)+".sh"),slurm_file_array_subsys_dict[str(m)])
+                            cf.write_file(subsys_apath/("job_labeling_array_"+cluster_spec["arch_type"]+"_"+cluster+"_"+str(m)+".sh"),slurm_file_array_subsys_dict[str(m)])
                             m = m + 1
                     del quotient2, remainder2, j
             del m, quotient, remainder, m, i
@@ -254,7 +266,7 @@ for it0_subsys_nr, it_subsys_nr in enumerate(subsys_list):
         slurm_file = cf.replace_in_list(slurm_file_subsys,"XXXXX",step_iter_str)
         slurm_file = cf.replace_in_list(slurm_file,"_R_CP2K_JOBNAME_","CP2K_"+it_subsys_nr+"_"+current_iteration_zfill)
 
-        cf.write_file(subsys_apath/step_iter_str/("job_labeling_"+step_iter_str+"_"+arch_type+"_"+cluster+".sh"),slurm_file)
+        cf.write_file(subsys_apath/step_iter_str/("job_labeling_"+step_iter_str+"_"+cluster_spec["arch_type"]+"_"+cluster+".sh"),slurm_file)
         cf.write_xyz_from_index(subsys_apath/step_iter_str/("labeling_"+step_iter_str+".xyz"),step_iter-1,n_atom,step_atoms,step_coordinates,blank)
         end_step = step_iter
 
@@ -276,7 +288,7 @@ for it0_subsys_nr, it_subsys_nr in enumerate(subsys_list):
             slurm_file=cf.replace_in_list(slurm_file_subsys,"XXXXX",d_step_iter_str)
             slurm_file=cf.replace_in_list(slurm_file,"_R_CP2K_JOBNAME_","CP2K_"+it_subsys_nr+"_"+current_iteration_zfill)
 
-            cf.write_file(subsys_apath/d_step_iter_str/("job_labeling_"+d_step_iter_str+"_"+arch_type+"_"+cluster+".sh"),slurm_file)
+            cf.write_file(subsys_apath/d_step_iter_str/("job_labeling_"+d_step_iter_str+"_"+cluster_spec["arch_type"]+"_"+cluster+".sh"),slurm_file)
             cf.write_xyz_from_index(subsys_apath/d_step_iter_str/("labeling_"+d_step_iter_str+".xyz"),d_step_iter-end_step-1,n_atom,step_atoms,step_coordinates,blank)
             end_step_disturbed=d_step_iter
 
@@ -293,7 +305,6 @@ del xyz_file, xyz_file_disturbed
 del cp2k_input_1, cp2k_input_2, cp2k_input_t1, cp2k_input_t2
 del slurm_file_master, slurm_file_subsys, slurm_file
 del slurm_file_array_master, slurm_file_array_subsys
-del slurm_walltime_s
 
 labeling_json["is_locked"] = True
 labeling_json["is_launched"] = False
@@ -309,10 +320,9 @@ del config_json, training_iterative_apath, control_apath, jobs_apath
 del current_iteration, current_iteration_zfill
 del labeling_json
 del exploration_json
-del cluster, arch_type
-del project_name, allocation_name, arch_name
-del deepmd_iterative_apath
+del cluster, cluster_spec
 del slurm_email
+del deepmd_iterative_apath
 
 del sys, Path, logging, cf
 del subprocess

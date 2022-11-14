@@ -50,23 +50,21 @@ if not exploration_json["is_locked"]:
     logging.critical("Aborting...")
     sys.exit(1)
 
-### #35
+###
 cluster = cf.check_cluster()
-if exploration_json["arch_name"] == "v100" or exploration_json["arch_name"] == "a100":
-    arch_type="gpu"
-
 cf.check_same_cluster(cluster,exploration_json)
 
-exploration_type = exploration_json['exploration_type'] 
+exploration_type = exploration_json['exploration_type']
+
 ### Launch the jobs
 check = 0
 for it_subsys_nr in config_json["subsys_nr"]:
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
         for it_each in range(1, exploration_json["nb_traj"] + 1):
             local_apath = Path(".").resolve()/str(it_subsys_nr)/str(it_nnp)/(str(it_each).zfill(5))
-            if (local_apath/("job_deepmd_"+exploration_type+"_"+arch_type+"_"+cluster+".sh")).is_file():
+            if (local_apath/("job_deepmd_"+exploration_type+"_"+exploration_json["arch_type"]+"_"+cluster+".sh")).is_file():
                 cf.change_dir(local_apath)
-                subprocess.call(["sbatch","./job_deepmd_"+exploration_type+"_"+arch_type+"_"+cluster+".sh"])
+                subprocess.call(["sbatch","./job_deepmd_"+exploration_type+"_"+exploration_json["arch_type"]+"_"+cluster+".sh"])
                 cf.change_dir(((local_apath.parent).parent).parent)
                 logging.info("Exploration - "+str(it_subsys_nr)+"/"+str(it_nnp)+"/"+str(it_each).zfill(5)+" launched")
                 check = check + 1
@@ -91,7 +89,7 @@ cf.json_dump(exploration_json,(control_apath/("exploration_"+current_iteration_z
 del config_json, training_iterative_apath, control_apath
 del current_iteration, current_iteration_zfill
 del exploration_json
-del cluster, arch_type
+del cluster
 del deepmd_iterative_apath
 
 del sys, Path, logging, cf

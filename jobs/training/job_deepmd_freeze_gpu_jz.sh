@@ -21,9 +21,9 @@
 #SBATCH -e DeepMD_Freeze.%j
 # Name of job
 #SBATCH -J DeepMD_Freeze
-# Email (Remove the space between # and SBATCH on the next two lines)
-##SBATCH --mail-type FAIL,BEGIN,END,ALL
-##SBATCH --mail-user _R_EMAIL_
+# Email
+#SBATCH --mail-type FAIL,BEGIN,END,ALL
+#SBATCH --mail-user _R_EMAIL_
 #
 
 # Input files

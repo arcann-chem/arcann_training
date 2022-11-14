@@ -21,9 +21,9 @@
 #SBATCH -e LAMMPS_DeepMD.%j
 # Name of job
 #SBATCH -J LAMMPS_DeepMD
-# Email (Remove the space between # and SBATCH on the next two lines)
-##SBATCH --mail-type FAIL,BEGIN,END,ALL
-##SBATCH --mail-user _R_EMAIL_
+# Email
+#SBATCH --mail-type FAIL,BEGIN,END,ALL
+#SBATCH --mail-user _R_EMAIL_
 #
 
 # Input file (extension is automatically added as .in for INPUT)

@@ -49,20 +49,17 @@ if not training_json["is_locked"]:
     logging.critical("Aborting...")
     sys.exit(1)
 
-### #35
+###
 cluster = cf.check_cluster()
-if training_json["arch_name"] == "v100" or training_json["arch_name"] == "a100":
-    arch_type="gpu"
-
 cf.check_same_cluster(cluster,training_json)
 
 ### Launch the jobs
 check = 0
 for it_nnp in range(1, config_json["nb_nnp"] + 1):
     local_apath = Path(".").resolve()/str(it_nnp)
-    if (local_apath/("job_deepmd_train_"+arch_type+"_"+cluster+".sh")).is_file():
+    if (local_apath/("job_deepmd_train_"+training_json["arch_type"]+"_"+cluster+".sh")).is_file():
         cf.change_dir(local_apath)
-        subprocess.call(["sbatch","./job_deepmd_train_"+arch_type+"_"+cluster+".sh"])
+        subprocess.call(["sbatch","./job_deepmd_train_"+training_json["arch_type"]+"_"+cluster+".sh"])
         cf.change_dir(local_apath.parent)
         logging.info("DP Train - "+str(it_nnp)+" launched")
         check = check + 1
@@ -85,7 +82,7 @@ cf.json_dump(training_json,(control_apath/("training_"+current_iteration_zfill+"
 del config_json, training_iterative_apath, control_apath
 del current_iteration, current_iteration_zfill
 del training_json
-del cluster, arch_type
+del cluster
 del deepmd_iterative_apath
 
 del sys, Path, logging, cf

@@ -20,7 +20,7 @@
 # Name of job
 #MSUB -r _R_CP2K_JOBNAME_
 # Email (Remove the space between # and SBATCH on the next two lines)
-##MSUB -@ _EMAIL_:begin,end
+#MSUB -@ _R_EMAIL_:begin,end
 #
 
 # Input file (extension is automatically added as .inp for INPUT, wfn for WFRST, restart for MDRST)

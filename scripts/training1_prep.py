@@ -1,9 +1,8 @@
 ## deepmd_iterative_apath
 # deepmd_iterative_apath: str = ""
-## Project name / allocation / arch (nvs/v100/a100 or gen7156/rome/cpu)
-# project_name: str = "nvs"
-# allocation_name: str = "v100"
-# arch_name: str = "v100"
+## Either shortcut (machine_file.json) or Project name / allocation / arch
+# user_spec = "v100"
+# user_spec = ["nvs","v100","v100"]
 # slurm_email: str = ""
 ## Training Parameters (Here are the default defaults)
 # use_initial_datasets: bool = True
@@ -62,10 +61,13 @@ jobs_apath = deepmd_iterative_apath/"jobs"/"exploration"
 current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
 current_iteration = int(current_iteration_zfill)
 
-### #35
-if "arch_name" in globals() and ( arch_name != "v100" or arch_name != "a100" ):
-    logging.critical("Invalid arch_name: "+ arch_name)
-    logging.critical("Aborting...")
+### Read cluster info
+if "user_spec" in globals():
+    cluster, cluster_spec, cluster_error = cf.clusterize(deepmd_iterative_apath,training_iterative_apath,step="training",user_keyword=user_spec)
+else:
+    cluster, cluster_spec, cluster_error = cf.clusterize(deepmd_iterative_apath,training_iterative_apath,step="training")
+if cluster_error != 0:
+    ###FIXME Better errors
     sys.exit(1)
 
 if current_iteration > 0:
@@ -74,9 +76,6 @@ if current_iteration > 0:
         logging.critical("Lock found. Run/Check first: labeling4_extract.py")
         logging.critical("Aborting...")
         sys.exit(1)
-
-### Check the cluster name
-cluster = cf.check_cluster()
 
 ### Get/Create training parameters
 training_json = cf.json_read((control_apath/("training_"+current_iteration_zfill+".json")),False,True)
@@ -90,20 +89,14 @@ training_json["use_initial_datasets"] = True if "use_initial_datasets" not in gl
 training_json["use_extra_datasets"] = False if "use_extra_datasets" not in globals() else use_extra_datasets
 training_json["deepmd_model_version"] = 2.1 if "deepmd_model_version" not in globals() else deepmd_model_version
 training_json["deepmd_model_type_descriptor"] = "se_e2_a" if "deepmd_model_type_descriptor" not in globals() else deepmd_model_type_descriptor
-### #35
 training_json["cluster"] = cluster
-training_json["project_name"] = "nvs" if "project_name" not in globals() else project_name
-training_json["allocation_name"] = "v100" if "allocation_name" not in globals() else allocation_name
-training_json["arch_name"] = "v100" if "arch_name" not in globals() else arch_name
-project_name = training_json["project_name"]
-allocation_name = training_json["allocation_name"]
-arch_name = training_json["arch_name"]
-if arch_name == "v100" or arch_name == "a100":
-    arch_type ="gpu"
+training_json["project_name"] = cluster_spec["project_name"]
+training_json["allocation_name"] = cluster_spec["allocation_name"]
+training_json["arch_name"] = cluster_spec["arch_name"]
+training_json["arch_type"] = cluster_spec["arch_type"]
 
-### #35
-cf.check_file(jobs_apath/("job_deepmd_train_"+arch_type +"_"+cluster+".sh"),True,True,"No SLURM file present for the training step on this cluster.")
-slurm_file_master = cf.read_file(jobs_apath/("job_deepmd_train_"+arch_type +"_"+cluster+".sh"))
+cf.check_file(jobs_apath/("job_deepmd_train_"+cluster_spec["arch_type"]+"_"+cluster+".sh"),True,True,"No SLURM file present for the training step on this cluster.")
+slurm_file_master = cf.read_file(jobs_apath/("job_deepmd_train_"+cluster_spec["arch_type"]+"_"+cluster+".sh"))
 del jobs_apath
 
 ### Check DeePMD version
@@ -117,12 +110,7 @@ if training_json["deepmd_model_type_descriptor"] not in ["se_a", "se_ar", "se_e2
     logging.critical("Aborting...")
     sys.exit(1)
 
-### #35
 ### Check mismatch between cluster/arch_name/arch and DeePMD
-if cluster != "jz":
-    logging.critical("Only on Jean Zay !")
-    logging.critical("Aborting...")
-    sys.exit(1)
 if training_json["deepmd_model_version"] < 2.0:
     logging.critical("Only version >= 2.0 on Jean Zay!")
     logging.critical("Aborting...")
@@ -398,15 +386,12 @@ if current_iteration > 0:
     previous_iteration = current_iteration - 1
     previous_iteration_zfill = str(previous_iteration).zfill(3)
     prevtraining_json = cf.json_read((control_apath/("training_"+previous_iteration_zfill+".json")),True,True)
-    approx_time = int(np.ceil((numb_steps*(prevtraining_json["s_per_step"]*1.25)/3600)))
+    walltime_approx_s = int(np.ceil((numb_steps*(prevtraining_json["s_per_step"]*1.25))))
     del previous_iteration, previous_iteration_zfill, prevtraining_json
 else:
     initial_seconds_per_1000steps = 90 if "initial_seconds_per_1000steps" not in globals() else initial_seconds_per_1000steps
-    approx_time = int(np.ceil((numb_steps*initial_seconds_per_1000steps/1000/3600)))
+    walltime_approx_s = int(np.ceil((numb_steps*initial_seconds_per_1000steps/1000)))
 del numb_steps
-
-if approx_time > 100:
-    approx_time = 100
 
 for it_nnp in range(1,config_json["nb_nnp"] + 1):
     local_apath = Path(".").resolve()/str(it_nnp)
@@ -428,44 +413,37 @@ for it_nnp in range(1,config_json["nb_nnp"] + 1):
     training_input_json_fpath = Path(str(it_nnp)+"/training.json").resolve()
     cf.json_dump(training_input_json,training_input_json_fpath,False)
 
-    slurm_file = slurm_file_master
-    slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",project_name)
-    slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(approx_time)+":00:00")
+    slurm_file = slurm_file_master.copy()
     slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_VERSION_",str(training_json["deepmd_model_version"]))
-    if allocation_name == "v100":
-        slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",allocation_name)
-        if approx_time <= 20:
-            if arch_name == "v100":
-                slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t3")
-                slurm_file = cf.replace_in_list(slurm_file,"_R_PARTITION_","gpu_p13")
-                slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _R_SUBPARTITION_","##SBATCH -C _R_SUBPARTITION_")
-            else:
-                slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t3")
-                slurm_file = cf.replace_in_list(slurm_file,"_R_PARTITION_","gpu_p4")
-                slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _R_SUBPARTITION_","##SBATCH -C _R_SUBPARTITION_")
+    slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",cluster_spec["project_name"])
+    slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",cluster_spec["allocation_name"])
+    slurm_file = cf.delete_in_list(slurm_file,"_R_PARTITON_") if cluster_spec["partition"] is None else cf.replace_in_list(slurm_file,"_R_PARTITION_",cluster_spec["partition"])
+    slurm_file = cf.delete_in_list(slurm_file,"_R_SUBPARTITION_") if cluster_spec["subpartition"] is None else cf.replace_in_list(slurm_file,"_R_SUBPARTITION_",cluster_spec["subpartition"])
+    max_qos_time = 0
+    for it_qos in cluster_spec["qos"]:
+        if cluster_spec["qos"][it_qos] >= walltime_approx_s:
+            slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_",it_qos)
+            qos_ok = True
         else:
-            slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t4")
-            slurm_file = cf.replace_in_list(slurm_file,"_R_PARTITION_","gpu_p13")
-            slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _R_SUBPARTITION_","##SBATCH -C _R_SUBPARTITION_")
-    elif allocation_name == "a100":
-        slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",allocation_name)
-        if approx_time <= 20:
-            slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t3")
-        else:
-            slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t4")
-        slurm_file = cf.replace_in_list(slurm_file,"_R_PARTITION_","gpu_p5")
-        slurm_file = cf.replace_in_list(slurm_file,"_R_SUBPARTITION_","a100")
+            max_qos = it_qos if cluster_spec["qos"][it_qos] > max_qos_time else max_qos
+            qos_ok = False
+    del it_qos
+    if not qos_ok:
+        logging.warning("Approximate wall time superior than the maximun time allowed by the QoS")
+        logging.warning("Settign the maximum QoS time as walltime")
+        slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(max_qos_time))
     else:
-        logging.critical("Unknown error. Please BUG REPORT")
-        logging.critical("Aborting")
-        sys.exit(1)
-    if slurm_email != "":
-        slurm_file = cf.replace_in_list(slurm_file,"##SBATCH --mail-type","#SBATCH --mail-type")
-        slurm_file = cf.replace_in_list(slurm_file,"##SBATCH --mail-user _R_EMAIL_","#SBATCH --mail-user "+slurm_email)
+        slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(walltime_approx_s))
 
-    cf.write_file(local_apath/("job_deepmd_train_"+arch_type+"_"+cluster+".sh"),slurm_file)
-    del slurm_file, local_apath, training_input_json_fpath, RAND
-del it_nnp, approx_time, training_input_json
+    if slurm_email != "":
+        slurm_file = cf.replace_in_list(slurm_file,"_R_EMAIL_",slurm_email)
+    else:
+        slurm_file = cf.delete_in_list(slurm_file,"_R_EMAIL_")
+        slurm_file = cf.delete_in_list(slurm_file,"mail")
+
+    cf.write_file(local_apath/("job_deepmd_train_"+cluster_spec["arch_type"]+"_"+cluster+".sh"),slurm_file)
+    del slurm_file, local_apath, training_input_json_fpath, RAND, max_qos_time, qos_ok
+del it_nnp, walltime_approx_s, training_input_json
 
 ## Dump the config/training
 cf.json_dump(config_json,(control_apath/"config.json"),True)
@@ -481,8 +459,7 @@ del data_apath, control_apath
 del config_json, training_iterative_apath
 del current_iteration, current_iteration_zfill
 del training_json
-del cluster, arch_type
-del project_name, allocation_name, arch_name
+del cluster, cluster_spec
 del slurm_email
 del slurm_file_master
 del deepmd_iterative_apath
