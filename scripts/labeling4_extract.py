@@ -111,7 +111,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
             del stress_xyz, stress_xyz_array
         else:
             True
-            ### TODO
+            ### #TODO: cp2k_version > 8.1 for stress
 
         force_cp2k = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Forces.for"))
         del force_cp2k[0:4]
@@ -211,7 +211,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
                 del stress_xyz, stress_xyz_array
             else:
                 True
-                ### TODO
+                ### #TODO: cp2k_version > 8.1 for stress
 
             force_cp2k = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Forces.for"))
             del force_cp2k[0:4]

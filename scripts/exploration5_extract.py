@@ -99,7 +99,7 @@ starting_structures_apath = training_iterative_apath/"starting_structures"
 starting_structures_apath.mkdir(exist_ok=True)
 cf.check_dir(starting_structures_apath,True)
 
-###TODO Use of atomsk --> work avoid loop and cat
+#### TODO: Use of atomsk --> work avoid loop and cat
 
 ### Extract for labeling
 for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
@@ -112,7 +112,6 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
             stderr=subprocess.STDOUT)
         topo_file=training_iterative_apath/"inputs"/(it_subsys_nr+".pdb")
     elif exploration_json["exploration_type"] == "i-PI":
-        cf.check_file(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp"),True,True)
         cf.check_file(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp"),True,True)
         subprocess.call([atomsk_bin,str(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp")),"pdb",str(training_iterative_apath/"inputs"/it_subsys_nr),"-ow"],\
             stdout=subprocess.DEVNULL,\
@@ -226,7 +225,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                 cf.remove_file((local_apath/"min.vmd"))
 
                 cf.remove_file(local_apath/("temp_candidates_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".xyz"))
-                ####TODO Not Path friendly / Replace with either subprocess call or read python
+                ### #TODO: Not Path friendly / Replace with either subprocess call or read python
                 os.system("cat "+str(local_apath)+"/vmd_*.xyz >> "+str(local_apath)+"/temp_candidates_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".xyz")
 
                 if "disturbed_candidates_value" in globals() and disturbed_candidates_value[it0_subsys_nr] != 0:
@@ -244,7 +243,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     del it_vmd_xyz_files, vmd_xyz_files
 
                     cf.remove_file(local_apath/("temp_candidates_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+"_disturbed.xyz"))
-                    ####TODO Not Path friendly / Replace with either subprocess call or read python
+                    ### #TODO: Not Path friendly / Replace with either subprocess call or read python
                     os.system("cat "+str(local_apath)+"/vmd_*_disturbed.xyz >> "+str(local_apath)+"/temp_candidates_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+"_disturbed.xyz")
 
                 ### Remove all vmd_*.xyz
@@ -263,7 +262,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
     if "disturbed_candidates_value" in globals() and disturbed_candidates_value[it0_subsys_nr] != 0:
 
         cf.remove_file(subsys_apath/("candidates_"+str(it_subsys_nr)+"_"+current_iteration_zfill+"_disturbed.xyz"))
-        ####TODO Not Path friendly / Replace with either subprocess call or read python
+        ### #TODO: Not Path friendly / Replace with either subprocess call or read python
         os.system("cat "+str(subsys_apath)+"/*/*/temp_candidates_*_disturbed.xyz >> "+str(subsys_apath)+"/candidates_"+str(it_subsys_nr)+"_"+current_iteration_zfill+"_disturbed.xyz")
         cf.remove_file_glob(subsys_apath,"**/temp_candidates_*_disturbed.xyz")
 
@@ -281,7 +280,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
         exploration_json["subsys_nr"][it_subsys_nr]["disturbed_min_value"] = 0
 
     cf.remove_file(subsys_apath/("candidates_"+str(it_subsys_nr)+"_"+current_iteration_zfill+".xyz"))
-    ####TODO Not Path friendly / Replace with either subprocess call or read python
+    ### #TODO: Not Path friendly / Replace with either subprocess call or read python
     os.system("cat "+str(subsys_apath)+"/*/*/temp_candidates_*.xyz >> "+str(subsys_apath)+"/candidates_"+str(it_subsys_nr)+"_"+current_iteration_zfill+".xyz")
     cf.remove_file_glob(subsys_apath,"**/temp_candidates_*.xyz")
 

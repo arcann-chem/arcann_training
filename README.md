@@ -43,6 +43,8 @@ Very fancy DeepMD-based semi-automatic highly-customizable iterative training pr
 
 ### Prerequisites
 
+#<!-- TODO: Prerequisites  -->
+
 * python >= 3.8 (all steps)
 * numpy >= 1.15 (exploration1_prep exploration4_devi exploration5_extract labeling4_extract training1_prep training3_check initialization)
 * VMD >= 1.9.4 (exploration5_extract)
@@ -53,7 +55,7 @@ Very fancy DeepMD-based semi-automatic highly-customizable iterative training pr
 
 ### Installation
 
-TODO
+<!-- TODO: Installation  -->
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -62,7 +64,7 @@ TODO
 
 ## Usage
 
-TODO
+<!-- TODO: Usage  -->
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 

@@ -65,7 +65,9 @@ if user_spec in globals():
 else:
     cluster, cluster_spec, cluster_error = cf.clusterize(deepmd_iterative_apath,training_iterative_apath,step="exploration")
 if cluster_error != 0:
-    ###FIXME Better errors
+    ### #FIXME: Better errors for clusterize
+    logging.critical("Error in machine_file.json")
+    logging.critical("Aborting...")
     sys.exit(1)
 
 cf.check_file(jobs_apath/("job_labeling_XXXXX_"+cluster_spec["arch_type"] +"_"+cluster+".sh"),True,True,"No SLURM file present for the exploration step on this cluster.")
@@ -228,7 +230,7 @@ for it0_subsys_nr, it_subsys_nr in enumerate(subsys_list):
                             if it0_subsys_nr != len(config_json["subsys_nr"]) - 1:
                                 slurm_file_array_subsys_dict[str(m)] = cf.replace_in_list(slurm_file_array_subsys_dict[str(m)],"_R_LAUNCHNEXT_","1")
                                 slurm_file_array_subsys_dict[str(m)] = cf.replace_in_list(slurm_file_array_subsys_dict[str(m)],"_R_NEXT_JOB_FILE_","0")
-                                ### #TODO This is not Path friendly
+                                ### #TODO: This is not Path friendly
                                 slurm_file_array_subsys_dict[str(m)] = cf.replace_in_list(slurm_file_array_subsys_dict[str(m)],"_R_CD_WHERE_","${SLURM_SUBMIT_DIR}/../"+subsys_list[it0_subsys_nr+1])
                             else:
                                 True

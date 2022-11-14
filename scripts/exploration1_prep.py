@@ -90,7 +90,9 @@ if user_spec in globals():
 else:
     cluster, cluster_spec, cluster_error = cf.clusterize(deepmd_iterative_apath,training_iterative_apath,step="exploration")
 if cluster_error != 0:
-    ###FIXME Better errors
+    ### #FIXME: Better errors for clusterize
+    logging.critical("Error in machine_file.json")
+    logging.critical("Aborting...")
     sys.exit(1)
 
 exploration_json["cluster"] = cluster

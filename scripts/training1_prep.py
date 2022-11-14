@@ -67,7 +67,9 @@ if "user_spec" in globals():
 else:
     cluster, cluster_spec, cluster_error = cf.clusterize(deepmd_iterative_apath,training_iterative_apath,step="training")
 if cluster_error != 0:
-    ###FIXME Better errors
+    ### #FIXME: Better errors for clusterize
+    logging.critical("Error in machine_file.json")
+    logging.critical("Aborting...")
     sys.exit(1)
 
 if current_iteration > 0:
@@ -149,7 +151,7 @@ data_apath = training_iterative_apath/"data"
 cf.check_dir(data_apath,True)
 subsys_name=[]
 
-### #MAYBETODO IMPLEMENT TEST LIST FOR VALIDATION ? If DeepMD version >= 2.0
+### #TODO: IMPLEMENT TEST LIST FOR VALIDATION ? If DeepMD version >= 2.0
 
 datasets_extra=[]
 datasets_validation=[]
@@ -182,7 +184,7 @@ nb_initial = 0
 if training_json["use_initial_datasets"]:
     for it_datasets_initial_json in datasets_initial_json.keys():
         if (data_apath/it_datasets_initial_json).is_dir():
-            ### #MAYBEFIX: Here we don't Path because too complex
+            ### #TODO: Here we don't Path because too complex
             datasets_training.append("data/"+it_datasets_initial_json+"/")
             datasets_training_json.append(it_datasets_initial_json)
             nb_initial = nb_initial+datasets_initial_json[it_datasets_initial_json]
@@ -209,7 +211,7 @@ if current_iteration > 0:
         try:
             for system_it in config_json["subsys_nr"]:
                 if (data_apath/(system_it+"_"+str(it_iteration).zfill(3))).is_dir():
-                    ### #MAYBEFIX: Here we don't Path because too complex
+                    ### #TODO: Here we don't Path because too complex
                     datasets_training.append("data/"+system_it+"_"+str(it_iteration).zfill(3)+"/")
                     datasets_training_json.append(system_it+"_"+str(it_iteration).zfill(3))
                     nb_added_nr = nb_added_nr+np.load(str(data_apath/(system_it+"_"+str(it_iteration).zfill(3))/"set.000"/"box.npy")).shape[0]
@@ -221,7 +223,7 @@ if current_iteration > 0:
         try:
             for system_it in [zzz + "-disturbed" for zzz in config_json["subsys_nr"]]:
                 if (data_apath/(system_it+"_"+str(it_iteration).zfill(3))).is_dir():
-                    ### #MAYBEFIX: Here we don't Path because too complex
+                    ### #TODO: Here we don't Path because too complex
                     datasets_training.append("data/"+system_it+"_"+str(it_iteration).zfill(3)+"/")
                     datasets_training_json.append(system_it+"_"+str(it_iteration).zfill(3))
                     nb_added_nr = nb_added_nr+np.load(str(data_apath/(system_it+"_"+str(it_iteration).zfill(3))/"set.000"/"box.npy")).shape[0]
@@ -233,7 +235,7 @@ if current_iteration > 0:
         try:
             for system_it in config_json["subsys_r"]:
                 if (data_apath/(system_it+"_"+str(it_iteration).zfill(3))).is_dir():
-                    ### #MAYBEFIX: Here we don't Path because too complex
+                    ### #TODO: Here we don't Path because too complex
                     datasets_training.append("data/"+system_it+"_"+str(it_iteration).zfill(3)+"/")
                     datasets_training_json.append(system_it+"_"+str(it_iteration).zfill(3))
                     nb_added_nr = nb_added_nr+np.load(str(data_apath/(system_it+"_"+str(it_iteration).zfill(3))/"set.000"/"box.npy")).shape[0]
@@ -250,7 +252,7 @@ if training_json["use_extra_datasets"]:
     config_json["datasets_extra"] = datasets_extra
     del datasets_extra
     for it_datasets_extra in config_json["datasets_extra"]:
-        ####MAYBEFIX: Here we don't Path because too complex
+        ### #TODO: Here we don't Path because too complex
         datasets_training.append("data/"+it_datasets_extra+"/")
         datasets_training_json.append(it_datasets_extra)
         nb_extra = nb_extra+np.load(str(data_apath/it_datasets_extra/"set.000"/"box.npy")).shape[0]
@@ -265,8 +267,7 @@ nb_trained = nb_initial+nb_added_nr+nb_added_r+nb_extra
 if ( training_json["deepmd_model_version"] < 2.0 ):
     training_input_json["training"]["numb_test"] = training_json["numb_test"]
 
-### #MAYBETODO If there is validation/test sets for 2.0, maybe enforce numb_test to not 0??
-### #MAYBETODO If they appeared ? Maybe in the exploration extract if discarded ones, keep 10/20 to grow a validation ?
+### #TODO: Auto validiation: If there is validation/test sets for 2.0, maybe enforce numb_test to not 0??
 
 ### Because changes beteween version
 if ( training_json["deepmd_model_version"] >= 2.0 ):
