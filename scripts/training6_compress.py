@@ -85,8 +85,8 @@ for it_nnp in range(1, config_json["nb_nnp"] + 1):
     slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",cluster_spec["allocation_name"])
     slurm_file = cf.delete_in_list(slurm_file,"_R_PARTITON_") if cluster_spec["partition"] is None else cf.replace_in_list(slurm_file,"_R_PARTITION_",cluster_spec["partition"])
     slurm_file = cf.delete_in_list(slurm_file,"_R_SUBPARTITION_") if cluster_spec["subpartition"] is None else cf.replace_in_list(slurm_file,"_R_SUBPARTITION_",cluster_spec["subpartition"])
-
     max_qos_time = 0
+    max_qos = 0
     for it_qos in cluster_spec["qos"]:
         if cluster_spec["qos"][it_qos] >= 7200:
             slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_",it_qos)
@@ -98,15 +98,16 @@ for it_nnp in range(1, config_json["nb_nnp"] + 1):
     if not qos_ok:
         logging.warning("Approximate wall time superior than the maximun time allowed by the QoS")
         logging.warning("Settign the maximum QoS time as walltime")
-        slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",max_qos_time)
+        slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(max_qos_time))
     else:
-        slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",7200)
-
+        slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(7200))
+    del qos_ok, max_qos_time, max_qos
     if slurm_email != "":
         slurm_file = cf.replace_in_list(slurm_file,"_R_EMAIL_",slurm_email)
     else:
         slurm_file = cf.delete_in_list(slurm_file,"_R_EMAIL_")
         slurm_file = cf.delete_in_list(slurm_file,"mail")
+
 
     cf.write_file(local_apath/("job_deepmd_compress_"+cluster_spec["arch_type"]+"_"+cluster+".sh"),slurm_file)
     if (local_apath/("job_deepmd_compress_"+cluster_spec["arch_type"]+"_"+cluster+".sh")).is_file():

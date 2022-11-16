@@ -418,13 +418,15 @@ for it_nnp in range(1,config_json["nb_nnp"] + 1):
 
     slurm_file = slurm_file_master.copy()
     slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_VERSION_",str(training_json["deepmd_model_version"]))
+
     slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",cluster_spec["project_name"])
     slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",cluster_spec["allocation_name"])
     slurm_file = cf.delete_in_list(slurm_file,"_R_PARTITON_") if cluster_spec["partition"] is None else cf.replace_in_list(slurm_file,"_R_PARTITION_",cluster_spec["partition"])
     slurm_file = cf.delete_in_list(slurm_file,"_R_SUBPARTITION_") if cluster_spec["subpartition"] is None else cf.replace_in_list(slurm_file,"_R_SUBPARTITION_",cluster_spec["subpartition"])
     max_qos_time = 0
+    max_qos = 0
     for it_qos in cluster_spec["qos"]:
-        if cluster_spec["qos"][it_qos] >= walltime_approx_s:
+        if cluster_spec["qos"][it_qos] >= subsys_walltime_approx_s:
             slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_",it_qos)
             qos_ok = True
         else:
@@ -436,8 +438,8 @@ for it_nnp in range(1,config_json["nb_nnp"] + 1):
         logging.warning("Settign the maximum QoS time as walltime")
         slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(max_qos_time))
     else:
-        slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(walltime_approx_s))
-
+        slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(subsys_walltime_approx_s))
+    del qos_ok, max_qos_time, max_qos
     if slurm_email != "":
         slurm_file = cf.replace_in_list(slurm_file,"_R_EMAIL_",slurm_email)
     else:

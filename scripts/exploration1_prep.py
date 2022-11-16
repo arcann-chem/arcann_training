@@ -443,7 +443,6 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     slurm_file = cf.delete_in_list(slurm_file,"_R_EMAIL_")
                     slurm_file = cf.delete_in_list(slurm_file,"mail")
 
-
                 ### Add plumed files (SLURM part and only if in the .in)
                 if any("plumed" in zzz for zzz in exploration_ipi_xmllist):
                     for n,it_plumed_input in enumerate(plumed_input):
