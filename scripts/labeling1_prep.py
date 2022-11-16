@@ -147,12 +147,11 @@ for it0_subsys_nr, it_subsys_nr in enumerate(subsys_list):
     if not qos_ok:
         logging.warning("Approximate wall time superior than the maximun time allowed by the QoS")
         logging.warning("Settign the maximum QoS time as walltime")
-        slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_WALLTIME_",str(max_qos_time))
-        slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,"_R_WALLTIME_",str(max_qos_time))
+        slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_WALLTIME_",cf.seconds_to_walltime(max_qos_time)) if cluster != "ir" else cf.replace_in_list(slurm_file_array_subsys,"_R_WALLTIME_",str(max_qos_time))
+        slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,"_R_WALLTIME_",cf.seconds_to_walltime(max_qos_time)) if cluster != "ir" else cf.replace_in_list(slurm_file_subsys,"_R_WALLTIME_",str(max_qos_time))
     else:
-        slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_WALLTIME_",str(subsys_walltime_approx_s))
-        slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,"_R_WALLTIME_",str(subsys_walltime_approx_s))
-
+        slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_WALLTIME_",cf.seconds_to_walltime(subsys_walltime_approx_s)) if cluster != "ir" else cf.replace_in_list(slurm_file_array_subsys,"_R_WALLTIME_",str(subsys_walltime_approx_s))
+        slurm_file_subsys = cf.replace_in_list(slurm_file_subsys,"_R_WALLTIME_",cf.seconds_to_walltime(subsys_walltime_approx_s)) if cluster != "ir" else cf.replace_in_list(slurm_file_subsys,"_R_WALLTIME_",str(subsys_walltime_approx_s))
     if cluster == "jz":
         slurm_file_array_subsys = cf.replace_in_list(slurm_file_array_subsys,"_R_ARRAYCOUNT_",str(nb_steps))
         cf.write_file(subsys_apath/("job_labeling_array_"+cluster_spec["arch_type"]+"_"+cluster+".sh"),slurm_file_array_subsys)

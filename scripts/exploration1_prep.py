@@ -351,9 +351,9 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                 if not qos_ok:
                     logging.warning("Approximate wall time superior than the maximun time allowed by the QoS")
                     logging.warning("Settign the maximum QoS time as walltime")
-                    slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(max_qos_time))
+                    slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",cf.seconds_to_walltime(max_qos_time)) if cluster != "ir" else cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(max_qos_time))
                 else:
-                    slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(subsys_walltime_approx_s))
+                    slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",cf.seconds_to_walltime(subsys_walltime_approx_s)) if cluster != "ir" else cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(subsys_walltime_approx_s))
                 del qos_ok, max_qos_time, max_qos
                 if slurm_email != "":
                     slurm_file = cf.replace_in_list(slurm_file,"_R_EMAIL_",slurm_email)

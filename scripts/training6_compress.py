@@ -98,9 +98,9 @@ for it_nnp in range(1, config_json["nb_nnp"] + 1):
     if not qos_ok:
         logging.warning("Approximate wall time superior than the maximun time allowed by the QoS")
         logging.warning("Settign the maximum QoS time as walltime")
-        slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(max_qos_time))
+        slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",cf.seconds_to_walltime(max_qos_time)) if cluster != "ir" else cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(max_qos_time))
     else:
-        slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(7200))
+        slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",cf.seconds_to_walltime(7200)) if cluster != "ir" else cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(7200))
     del qos_ok, max_qos_time, max_qos
     if slurm_email != "":
         slurm_file = cf.replace_in_list(slurm_file,"_R_EMAIL_",slurm_email)
