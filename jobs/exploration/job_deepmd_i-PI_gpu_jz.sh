@@ -101,14 +101,14 @@ CURRENT_HOST=$(hostname)
 PORT_OK=0
 PORT=$(python -c "import random; print(random.randint(30000,42000))")
 while [ ${PORT_OK} -eq 0 ]; do
-    echo ${PORT_OK}
+    echo "${PORT}"
     if netstat -tuln | grep :"${PORT}" ; then
         PORT=$(python -c "import random; print(random.randint(30000,42000))")
     else
         PORT_OK=1
     fi
-    PORT_OK=1
 done
+echo "${PORT}"
 
 SRUN_IPI_EXE=${IPI_EXE}
 if  [ -f RESTART ]; then
