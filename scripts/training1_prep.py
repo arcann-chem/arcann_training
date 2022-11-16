@@ -57,7 +57,7 @@ slurm_email = "" if "slurm_email" not in globals() else slurm_email
 ### Read the config file
 control_apath = training_iterative_apath/"control"
 config_json = cf.json_read((control_apath/"config.json"),True,True)
-jobs_apath = deepmd_iterative_apath/"jobs"/"exploration"
+jobs_apath = deepmd_iterative_apath/"jobs"/"training"
 current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
 current_iteration = int(current_iteration_zfill)
 
@@ -141,6 +141,8 @@ elif ((training_json["deepmd_model_type_descriptor"] == "se_e2_a") and ( trainin
 ### Check if the default input json file exists
 input_file_fpath = (training_iterative_apath/"inputs"/(str(training_json["deepmd_model_version"])+"_"+str(training_json["deepmd_model_type_descriptor"])+".json")).resolve()
 training_input_json = cf.json_read(input_file_fpath,True,True)
+config_json["type_map"] = {}
+config_json["type_map"] = training_input_json["model"]["type_map"]
 del input_file_fpath
 
 ### Check the initial sets json file
@@ -369,7 +371,7 @@ logging.info(datasets_training)
 
 ### Rsync data to local data
 localdata_apath = Path(".").resolve()/"data"
-cf.create_dir(localdata_apath)
+localdata_apath.mkdir(exist_ok=True)
 for it_datasets_training in datasets_training:
     subprocess.call(["rsync","-a", str(training_iterative_apath)+"/"+it_datasets_training.rsplit("/",1)[0], str(localdata_apath)])
 del it_datasets_training, localdata_apath, datasets_training

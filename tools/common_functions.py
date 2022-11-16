@@ -5,6 +5,8 @@ import numpy as np
 from pathlib import Path
 import socket
 import logging
+import xml.etree.ElementTree as ET
+
 
 def json_read(file_path: Path,abort: bool=True,is_logged: bool=False) -> dict:
     """Read a JSON file to a JSON dict
@@ -100,7 +102,7 @@ def check_dir(directory_path: Path, abort: bool,error_msg: str="default"):
 
 
 def check_initial_datasets(training_iterative_apath: Path) -> dict:
-    """Check the initial datastes
+    """Check the initial datasets
 
     Args:
         training_iterative_apath (Path): Path object to the root training folder
@@ -145,8 +147,113 @@ def read_file(file_path: Path) -> list:
         with file_path.open() as f:
             return f.readlines()
 
+### XML maninulations
+def read_xml(file_path: Path) -> ET.ElementTree:
+    """_summary_
+
+    Args:
+        file_path (Path): _description_
+
+    Returns:
+        ET.ElementTree: _description_
+    """
+    with open(file_path) as zzz:
+        xml_tree = ET.parse(zzz)
+        return xml_tree
+
+
+def convert_xml_to_listofstrings(xml_tree: ET.ElementTree) -> list:
+    """_summary_
+
+    Args:
+        xml_tree (ET.ElementTree): _description_
+
+    Returns:
+        list: _description_
+    """
+    xml_string = ET.tostring(xml_tree.getroot(), encoding='unicode', method='xml')
+    list_string = []
+    current_string=""
+    for zzz in xml_string:
+        if "\n" not in zzz:
+            current_string = current_string + zzz
+        else:
+            current_string = current_string + zzz
+            list_string.append(current_string)
+            current_string=""
+    list_string.append(current_string)
+    return list_string
+
+
+def convert_listofstrings_to_xml(list_string: list) -> ET.ElementTree:
+    lst = []
+    for zzz in list_string:
+        for yyy in zzz:
+            lst.append(yyy)
+    string="".join(lst)
+    return ET.ElementTree(ET.fromstring(string))
+
+
+def write_xml(xml_tree: ET.ElementTree, file_path: Path):
+    """_summary_
+
+    Args:
+        xml_tree (ET.ElementTree): _description_
+        file_path (Path): _description_
+    """
+    xml_tree.write(file_path)
+
+def get_temp_from_xml_tree(xml_tree):
+    temp = -1
+    for state in xml_tree.iter():
+        try:
+            temp = state.find('temperature').text
+        except:
+            pass
+    return temp
+
+
+### Cluster
+def check_cluster() -> str:
+    """Get the cluster name
+
+    Returns:
+        str: The short string name for the cluster: jz, oc, pc, ir
+    """
+    if socket.gethostname().find(".")>=0:
+        cluster_name = socket.gethostname()
+    else:
+        cluster_name = socket.gethostbyaddr(socket.gethostname())[0]
+    if ("jean-zay" or "idris.fr") in cluster_name:
+        logging.info("Cluster found: Jean Zay")
+        return "jz"
+    elif ("occigen" ) in cluster_name:
+        logging.info("Cluster found: Occigen")
+        return "oc"
+    elif ("debye.net") in cluster_name:
+        logging.info("Cluster found: Paracelsus")
+        return "pc"
+    elif ("irene") in cluster_name:
+        logging.info("Cluster found: Irene Rome")
+        return "ir"
+    else:
+        logging.warning("Not on a known cluster, some features will not work.")
+        return "0"
+
 
 def clusterize(deepmd_iterative_apath: Path,training_iterative_apath: Path,step: str, cluster: str=None, user_keyword=None):
+    """_summary_
+
+    Args:
+        deepmd_iterative_apath (Path): _description_
+        training_iterative_apath (Path): _description_
+        step (str): _description_
+        cluster (str, optional): _description_. Defaults to None.
+        user_keyword (_type_, optional): _description_. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
     if cluster is None:
         cluster = check_cluster()
     if (training_iterative_apath / "inputs" / "machine_file.json").is_file():
@@ -157,11 +264,11 @@ def clusterize(deepmd_iterative_apath: Path,training_iterative_apath: Path,step:
         for zzz in machine_file[cluster].keys():
             if "default" in machine_file[cluster][zzz].keys():
                 for yyy in machine_file[cluster][zzz]["default"]:
-                    print(zzz, yyy)
                     if step in yyy:
                         return cluster, machine_file[cluster][zzz], 0
                     else:
-                        return "", [], 1
+                        True
+                return "", [], 1
             else:
                 return "", [], 2
     elif type(user_keyword) == list and len(user_keyword) == 3:
@@ -191,33 +298,45 @@ def clusterize(deepmd_iterative_apath: Path,training_iterative_apath: Path,step:
         return "", [], 3
 
 
-def check_cluster() -> str:
-    """Get the cluster name
+def check_same_cluster(cluster: str, _json: dict):
+    """_summary_
+
+    Args:
+        cluster (str): _description_
+        _json (dict): _description_
+    """
+    if _json["cluster"] != cluster:
+        logging.critical("Different cluster ("+str(cluster)+") than the one for prep ("+str(_json["cluster"])+")")
+        logging.critical("Aborting...")
+        sys.exit(1)
+
+
+### LMP Files
+def get_cell_nbatoms_from_lmp(subsys_lammps_data: list):
+    """_summary_
+
+    Args:
+        subsys_lammps_data (list): _description_
 
     Returns:
-        str: The short string name for the cluster: jz, oc, pc, ir
+        _type_: _description_
     """
-    if socket.gethostname().find(".")>=0:
-        cluster_name = socket.gethostname()
-    else:
-        cluster_name = socket.gethostbyaddr(socket.gethostname())[0]
-    if ("jean-zay" or "idris.fr") in cluster_name:
-        logging.info("Cluster found: Jean Zay")
-        return "jz"
-    elif ("occigen" ) in cluster_name:
-        logging.info("Cluster found: Occigen")
-        return "oc"
-    elif ("debye.net") in cluster_name:
-        logging.info("Cluster found: Paracelsus")
-        return "pc"
-    elif ("irene") in cluster_name:
-        logging.info("Cluster found: Irene Rome")
-        return "ir"
-    else:
-        logging.warning("Not on a known cluster, some features will not work.")
-        return "0"
+    dim_string = ["xlo xhi", "ylo yhi", "zlo zhi"]
+    subsys_cell=[]
+    for n,string in enumerate(dim_string):
+        temp = [zzz for zzz in subsys_lammps_data if string in zzz]
+        temp = replace_in_list(temp,"\n","")
+        temp = [zzz for zzz in temp[0].split(" ") if zzz]
+        subsys_cell.append(float(temp[1]) - float(temp[0]))
+    del n, string
+    temp = [zzz for zzz in subsys_lammps_data if "atoms" in zzz]
+    temp = replace_in_list(temp,"\n","")
+    temp = [zzz for zzz in temp[0].split(" ") if zzz]
+    subsys_nb_atm = int(temp[0])
+    return subsys_cell, subsys_nb_atm
 
 
+### Generic files (as list of string)
 def write_file(file_path: Path, list_of_string: list):
     """_summary_
 
@@ -256,26 +375,6 @@ def delete_in_list(input_list: list, substring_in: str) -> list:
     output_list = [zzz for zzz in input_list if not substring_in in zzz]
     return output_list
 
-
-def change_dir(directory_path: Path):
-    """_summary_
-
-    Args:
-        directory_path (Path): Path to the new directory
-    """
-    if not directory_path.is_dir():
-        logging.critical("Directory not found: "+str(directory_path))
-        logging.critical("Aborting...")
-        sys.exit(1)
-    else:
-        try:
-            os.chdir(directory_path)
-        except:
-            logging.critical("Error in changing dir: "+str(directory_path))
-            logging.critical("Aborting...")
-            sys.exit(1)
-
-
 def remove_file(file_path: Path):
     """_summary_
 
@@ -309,6 +408,26 @@ def remove_tree(directory_path: Path):
         else:
             remove_tree(child)
     directory_path.rmdir()
+
+
+
+def change_dir(directory_path: Path):
+    """_summary_
+
+    Args:
+        directory_path (Path): Path to the new directory
+    """
+    if not directory_path.is_dir():
+        logging.critical("Directory not found: "+str(directory_path))
+        logging.critical("Aborting...")
+        sys.exit(1)
+    else:
+        try:
+            os.chdir(directory_path)
+        except:
+            logging.critical("Error in changing dir: "+str(directory_path))
+            logging.critical("Aborting...")
+            sys.exit(1)
 
 
 def seconds_to_walltime(seconds: float) -> str:
@@ -381,11 +500,7 @@ def get_learning_rate(training_step: int,start_lr: float,decay_rate: float,decay
     return (start_lr*decay_rate**(training_step/decay_steps))
 
 
-def check_same_cluster(cluster: str, _json: dict):
-    if _json["cluster"] != cluster:
-        logging.critical("Different cluster ("+str(cluster)+") than the one for prep ("+str(_json["cluster"])+")")
-        logging.critical("Aborting...")
-        sys.exit(1)
+
 
 ### Trash ?
 def check_if_in_dict(params_f,key_f,default_f,error_f):
