@@ -170,7 +170,6 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
             logging.critical("Aborting...")
             sys.exit(1)
         subsys_exploration_ipi_xmllist = cf.replace_in_list(subsys_exploration_ipi_xmllist,"_R_TIMESTEP_",str(subsys_timestep))
-        subsys_exploration_ipi_xmllist = cf.replace_in_list(subsys_exploration_ipi_xmllist,"_R_SUBSYS_",it_subsys_nr)
         subsys_exploration_ipi_xmllist = cf.replace_in_list(subsys_exploration_ipi_xmllist,"_R_NB_BEADS_",str(8))
 
         ### Initial conditions
@@ -318,7 +317,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     exploration_input = cf.replace_in_list(exploration_input,"_R_PLUMED_IN_","plumed_"+str(it_subsys_nr)+".dat")
                     exploration_input = cf.replace_in_list(exploration_input,"_R_PLUMED_OUT_","plumed_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".log")
                     for it_plumed_input in plumed_input:
-                        plumed_input[it_plumed_input] = cf.replace_in_list(plumed_input[it_plumed_input],"_R_print_every_x_steps_",str(it_print_every_x_steps))
+                        plumed_input[it_plumed_input] = cf.replace_in_list(plumed_input[it_plumed_input],"_R_PRINT_FREQ_",str(it_print_every_x_steps))
                         cf.write_file(local_apath/it_plumed_input,plumed_input[it_plumed_input])
                     del list_plumed_files, it_list_plumed_files
 
@@ -387,6 +386,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                 RAND = random.randrange(0,1000)
                 exploration_ipi_xmllist = cf.replace_in_list(exploration_ipi_xmllist,"_R_NB_SEED_",str(it_nnp)+str(RAND)+str(it_number)+previous_iteration_zfill)
                 del RAND
+                exploration_ipi_xmllist = cf.replace_in_list(exploration_ipi_xmllist,"_R_SUBSYS_",str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill)
 
                 ### Get print freq
                 it_print_every_x_steps = int(subsys_nb_steps*0.01) if "print_every_x_steps" not in globals() else print_every_x_steps[it0_subsys_nr]
@@ -403,6 +403,23 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                 exploration_dpipi_json = subsys_exploration_ipi_json.copy()
                 exploration_dpipi_json["graph_file"] = models_list[0]
 
+                ### Plumed files (and only if in the .in)
+                if any("plumed" in zzz for zzz in exploration_ipi_xmllist):
+                    list_plumed_files=[zzz for zzz in (training_iterative_apath/"inputs").glob("*plumed*_"+it_subsys_nr+".dat")]
+                    if len(list_plumed_files) == 0 :
+                        logging.critical("Plumed in i-PI input but no plumed files")
+                        logging.critical("Aborting...")
+                        sys.exit(1)
+                    plumed_input={}
+                    for it_list_plumed_files in list_plumed_files:
+                        plumed_input[it_list_plumed_files.name] = cf.read_file(it_list_plumed_files)
+                    exploration_ipi_xmllist = cf.replace_in_list(exploration_ipi_xmllist,"_R_PLUMED_IN_","plumed_"+str(it_subsys_nr)+".dat")
+                    #exploration_ipi_xmllist = cf.replace_in_list(exploration_ipi_xmllist,"_R_PLUMED_OUT_","plumed_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".log")
+                    for it_plumed_input in plumed_input:
+                        plumed_input[it_plumed_input] = cf.replace_in_list(plumed_input[it_plumed_input],"_R_PRINT_FREQ_",str(it_print_every_x_steps))
+                        cf.write_file(local_apath/it_plumed_input,plumed_input[it_plumed_input])
+                    del list_plumed_files, it_list_plumed_files
+                
                 ### Write INPUT file
                 exploration_ipi_xml = cf.convert_listofstrings_to_xml(exploration_ipi_xmllist)
                 cf.write_file(local_apath/subsys_ipi_xyz_fn,subsys_ipi_xyz)
@@ -413,7 +430,6 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                 slurm_file = slurm_file_master.copy()
                 slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_VERSION_",str(exploration_json["deepmd_model_version"]))
                 slurm_file = cf.replace_in_list(slurm_file,"_R_IPI_INPUT_",str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill)
-                slurm_file = cf.replace_in_list(slurm_file,"_R_DP_IPI_INPUT_",str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill)
                 slurm_file = cf.replace_in_list(slurm_file,"_R_XYZ_FILE_",subsys_ipi_xyz_fn)
 
                 slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",cluster_spec["project_name"])
@@ -433,9 +449,9 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                 if not qos_ok:
                     logging.warning("Approximate wall time superior than the maximun time allowed by the QoS")
                     logging.warning("Settign the maximum QoS time as walltime")
-                    slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(max_qos_time))
+                    slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",cf.seconds_to_walltime(max_qos_time)) if cluster != "ir" else cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(max_qos_time))
                 else:
-                    slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(subsys_walltime_approx_s))
+                    slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",cf.seconds_to_walltime(subsys_walltime_approx_s)) if cluster != "ir" else cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(subsys_walltime_approx_s))
                 del qos_ok, max_qos_time, max_qos
                 if slurm_email != "":
                     slurm_file = cf.replace_in_list(slurm_file,"_R_EMAIL_",slurm_email)
