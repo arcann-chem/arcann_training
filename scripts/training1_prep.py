@@ -426,7 +426,7 @@ for it_nnp in range(1,config_json["nb_nnp"] + 1):
     max_qos_time = 0
     max_qos = 0
     for it_qos in cluster_spec["qos"]:
-        if cluster_spec["qos"][it_qos] >= subsys_walltime_approx_s:
+        if cluster_spec["qos"][it_qos] >= walltime_approx_s:
             slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_",it_qos)
             qos_ok = True
         else:
@@ -438,7 +438,7 @@ for it_nnp in range(1,config_json["nb_nnp"] + 1):
         logging.warning("Settign the maximum QoS time as walltime")
         slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(max_qos_time))
     else:
-        slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(subsys_walltime_approx_s))
+        slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(walltime_approx_s))
     del qos_ok, max_qos_time, max_qos
     if slurm_email != "":
         slurm_file = cf.replace_in_list(slurm_file,"_R_EMAIL_",slurm_email)
