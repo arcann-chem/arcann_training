@@ -158,7 +158,6 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
             ### Get the cell and nb of atoms (just for config.json)
             subsys_cell, subsys_nb_atm = cf.get_cell_nbatoms_from_lmp(subsys_lammps_data)
 
-
     ### #12
     elif exploration_type == 'i-PI':
         subsys_exploration_ipi_xml = cf.read_xml(training_iterative_apath/"inputs"/(it_subsys_nr+".xml"))
@@ -419,7 +418,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                         plumed_input[it_plumed_input] = cf.replace_in_list(plumed_input[it_plumed_input],"_R_PRINT_FREQ_",str(it_print_every_x_steps))
                         cf.write_file(local_apath/it_plumed_input,plumed_input[it_plumed_input])
                     del list_plumed_files, it_list_plumed_files
-                
+
                 ### Write INPUT file
                 exploration_ipi_xml = cf.convert_listofstrings_to_xml(exploration_ipi_xmllist)
                 cf.write_file(local_apath/subsys_ipi_xyz_fn,subsys_ipi_xyz)
