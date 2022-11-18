@@ -99,49 +99,47 @@ export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 CURRENT_HOST=$(hostname)
 
 PORT_OK=0
-PORT=$(python -c "import random;random.seed(a=_R_RANDOMSEED_); print(random.randint(30000,42000))")
+PORT=$(python -c "import random;random.seed(a=${SLURM_JOBID}); print(random.randint(30000,42000))")
 while [ ${PORT_OK} -eq 0 ]; do
-    echo "${PORT}"
+    echo "Testing availability of port ${PORT}"
     if netstat -tuln | grep :"${PORT}" ; then
-        PORT=$(python -c "import random;random.seed(a=_R_RANDOMSEED_); print(random.randint(30000,42000))")
+        PORT=$(python -c "import random;random.seed(a=${SLURM_JOBID}); print(random.randint(30000,42000))")
     else
         PORT_OK=1
     fi
 done
-echo "${PORT}"
+echo "${PORT} will be used as port."
 
-SRUN_IPI_EXE=${IPI_EXE}
 if  [ -f RESTART ]; then
     sed -i "s/address>[^<]*</address>${CURRENT_HOST}</" RESTART
     sed -i "s/port>[^<]*</port>${PORT}</" RESTART
-    LAUNCH_CMD="${SRUN_IPI_EXE} RESTART"
-    echo "${LAUNCH_CMD}"
+    LAUNCH_CMD="${IPI_EXE} RESTART"
     ${LAUNCH_CMD} &>> ${IPI_INPUT}.i-PI.server.log &
 else
     sed -i "s/address>[^<]*</address>${CURRENT_HOST}</" ${IPI_INPUT}.xml
     sed -i "s/port>[^<]*</port>${PORT}</" ${IPI_INPUT}.xml
-    LAUNCH_CMD="${SRUN_IPI_EXE} ${IPI_INPUT}.xml"
-    echo "${LAUNCH_CMD}"
+    LAUNCH_CMD="${IPI_EXE} ${IPI_INPUT}.xml"
     ${LAUNCH_CMD} &> ${IPI_INPUT}.i-PI.server.log &
 fi
 
+# Sleep
 sleep 40
 
 IFS=',' read -r -a CUDA_ARR <<< "${CUDA_VISIBLE_DEVICES}"
 echo "GPU visible: ${CUDA_VISIBLE_DEVICES}"
 
-SRUN_DP_IPI_EXE=${DP_IPI_EXE}
-# Launch dp_ipi
+
 sed -i "s/_R_ADDRESS_/${CURRENT_HOST}/" ${IPI_INPUT}.json
 sed -i "s/\"_R_NB_PORT_\"/${PORT}/" ${IPI_INPUT}.json
+
+# Launch dp_ipi
 for j in "${CUDA_ARR[@]}"; do
 export CUDA_VISIBLE_DEVICES=${j}
     for ((i=0; i<NB_CLIENT_PER_GPU; i++)); do
-        LAUNCH_CMD="${SRUN_DP_IPI_EXE} ${IPI_INPUT}.json"
-        echo "${LAUNCH_CMD}"
+        LAUNCH_CMD="${DP_IPI_EXE} ${IPI_INPUT}.json"
         ${LAUNCH_CMD} > "${IPI_INPUT}.DP-i-PI.client_${i}.log" 2> "${IPI_INPUT}.DP-i-PI.client_${i}.err" &
         echo "GPU ${CUDA_VISIBLE_DEVICES}, client ${i} launched."
-        sleep 1
+        sleep 2
     done
 done
 wait
