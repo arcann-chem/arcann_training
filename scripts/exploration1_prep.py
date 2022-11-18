@@ -430,6 +430,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                 slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_VERSION_",str(exploration_json["deepmd_model_version"]))
                 slurm_file = cf.replace_in_list(slurm_file,"_R_IPI_INPUT_",str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill)
                 slurm_file = cf.replace_in_list(slurm_file,"_R_XYZ_FILE_",subsys_ipi_xyz_fn)
+                slurm_file = cf.replace_in_list(slurm_file,"_R_RANDOMSEED_",str(random.randint(0,9999)))
 
                 slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",cluster_spec["project_name"])
                 slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",cluster_spec["allocation_name"])

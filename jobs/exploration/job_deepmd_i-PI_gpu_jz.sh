@@ -99,11 +99,11 @@ export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 CURRENT_HOST=$(hostname)
 
 PORT_OK=0
-PORT=$(python -c "import random; print(random.randint(30000,42000))")
+PORT=$(python -c "import random;random.seed(a=_R_RANDOMSEED_); print(random.randint(30000,42000))")
 while [ ${PORT_OK} -eq 0 ]; do
     echo "${PORT}"
     if netstat -tuln | grep :"${PORT}" ; then
-        PORT=$(python -c "import random; print(random.randint(30000,42000))")
+        PORT=$(python -c "import random;random.seed(a=_R_RANDOMSEED_); print(random.randint(30000,42000))")
     else
         PORT_OK=1
     fi
@@ -116,13 +116,13 @@ if  [ -f RESTART ]; then
     sed -i "s/port>[^<]*</port>${PORT}</" RESTART
     LAUNCH_CMD="${SRUN_IPI_EXE} RESTART"
     echo "${LAUNCH_CMD}"
-    ${LAUNCH_CMD} &>> ipi-server.log &
+    ${LAUNCH_CMD} &>> ${IPI_INPUT}.i-PI.server.log &
 else
     sed -i "s/address>[^<]*</address>${CURRENT_HOST}</" ${IPI_INPUT}.xml
     sed -i "s/port>[^<]*</port>${PORT}</" ${IPI_INPUT}.xml
     LAUNCH_CMD="${SRUN_IPI_EXE} ${IPI_INPUT}.xml"
     echo "${LAUNCH_CMD}"
-    ${LAUNCH_CMD} &> ipi-server.log &
+    ${LAUNCH_CMD} &> ${IPI_INPUT}.i-PI.server.log &
 fi
 
 sleep 40
@@ -139,7 +139,7 @@ export CUDA_VISIBLE_DEVICES=${j}
     for ((i=0; i<NB_CLIENT_PER_GPU; i++)); do
         LAUNCH_CMD="${SRUN_DP_IPI_EXE} ${IPI_INPUT}.json"
         echo "${LAUNCH_CMD}"
-        ${LAUNCH_CMD} > dp_ipi_client_"${i}".log 2> dp_ipi_client_"${i}".err &
+        ${LAUNCH_CMD} > "${IPI_INPUT}.DP-i-PI.client_${i}.log" 2> "${IPI_INPUT}.DP-i-PI.client_${i}.err" &
         echo "GPU ${CUDA_VISIBLE_DEVICES}, client ${i} launched."
         sleep 1
     done
@@ -153,7 +153,7 @@ mv ./* "${SLURM_SUBMIT_DIR}"
 cd "${SLURM_SUBMIT_DIR}" || exit 1
 rmdir "${TEMPWORKDIR}" 2> /dev/null || echo "Leftover files on ${TEMPWORKDIR}"
 [ ! -d "${TEMPWORKDIR}" ] && { [ -h JOB-"${SLURM_JOBID}" ] && rm JOB-"${SLURM_JOBID}"; }
-rm "${LAMMPS_INPUT}".in."${SLURM_JOBID}"
+rm "${IPI_INPUT}".xml."${SLURM_JOBID}"
 
 # Done
 echo "Have a nice day !"
