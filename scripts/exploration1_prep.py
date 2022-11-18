@@ -416,6 +416,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     #exploration_ipi_xmllist = cf.replace_in_list(exploration_ipi_xmllist,"_R_PLUMED_OUT_","plumed_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".log")
                     for it_plumed_input in plumed_input:
                         plumed_input[it_plumed_input] = cf.replace_in_list(plumed_input[it_plumed_input],"_R_PRINT_FREQ_",str(it_print_every_x_steps))
+                        plumed_input[it_plumed_input] = cf.replace_in_list(plumed_input[it_plumed_input],"UNITS LENGTH","UNITS TIME="+str(subsys_timestep)+"LENGTH")
                         cf.write_file(local_apath/it_plumed_input,plumed_input[it_plumed_input])
                     del list_plumed_files, it_list_plumed_files
 
