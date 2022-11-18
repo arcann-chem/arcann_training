@@ -7,7 +7,8 @@ subsys_name: list = ["SYSTEM1","SYSTEM2"]
 # nb_nnp: int = 3
 # exploration_type: str = "lammps"
 # temperature_K: list = [298.15, 298.15]
-# timestep_ps: list = [0.0005, 0.0005]
+# timestep_ps: list = [0.0005, 0.0005] #float #LAMMPS
+# timestep_ps: list = [0.00025, 0.00025] #float #i-PI
 # nb_candidates_max = [500, 500]
 # s_low: list = [0.1, 0.1]
 # s_high: list = [0.8, 0.8]
@@ -59,7 +60,10 @@ del sys_name
 for it0_subsys_nr,it_subsys_nr in enumerate(subsys_name):
     config_json["subsys_nr"][it_subsys_nr] = {}
     config_json["subsys_nr"][it_subsys_nr]["temperature_K"] = 298.15 if "temperature_K" not in globals() else temperature_K[it0_subsys_nr]
-    config_json["subsys_nr"][it_subsys_nr]["timestep_ps"] = 0.0005 if "timestep_ps" not in globals() else timestep_ps[it0_subsys_nr]
+    if config_json["exploration_type"] == "lammps":
+        config_json["subsys_nr"][it_subsys_nr]["timestep_ps"] = 0.0005 if "timestep_ps" not in globals() else timestep_ps[it0_subsys_nr]
+    elif config_json["exploration_type"] == "i-PI":
+        config_json["subsys_nr"][it_subsys_nr]["timestep_ps"] = 0.00025 if "timestep_ps" not in globals() else timestep_ps[it0_subsys_nr]
     config_json["subsys_nr"][it_subsys_nr]["nb_candidates_max"] = 500 if "nb_candidates_max" not in globals() else nb_candidates_max[it0_subsys_nr]
     config_json["subsys_nr"][it_subsys_nr]["s_low"] = 0.1 if "s_low" not in globals() else s_low[it0_subsys_nr]
     config_json["subsys_nr"][it_subsys_nr]["s_high"] = 0.8 if "temperature" not in globals() else s_high[it0_subsys_nr]
