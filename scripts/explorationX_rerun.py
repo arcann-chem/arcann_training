@@ -55,7 +55,6 @@ if "i-PI" not in exploration_json["exploration_type"]:
     logging.critical("This is not an i-PI exploration")
     logging.critical("Aborting...")
     sys.exit(1)
-
 if not exploration_json["is_unbeaded"]:
     logging.critical("Lock found. Run/Check first: explorationX_selectbeads.py")
     logging.critical("Aborting...")

@@ -40,6 +40,10 @@ current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
 exploration_json = cf.json_read((control_apath/("exploration_"+current_iteration_zfill+".json")),True,True)
 
 ### Checks
+if "i-PI" not in exploration_json["exploration_type"]:
+    logging.critical("This is not an i-PI exploration")
+    logging.critical("Aborting...")
+    sys.exit(1)
 if not exploration_json["is_reruned"]:
     logging.critical("Lock found. Run/Check first: explorationX_rerun.py")
     logging.critical("Aborting...")

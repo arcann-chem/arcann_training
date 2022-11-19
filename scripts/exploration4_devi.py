@@ -52,7 +52,7 @@ if not exploration_json["is_checked"]:
     sys.exit(1)
 if exploration_json["exploration_type"] == "i-PI" and not exploration_json["is_rechecked"]:
     ### #12
-    logging.critical("Lock found. Run/Check first: XXX")
+    logging.critical("Lock found. Run/Check first: explorationX_recheck.py")
     logging.critical("Aborting...")
     sys.exit(1)
 
@@ -91,20 +91,25 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
             devi_info_json["s_high"] = it_s_high
             devi_info_json["s_high_max"] = it_s_high_max
 
-            expected =  int( exploration_json["subsys_nr"][it_subsys_nr]["nb_steps"] / exploration_json["subsys_nr"][it_subsys_nr]["print_every_x_steps"] + 1 ) - it_first_frame
+            expected = int( exploration_json["subsys_nr"][it_subsys_nr]["nb_steps"] / exploration_json["subsys_nr"][it_subsys_nr]["print_every_x_steps"] + 1 ) - it_first_frame
 
             if not (local_apath/"skip").is_file():
 
                 devi = np.genfromtxt(str(local_apath/devi_filename))
-
-                if expected > ( devi.shape[0] - it_first_frame ):
+                devi_shape = devi.shape[0]
+                if exploration_json["exploration_type"] == "lammps":
+                    devi_shape = devi.shape[0]
+                elif exploration_json["exploration_type"] == "i-PI":
+                    devi_shape = devi.shape[0] + 1
+                print(expected,devi_shape,it_first_frame)
+                if expected > ( devi_shape - it_first_frame ):
                     devi_info_json["nb_total"] = expected
                     logging.warning("Exploration "+ str(it_subsys_nr)+" / "+str(it_nnp)+" / "+str(it_each))
                     logging.warning("mismatch between expected and actual number in the deviation file")
                     if (local_apath/"forced").is_file():
                         logging.warning("but it has been forced, so it should be ok")
-                elif expected == ( devi.shape[0] - it_first_frame ):
-                    devi_info_json["nb_total"] = devi.shape[0] - it_first_frame
+                elif expected == ( devi_shape - it_first_frame ):
+                    devi_info_json["nb_total"] = devi_shape - it_first_frame
                 else:
                     logging.critical("Unknown error. Please BUG REPORT")
                     logging.critical("Aborting...")
