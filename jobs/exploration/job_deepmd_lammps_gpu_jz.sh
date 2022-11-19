@@ -31,7 +31,7 @@
 DeepMD_MODEL_VERSION="_R_DEEPMD_VERSION_"
 DeepMD_MODEL=("_R_MODELS_LIST_")
 LAMMPS_INPUT="_R_INPUT_"
-EXTRA_FILES=("_R_DATA_FILE_" "_R_PLUMED_FILES_LIST_")
+EXTRA_FILES=("_R_DATA_FILE_" "_R_PLUMED_FILES_LIST_" "_R_XYZ_IN_")
 
 
 #!!Nothing needed to be changed past this point

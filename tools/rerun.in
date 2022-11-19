@@ -1,0 +1,19 @@
+units metal
+boundary p p p
+atom_style atomic
+
+neighbor 2.0 bin
+neigh_modify every 10 delay 0 check no
+
+read_data _R_DATA_FILE_
+
+pair_style deepmd _R_MODELS_LIST_ out_freq 1 out_file _R_DEVI_OUT_
+pair_coeff * *
+
+dump dcd all dcd 1 _R_DCD_OUT_
+
+thermo_style custom step time etotal ke pe temp press vol density cella cellb cellc cpuremain
+thermo_modify flush yes
+thermo 1
+
+rerun _R_XYZ_IN_ dump x y z box no format xyz

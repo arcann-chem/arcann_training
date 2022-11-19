@@ -128,14 +128,15 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
             ### Selection of the min for the next iteration starting point
             if devi_info_json["min_index"] != -1:
 
-                min_index = int(devi_info_json["min_index"] / print_every_x_steps)
-                (local_apath/"min.vmd").write_text(str(min_index))
-                del min_index
-
                 if exploration_json["exploration_type"] == "lammps":
                     traj_file = local_apath/(str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".dcd")
+                    min_index = int(devi_info_json["min_index"] / print_every_x_steps)
                 elif exploration_json["exploration_type"] == "i-PI":
-                    traj_file = local_apath/(str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+"_random_beads.dcd")
+                    traj_file = local_apath/(str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".dcd")
+                    min_index = int(devi_info_json["min_index"] )
+
+                (local_apath/"min.vmd").write_text(str(min_index))
+                del min_index
 
                 min_file_name = current_iteration_zfill+"_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+str(it_each).zfill(5)
 
@@ -196,18 +197,20 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
 
             ### Selection of labeling XYZ
             if len(devi_index_json["candidates_kept_ind"]) != 0:
+
                 candidates_index = np.array(devi_index_json["candidates_kept_ind"])
-                candidates_index = candidates_index / print_every_x_steps
+                if exploration_json["exploration_type"] == "lammps":
+                    traj_file = local_apath/(str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".dcd")
+                    candidates_index = candidates_index / print_every_x_steps
+                elif exploration_json["exploration_type"] == "i-PI":
+                    traj_file = local_apath/(str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".dcd")
+                    candidates_index = candidates_index
+
                 candidates_index = candidates_index.astype(int)
                 candidates_index = map(str, candidates_index.astype(int))
                 candidates_index = [ zzz + "\n" for zzz in candidates_index]
                 cf.write_file(local_apath/"label.vmd", candidates_index)
                 del candidates_index
-
-                if exploration_json["exploration_type"] == "lammps":
-                    traj_file = local_apath/(str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".dcd")
-                elif exploration_json["exploration_type"] == "i-PI":
-                    traj_file = local_apath/(str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+"_random_beads.dcd")
 
                 vmd_tcl = master_vmd_tcl.copy()
                 vmd_tcl = cf.replace_in_list(vmd_tcl,"_R_PDB_FILE_",str(topo_file))
@@ -304,5 +307,4 @@ del deepmd_iterative_apath
 del sys, Path, logging, cf
 del os, np, subprocess
 import gc; gc.collect(); del gc
-print(globals())
 exit()

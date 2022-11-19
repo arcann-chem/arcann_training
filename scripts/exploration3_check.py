@@ -140,9 +140,13 @@ else:
                     logging.info("Deleting NNP PB files...")
                     cf.remove_file_glob(local_apath,"*.pb")
                     logging.info("Cleaning done!")
+                ### #12
                 elif exploration_type == "i-PI":
-                    ### #12
-                    True
+                    logging.info("Deleting SLURM out/error files...")
+                    cf.remove_file_glob(local_apath,"i-PI_DeepMD*")
+                    logging.info("Removing DP-i-PI log/error files...")
+                    cf.remove_file_glob(local_apath,"*.DP-i-PI.client_*.log")
+                    cf.remove_file_glob(local_apath,"*.DP-i-PI.client_*.err")
                 del local_apath
             del it_each
         del it_nnp

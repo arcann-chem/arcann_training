@@ -369,7 +369,8 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     del n, it_plumed_input, plumed_input, prev_plumed
                 else:
                     slurm_file = cf.replace_in_list(slurm_file," \"_R_PLUMED_FILES_LIST_\"","")
-
+                    
+                slurm_file = cf.replace_in_list(slurm_file," \"_R_XYZ_IN_\"","")
                 models_list_job = models_string.replace(" ","\" \"")
                 slurm_file = cf.replace_in_list(slurm_file, "_R_MODELS_LIST_", models_list_job)
 

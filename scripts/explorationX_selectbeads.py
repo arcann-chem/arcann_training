@@ -94,7 +94,6 @@ if not exploration_json["is_checked"]:
     sys.exit(1)
 
 master_vmd_tcl = cf.read_file(scripts_apath/"vmd_xyz_selection_index.tcl")
-
 nb_beads = 8
 
 for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
@@ -103,9 +102,9 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
         stdout=subprocess.DEVNULL,\
         stderr=subprocess.STDOUT)
     topo_file=training_iterative_apath/"inputs"/(it_subsys_nr+".pdb")
-    
+
     nb_pos = int(exploration_json["subsys_nr"][it_subsys_nr]["nb_steps"] / exploration_json["subsys_nr"][it_subsys_nr]["print_every_x_steps"])
-    
+
     for it_nnp in range(1, exploration_json["nb_nnp"] + 1):
         for it_each in range(1, exploration_json["nb_traj"] + 1):
 
@@ -118,29 +117,28 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                 beads_selection_index=[]
                 random.seed(a=(it0_subsys_nr+it_nnp+it_each+random.randint(0,1000)))
                 possible_beads = [zzz for zzz in range(0, nb_beads)]
-                for f in range(0,int(nb_pos)):
+                for it_pos in range(0,int(nb_pos)):
                     if len(possible_beads) == 0:
                         possible_beads = [zzz for zzz in range(0,nb_beads)]
                     bead_idx = random.randrange(0,len(possible_beads))
                     beads_selection_index.append(possible_beads[bead_idx])
                     del possible_beads[bead_idx]
-                del bead_idx, possible_beads
+                del bead_idx, possible_beads, it_pos
 
-                for f in range(0, nb_beads):
-                    beads_index_json[f] = [i for i,val in enumerate(beads_selection_index) if val==f]
-                    beads_idx = np.array(beads_index_json[f])
+                for it_beads in range(0, nb_beads):
+                    beads_index_json[it_beads] = [i for i,val in enumerate(beads_selection_index) if val==it_beads]
+                    beads_idx = np.array(beads_index_json[it_beads])
                     beads_idx = map(str,  beads_idx.astype(int))
                     beads_idx = [ zzz + "\n" for zzz in beads_idx]
-                    cf.write_file(local_apath / ("beads_"+str(f)+".vmd"), beads_idx)
+                    cf.write_file(local_apath / ("beads_"+str(it_beads)+".vmd"), beads_idx)
+                del beads_idx, beads_selection_index, it_beads
 
-                del beads_idx, beads_selection_index
-                
-                for f in range(0, nb_beads):
-                    traj_file = local_apath/(str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".beads_"+str(f)+".xyz")
+                for it_beads in range(0, nb_beads):
+                    traj_file = local_apath/(str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".beads_"+str(it_beads)+".xyz")
                     vmd_tcl = master_vmd_tcl.copy()
                     vmd_tcl = cf.replace_in_list(vmd_tcl,"_R_PDB_FILE_",str(topo_file))
                     vmd_tcl = cf.replace_in_list(vmd_tcl,"_R_XYZ_FILE_",str(traj_file))
-                    vmd_tcl = cf.replace_in_list(vmd_tcl,"_R_SELECTION_FILE_",str(local_apath/ ("beads_"+str(f)+".vmd")))
+                    vmd_tcl = cf.replace_in_list(vmd_tcl,"_R_SELECTION_FILE_",str(local_apath/ ("beads_"+str(it_beads)+".vmd")))
                     vmd_tcl = cf.replace_in_list(vmd_tcl,"_R_XYZ_OUT_",str(local_apath/("vmd_${j}.xyz")))
                     cf.write_file((local_apath/"vmd.tcl"),vmd_tcl)
                     del vmd_tcl, traj_file
@@ -148,10 +146,32 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                         stdout=subprocess.DEVNULL,\
                         stderr=subprocess.STDOUT)
                     cf.remove_file((local_apath/"vmd.tcl"))
-                    cf.remove_file((local_apath/("beads_"+str(f)+".vmd")))
-
+                    cf.remove_file((local_apath/("beads_"+str(it_beads)+".vmd")))
+                del it_beads
                 cf.remove_file(local_apath/("beads_rerun_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".xyz"))
                 ### #TODO: Not Path friendly / Replace with either subprocess call or read python
                 os.system("cat "+str(local_apath)+"/vmd_*.xyz >> "+str(local_apath)+"/beads_rerun_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".xyz")
                 cf.remove_file_glob(local_apath,"vmd_*.xyz")
                 cf.json_dump(beads_index_json,local_apath/"beads_index_json")
+
+                del beads_index_json
+            del local_apath
+    del nb_pos
+del master_vmd_tcl, nb_beads, it0_subsys_nr, it_subsys_nr, topo_file
+
+exploration_json["is_unbeaded"] = True
+cf.json_dump(exploration_json,(control_apath/("exploration_"+current_iteration_zfill+".json")),True)
+
+logging.info("Exploration: Select Beads phase is a success!")
+
+### Cleaning
+del config_json, training_iterative_apath, scripts_apath, control_apath
+del current_iteration_zfill
+del exploration_json
+del deepmd_iterative_apath
+
+del sys, Path, logging, cf
+del os, np, subprocess, random
+import gc; gc.collect(); del gc
+print(globals())
+exit()
