@@ -24,7 +24,6 @@
 atomsk_fpath: str ="/gpfswork/rech/nvs/commun/programs/apps/atomsk/0.11.2/bin/atomsk"
 
 ###################################### No change past here
-from re import I
 import sys
 from pathlib import Path
 import logging

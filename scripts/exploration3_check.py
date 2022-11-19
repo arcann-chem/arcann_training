@@ -5,9 +5,10 @@
 import sys
 from pathlib import Path
 import logging
-import numpy as np
 
 logging.basicConfig(level=logging.INFO,format="%(levelname)s: %(message)s")
+
+import numpy as np
 
 training_iterative_apath = Path("..").resolve()
 ### Check if the deepmd_iterative_apath is defined
