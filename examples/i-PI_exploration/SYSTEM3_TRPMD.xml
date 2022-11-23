@@ -1,8 +1,8 @@
-<simulation verbosity="high">
+<simulation verbosity="medium">
     <output prefix="_R_SUBSYS_">
-        <properties shape="(9)" filename="out" stride="_R_print_every_x_steps_">
+        <properties shape="(7)" filename="out" stride="_R_print_every_x_steps_">
        [ step, time{picosecond}, conserved, temperature{kelvin}, kinetic_cv,
-         potential, kinetic_cv(H), kinetic_cv(O), pressure_cv{megapascal} ]
+         potential, pressure_cv{megapascal} ]
         </properties>
         <trajectory filename="center" cell_units="angstrom" stride="_R_print_every_x_steps_"> x_centroid{angstrom} </trajectory>
         <trajectory filename="beads" cell_units="angstrom" stride="_R_print_every_x_steps_"> positions{angstrom} </trajectory>

@@ -143,23 +143,24 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
         subsys_exploration_ipi_xml = cf.read_xml(training_iterative_apath/"inputs"/(it_subsys_nr+".xml"))
         subsys_exploration_ipi_xmllist = cf.convert_xml_to_listofstrings(subsys_exploration_ipi_xml)
         subsys_exploration_ipi_json = {"verbose": False,"use_unix": False, "port": "_R_NB_PORT_", "host": "_R_ADDRESS_", "graph_file": "_R_GRAPH_", "coord_file": "_R_XYZ_", "atom_type": {}}
-        if any("plumed" in zzz for zzz in subsys_exploration_lammps_input):
+        if any("plumed" in zzz for zzz in subsys_exploration_ipi_xmllist):
             with_plumed = 1
 
     ### Get plumed
-    list_plumed_files=[zzz for zzz in (training_iterative_apath/"inputs").glob("*plumed*_"+it_subsys_nr+".dat")]
-    if len(list_plumed_files) == 0 :
-        logging.critical("Plumed in input but no plumed files")
-        logging.critical("Aborting...")
-        sys.exit(1)
-    plumed_input={}
-    for it_list_plumed_files in list_plumed_files:
-        plumed_input[it_list_plumed_files.name] = cf.read_file(it_list_plumed_files)
-        if any("MOVINGRESTRAINT" in zzz for zzz in plumed_input[it_list_plumed_files.name]):
-            SMD_step = [zzz for zzz in plumed_input[it_list_plumed_files.name] if "STEP" in zzz]
-            with_plumed_smd = 1
-            subsys_SMD_nb_steps = SMD_step[-1].split(" ")[0].split("=")[-1]
-    del list_plumed_files, it_list_plumed_files
+    if with_plumed ==1 :
+        list_plumed_files=[zzz for zzz in (training_iterative_apath/"inputs").glob("*plumed*_"+it_subsys_nr+".dat")]
+        if len(list_plumed_files) == 0 :
+            logging.critical("Plumed in input but no plumed files")
+            logging.critical("Aborting...")
+            sys.exit(1)
+        plumed_input={}
+        for it_list_plumed_files in list_plumed_files:
+            plumed_input[it_list_plumed_files.name] = cf.read_file(it_list_plumed_files)
+            if any("MOVINGRESTRAINT" in zzz for zzz in plumed_input[it_list_plumed_files.name]):
+                SMD_step = [zzz for zzz in plumed_input[it_list_plumed_files.name] if "STEP" in zzz]
+                with_plumed_smd = 1
+                subsys_SMD_nb_steps = SMD_step[-1].split(" ")[0].split("=")[-1]
+        del list_plumed_files, it_list_plumed_files
 
     ### Timestep
     subsys_timestep = config_json["subsys_nr"][it_subsys_nr]["timestep_ps"] if "timestep_ps" not in globals() else timestep_ps[it0_subsys_nr]
@@ -278,7 +279,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                 subprocess.call(["ln","-s", str(nnp_apath), str(local_apath)])
             models_string=" ".join(models_list)
             del list_nnp, it_sub_nnp, nnp_apath, compress_str, reorder_nnp_list
-
+                    
             ### LAMMPS
             if exploration_type == "lammps":
                 exploration_input = subsys_exploration_lammps_input.copy()
@@ -291,14 +292,6 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                 exploration_input = cf.replace_in_list(exploration_input,"_R_MODELS_LIST_",models_string)
                 exploration_input = cf.replace_in_list(exploration_input,"_R_DEVI_OUT_","model_devi_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".out")
                 del RAND
-
-                ### Plumed files
-                if with_plumed == 1:
-                    exploration_input = cf.replace_in_list(exploration_input,"_R_PLUMED_IN_","plumed_"+str(it_subsys_nr)+".dat")
-                    exploration_input = cf.replace_in_list(exploration_input,"_R_PLUMED_OUT_","plumed_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".log")
-                    for it_plumed_input in plumed_input:
-                        plumed_input[it_plumed_input] = cf.replace_in_list(plumed_input[it_plumed_input],"_R_PRINT_FREQ_",str(it_print_every_x_steps))
-                        cf.write_file(local_apath/it_plumed_input,plumed_input[it_plumed_input])
 
                 ### Get data files (starting points) and number of steps
                 if current_iteration > 1:
@@ -339,13 +332,21 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     del starting_point_list[RAND]
                     del RAND
 
-                ### Write DATA file
-                cf.write_file(local_apath/subsys_lammps_data_fn,subsys_lammps_data)
-
                 ### Get print freq
                 it_print_every_x_steps = int(subsys_nb_steps*0.01) if "print_every_x_steps" not in globals() else print_every_x_steps[it0_subsys_nr]
                 exploration_input = cf.replace_in_list(exploration_input,"_R_print_every_x_steps_",str(it_print_every_x_steps))
 
+                ### Plumed files
+                if with_plumed == 1:
+                    exploration_input = cf.replace_in_list(exploration_input,"_R_PLUMED_IN_","plumed_"+str(it_subsys_nr)+".dat")
+                    exploration_input = cf.replace_in_list(exploration_input,"_R_PLUMED_OUT_","plumed_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".log")
+                    for it_plumed_input in plumed_input:
+                        plumed_input[it_plumed_input] = cf.replace_in_list(plumed_input[it_plumed_input],"_R_PRINT_FREQ_",str(it_print_every_x_steps))
+                        cf.write_file(local_apath/it_plumed_input,plumed_input[it_plumed_input])
+                        
+                ### Write DATA file
+                cf.write_file(local_apath/subsys_lammps_data_fn,subsys_lammps_data)
+                
                 exploration_json["subsys_nr"][it_subsys_nr]["nb_steps"] = subsys_nb_steps
                 exploration_json["subsys_nr"][it_subsys_nr]["print_every_x_steps"] = it_print_every_x_steps
 
@@ -393,7 +394,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                         else:
                             slurm_file = cf.replace_in_list(slurm_file,prev_plumed,prev_plumed+"\" \""+it_plumed_input)
                         prev_plumed = it_plumed_input
-                    del n, it_plumed_input, plumed_input, prev_plumed
+                    del n, it_plumed_input, prev_plumed
                 else:
                     slurm_file = cf.replace_in_list(slurm_file," \"_R_PLUMED_FILES_LIST_\"","")
 
@@ -407,24 +408,13 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
 
             ### #12
             elif exploration_type == "i-PI":
-
+                
+                    
                 exploration_ipi_xmllist = subsys_exploration_ipi_xmllist.copy()
                 RAND = random.randrange(0,1000)
                 exploration_ipi_xmllist = cf.replace_in_list(exploration_ipi_xmllist,"_R_NB_SEED_",str(it_nnp)+str(RAND)+str(it_number)+previous_iteration_zfill)
                 del RAND
                 exploration_ipi_xmllist = cf.replace_in_list(exploration_ipi_xmllist,"_R_SUBSYS_",str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill)
-
-                ### Plumed files
-                if with_plumed == 1:
-                    exploration_ipi_xmllist = cf.replace_in_list(exploration_ipi_xmllist,"_R_PLUMED_IN_","plumed_"+str(it_subsys_nr)+".dat")
-                    for it_plumed_input in plumed_input:
-                        plumed_input[it_plumed_input] = cf.replace_in_list(plumed_input[it_plumed_input],"_R_PRINT_FREQ_",str(it_print_every_x_steps))
-                        plumed_input[it_plumed_input] = cf.replace_in_list(plumed_input[it_plumed_input],"UNITS LENGTH","UNITS TIME="+str(subsys_timestep)+"LENGTH")
-                        cf.write_file(local_apath/it_plumed_input,plumed_input[it_plumed_input])
-
-                ### Get print freq
-                it_print_every_x_steps = int(subsys_nb_steps*0.01) if "print_every_x_steps" not in globals() else print_every_x_steps[it0_subsys_nr]
-                exploration_ipi_xmllist = cf.replace_in_list(exploration_ipi_xmllist,"_R_print_every_x_steps_",str(it_print_every_x_steps))
 
                 if current_iteration > 1:
                     if len(starting_point_list) == 0:
@@ -464,6 +454,20 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
 
                     del starting_point_list[RAND]
                     del RAND
+                
+                ### Get print freq
+                it_print_every_x_steps = int(subsys_nb_steps*0.01) if "print_every_x_steps" not in globals() else print_every_x_steps[it0_subsys_nr]
+                exploration_ipi_xmllist = cf.replace_in_list(exploration_ipi_xmllist,"_R_print_every_x_steps_",str(it_print_every_x_steps))
+        
+
+                    
+                ### Plumed files
+                if with_plumed == 1:
+                    exploration_ipi_xmllist = cf.replace_in_list(exploration_ipi_xmllist,"_R_PLUMED_IN_","plumed_"+str(it_subsys_nr)+".dat")
+                    for it_plumed_input in plumed_input:
+                        plumed_input[it_plumed_input] = cf.replace_in_list(plumed_input[it_plumed_input],"_R_PRINT_FREQ_",str(it_print_every_x_steps))
+                        plumed_input[it_plumed_input] = cf.replace_in_list(plumed_input[it_plumed_input],"UNITS LENGTH","UNITS TIME="+str(subsys_timestep)+"LENGTH")
+                        cf.write_file(local_apath/it_plumed_input,plumed_input[it_plumed_input])
 
                 exploration_dpipi_json = subsys_exploration_ipi_json.copy()
                 exploration_dpipi_json["graph_file"] = models_list[0]
@@ -515,7 +519,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                         else:
                             slurm_file = cf.replace_in_list(slurm_file,prev_plumed,prev_plumed+"\" \""+it_plumed_input)
                         prev_plumed = it_plumed_input
-                    del n, it_plumed_input, plumed_input, prev_plumed
+                    del n, it_plumed_input, prev_plumed
                 else:
                     slurm_file = cf.replace_in_list(slurm_file," \"_R_PLUMED_FILES_LIST_\"","")
 
@@ -540,6 +544,8 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
     config_json["subsys_nr"][it_subsys_nr]["cell"] = subsys_cell
     config_json["subsys_nr"][it_subsys_nr]["nb_atm"] = subsys_nb_atm
 
+    if with_plumed == 1:
+        del plumed_input
     del subsys_temp, subsys_cell, subsys_nb_atm, subsys_nb_steps
     del subsys_lammps_data, subsys_timestep, subsys_lammps_data_fn, subsys_walltime_approx_s, it_print_every_x_steps
 
