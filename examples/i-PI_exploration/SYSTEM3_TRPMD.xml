@@ -1,0 +1,53 @@
+<simulation verbosity="high">
+    <output prefix="_R_SUBSYS_">
+        <properties shape="(9)" filename="out" stride="_R_print_every_x_steps_">
+       [ step, time{picosecond}, conserved, temperature{kelvin}, kinetic_cv,
+         potential, kinetic_cv(H), kinetic_cv(O), pressure_cv{megapascal} ]
+        </properties>
+        <trajectory filename="center" cell_units="angstrom" stride="_R_print_every_x_steps_"> x_centroid{angstrom} </trajectory>
+        <trajectory filename="beads" cell_units="angstrom" stride="_R_print_every_x_steps_"> positions{angstrom} </trajectory>
+    </output>
+    <total_time>0</total_time>
+    <total_steps>_R_NB_STEPS_</total_steps>
+    <prng>
+        <seed>_R_NB_SEED_</seed>
+    </prng>
+    <ffsocket name="deepmd">
+        <address>_R_ADDRESS_</address>
+        <port>_R_NB_PORT_</port>
+    </ffsocket>
+    <ffplumed name='plumed'>
+        <init_file mode='xyz' units='angstrom'>_R_XYZ_</init_file>
+        <plumeddat>_R_PLUMED_IN_</plumeddat>
+    </ffplumed>
+    <system>
+        <initialize nbeads="_R_NB_BEADS_">
+            <file mode="xyz" units="angstrom">_R_XYZ_</file>
+            <cell mode="abc" units="angstrom">_R_CELL_</cell>
+            <velocities mode="thermal" units="kelvin">300</velocities>
+        </initialize>
+        <forces>
+            <force forcefield="deepmd"></force>
+        </forces>
+        <ensemble>
+            <temperature units="kelvin">300</temperature>
+            <bias>
+                <force forcefield="plumed" nbeads="1"> </force>
+            </bias>
+        </ensemble>
+        <motion mode="dynamics">
+            <dynamics mode="nvt">
+                <thermostat mode="pile_g">
+                    <tau>8.26827460e+04</tau>
+                    <ethermo>1.47477075e+01</ethermo>
+                    <pile_lambda>5.00000000e-01</pile_lambda>
+                </thermostat>
+                <timestep units="picosecond">_R_TIMESTEP_</timestep>
+            </dynamics>
+            <fixcom>True</fixcom>
+        </motion>
+    </system>
+    <smotion mode="metad">
+        <metad> <metaff> [ plumed ] </metaff> </metad>
+    </smotion>
+</simulation>
