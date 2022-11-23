@@ -25,6 +25,8 @@
 #SBATCH --mail-user _R_EMAIL_
 #
 
+eval "$(idrenv -d _R_PROJECT_)"
+
 module purge
 module load anaconda-py3/2022.05
 

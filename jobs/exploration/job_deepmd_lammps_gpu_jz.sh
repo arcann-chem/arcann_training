@@ -26,6 +26,8 @@
 #SBATCH --mail-user _R_EMAIL_
 #
 
+eval "$(idrenv -d _R_PROJECT_)"
+
 # Input file (extension is automatically added as .in for INPUT)
 # Support a list of files as a bash array
 DeepMD_MODEL_VERSION="_R_DEEPMD_VERSION_"

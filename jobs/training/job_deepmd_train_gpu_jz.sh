@@ -26,6 +26,8 @@
 #SBATCH --mail-user _R_EMAIL_
 #
 
+eval "$(idrenv -d _R_PROJECT_)"
+
 # Input files
 DeepMD_MODEL_VERSION="_R_DEEPMD_VERSION_"
 DeepMD_CHKPT="_R_CHECKPOINT_"

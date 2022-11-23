@@ -23,6 +23,8 @@
 #SBATCH --mail-user _R_EMAIL_
 #
 
+eval "$(idrenv -d _R_PROJECT_)"
+
 # Input file (extension is automatically added as .inp for INPUT, wfn for WFRST, restart for MDRST)
 CP2K_INPUT_F1="1_labeling_XXXXX"
 CP2K_INPUT_F2="2_labeling_XXXXX"

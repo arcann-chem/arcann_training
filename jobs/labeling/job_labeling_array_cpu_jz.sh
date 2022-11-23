@@ -25,6 +25,8 @@
 #SBATCH --array=1-_R_ARRAYCOUNT_%300
 #
 
+eval "$(idrenv -d _R_PROJECT_)"
+
 echo "${SLURM_ARRAY_TASK_ID}"
 SLURM_ARRAY_TASK_ID_PADDED=$(printf "%05d\n" "${SLURM_ARRAY_TASK_ID}")
 echo "$SLURM_ARRAY_TASK_ID_PADDED"
