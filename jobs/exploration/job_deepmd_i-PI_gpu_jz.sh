@@ -139,7 +139,7 @@ for j in "${CUDA_ARR[@]}"; do
 export CUDA_VISIBLE_DEVICES=${j}
     for ((i=0; i<NB_CLIENT_PER_GPU; i++)); do
         LAUNCH_CMD="${DP_IPI_EXE} ${IPI_INPUT}.json"
-        ${LAUNCH_CMD} > "${IPI_INPUT}.DP-i-PI.client_${i}.log" 2> "${IPI_INPUT}.DP-i-PI.client_${i}.err" &
+        ${LAUNCH_CMD} > /dev/null 2> /dev/null &
         echo "GPU ${CUDA_VISIBLE_DEVICES}, client ${i} launched."
         sleep 2
     done
