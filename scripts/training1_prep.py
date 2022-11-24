@@ -440,6 +440,7 @@ for it_nnp in range(1,config_json["nb_nnp"] + 1):
     else:
         slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",cf.seconds_to_walltime(walltime_approx_s)) if cluster != "ir" else cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(walltime_approx_s))
     del qos_ok, max_qos_time, max_qos
+
     if slurm_email != "":
         slurm_file = cf.replace_in_list(slurm_file,"_R_EMAIL_",slurm_email)
     else:
@@ -447,7 +448,7 @@ for it_nnp in range(1,config_json["nb_nnp"] + 1):
         slurm_file = cf.delete_in_list(slurm_file,"mail")
 
     cf.write_file(local_apath/("job_deepmd_train_"+cluster_spec["arch_type"]+"_"+cluster+".sh"),slurm_file)
-    del slurm_file, local_apath, training_input_json_fpath, RAND, max_qos_time, qos_ok
+    del slurm_file, local_apath, training_input_json_fpath, RAND
 del it_nnp, walltime_approx_s, training_input_json
 
 ## Dump the config/training
