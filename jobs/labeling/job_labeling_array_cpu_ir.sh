@@ -1,18 +1,15 @@
 #!/bin/bash
-# Author: Rolf DAVID
-# Date: 2021/12/08
-# Modified: 2022/10/27
-# Account
+# Project/Account
 #MSUB -A _R_PROJECT_
-# Queue
 #MSUB -q _R_ALLOC_
+# QoS/Partition/SubPartition
+#MSUB -Q _R_QOS_
 #MSUB -m scratch,work,store
-#MSUB -Q normal
-# Number of nodes/processes/tasksperprocess
+# Number of Nodes/MPIperNodes/OpenMPperMPI/GPU
 #MSUB -N _R_nb_NODES_
 #MSUB -n _R_nb_MPI_
 #MSUB -c _R_nb_OPENMP_per_MPI_
-# Wall-time
+# Walltime
 #MSUB -T _R_WALLTIME_
 # Merge Output/Error
 #MSUB -o CP2K.%A_%a
@@ -21,7 +18,7 @@
 #MSUB -r _R_CP2K_JOBNAME_
 # Email
 #MSUB -@ _R_EMAIL_:begin,end
-#
+# Array
 #MSUB -E "--array=_R_ARRAY_START_-_R_ARRAY_END_%250"
 #
 
@@ -36,17 +33,31 @@ CP2K_INPUT_F2="2_labeling_${SLURM_ARRAY_TASK_ID_PADDED}"
 CP2K_WFRST_F="labeling_${SLURM_ARRAY_TASK_ID_PADDED}-SCF"
 CP2K_XYZ_F="labeling_${SLURM_ARRAY_TASK_ID_PADDED}.xyz"
 
-#!!Nothing needed to be changed past this point
+#----------------------------------------------
+## Nothing needed to be changed past this point
 
-# Load the environment depending on the version
+### Project Switch
 module purge
 module switch dfldatadir/_R_PROJECT_
-module load flavor/buildcompiler/intel/20 flavor/buildmpi/openmpi/4.0 flavor/cp2k/xc
-module load cp2k/7.1
-CP2K_EXE=$(which cp2k.popt) || ( echo "Executable not found. Aborting..."; exit 1 )
 
 # Go where the job has been launched
 cd "${SLURM_SUBMIT_DIR}"/"${SLURM_ARRAY_TASK_ID_PADDED}" || exit 1
+
+# Load the environment depending on the version
+module load flavor/buildcompiler/intel/20 flavor/buildmpi/openmpi/4.0 flavor/cp2k/xc
+module load cp2k/7.1
+
+if [ "$(command -v cp2k.psmp)" ]; then
+    CP2K_EXE=$(command -v cp2k.psmp)
+elif [ "$(command -v cp2k.popt)" ]; then
+    if [ "${SLURM_CPUS_PER_TASK}" -lt 2 ]; then
+        CP2K_EXE=$(command -v cp2k.popt)
+    else
+        echo "Only executable (cp2k.popt) was found and OpenMP was requested. Aborting..."
+    fi
+else
+    echo "Executable (cp2k.popt/cp2k.psmp) not found. Aborting..."
+fi
 
 # Test if input file is present
 if [ ! -f "${CP2K_INPUT_F1}".inp ]; then echo "No input file found. Aborting..."; exit 1; fi

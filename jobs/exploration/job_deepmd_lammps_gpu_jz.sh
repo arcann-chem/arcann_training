@@ -1,20 +1,17 @@
 #!/bin/bash
-# Author: Rolf DAVID
-# Date: 2021/03/16
-# Modified: 2022/10/27
-# Account
+# Project/Account
 #SBATCH --account=_R_PROJECT_@_R_ALLOC_
-# Queue
+# QoS/Partition/SubPartition
 #SBATCH --qos=_R_QOS_
 #SBATCH --partition=_R_PARTITION_
 #SBATCH -C _R_SUBPARTITION_
-# Number of nodes/processes/tasksperprocess
+# Number of Nodes/MPIperNodes/OpenMPperMPI/GPU
 #SBATCH --nodes 1
 #SBATCH --ntasks-per-node 1
 #SBATCH --cpus-per-task 10
 #SBATCH --gres=gpu:1
 #SBATCH --hint=nomultithread
-# Wall-time
+# Walltime
 #SBATCH -t _R_WALLTIME_
 # Merge Output/Error
 #SBATCH -o LAMMPS_DeepMD.%j
@@ -26,8 +23,6 @@
 #SBATCH --mail-user _R_EMAIL_
 #
 
-eval "$(idrenv -d _R_PROJECT_)"
-
 # Input file (extension is automatically added as .in for INPUT)
 # Support a list of files as a bash array
 DeepMD_MODEL_VERSION="_R_DEEPMD_VERSION_"
@@ -35,8 +30,11 @@ DeepMD_MODEL=("_R_MODELS_LIST_")
 LAMMPS_INPUT="_R_INPUT_"
 EXTRA_FILES=("_R_DATA_FILE_" "_R_PLUMED_FILES_LIST_" "_R_XYZ_IN_")
 
+#----------------------------------------------
+## Nothing needed to be changed past this point
 
-#!!Nothing needed to be changed past this point
+### Project Switch
+eval "$(idrenv -d _R_PROJECT_)"
 
 # Go where the job has been launched
 cd "${SLURM_SUBMIT_DIR}" || exit 1
@@ -59,7 +57,7 @@ elif [ "${SLURM_JOB_QOS:3:4}" == "cpu" ]; then
 else
     echo "There is no ${SLURM_JOB_QOS}. Aborting..."; exit 1
 fi
-LAMMPS_EXE=$(which lmp) || ( echo "Executable not found. Aborting..."; exit 1 )
+LAMMPS_EXE=$(command -v lmp) || ( echo "Executable (lmp) not found. Aborting..."; exit 1 )
 
 # Test if input file is present
 if [ ! -f "${LAMMPS_INPUT}".in ]; then echo "No input file found. Aborting..."; exit 1; fi

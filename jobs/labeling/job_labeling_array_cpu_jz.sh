@@ -1,17 +1,16 @@
 #!/bin/bash
-# Author: Rolf DAVID
-# Date: 2021/03/18
-# Modified: 2022/10/27
-# Account
+# Project/Account
 #SBATCH --account=_R_PROJECT_@_R_ALLOC_
-# Queue
-#SBATCH --qos=qos_cpu-t3
-# Number of nodes/processes/tasksperprocess
+# QoS/Partition/SubPartition
+#SBATCH --qos=_R_QOS_
+#SBATCH --partition=_R_PARTITION_
+#SBATCH -C _R_SUBPARTITION_
+# Number of Nodes/MPIperNodes/OpenMPperMPI/GPU
 #SBATCH --nodes _R_nb_NODES_
 #SBATCH --ntasks-per-node _R_nb_MPI_per_NODE_
 #SBATCH --cpus-per-task _R_nb_OPENMP_per_MPI_
 #SBATCH --hint=nomultithread
-# Wall-time
+# Walltime
 #SBATCH -t _R_WALLTIME_
 # Merge Output/Error
 #SBATCH -o CP2K.%A_%a
@@ -21,11 +20,9 @@
 # Email
 #SBATCH --mail-type FAIL,BEGIN,END,ALL
 #SBATCH --mail-user _R_EMAIL_
-#
+# Array
 #SBATCH --array=1-_R_ARRAYCOUNT_%300
 #
-
-eval "$(idrenv -d _R_PROJECT_)"
 
 echo "${SLURM_ARRAY_TASK_ID}"
 SLURM_ARRAY_TASK_ID_PADDED=$(printf "%05d\n" "${SLURM_ARRAY_TASK_ID}")
@@ -37,7 +34,11 @@ CP2K_INPUT_F2="2_labeling_${SLURM_ARRAY_TASK_ID_PADDED}"
 CP2K_WFRST_F="labeling_${SLURM_ARRAY_TASK_ID_PADDED}-SCF"
 CP2K_XYZ_F="labeling_${SLURM_ARRAY_TASK_ID_PADDED}.xyz"
 
-#!!Nothing needed to be changed past this point
+#----------------------------------------------
+## Nothing needed to be changed past this point
+
+### Project Switch
+eval "$(idrenv -d _R_PROJECT_)"
 
 # Go where the job has been launched
 cd "${SLURM_SUBMIT_DIR}"/"${SLURM_ARRAY_TASK_ID_PADDED}" || exit 1
@@ -45,7 +46,18 @@ cd "${SLURM_SUBMIT_DIR}"/"${SLURM_ARRAY_TASK_ID_PADDED}" || exit 1
 # Load the environment depending on the version
 module purge
 module load cp2k/6.1-mpi-popt
-CP2K_EXE=$(which cp2k.popt) || ( echo "Executable not found. Aborting..."; exit 1 )
+
+if [ "$(command -v cp2k.psmp)" ]; then
+    CP2K_EXE=$(command -v cp2k.psmp)
+elif [ "$(command -v cp2k.popt)" ]; then
+    if [ "${SLURM_CPUS_PER_TASK}" -lt 2 ]; then
+        CP2K_EXE=$(command -v cp2k.popt)
+    else
+        echo "Only executable (cp2k.popt) was found and OpenMP was requested. Aborting..."
+    fi
+else
+    echo "Executable (cp2k.popt/cp2k.psmp) not found. Aborting..."
+fi
 
 # Test if input file is present
 if [ ! -f "${CP2K_INPUT_F1}".inp ]; then echo "No input file found. Aborting..."; exit 1; fi

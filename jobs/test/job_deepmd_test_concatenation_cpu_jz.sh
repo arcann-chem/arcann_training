@@ -1,19 +1,16 @@
 #!/bin/bash
-# Author: Rolf DAVID
-# Date: 2021/05/20
-# Modified: 2022/10/27
-# Account
+# Project/Account
 #SBATCH --account=_R_PROJECT_@_R_ALLOC_
-# Queue
+# QoS/Partition/SubPartition
 #SBATCH --qos=_R_QOS_
 #SBATCH --partition=_R_PARTITION_
 #SBATCH -C _R_SUBPARTITION_
-# Number of nodes/processes/tasksperprocess
+# Number of Nodes/MPIperNodes/OpenMPperMPI/GPU
 #SBATCH --nodes 1
-#SBATCH --ntasks-per-node 10
-#SBATCH --cpus-per-task 1
+#SBATCH --ntasks-per-node 1
+#SBATCH --cpus-per-task 10
 #SBATCH --hint=nomultithread
-# Wall-time
+# Walltime
 #SBATCH -t _R_WALLTIME_
 # Merge Output/Error
 #SBATCH -o DeepMD_Test_Concatenation.%j
@@ -25,6 +22,10 @@
 #SBATCH --mail-user _R_EMAIL_
 #
 
+#----------------------------------------------
+## Nothing needed to be changed past this point
+
+### Project Switch
 eval "$(idrenv -d _R_PROJECT_)"
 
 module purge
