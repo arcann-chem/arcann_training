@@ -268,9 +268,7 @@ def clusterize(deepmd_iterative_apath: Path,training_iterative_apath: Path,step:
                         return cluster, machine_file[cluster][zzz], 0
                     else:
                         True
-                return "", [], 1
-            else:
-                return "", [], 2
+        return "", [], 1
     elif type(user_keyword) == list and len(user_keyword) == 3:
         for zzz in machine_file[cluster].keys():
             if (
@@ -284,7 +282,6 @@ def clusterize(deepmd_iterative_apath: Path,training_iterative_apath: Path,step:
             ):
                 return cluster, machine_file[cluster][zzz], 0
         return "", [], 5
-
     elif type(user_keyword) == str:
         if (
             user_keyword in machine_file[cluster].keys()

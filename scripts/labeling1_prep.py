@@ -60,10 +60,10 @@ if not exploration_json["is_extracted"]:
     sys.exit(1)
 
 ### Read cluster info
-if user_spec in globals():
-    cluster, cluster_spec, cluster_error = cf.clusterize(deepmd_iterative_apath,training_iterative_apath,step="exploration",user_keyword=user_spec)
+if "user_spec" in globals():
+    cluster, cluster_spec, cluster_error = cf.clusterize(deepmd_iterative_apath,training_iterative_apath,step="labeling",user_keyword=user_spec)
 else:
-    cluster, cluster_spec, cluster_error = cf.clusterize(deepmd_iterative_apath,training_iterative_apath,step="exploration")
+    cluster, cluster_spec, cluster_error = cf.clusterize(deepmd_iterative_apath,training_iterative_apath,step="labeling")
 if cluster_error != 0:
     ### #FIXME: Better errors for clusterize
     logging.critical("Error in machine_file.json")
@@ -94,9 +94,12 @@ slurm_file_array_master = cf.delete_in_list(slurm_file_array_master,"_R_SUBPARTI
 
 if slurm_email != "":
     slurm_file_array_master = cf.replace_in_list(slurm_file_array_master,"_R_EMAIL_",slurm_email)
+    slurm_file_master = cf.replace_in_list(slurm_file_master,"_R_EMAIL_",slurm_email)
 else:
     slurm_file_array_master = cf.delete_in_list(slurm_file_array_master,"_R_EMAIL_")
     slurm_file_array_master = cf.delete_in_list(slurm_file_array_master,"mail")
+    slurm_file_master = cf.delete_in_list(slurm_file_master,"_R_EMAIL_")
+    slurm_file_master = cf.delete_in_list(slurm_file_master,"mail")
 
 labeling_json["subsys_nr"] = {}
 subsys_list=list(config_json["subsys_nr"].keys())
