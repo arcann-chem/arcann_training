@@ -61,7 +61,7 @@ for it_nnp in range(1, config_json["nb_nnp"] + 1):
             if (local_apath/("model.ckpt-"+str(training_out_time_split[-1][3])+".index")).is_file():
                 (local_apath/("model.ckpt-"+str(training_out_time_split[-1][3])+".index")).rename(local_apath/"model.ckpt.index")
                 (local_apath/("model.ckpt-"+str(training_out_time_split[-1][3])+".meta")).rename(local_apath/"model.ckpt.meta")
-                (local_apath/("model.ckpt-"+str(training_out_time_split[-1][3])+".meta")).rename(local_apath/"model.ckpt.meta")
+                (local_apath/("model.ckpt-"+str(training_out_time_split[-1][3])+".data-00000-of-00001")).rename(local_apath/"model.ckpt.data-00000-of-00001")
             for n in range(0,len(training_out_time_split)):
                 time_per_step.append(float(training_out_time_split[n][6]))
             del n
