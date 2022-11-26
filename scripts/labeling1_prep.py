@@ -171,6 +171,7 @@ for it0_subsys_nr, it_subsys_nr in enumerate(subsys_list):
                 else:
                     True
                 cf.write_file(subsys_apath/("job_labeling_array_"+cluster_spec["arch_type"]+"_"+cluster+"_0.sh"),slurm_file_array_subsys)
+
             else:
                 slurm_file_array_subsys_dict={}
                 quotient = nb_steps // 250
