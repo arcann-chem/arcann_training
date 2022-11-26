@@ -424,7 +424,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     RAND = random.randrange(0,len(starting_point_list))
                     subsys_ipi_xyz_fn = starting_point_list[RAND]
                     subsys_ipi_xyz = cf.read_file(training_iterative_apath/"starting_structures"/subsys_ipi_xyz_fn)
-                    exploration_ipi_xmllist = cf.exploration_ipi_xmllist(exploration_ipi_xmllist,"_R_XYZ_",subsys_ipi_xyz)
+                    exploration_ipi_xmllist = cf.replace_in_list(exploration_ipi_xmllist,"_R_XYZ_",subsys_ipi_xyz)
 
                     ### Get again the subsys_cell and nb_atom
                     subsys_cell, subsys_nb_atm = cf.get_cell_nbatoms_from_lmp(subsys_lammps_data)
