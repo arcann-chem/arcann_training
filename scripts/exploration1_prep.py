@@ -262,6 +262,9 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
             exploration_json["subsys_nr"][it_subsys_nr]["disturbed_start"] = False
         del starting_point_list_path, starting_point_list_all
 
+    elif current_iteration == 1:
+        exploration_json["subsys_nr"][it_subsys_nr]["disturbed_start"] = False
+
     ### Now it is by NNP and by nb_traj
     for it_nnp in range(1, config_json["nb_nnp"] + 1 ):
         for it_number in range(1, exploration_json["nb_traj"] + 1):
