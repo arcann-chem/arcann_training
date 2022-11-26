@@ -1,9 +1,8 @@
 ## deepmd_iterative_apath
 # deepmd_iterative_apath: str = ""
-## Project name / allocation / arch (nvs/v100/a100 or gen7156/rome/cpu)
-# project_name: str = "nvs"
-# allocation_name: str = "v100"
-# arch_name: str = "v100"
+## Either shortcut (machine_file.json) or Project name / allocation / arch
+# user_spec = "v100"
+# user_spec = ["nvs","v100","v100"]
 # slurm_email: str = ""
 
 ###################################### No change past here
@@ -55,64 +54,57 @@ if not training_json["is_frozen"]:
     logging.critical("Aborting...")
     sys.exit(1)
 
+### Read cluster info
+if "user_spec" in globals():
+    cluster, cluster_spec, cluster_error = cf.clusterize(deepmd_iterative_apath,training_iterative_apath,step="test",user_keyword=user_spec)
+else:
+    cluster, cluster_spec, cluster_error = cf.clusterize(deepmd_iterative_apath,training_iterative_apath,step="test")
+if cluster_error != 0:
+    ### #FIXME: Better errors for clusterize
+    logging.critical("Error in machine_file.json: "+str(cluster_error))
+    logging.critical("Aborting...")
+    sys.exit(1)
+
+cf.check_file(jobs_apath/("job_deepmd_test_"+cluster_spec["arch_type"]+"_"+cluster+".sh"),True,True,"No SLURM file present for the test step on this cluster.")
+slurm_file_master = cf.read_file(jobs_apath/("job_deepmd_test_"+cluster_spec["arch_type"]+"_"+cluster+".sh"))
+del jobs_apath
+
 ### Set needed variables
 test_json["nb_nnp"] = config_json["nb_nnp"]
 test_json["is_compressed"] = training_json["is_compressed"]
-
-### #35
-cluster = cf.check_cluster()
-test_json["cluster"] = cluster
-test_json["project_name"] = "nvs" if "project_name" not in globals() else project_name
-test_json["allocation_name"] = "v100" if "allocation_name" not in globals() else allocation_name
-test_json["arch_name"] = "v100" if "arch_name" not in globals() else arch_name
-project_name = test_json["project_name"]
-allocation_name = test_json["allocation_name"]
-arch_name = test_json["arch_name"]
-if arch_name == "v100" or arch_name == "a100":
-    arch_type ="gpu"
-
-### #35
-cf.check_file(jobs_apath/("job_deepmd_test_"+arch_type +"_"+cluster+".sh"),True,True)
-slurm_master = cf.read_file(jobs_apath/("job_deepmd_test_"+arch_type +"_"+cluster+".sh"))
+test_json["test"] = {}
+test_json["test"]["cluster"] = cluster
+test_json["test"]["project_name"] = cluster_spec["project_name"]
+test_json["test"]["allocation_name"] = cluster_spec["allocation_name"]
+test_json["test"]["arch_name"] = cluster_spec["arch_name"]
+test_json["test"]["arch_type"] = cluster_spec["arch_type"]
 
 ###
 compressed = "_compressed" if test_json["is_compressed"] else ""
 for it_nnp in range(1, test_json["nb_nnp"] + 1):
-    slurm_file = slurm_master.copy()
+    slurm_file = slurm_file_master.copy()
     cf.check_file(training_iterative_apath/"NNP"/("graph_"+str(it_nnp)+"_"+current_iteration_zfill+compressed+".pb"),True,True)
     subprocess.call(["rsync","-a", str(training_iterative_apath/"NNP"/("graph_"+str(it_nnp)+"_"+current_iteration_zfill+compressed+".pb")), str(current_apath)])
     slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_MODEL_","graph_"+str(it_nnp)+"_"+current_iteration_zfill+compressed)
     slurm_file = cf.replace_in_list(slurm_file,"_R_NNPNB_","NNP"+str(it_nnp))
-    slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",project_name)
     slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_","04:00:00")
     slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_VERSION_",str(training_json["deepmd_model_version"]))
+    
+    slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",cluster_spec["project_name"])
+    slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",cluster_spec["allocation_name"])
+    slurm_file = cf.delete_in_list(slurm_file,"_R_PARTITON_") if cluster_spec["partition"] is None else cf.replace_in_list(slurm_file,"_R_PARTITION_",cluster_spec["partition"])
+    slurm_file = cf.delete_in_list(slurm_file,"_R_SUBPARTITION_") if cluster_spec["subpartition"] is None else cf.replace_in_list(slurm_file,"_R_SUBPARTITION_",cluster_spec["subpartition"])
 
-    if allocation_name == "v100":
-        slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",allocation_name)
-        if arch_name == "v100":
-            slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t3")
-            slurm_file = cf.replace_in_list(slurm_file,"_R_PARTITION_","gpu_p13")
-            slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _R_SUBPARTITION_","##SBATCH -C _R_SUBPARTITION_")
-        elif arch_name == "a100":
-            slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t3")
-            slurm_file = cf.replace_in_list(slurm_file,"_R_PARTITION_","gpu_p4")
-            slurm_file = cf.replace_in_list(slurm_file,"#SBATCH -C _R_SUBPARTITION_","##SBATCH -C _R_SUBPARTITION_")
-    elif allocation_name == "a100":
-        slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",allocation_name)
-        slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_","qos_gpu-t3")
-        slurm_file = cf.replace_in_list(slurm_file,"_R_PARTITION_","gpu_p5")
-        slurm_file = cf.replace_in_list(slurm_file,"_R_SUBPARTITION_",arch_name)
-    else:
-        logging.critical("Unknown error. Please BUG REPORT")
-        logging.critical("Aborting...")
-        sys.exit(1)
     if slurm_email != "":
-        slurm_file = cf.replace_in_list(slurm_file,"##SBATCH --mail-type","#SBATCH --mail-type")
-        slurm_file = cf.replace_in_list(slurm_file,"##SBATCH --mail-user _R_EMAIL_","#SBATCH --mail-user "+slurm_email)
-    cf.write_file(current_apath/("job_deepmd_test_"+arch_type +"_"+cluster+"_NNP"+str(it_nnp)+".sh"),slurm_file)
+        slurm_file = cf.replace_in_list(slurm_file,"_R_EMAIL_",slurm_email)
+    else:
+        slurm_file = cf.delete_in_list(slurm_file,"_R_EMAIL_")
+        slurm_file = cf.delete_in_list(slurm_file,"mail")
+
+    cf.write_file(current_apath/("job_deepmd_test_"+cluster_spec["arch_type"] +"_"+cluster+"_NNP"+str(it_nnp)+".sh"),slurm_file)
     del slurm_file
 del it_nnp
-del slurm_master, compressed
+del slurm_file_master, compressed
 
 test_json["is_locked"] = True
 test_json["is_launched"] = False
@@ -128,8 +120,7 @@ del config_json, training_iterative_apath, control_apath, jobs_apath, current_ap
 del training_json
 del test_json
 del current_iteration, current_iteration_zfill
-del cluster, arch_type
-del project_name, allocation_name, arch_name
+del cluster, cluster_spec
 del deepmd_iterative_apath
 del slurm_email
 

@@ -42,7 +42,6 @@ import common_functions as cf
 control_apath = training_iterative_apath/"control"
 current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
 current_iteration = int(current_iteration_zfill)
-config_json = cf.json_read((control_apath/"config.json"),True,True)
 test_json = cf.json_read((control_apath/("test_"+current_iteration_zfill+".json")),True,True)
 current_apath = Path(".").resolve()
 
@@ -57,26 +56,21 @@ if not test_json["is_locked"]:
     logging.critical("Aborting...")
     sys.exit(1)
 
-### #35
 cluster = cf.check_cluster()
-
-if test_json["arch_name"] == "v100" or test_json["arch_name"] == "a100":
-    arch_type ="gpu"
-
 cf.check_same_cluster(cluster,test_json)
 
 ### Launch the jobs
 check = 0
 for it_nnp in range(1, test_json["nb_nnp"] + 1):
-    if (current_apath/("job_deepmd_test_"+arch_type+"_"+cluster+"_NNP"+str(it_nnp)+".sh")).is_file():
-        subprocess.call(["sbatch",str(current_apath/("job_deepmd_test_"+arch_type+"_"+cluster+"_NNP"+str(it_nnp)+".sh"))])
+    if (current_apath/("job_deepmd_test_"+test_json["test"]["arch_type"]+"_"+cluster+"_NNP"+str(it_nnp)+".sh")).is_file():
+        subprocess.call(["sbatch",str(current_apath/("job_deepmd_test_"+test_json["test"]["arch_type"]+"_"+cluster+"_NNP"+str(it_nnp)+".sh"))])
         logging.info("DP Test - "+str(it_nnp)+" launched")
         check = check + 1
     else:
         logging.warning("DP Test - "+str(it_nnp)+" NOT launched")
 del it_nnp
 
-if check == config_json["nb_nnp"]:
+if check == test_json["nb_nnp"]:
     test_json["is_launched"] = True
     logging.info("DP-Test: SLURM phase is a success!")
 else:
@@ -88,7 +82,7 @@ del check
 cf.json_dump(test_json,(control_apath/("test_"+current_iteration_zfill+".json")),True)
 
 ### Cleaning
-del config_json, training_iterative_apath, control_apath, current_apath
+del training_iterative_apath, control_apath, current_apath
 del current_iteration, current_iteration_zfill
 del test_json
 del deepmd_iterative_apath

@@ -32,7 +32,6 @@ import common_functions as cf
 control_apath = training_iterative_apath/"control"
 current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
 current_iteration = int(current_iteration_zfill)
-config_json = cf.json_read((control_apath/"config.json"),True,True)
 test_json = cf.json_read((control_apath/("test_"+current_iteration_zfill+".json")),True,True)
 current_apath = Path(".").resolve()
 
@@ -49,7 +48,7 @@ total = 0
 for it_data_folders in (current_apath/"data").iterdir():
     if it_data_folders.is_dir():
         data_name_t = str(it_data_folders.name)
-        for it_nnp in range(1,config_json["nb_nnp"]+1):
+        for it_nnp in range(1,test_json["nb_nnp"]+1):
             total = total + 1
             if (current_apath/("out_NNP"+str(it_nnp)+"/graph_"+str(it_nnp)+"_"+current_iteration_zfill+compressed+"_"+data_name_t+".e.out")).is_file():
                 check = check +1
@@ -72,7 +71,7 @@ cf.remove_file_glob(current_apath,"DeepMD_Test.*")
 logging.info("The DP-Test: Check phase is a success!")
 
 ### Cleaning
-del config_json, training_iterative_apath, control_apath, current_apath
+del training_iterative_apath, control_apath, current_apath
 del current_iteration, current_iteration_zfill
 del test_json
 del deepmd_iterative_apath

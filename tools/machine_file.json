@@ -9,8 +9,8 @@
             "partition": "gpu_p13",
             "subpartition": "[v100-16g|v100-32g]",
             "qos": {"qos_gpu-t3": 72000, "qos_gpu-t4": 360000},
-            "valid_for":  ["training","freezing","compressing","exploration"],
-            "default": ["training","freezing","compressing","exploration"]},
+            "valid_for":  ["training","freezing","compressing","exploration","test"],
+            "default": ["training","freezing","compressing","exploration","test"]},
 
         "v100_16g": {
             "project_name": "nvs",
@@ -20,7 +20,7 @@
             "partition": "gpu_p13",
             "subpartition": "v100-16g",
             "qos": {"qos_gpu-t3": 72000, "qos_gpu-t4": 360000},
-            "valid_for":  ["training","freezing","compressing","exploration"]},
+            "valid_for":  ["training","freezing","compressing","exploration","test"]},
 
         "v100_32g": {
             "project_name": "nvs",
@@ -30,7 +30,7 @@
             "partition": "gpu_p13",
             "subpartition": "v100-32g",
             "qos": {"qos_gpu-t3": 72000, "qos_gpu-t4": 360000},
-            "valid_for":  ["training","freezing","compressing","exploration"]},
+            "valid_for":  ["training","freezing","compressing","exploration","test"]},
 
         "a100_v100": {
             "project_name": "nvs",
@@ -40,7 +40,7 @@
             "partition": "gpu_p4",
             "subpartition": null,
             "qos": {"qos_gpu-t3": 72000},
-            "valid_for":  ["training","freezing","compressing","exploration"]},
+            "valid_for":  ["training","freezing","compressing","exploration","test"]},
 
         "a100": {
             "project_name": "nvs",
@@ -60,7 +60,7 @@
             "partition": "cpu_p1",
             "subpartition": null,
             "qos": {"qos_cpu-t3": 72000, "qos_cpu-t4": 360000},
-            "valid_for":  ["labeling"],
+            "valid_for": ["labeling","test_graph"],
             "default": ["labeling"]},
 
         "cpu-dev": {
@@ -71,7 +71,18 @@
             "partition": "cpu_p1",
             "subpartition": null,
             "qos": {"qos_cpu-dev": 7200},
-            "valid_for":  ["nothing"]}
+            "valid_for":  ["test_graph"]},
+
+        "prepost_cpu": {
+            "project_name": "nvs",
+            "allocation_name": "cpu",
+            "arch_name": "cpu",
+            "arch_type": "cpu",
+            "partition": "prepost",
+            "subpartition": null,
+            "qos": {"qos_cpu-t3": 72000},
+            "valid_for": ["test_graph"],
+            "default": ["test_graph"]}
     },
     "ir":
     {
