@@ -96,8 +96,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
         else:
             failed_list_2.append(str(local_apath/("2_labeling_"+it_step_zfill+".out"))+"\n")
         del cp2k_output_file_2
-    del it_step, it_step_zfill
-
+    
     for it_step in range(labeling_json["subsys_nr"][it_subsys_nr]["candidates"] + 1, labeling_json["subsys_nr"][it_subsys_nr]["candidates"] + labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"] + 1):
         it_step_zfill = str(it_step).zfill(5)
         local_apath = Path(".").resolve()/str(it_subsys_nr)/it_step_zfill
