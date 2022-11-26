@@ -425,8 +425,10 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     subsys_ipi_xyz_fn = starting_point_list[RAND]
                     subsys_ipi_xyz = cf.read_file(training_iterative_apath/"starting_structures"/subsys_ipi_xyz_fn)
                     exploration_ipi_xmllist = cf.replace_in_list(exploration_ipi_xmllist,"_R_XYZ_",subsys_ipi_xyz_fn)
-
+                    
+                    
                     ### Get again the subsys_cell and nb_atom
+                    subsys_lammps_data = cf.read_file(training_iterative_apath/"starting_structures"/subsys_ipi_xyz_fn.replace(".xyz",".lmp"))
                     subsys_cell, subsys_nb_atm = cf.get_cell_nbatoms_from_lmp(subsys_lammps_data)
 
                     ratio_ill_described = (
@@ -448,7 +450,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     else:
                         subsys_nb_steps = subsys_nb_steps if "nb_steps_exploration" not in globals() else nb_steps_exploration[it0_subsys_nr]
 
-                    exploration_input = cf.replace_in_list(exploration_input,"_R_NUMBER_OF_STEPS_",str(subsys_nb_steps))
+                    exploration_ipi_xmllist = cf.replace_in_list(exploration_ipi_xmllist,"_R_NUMBER_OF_STEPS_",str(subsys_nb_steps))
 
                     subsys_walltime_approx_s = ( prevexploration_json["subsys_nr"][it_subsys_nr]["s_per_step"] * subsys_nb_steps )
                     subsys_walltime_approx_s = subsys_walltime_approx_s * 1.10
@@ -546,7 +548,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
     if with_plumed == 1:
         del plumed_input
     del subsys_temp, subsys_cell, subsys_nb_atm, subsys_nb_steps
-    del subsys_lammps_data, subsys_timestep, subsys_lammps_data_fn, subsys_walltime_approx_s, it_print_every_x_steps
+    del subsys_lammps_data, subsys_timestep, subsys_walltime_approx_s, it_print_every_x_steps
 
 del it0_subsys_nr, it_subsys_nr, slurm_file_master
 
