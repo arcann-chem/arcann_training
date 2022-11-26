@@ -419,7 +419,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                 exploration_ipi_xmllist = cf.replace_in_list(exploration_ipi_xmllist,"_R_SUBSYS_",str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill)
 
                 if current_iteration > 1:
-                    if len(starting_point_list) == 0:
+                    if len(starting_point_list) == 0:   
                         starting_point_list = starting_point_list_bckp.copy()
                     RAND = random.randrange(0,len(starting_point_list))
                     subsys_ipi_xyz_fn = starting_point_list[RAND]
@@ -430,6 +430,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     ### Get again the subsys_cell and nb_atom
                     subsys_lammps_data = cf.read_file(training_iterative_apath/"starting_structures"/subsys_ipi_xyz_fn.replace(".xyz",".lmp"))
                     subsys_cell, subsys_nb_atm = cf.get_cell_nbatoms_from_lmp(subsys_lammps_data)
+                    exploration_ipi_xmllist = cf.replace_in_list(exploration_ipi_xmllist,"_R_CELL_",str(subsys_cell))
 
                     ratio_ill_described = (
                         (prevexploration_json["subsys_nr"][it_subsys_nr]["nb_candidates"] + prevexploration_json["subsys_nr"][it_subsys_nr]["nb_rejected"])
@@ -450,7 +451,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     else:
                         subsys_nb_steps = subsys_nb_steps if "nb_steps_exploration" not in globals() else nb_steps_exploration[it0_subsys_nr]
 
-                    exploration_ipi_xmllist = cf.replace_in_list(exploration_ipi_xmllist,"_R_NUMBER_OF_STEPS_",str(subsys_nb_steps))
+                    exploration_ipi_xmllist = cf.replace_in_list(exploration_ipi_xmllist,"_R_NB_STEPS_",str(subsys_nb_steps))
 
                     subsys_walltime_approx_s = ( prevexploration_json["subsys_nr"][it_subsys_nr]["s_per_step"] * subsys_nb_steps )
                     subsys_walltime_approx_s = subsys_walltime_approx_s * 1.10
@@ -472,7 +473,12 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                         cf.write_file(local_apath/it_plumed_input,plumed_input[it_plumed_input])
 
                 exploration_dpipi_json = subsys_exploration_ipi_json.copy()
+                if current_iteration > 1:
+                    exploration_dpipi_json["coord_file"] = subsys_ipi_xyz_fn
+                    for it_zzz,zzz in enumerate(config_json["type_map"]):
+                        exploration_dpipi_json["atom_type"][str(zzz)] = it_zzz
                 exploration_dpipi_json["graph_file"] = models_list[0]
+
                 ### Write INPUT file
                 exploration_ipi_xml = cf.convert_listofstrings_to_xml(exploration_ipi_xmllist)
                 cf.write_file(local_apath/subsys_ipi_xyz_fn,subsys_ipi_xyz)
