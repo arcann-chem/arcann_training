@@ -269,8 +269,8 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
         np.savetxt(str(subsys_path/"wannier-disturbed.raw"),wannier_array_raw,delimiter=" ")
         np.save(str(data_apath/"set.000"/"wannier"),wannier_array_raw)
 
-        del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw, wannier_array_raw
-del volume, cp2k_version, count, subsys_path, data_apath, it_subsys_nr
+        del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw, wannier_array_raw, count
+del volume, cp2k_version, subsys_path, data_apath, it_subsys_nr
 del Ha_to_eV, Bohr_to_A, au_to_eV_per_A,eV_per_A3_to_GPa
 
 labeling_json["is_extracted"] = True
