@@ -159,8 +159,8 @@ datasets_extra=[]
 datasets_validation=[]
 for it_data_folders in data_apath.iterdir():
     if it_data_folders.is_dir():
-    ### Escape initial/extra sets, because initial get added first and extra as last
-        if it_data_folders.name not in datasets_initial_json.keys() and "extra_" != it_data_folders.name[:6]:
+    ### Escape initial/extra sets, because initial get added first and extra as last, and also escape init_ not in initial_json (in case of removal)
+        if it_data_folders.name not in datasets_initial_json.keys() and "extra_" != it_data_folders.name[:6] and "init_" != it_data_folders.name[:5]:
             ### Escape test sets
             if "test_" != it_data_folders.name[:5]:
                 ### Escape if set iter is superior as iter, it is only for reprocessing old stuff.
