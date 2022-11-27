@@ -389,7 +389,7 @@ if current_iteration > 0:
     previous_iteration = current_iteration - 1
     previous_iteration_zfill = str(previous_iteration).zfill(3)
     prevtraining_json = cf.json_read((control_apath/("training_"+previous_iteration_zfill+".json")),True,True)
-    walltime_approx_s = int(np.ceil((numb_steps*(prevtraining_json["s_per_step"]*1.25))))
+    walltime_approx_s = int(np.ceil((numb_steps*(prevtraining_json["s_per_step"]*1.50))))
     del previous_iteration, previous_iteration_zfill, prevtraining_json
 else:
     initial_seconds_per_1000steps = 90 if "initial_seconds_per_1000steps" not in globals() else initial_seconds_per_1000steps
