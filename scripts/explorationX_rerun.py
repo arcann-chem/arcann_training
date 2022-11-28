@@ -97,7 +97,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                 for it_sub_nnp in range(1, config_json["nb_nnp"] + 1 ):
                     nnp_apath = (training_iterative_apath/"NNP"/("graph_"+str(it_sub_nnp)+"_"+previous_iteration_zfill+compress_str+".pb")).resolve()
                     if not (local_apath/ ("graph_"+str(it_sub_nnp)+"_"+previous_iteration_zfill+compress_str+".pb")).is_file():
-                        subprocess.call(["ln","-s", str(nnp_apath), str(local_apath)])
+                        subprocess.call(["ln","-nsf", str(nnp_apath), str(local_apath)])
                 models_string=" ".join(models_list)
                 del list_nnp, it_sub_nnp, nnp_apath, compress_str, reorder_nnp_list
 
