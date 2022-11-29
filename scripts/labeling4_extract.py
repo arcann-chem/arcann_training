@@ -75,7 +75,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
     volume = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"]))
     volume = box_array_raw[:,0] * box_array_raw[:,4] * box_array_raw[:,8]
 
-    wannier_pourris = ["#Indexes start at 0\n"]
+    wannier_not_converged = ["#Indexes start at 0\n"]
     is_wannier = False
 
     for it_step in range(1, labeling_json["subsys_nr"][it_subsys_nr]["candidates"] + 1):
@@ -151,11 +151,11 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
             wannier_array_raw[it_step-1,:] = wannier_array
             is_wannier = True
             del wannier_array, wannier_xyz
-            ### Check if wannier centers are pourris
+            ### Check if wannier centers are not converged
             cp2k_output_file_2 = local_apath/("2_labeling_"+it_step_zfill+".out")
             cp2k_output_2 = cf.read_file(cp2k_output_file_2)
             if any("LOCALIZATION! loop did not converge within the maximum number of iterations" in f for f in cp2k_output_2):
-                wannier_pourris.append(str(it_step-1)+"\n")
+                wannier_not_converged.append(str(it_step-1)+"\n")
 
         del it_step_zfill, local_apath
     del it_step
@@ -172,7 +172,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
     np.save(str(data_apath/"set.000"/"coord"),coord_array_raw)
     np.savetxt(str(subsys_path/"wannier.raw"),wannier_array_raw,delimiter=" ") if is_wannier else True
     np.save(str(data_apath/"set.000"/"wannier"),wannier_array_raw) if is_wannier else True
-    cf.write_file((data_apath/"set.000"/"wannier_pourris.txt"),wannier_pourris) if len(wannier_pourris) > 1 else True
+    cf.write_file((data_apath/"set.000"/"wannier_not-converged.txt"),wannier_not_converged) if len(wannier_not_converged) > 1 else True
 
     del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw,wannier_array_raw
 
@@ -187,7 +187,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
         box_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"], 9))
         virial_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"], 9))
 
-        wannier_pourris = ["#Indexes start at 0\n"]
+        wannier_not_converged = ["#Indexes start at 0\n"]
         is_wannier = False
 
         for count,it_step in enumerate(range(labeling_json["subsys_nr"][it_subsys_nr]["candidates"] + 1, labeling_json["subsys_nr"][it_subsys_nr]["candidates"] + labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"] + 1 )):
@@ -262,11 +262,11 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
                 wannier_array_raw[it_step-1,:] = wannier_array
                 is_wannier = True
                 del wannier_array, wannier_xyz
-                ### Check if wannier centers are pourris
+                ### Check if wannier centers are not converged
                 cp2k_output_file_2 = local_apath/("2_labeling_"+it_step_zfill+".out")
                 cp2k_output_2 = cf.read_file(cp2k_output_file_2)
                 if any("LOCALIZATION! loop did not converge within the maximum number of iterations" in f for f in cp2k_output_2):
-                    wannier_pourris.append(str(count)+"\n")
+                    wannier_not_converged.append(str(count)+"\n")
 
             del it_step_zfill, local_apath
         del it_step
@@ -287,7 +287,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
         np.save(str(data_apath/"set.000"/"coord"),coord_array_raw)
         np.savetxt(str(subsys_path/"wannier-disturbed.raw"),wannier_array_raw,delimiter=" ") if is_wannier else True
         np.save(str(data_apath/"set.000"/"wannier"),wannier_array_raw) if is_wannier else True
-        cf.write_file((data_apath/"set.000"/"wannier_pourris.txt"),wannier_pourris) if len(wannier_pourris) > 1 else True
+        cf.write_file((data_apath/"set.000"/"wannier_not-converged.txt"),wannier_not_converged) if len(wannier_not_converged) > 1 else True
 
         del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw, wannier_array_raw, count
 del volume, cp2k_version, subsys_path, data_apath, it_subsys_nr
