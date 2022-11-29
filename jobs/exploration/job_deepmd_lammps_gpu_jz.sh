@@ -1,39 +1,40 @@
 #!/bin/bash
-# Author: Rolf DAVID
-# Date: 2021/03/16
-# Modified: 2022/10/08
-# Account
-#SBATCH --account=_PROJECT_@_ALLOC_
-# Queue
-#SBATCH --qos=_QOS_
-#SBATCH --partition=_PARTITION_
-#SBATCH -C _SUBPARTITION_
-# Number of nodes/processes/tasksperprocess
+# Project/Account
+#SBATCH --account=_R_PROJECT_@_R_ALLOC_
+# QoS/Partition/SubPartition
+#SBATCH --qos=_R_QOS_
+#SBATCH --partition=_R_PARTITION_
+#SBATCH -C _R_SUBPARTITION_
+# Number of Nodes/MPIperNodes/OpenMPperMPI/GPU
 #SBATCH --nodes 1
 #SBATCH --ntasks-per-node 1
 #SBATCH --cpus-per-task 10
 #SBATCH --gres=gpu:1
 #SBATCH --hint=nomultithread
-# Wall-time
-#SBATCH -t _WALLTIME_
+# Walltime
+#SBATCH -t _R_WALLTIME_
 # Merge Output/Error
 #SBATCH -o LAMMPS_DeepMD.%j
 #SBATCH -e LAMMPS_DeepMD.%j
 # Name of job
 #SBATCH -J LAMMPS_DeepMD
-# Email (Remove the space between # and SBATCH on the next two lines)
-##SBATCH --mail-type FAIL,BEGIN,END,ALL
-##SBATCH --mail-user _EMAIL_
+# Email
+#SBATCH --mail-type FAIL,BEGIN,END,ALL
+#SBATCH --mail-user _R_EMAIL_
 #
 
 # Input file (extension is automatically added as .in for INPUT)
 # Support a list of files as a bash array
-DeepMD_MODEL_VERSION="SET_DEEPMD_MODEL_VERSION"
-LAMMPS_INPUT_F="_INPUT_"
-EXTRA_FILES=("_DATA_FILE_" "_PLUMED_FILES_LIST_")
-NNP_FILES=("_MODELS_LIST_")
+DeepMD_MODEL_VERSION="_R_DEEPMD_VERSION_"
+DeepMD_MODEL=("_R_MODELS_LIST_")
+LAMMPS_INPUT="_R_INPUT_"
+EXTRA_FILES=("_R_DATA_FILE_" "_R_PLUMED_FILES_LIST_" "_R_XYZ_IN_")
 
-#!!Nothing needed to be changed past this point
+#----------------------------------------------
+## Nothing needed to be changed past this point
+
+### Project Switch
+eval "$(idrenv -d _R_PROJECT_)"
 
 # Go where the job has been launched
 cd "${SLURM_SUBMIT_DIR}" || exit 1
@@ -56,10 +57,10 @@ elif [ "${SLURM_JOB_QOS:3:4}" == "cpu" ]; then
 else
     echo "There is no ${SLURM_JOB_QOS}. Aborting..."; exit 1
 fi
-LAMMPS_EXE=$(which lmp) || ( echo "Executable not found. Aborting..."; exit 1 )
+LAMMPS_EXE=$(command -v lmp) || ( echo "Executable (lmp) not found. Aborting..."; exit 1 )
 
 # Test if input file is present
-if [ ! -f "${LAMMPS_INPUT_F}".in ]; then echo "No input file found. Aborting..."; exit 1; fi
+if [ ! -f "${LAMMPS_INPUT}".in ]; then echo "No input file found. Aborting..."; exit 1; fi
 
 # Set the temporary work directory
 export TEMPWORKDIR=${SCRATCH}/JOB-${SLURM_JOBID}
@@ -67,10 +68,10 @@ mkdir -p "${TEMPWORKDIR}"
 ln -s "${TEMPWORKDIR}" "${SLURM_SUBMIT_DIR}"/JOB-"${SLURM_JOBID}"
 
 # Copy files to the temporary work directory
-cp "${LAMMPS_INPUT_F}".in "${TEMPWORKDIR}" && echo "${LAMMPS_INPUT_F}.in copied successfully"
-cp "${LAMMPS_INPUT_F}".in "${LAMMPS_INPUT_F}".in."${SLURM_JOBID}"
+cp "${LAMMPS_INPUT}".in "${TEMPWORKDIR}" && echo "${LAMMPS_INPUT}.in copied successfully"
+cp "${LAMMPS_INPUT}".in "${LAMMPS_INPUT}".in."${SLURM_JOBID}"
 for f in "${EXTRA_FILES[@]}"; do [ -f "${f}" ] && cp "${f}" "${TEMPWORKDIR}" && echo "${f} copied successfully"; done
-for f in "${NNP_FILES[@]}"; do [ -f "${f}" ] && ln -s "$(realpath "${f}")" "${TEMPWORKDIR}" && echo "${f} linked successfully"; done
+for f in "${DeepMD_MODEL[@]}"; do [ -f "${f}" ] && ln -s "$(realpath "${f}")" "${TEMPWORKDIR}" && echo "${f} linked successfully"; done
 cd "${TEMPWORKDIR}" || exit 1
 
 # Run LAMMPS
@@ -85,7 +86,7 @@ export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 
 # Launch command
 SRUN_LAMMPS_EXE="srun --ntasks=${SLURM_NTASKS} --nodes=${SLURM_NNODES} --ntasks-per-node=${TASKS_PER_NODE} --cpus-per-task=${SLURM_CPUS_PER_TASK} ${LAMMPS_EXE}"
-LAUNCH_CMD="${SRUN_LAMMPS_EXE} -in ${LAMMPS_INPUT_F}.in -log ${LAMMPS_INPUT_F}.log -screen none"
+LAUNCH_CMD="${SRUN_LAMMPS_EXE} -in ${LAMMPS_INPUT}.in -log ${LAMMPS_INPUT}.log -screen none"
 
 echo "${LAUNCH_CMD}"
 ${LAUNCH_CMD} || export EXIT_CODE="1"
@@ -98,7 +99,7 @@ mv ./* "${SLURM_SUBMIT_DIR}"
 cd "${SLURM_SUBMIT_DIR}" || exit 1
 rmdir "${TEMPWORKDIR}" 2> /dev/null || echo "Leftover files on ${TEMPWORKDIR}"
 [ ! -d "${TEMPWORKDIR}" ] && { [ -h JOB-"${SLURM_JOBID}" ] && rm JOB-"${SLURM_JOBID}"; }
-rm "${LAMMPS_INPUT_F}".in."${SLURM_JOBID}"
+rm "${LAMMPS_INPUT}".in."${SLURM_JOBID}"
 
 # Done
 echo "Have a nice day !"

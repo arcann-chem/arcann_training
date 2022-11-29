@@ -1,29 +1,32 @@
 #!/bin/bash
-# Author: Rolf DAVID
-# Date: 2021/05/20
-# Modified: 2022/10/12
-# Account
-#SBATCH --account=_PROJECT_@_ALLOC_
-# Queue
-#SBATCH --qos=_QOS_
-#SBATCH --partition=_PARTITION_
-#SBATCH -C _SUBPARTITION_
-# Number of nodes/processes/tasksperprocess
+# Project/Account
+#SBATCH --account=_R_PROJECT_@_R_ALLOC_
+# QoS/Partition/SubPartition
+#SBATCH --qos=_R_QOS_
+#SBATCH --partition=_R_PARTITION_
+#SBATCH -C _R_SUBPARTITION_
+# Number of Nodes/MPIperNodes/OpenMPperMPI/GPU
 #SBATCH --nodes 1
-#SBATCH --ntasks-per-node 10
-#SBATCH --cpus-per-task 1
+#SBATCH --ntasks-per-node 1
+#SBATCH --cpus-per-task 10
 #SBATCH --hint=nomultithread
-# Wall-time
-#SBATCH -t _WALLTIME_
+# Walltime
+#SBATCH -t _R_WALLTIME_
 # Merge Output/Error
 #SBATCH -o DeepMD_Test_Plot.%j
 #SBATCH -e DeepMD_Test_Plot.%j
 # Name of job
 #SBATCH -J DeepMD_Test_Plot
-# Email (Remove the space between # and SBATCH on the next two lines)
-##SBATCH --mail-type FAIL,BEGIN,END,ALL
-##SBATCH --mail-user _EMAIL_
+# Email
+#SBATCH --mail-type FAIL,BEGIN,END,ALL
+#SBATCH --mail-user _R_EMAIL_
 #
+
+#----------------------------------------------
+## Nothing needed to be changed past this point
+
+### Project Switch
+eval "$(idrenv -d _R_PROJECT_)"
 
 module purge
 module load anaconda-py3/2022.05

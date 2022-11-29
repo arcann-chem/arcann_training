@@ -1,120 +1,118 @@
 ## deepmd_iterative_apath
-# deepmd_iterative_apath = ''
+# deepmd_iterative_apath: str = ""
 ## Project name / allocation / arch (nvs/v100/a100 or gen7156/rome/cpu)
-# project_name = 'nvs'
-# allocation_name = 'dev'
-# arch_name = 'cpu'
-# slurm_email = ''
+# project_name: str = "nvs"
+# allocation_name: str = "dev"
+# arch_name: str = "cpu"
+# slurm_email: str = ""
 
 ###################################### No change past here
 import sys
 from pathlib import Path
 import logging
-logging.basicConfig(level=logging.INFO,format='%(levelname)s: %(message)s')
+
+logging.basicConfig(level=logging.INFO,format="%(levelname)s: %(message)s")
 
 import subprocess
 
-training_iterative_apath = Path('..').resolve()
+training_iterative_apath = Path("..").resolve()
 ### Check if the deepmd_iterative_apath is defined
 deepmd_iterative_apath_error = 1
-if 'deepmd_iterative_apath' in globals():
-    if (Path(deepmd_iterative_apath)/'scripts'/'common_functions.py').is_file():
+if "deepmd_iterative_apath" in globals():
+    if (Path(deepmd_iterative_apath)/"tools"/"common_functions.py").is_file():
+        deepmd_iterative_apath = Path(deepmd_iterative_apath)
         deepmd_iterative_apath_error = 0
-elif (Path().home()/'deepmd_iterative_py'/'scripts'/'common_functions.py').is_file():
-    deepmd_iterative_apath = Path().home()/'deepmd_iterative_py'
+elif (Path().home()/"deepmd_iterative_py"/"tools"/"common_functions.py").is_file():
+    deepmd_iterative_apath = Path().home()/"deepmd_iterative_py"
     deepmd_iterative_apath_error = 0
-elif (training_iterative_apath/'control'/'path').is_file():
-    deepmd_iterative_apath = Path((training_iterative_apath/'control'/'path').read_text())
-    if (deepmd_iterative_apath/'scripts'/'common_functions.py').is_file():
+elif (training_iterative_apath/"control"/"path").is_file():
+    deepmd_iterative_apath = Path((training_iterative_apath/"control"/"path").read_text())
+    if (deepmd_iterative_apath/"tools"/"common_functions.py").is_file():
         deepmd_iterative_apath_error = 0
 if deepmd_iterative_apath_error == 1:
-    logging.critical('Can\'t find common_functions.py in usual places:')
-    logging.critical('deepmd_iterative_apath variable or ~/deepmd_iterative_py or in the path file in control')
-    logging.critical('Aborting...')
+    logging.critical("Can\'t find common_functions.py in usual places:")
+    logging.critical("deepmd_iterative_apath variable or ~/deepmd_iterative_py or in the path file in control")
+    logging.critical("Aborting...")
     sys.exit(1)
-sys.path.insert(0, str(Path(deepmd_iterative_apath)/'scripts'))
+sys.path.insert(0, str(deepmd_iterative_apath/"tools"))
 del deepmd_iterative_apath_error
 import common_functions as cf
 
-### Temp fix before Path/Str pass
-training_iterative_apath = str(training_iterative_apath)
-deepmd_iterative_apath = str(deepmd_iterative_apath)
+slurm_email = "" if "slurm_email" not in globals() else slurm_email
 
-config_json_fpath = training_iterative_apath+'/control/config.json'
-config_json = cf.json_read(config_json_fpath,True,True)
-
-current_iteration_zfill=Path().resolve().parts[-1].split('-')[0]
-current_iteration=int(current_iteration_zfill)
-
-test_json_fpath = training_iterative_apath+'/control/test_'+current_iteration_zfill+'.json'
-test_json = cf.json_read(test_json_fpath,True,True)
+### Read what is needed (json files)
+control_apath = training_iterative_apath/"control"
+jobs_apath = deepmd_iterative_apath/"jobs"/"test"
+current_iteration_zfill = Path().resolve().parts[-1].split('-')[0]
+current_iteration = int(current_iteration_zfill)
+config_json = cf.json_read((control_apath/"config.json"),True,True)
+test_json = cf.json_read((control_apath/("test_"+current_iteration_zfill+".json")),True,True)
+current_apath = Path(".").resolve()
+scripts_apath = deepmd_iterative_apath/"tools"
 
 ### Checks
-if test_json['is_checked'] is False:
-    logging.critical('Lock found. Run/Check first: test3_check.py')
-    logging.critical('Aborting...')
+if test_json["is_checked"] is False:
+    logging.critical("Lock found. Run/Check first: test3_check.py")
+    logging.critical("Aborting...")
     sys.exit(1)
 cluster = cf.check_cluster()
 
-### Set needed variables
-test_json['cluster_2'] = cluster
-test_json['project_name_2'] = project_name if 'project_name' in globals() else 'nvs'
-test_json['allocation_name_2'] = allocation_name if 'allocation_name' in globals() else 'dev'
-test_json['arch_name_2'] = arch_name if 'arch_name' in globals() else 'cpu'
-project_name = test_json['project_name_2']
-allocation_name = test_json['allocation_name_2']
-arch_name = test_json['arch_name_2']
-if arch_name == 'cpu':
-    arch_type ='cpu'
-slurm_email = '' if 'slurm_email' not in globals() else slurm_email
-
-cf.check_file(deepmd_iterative_apath+'/jobs/test/job_deepmd_test_concatenation_'+arch_type+'_'+cluster+'.sh',0,True,'No SLURM file present for the concatenation phase on this cluster.')
-slurm_file = cf.read_file(deepmd_iterative_apath+'/jobs/test/job_deepmd_test_concatenation_'+arch_type+'_'+cluster+'.sh')
-slurm_file = cf.replace_in_list(slurm_file,'_PROJECT_',project_name)
-slurm_file = cf.replace_in_list(slurm_file,'_WALLTIME_','02:00:00')
-if allocation_name == 'prepost':
-    slurm_file = cf.replace_in_list(slurm_file,'_ALLOC_','cpu')
-    slurm_file = cf.replace_in_list(slurm_file,'#SBATCH --qos=_QOS_','##SBATCH --qos=_QOS_')
-    slurm_file = cf.replace_in_list(slurm_file,'_PARTITION_','prepost')
-    slurm_file = cf.replace_in_list(slurm_file,'#SBATCH -C _SUBPARTITION_','##SBATCH -C _SUBPARTITION_')
-elif allocation_name == 'dev':
-    slurm_file = cf.replace_in_list(slurm_file,'_ALLOC_','cpu')
-    slurm_file = cf.replace_in_list(slurm_file,'_QOS_','qos_cpu-dev')
-    slurm_file = cf.replace_in_list(slurm_file,'#SBATCH --partition=_PARTITION_','##SBATCH --partition=_PARTITION_')
-    slurm_file = cf.replace_in_list(slurm_file,'#SBATCH -C _SUBPARTITION_','##SBATCH -C _SUBPARTITION_')
-elif allocation_name == 'cpu':
-    slurm_file = cf.replace_in_list(slurm_file,'_ALLOC_','cpu')
-    slurm_file = cf.replace_in_list(slurm_file,'_QOS_','qos_cpu-t3')
-    slurm_file = cf.replace_in_list(slurm_file,'#SBATCH --partition=_PARTITION_','##SBATCH --partition=_PARTITION_')
-    slurm_file = cf.replace_in_list(slurm_file,'#SBATCH -C _SUBPARTITION_','##SBATCH -C _SUBPARTITION_')
+### Read cluster info
+if "user_spec" in globals():
+    cluster, cluster_spec, cluster_error = cf.clusterize(deepmd_iterative_apath,training_iterative_apath,step="test_graph",user_keyword=user_spec)
 else:
-    logging.critical('Unknown error. Please BUG REPORT')
-    logging.critical('Aborting...')
+    cluster, cluster_spec, cluster_error = cf.clusterize(deepmd_iterative_apath,training_iterative_apath,step="test_graph")
+if cluster_error != 0:
+    ### #FIXME: Better errors for clusterize
+    logging.critical("Error in machine_file.json: "+str(cluster_error))
+    logging.critical("Aborting...")
     sys.exit(1)
-if slurm_email != '':
-    slurm_file = cf.replace_in_list(slurm_file,'##SBATCH --mail-type','#SBATCH --mail-type')
-    slurm_file = cf.replace_in_list(slurm_file,'##SBATCH --mail-user _EMAIL_','#SBATCH --mail-user '+slurm_email)
-cf.write_file('./job_deepmd_test_concat_'+arch_type+'_'+cluster+'.sh',slurm_file)
+
+cf.check_file(jobs_apath/("job_deepmd_test_concatenation_"+cluster_spec["arch_type"]+"_"+cluster+".sh"),True,True,"No SLURM file present for the test_graph step on this cluster.")
+slurm_file = cf.read_file(jobs_apath/("job_deepmd_test_concatenation_"+cluster_spec["arch_type"]+"_"+cluster+".sh"))
+del jobs_apath
+
+### Set needed variables
+test_json["test_graph"] = {}
+test_json["test_graph"]["cluster"] = cluster
+test_json["test_graph"]["project_name"] = cluster_spec["project_name"]
+test_json["test_graph"]["allocation_name"] = cluster_spec["allocation_name"]
+test_json["test_graph"]["arch_name"] = cluster_spec["arch_name"]
+test_json["test_graph"]["arch_type"] = cluster_spec["arch_type"]
+
+slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_","02:00:00")
+
+slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",cluster_spec["project_name"])
+slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",cluster_spec["allocation_name"])
+slurm_file = cf.delete_in_list(slurm_file,"_R_PARTITON_") if cluster_spec["partition"] is None else cf.replace_in_list(slurm_file,"_R_PARTITION_",cluster_spec["partition"])
+slurm_file = cf.delete_in_list(slurm_file,"_R_SUBPARTITION_") if cluster_spec["subpartition"] is None else cf.replace_in_list(slurm_file,"_R_SUBPARTITION_",cluster_spec["subpartition"])
+
+if slurm_email != "":
+    slurm_file = cf.replace_in_list(slurm_file,"_R_EMAIL_",slurm_email)
+else:
+    slurm_file = cf.delete_in_list(slurm_file,"_R_EMAIL_")
+    slurm_file = cf.delete_in_list(slurm_file,"mail")
+
+cf.write_file(current_apath/("job_deepmd_test_concat_"+cluster_spec["arch_type"]+"_"+cluster+".sh"),slurm_file)
 del slurm_file
 
-cf.check_file(deepmd_iterative_apath+'/scripts/_deepmd_test_concatenation.py',0,True)
-python_file = cf.read_file(deepmd_iterative_apath+'/scripts/_deepmd_test_concatenation.py')
-python_file = cf.replace_in_list(python_file,'_DEEPMD_ITERATIVE_APATH_',str(deepmd_iterative_apath))
-cf.write_file('./_deepmd_test_concatenation.py',python_file)
+cf.check_file(scripts_apath/"_deepmd_test_concatenation.py",True,True)
+python_file = cf.read_file(scripts_apath/"_deepmd_test_concatenation.py")
+python_file = cf.replace_in_list(python_file,"_DEEPMD_ITERATIVE_APATH_",str(deepmd_iterative_apath))
+cf.write_file(current_apath/"_deepmd_test_concatenation.py",python_file)
 del python_file
-logging.info('The DP-Test: concatenation-prep phase is a success!')
+logging.info("The DP-Test: concatenation-prep phase is a success!")
 
-subprocess.call(['sbatch','./job_deepmd_test_concat_'+arch_type+'_'+cluster+'.sh'])
-logging.info('The DP-Test: concatenation-SLURM phase is a success!')
+subprocess.call(["sbatch",str(current_apath/("job_deepmd_test_concat_"+cluster_spec["arch_type"]+"_"+cluster+".sh"))])
 
-cf.json_dump(test_json,test_json_fpath,True,'test.json')
+cf.json_dump(test_json,(control_apath/("test_"+current_iteration_zfill+".json")),True)
+logging.info("The DP-Test: concatenation-SLURM phase is a success!")
 
 ### Cleaning
-del config_json, config_json_fpath, training_iterative_apath
-del test_json, test_json_fpath
+del config_json, training_iterative_apath, control_apath, current_apath, scripts_apath, jobs_apath
+del test_json
 del current_iteration, current_iteration_zfill
-del cluster, arch_type
-del project_name, allocation_name, arch_name
+del cluster, cluster_spec
 del deepmd_iterative_apath
 del slurm_email
 

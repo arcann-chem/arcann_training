@@ -1,32 +1,29 @@
 #!/bin/bash
-# Author: Rolf DAVID
-# Date: 2021/12/08
-# Modified: 2022/04/27
-# Account
-#MSUB -A _PROJECT_
-# Queue
-#MSUB -q _ALLOC_
+# Project/Account
+#MSUB -A _R_PROJECT_
+#MSUB -q _R_ALLOC_
+# QoS/Partition/SubPartition
+#MSUB -Q _R_QOS_
 #MSUB -m scratch,work,store
-#MSUB -Q normal
-# Number of nodes/processes/tasksperprocess
-#MSUB -N _nb_NODES_
-#MSUB -n _nb_MPI_
-#MSUB -c _nb_OPENMP_per_MPI_
-# Wall-time
-#MSUB -T _WALLTIME_
+# Number of Nodes/MPIperNodes/OpenMPperMPI/GPU
+#MSUB -N _R_nb_NODES_
+#MSUB -n _R_nb_MPI_
+#MSUB -c _R_nb_OPENMP_per_MPI_
+# Walltime
+#MSUB -T _R_WALLTIME_
 # Merge Output/Error
 #MSUB -o CP2K.%A_%a
 #MSUB -e CP2K.%A_%a
 # Name of job
-#MSUB -r _CP2K_JOBNAME_
-# Email (Remove the space between # and SBATCH on the next two lines)
-##MSUB -@ _EMAIL_:begin,end
-#
-#MSUB -E "--array=_ARRAY_START_-_ARRAY_END_%250"
+#MSUB -r _R_CP2K_JOBNAME_
+# Email
+#MSUB -@ _R_EMAIL_:begin,end
+# Array
+#MSUB -E "--array=_R_ARRAY_START_-_R_ARRAY_END_%250"
 #
 
 echo "${SLURM_ARRAY_TASK_ID}"
-SLURM_ARRAY_TASK_ID_LARGE=$((SLURM_ARRAY_TASK_ID + _NEW_START_))
+SLURM_ARRAY_TASK_ID_LARGE=$((SLURM_ARRAY_TASK_ID + _R_NEW_START_))
 SLURM_ARRAY_TASK_ID_PADDED=$(printf "%05d\n" "${SLURM_ARRAY_TASK_ID_LARGE}")
 echo "$SLURM_ARRAY_TASK_ID_PADDED"
 
@@ -36,17 +33,31 @@ CP2K_INPUT_F2="2_labeling_${SLURM_ARRAY_TASK_ID_PADDED}"
 CP2K_WFRST_F="labeling_${SLURM_ARRAY_TASK_ID_PADDED}-SCF"
 CP2K_XYZ_F="labeling_${SLURM_ARRAY_TASK_ID_PADDED}.xyz"
 
-#!!Nothing needed to be changed past this point
+#----------------------------------------------
+## Nothing needed to be changed past this point
 
-# Load the environment depending on the version
+### Project Switch
 module purge
-module switch dfldatadir/_PROJECT_
-module load flavor/buildcompiler/intel/20 flavor/buildmpi/openmpi/4.0 flavor/cp2k/xc
-module load cp2k/7.1
-CP2K_EXE=$(which cp2k.popt) || ( echo "Executable not found. Aborting..."; exit 1 )
+module switch dfldatadir/_R_PROJECT_
 
 # Go where the job has been launched
 cd "${SLURM_SUBMIT_DIR}"/"${SLURM_ARRAY_TASK_ID_PADDED}" || exit 1
+
+# Load the environment depending on the version
+module load flavor/buildcompiler/intel/20 flavor/buildmpi/openmpi/4.0 flavor/cp2k/xc
+module load cp2k/7.1
+
+if [ "$(command -v cp2k.psmp)" ]; then
+    CP2K_EXE=$(command -v cp2k.psmp)
+elif [ "$(command -v cp2k.popt)" ]; then
+    if [ "${SLURM_CPUS_PER_TASK}" -lt 2 ]; then
+        CP2K_EXE=$(command -v cp2k.popt)
+    else
+        echo "Only executable (cp2k.popt) was found and OpenMP was requested. Aborting..."
+    fi
+else
+    echo "Executable (cp2k.popt/cp2k.psmp) not found. Aborting..."
+fi
 
 # Test if input file is present
 if [ ! -f "${CP2K_INPUT_F1}".inp ]; then echo "No input file found. Aborting..."; exit 1; fi
@@ -91,10 +102,10 @@ rmdir "${TEMPWORKDIR}" 2> /dev/null || echo "Leftover files on ${TEMPWORKDIR}"
 # Done
 echo "Have a nice day !"
 
-if [ "${SLURM_ARRAY_TASK_ID}" == "_ARRAY_END_" ]; then
-    if [ "_LAUNCHNEXT_" == "1" ]; then
-        cd "_CD_WHERE_" || exit 1
-        ccc_msub job_labeling_array_cpu_ir__NEXT_JOB_FILE_.sh
+if [ "${SLURM_ARRAY_TASK_ID}" == "_R_ARRAY_END_" ]; then
+    if [ "_R_LAUNCHNEXT_" == "1" ]; then
+        cd "_R_CD_WHERE_" || exit 1
+        ccc_msub job_labeling_array_cpu_ir__R_NEXT_JOB_FILE_.sh
     fi
 fi
 
