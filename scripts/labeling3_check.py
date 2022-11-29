@@ -182,5 +182,4 @@ del deepmd_iterative_apath
 
 del sys, Path, logging, cf
 import gc; gc.collect(); del gc
-print(globals())
 exit()

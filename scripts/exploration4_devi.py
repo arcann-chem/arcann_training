@@ -101,7 +101,6 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     devi_shape = devi.shape[0]
                 elif exploration_json["exploration_type"] == "i-PI":
                     devi_shape = devi.shape[0] + 1
-                print(expected,devi_shape,it_first_frame)
                 if expected > ( devi_shape - it_first_frame ):
                     devi_info_json["nb_total"] = expected
                     logging.warning("Exploration "+ str(it_subsys_nr)+" / "+str(it_nnp)+" / "+str(it_each))
