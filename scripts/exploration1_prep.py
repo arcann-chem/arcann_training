@@ -185,7 +185,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
             if with_plumed_smd == 1:
                 subsys_nb_steps = int(subsys_SMD_nb_steps)
             else:
-                subsys_nb_steps = 10/subsys_timestep if "exploration_time_ps" not in globals() else exploration_time_ps[it0_subsys_nr]/subsys_timestep
+                subsys_nb_steps = 10/subsys_timestep if "exploration_time_ps" not in globals() else int(exploration_time_ps[it0_subsys_nr]/subsys_timestep)
             subsys_exploration_lammps_input = cf.replace_in_list(subsys_exploration_lammps_input,"_R_NUMBER_OF_STEPS_",str(subsys_nb_steps))
             subsys_walltime_approx_s = 3600 if "init_job_walltime_h" not in globals() else init_job_walltime_h[it0_subsys_nr]*3600
             ### Get the cell and nb of atoms (just for config.json)
@@ -217,7 +217,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
             if with_plumed_smd == 1:
                 subsys_nb_steps = int(subsys_SMD_nb_steps)
             else:
-                subsys_nb_steps = 10/subsys_timestep if "exploration_time_ps" not in globals() else exploration_time_ps[it0_subsys_nr]/subsys_timestep
+                subsys_nb_steps = 10/subsys_timestep if "exploration_time_ps" not in globals() else int(exploration_time_ps[it0_subsys_nr]/subsys_timestep)
             subsys_exploration_ipi_xmllist = cf.replace_in_list(subsys_exploration_ipi_xmllist,"_R_NB_STEPS_",str(subsys_nb_steps))
 
             subsys_walltime_approx_s = 36000 if "init_job_walltime_h" not in globals() else init_job_walltime_h[it0_subsys_nr]*3600
@@ -325,7 +325,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     if with_plumed_smd == 1:
                         subsys_nb_steps = int(subsys_SMD_nb_steps)
                     else:
-                        subsys_nb_steps = subsys_nb_steps if "exploration_time_ps" not in globals() else exploration_time_ps[it0_subsys_nr]/subsys_timestep
+                        subsys_nb_steps = subsys_nb_steps if "exploration_time_ps" not in globals() else int(exploration_time_ps[it0_subsys_nr]/subsys_timestep)
                     exploration_input = cf.replace_in_list(exploration_input,"_R_NUMBER_OF_STEPS_",str(subsys_nb_steps))
 
                     subsys_walltime_approx_s = ( prevexploration_json["subsys_nr"][it_subsys_nr]["s_per_step"] * subsys_nb_steps )
@@ -449,7 +449,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     if with_plumed_smd == 1:
                         subsys_nb_steps = int(subsys_SMD_nb_steps)
                     else:
-                        subsys_nb_steps = subsys_nb_steps if "exploration_time_ps" not in globals() else exploration_time_ps[it0_subsys_nr]/subsys_timestep
+                        subsys_nb_steps = subsys_nb_steps if "exploration_time_ps" not in globals() else int(exploration_time_ps[it0_subsys_nr]/subsys_timestep)
 
                     exploration_ipi_xmllist = cf.replace_in_list(exploration_ipi_xmllist,"_R_NB_STEPS_",str(subsys_nb_steps))
 
