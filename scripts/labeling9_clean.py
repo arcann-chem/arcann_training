@@ -2,7 +2,6 @@
 # deepmd_iterative_apath: str = ""
 
 ###################################### No change past here
-from asyncio import subprocess
 import sys
 from pathlib import Path
 import logging
@@ -43,8 +42,9 @@ cf.remove_file_glob(current_apath,"**/*.xyz")
 logging.info("Deleting CP2K input files...")
 cf.remove_file_glob(current_apath,"**/*.inp")
 logging.info("Compressing into a compressed archive...")
-subprocess.call(["tar","-I","bzip2","--exclude={*.wfn,*.tar.bz2}","-cf","labeling_"+current_iteration_zfill+"_noWFN.tar.bz2",str(Path("."))])
+subprocess.call(["tar","-I","bzip2","--exclude=*.wfn","--exclude=*.tar.bz2","-cvf","labeling_"+current_iteration_zfill+"_noWFN.tar.bz2",str(Path("."))])
 logging.info("Cleaning done!")
+logging.info("Excute yourself: \"find ./ -name '*.wfn' | tar -cf labeling_"+current_iteration_zfill+"_WFN.tar --files-from -\"  (without the \") if you want to keep the wavefunction in a labeling_"+current_iteration_zfill+"_WFN.tar")
 logging.info("You can delete any subsys subfolders and the *.py files if the labeling_"+current_iteration_zfill+"_noWFN.tar.bz2 is ok")
 
 del deepmd_iterative_apath, training_iterative_apath, current_apath, current_iteration_zfill
