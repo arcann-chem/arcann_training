@@ -57,7 +57,7 @@ if not test_json["is_locked"]:
     sys.exit(1)
 
 cluster = cf.check_cluster()
-cf.check_same_cluster(cluster,test_json)
+cf.check_same_cluster(cluster,test_json["test"])
 
 ### Launch the jobs
 check = 0
