@@ -87,13 +87,31 @@ for it_nnp in range(1, test_json["nb_nnp"] + 1):
     subprocess.call(["rsync","-a", str(training_iterative_apath/"NNP"/("graph_"+str(it_nnp)+"_"+current_iteration_zfill+compressed+".pb")), str(current_apath)])
     slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_MODEL_","graph_"+str(it_nnp)+"_"+current_iteration_zfill+compressed)
     slurm_file = cf.replace_in_list(slurm_file,"_R_NNPNB_","NNP"+str(it_nnp))
-    slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_","04:00:00")
     slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_VERSION_",str(training_json["deepmd_model_version"]))
     
     slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",cluster_spec["project_name"])
     slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",cluster_spec["allocation_name"])
     slurm_file = cf.delete_in_list(slurm_file,"_R_PARTITON_") if cluster_spec["partition"] is None else cf.replace_in_list(slurm_file,"_R_PARTITION_",cluster_spec["partition"])
     slurm_file = cf.delete_in_list(slurm_file,"_R_SUBPARTITION_") if cluster_spec["subpartition"] is None else cf.replace_in_list(slurm_file,"_R_SUBPARTITION_",cluster_spec["subpartition"])
+
+    walltime_approx_s = 14400
+    max_qos_time = 0
+    max_qos = 0
+    for it_qos in cluster_spec["qos"]:
+        if cluster_spec["qos"][it_qos] >= walltime_approx_s:
+            slurm_file = cf.replace_in_list(slurm_file,"_R_QOS_",it_qos)
+            qos_ok = True
+        else:
+            max_qos = it_qos if cluster_spec["qos"][it_qos] > max_qos_time else max_qos
+            qos_ok = False
+    del it_qos
+    if not qos_ok:
+        logging.warning("Approximate wall time superior than the maximun time allowed by the QoS")
+        logging.warning("Settign the maximum QoS time as walltime")
+        slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",cf.seconds_to_walltime(max_qos_time)) if cluster != "ir" else cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(max_qos_time))
+    else:
+        slurm_file = cf.replace_in_list(slurm_file,"_R_WALLTIME_",cf.seconds_to_walltime(walltime_approx_s)) if cluster != "ir" else cf.replace_in_list(slurm_file,"_R_WALLTIME_",str(walltime_approx_s))
+    del qos_ok, max_qos_time, max_qos
 
     if slurm_email != "":
         slurm_file = cf.replace_in_list(slurm_file,"_R_EMAIL_",slurm_email)
@@ -116,7 +134,7 @@ cf.json_dump(test_json,(control_apath/("test_"+current_iteration_zfill+".json"))
 logging.info("DP-Test: Prep phase is a success!")
 
 ### Cleaning
-del config_json, training_iterative_apath, control_apath, jobs_apath, current_apath
+del config_json, training_iterative_apath, control_apath, current_apath
 del training_json
 del test_json
 del current_iteration, current_iteration_zfill
