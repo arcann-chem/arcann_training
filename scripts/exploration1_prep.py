@@ -193,7 +193,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
 
     ### #12
     elif exploration_type == 'i-PI':
-        subsys_temp = cf.get_temp_from_xml_tree(subsys_exploration_ipi_xml)
+        subsys_temp = float(cf.get_temp_from_xml_tree(subsys_exploration_ipi_xml))
         if subsys_temp == -1:
             logging.critical("No temperature found in the xml")
             logging.critical("Aborting...")
