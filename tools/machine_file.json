@@ -48,7 +48,7 @@
             "arch_name": "a100",
             "arch_type": "gpu",
             "partition": "gpu_p5",
-            "subpartition": [ "a100" ],
+            "subpartition": "a100",
             "qos": {"qos_gpu-t3": 72000, "qos_gpu-t4": 360000},
             "valid_for":  ["training"]},
 
