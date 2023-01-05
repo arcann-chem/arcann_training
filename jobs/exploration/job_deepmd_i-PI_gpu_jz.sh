@@ -100,11 +100,21 @@ export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 CURRENT_HOST=$(hostname)
 
 PORT_OK=0
-PORT=$(python -c "import random;random.seed(a=${SLURM_JOBID}); print(random.randint(30000,42000))")
+TEST_COUNT=0
+PORT=$(python -c "import random
+random.seed(a=${SLURM_JOBID})
+for n in range(0,1+${TEST_COUNT}):
+    new_port = random.randint(30000,42000)
+print(new_port)")
 while [ ${PORT_OK} -eq 0 ]; do
     echo "Testing availability of port ${PORT}"
     if netstat -tuln | grep :"${PORT}" ; then
-        PORT=$(python -c "import random;random.seed(a=${SLURM_JOBID}); print(random.randint(30000,42000))")
+        PORT=$(python -c "import random
+random.seed(a=${SLURM_JOBID})
+for n in range(0,1+${TEST_COUNT}):
+    new_port = random.randint(30000,42000)
+print(new_port)")
+    TEST_COUNT=$((TEST_COUNT + 1))
     else
         PORT_OK=1
     fi
