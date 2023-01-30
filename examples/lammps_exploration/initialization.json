@@ -1,0 +1,6 @@
+{
+    "step_name": "initialization",
+    "system": { "value": "ZundelACN", "_comment": "str"},
+    "subsys_nr": { "value": ["ZundelACN","ZundelACN-rst","ZundelACN-smd"], "_comment":"list of str"},
+    "nb_nnp": { "value": null, "_comment": "int", "_default": 3}
+}

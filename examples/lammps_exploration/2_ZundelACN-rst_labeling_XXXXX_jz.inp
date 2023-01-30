@@ -1,0 +1,171 @@
+@SET SYSNAME 2_labeling_XXXXX
+
+&GLOBAL
+    PRINT_LEVEL LOW
+    PREFERRED_FFT_LIBRARY FFTW3
+    EXTENDED_FFT_LENGTHS FALSE
+    PROJECT ${SYSNAME}
+    RUN_TYPE ENERGY_FORCE
+    WALLTIME _R_WALLTIME_
+&END GLOBAL
+&FORCE_EVAL
+    METHOD QS
+    &DFT
+        BASIS_SET_FILE_NAME GTH_BASIS_SETS
+        BASIS_SET_FILE_NAME BASIS_ADMM
+        POTENTIAL_FILE_NAME GTH_POTENTIALS
+        WFN_RESTART_FILE_NAME labeling_XXXXX-SCF.wfn
+        CHARGE +1
+        MULTIPLICITY 1
+        &MGRID
+            SKIP_LOAD_BALANCE_DISTRIBUTED FALSE
+            CUTOFF [Ry] 600.0
+            REL_CUTOFF [Ry] 50.0
+            #NGRIDS 4
+            #COMMENSURATE TRUE
+        &END MGRID
+        &AUXILIARY_DENSITY_MATRIX_METHOD
+            METHOD BASIS_PROJECTION
+            ADMM_PURIFICATION_METHOD MO_DIAG
+        &END AUXILIARY_DENSITY_MATRIX_METHOD
+        &SCF
+            MAX_SCF 20
+            EPS_SCF 3e-8
+            SCF_GUESS RESTART
+            &OUTER_SCF
+                EPS_SCF 3e-8
+                MAX_SCF 20
+            &END OUTER_SCF
+            &OT
+                PRECONDITIONER FULL_SINGLE_INVERSE
+                MINIMIZER DIIS
+                N_HISTORY_VEC 7
+            &END OT
+            &PRINT
+                &RESTART
+                    FILENAME =labeling_XXXXX-SCF.wfn
+                    LOG_PRINT_KEY
+                    BACKUP_COPIES 0
+                    &EACH
+                        QS_SCF 0
+                        JUST_ENERGY 1
+                    &END EACH
+                    COMMON_ITERATION_LEVELS 1
+                    ADD_LAST NUMERIC
+                &END RESTART
+                &RESTART_HISTORY OFF
+                &END RESTART_HISTORY
+            &END PRINT
+        &END SCF
+        &QS
+            METHOD GPW
+            EPS_DEFAULT 1.0E-14
+            EXTRAPOLATION ASPC
+            EXTRAPOLATION_ORDER 3
+            EPS_FILTER_MATRIX 0
+            EPS_PGF_ORB 1.0E-16
+        &END QS
+        &XC
+            &XC_FUNCTIONAL
+                &LIBXC
+                    FUNCTIONAL XC_HYB_GGA_XC_B3LYP
+                &END LIBXC
+            &END XC_FUNCTIONAL
+            &HF
+                FRACTION 0.2
+                &SCREENING
+                    EPS_SCHWARZ 1.0E-9
+                    SCREEN_ON_INITIAL_P TRUE
+                &END SCREENING
+                &INTERACTION_POTENTIAL
+                    POTENTIAL_TYPE TRUNCATED
+                    CUTOFF_RADIUS 7.5
+                    T_C_G_DATA t_c_g.dat
+                &END INTERACTION_POTENTIAL
+                &MEMORY
+                    MAX_MEMORY  2000
+                &END MEMORY
+            &END HF
+            #DENSITY_CUTOFF 1.0E-10
+            #GRADIENT_CUTOFF 1.0E-10
+            #&XC_GRID
+                #XC_SMOOTH_RHO NN50
+                #XC_DERIV NN50_SMOOTH
+            #&END XC_GRID
+            &VDW_POTENTIAL
+                POTENTIAL_TYPE PAIR_POTENTIAL
+                &PAIR_POTENTIAL
+                    R_CUTOFF 16.0
+                    TYPE DFTD3
+                    PARAMETER_FILE_NAME dftd3.dat
+                    REFERENCE_FUNCTIONAL B3LYP
+                    VERBOSE_OUTPUT
+                &END PAIR_POTENTIAL
+            &END VDW_POTENTIAL
+        &END XC
+        &POISSON
+            POISSON_SOLVER PERIODIC
+            PERIODIC XYZ
+        &END POISSON
+    &END DFT
+    STRESS_TENSOR ANALYTICAL
+    &SUBSYS
+        &CELL
+            ABC [angstrom] _R_CELL_
+            ALPHA_BETA_GAMMA [deg] 90.0 90.0 90.0
+            MULTIPLE_UNIT_CELL 1 1 1
+            PERIODIC XYZ
+            SYMMETRY ORTHORHOMBIC
+        &END CELL
+        &TOPOLOGY
+            COORD_FILE_FORMAT XYZ
+            COORD_FILE_NAME labeling_XXXXX.xyz
+        &END TOPOLOGY
+        &KIND N
+            BASIS_SET TZV2P-GTH-q5
+            BASIS_SET AUX_FIT cpFIT3
+            POTENTIAL GTH-BLYP-q5
+        &END KIND
+        &KIND C
+            BASIS_SET TZV2P-GTH-q4
+            BASIS_SET AUX_FIT cpFIT3
+            POTENTIAL GTH-BLYP-q4
+        &END KIND
+        &KIND H
+            BASIS_SET TZV2P-GTH-q1
+            BASIS_SET AUX_FIT cpFIT3
+            POTENTIAL GTH-BLYP-q1
+        &END KIND
+        &KIND O
+            BASIS_SET TZV2P-GTH-q6
+            BASIS_SET AUX_FIT cpFIT3
+            POTENTIAL GTH-BLYP-q6
+        &END KIND
+    &END SUBSYS
+    &PRINT
+        &PROGRAM_RUN_INFO
+            FILENAME =${SYSNAME}-Force_Eval.fe
+            LOG_PRINT_KEY
+            &EACH
+                JUST_ENERGY 1
+            &END EACH
+            ADD_LAST NUMERIC
+        &END PROGRAM_RUN_INFO
+        &FORCES
+            FILENAME =${SYSNAME}-Forces.for
+            LOG_PRINT_KEY
+            &EACH
+                JUST_ENERGY 1
+            &END EACH
+            ADD_LAST NUMERIC
+        &END
+        &STRESS_TENSOR
+            FILENAME =${SYSNAME}-Stress_Tensor.st
+            LOG_PRINT_KEY
+            &EACH
+                JUST_ENERGY 1
+            &END EACH
+            ADD_LAST NUMERIC
+        &END STRESS_TENSOR
+    &END PRINT
+&END FORCE_EVAL
