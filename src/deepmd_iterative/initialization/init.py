@@ -3,10 +3,10 @@ import logging
 import sys
 import copy
 
-### Non-standard imports
+# ### Non-standard imports
 import numpy as np
 
-### deepmd_iterative imports
+# ### deepmd_iterative imports
 from deepmd_iterative.common.json import (
     json_read,
     json_dump,
@@ -34,7 +34,7 @@ def main(
     logging.debug(f"Program path: {deepmd_iterative_apath}")
     logging.info(f"-" * 88)
 
-    ### Get default inputs json
+    # ### Get default inputs json
     default_present = False
     default_input_json = read_default_input_json(
         deepmd_iterative_apath / "data" / "inputs.json"
@@ -42,42 +42,39 @@ def main(
     if bool(default_input_json):
         default_present = True
 
-    ### Get input json (user one)
+    # ### Get input json (user one)
     input_json = json_read((current_apath / input_fn), True, True)
     new_input_json = copy.deepcopy(input_json)
 
-    ### Check if the input provided is correct
+    # ### Check if the input provided is correct
     if step_name not in input_json["step_name"]:
         logging.error(f"Wrong input: {input_json['step_name']}")
         logging.error("Aborting...")
         return 1
 
-    ### Check if we are in the correct dir
+    # ### Check if we are in the correct dir
     check_dir(
         (training_iterative_apath / "data"),
         True,
         error_msg=f"No data folder found in: {training_iterative_apath}",
     )
 
-    ### Create the config.json (and set everything)
-    config_json = {}
-    config_json["system"] = read_key_input_json(
+    # ### Create the config.json (and set everything)
+    config_json = {"system": read_key_input_json(
         input_json,
         new_input_json,
         "system",
         default_input_json,
         step_name,
         default_present,
-    )
-    config_json["nb_nnp"] = read_key_input_json(
+    ), "nb_nnp": read_key_input_json(
         input_json,
         new_input_json,
         "nb_nnp",
         default_input_json,
         step_name,
         default_present,
-    )
-    config_json["current_iteration"] = 0
+    ), "current_iteration": 0}
     current_iteration_zfill = str(config_json["current_iteration"]).zfill(3)
     config_json["subsys_nr"] = {}
     for it0_subsys_nr, it_subsys_nr in enumerate(
@@ -93,25 +90,25 @@ def main(
         config_json["subsys_nr"][it_subsys_nr] = {}
     del it0_subsys_nr, it_subsys_nr
 
-    ### Create the control directory
+    # ### Create the control directory
     control_apath = training_iterative_apath / "control"
     control_apath.mkdir(exist_ok=True)
     check_dir(control_apath, True)
 
-    ### Create the initial training directory
+    # ### Create the initial training directory
     (
         training_iterative_apath
-        / (f"current_iteration_zfill-training")
+        / f"{current_iteration_zfill}-training"
     ).mkdir(exist_ok=True)
     check_dir(
         (
             training_iterative_apath
-            / (f"current_iteration_zfill-training")
+            / f"{current_iteration_zfill}-training"
         ),
         True,
     )
 
-    ### Check if data exists, get init_* datasets and extract number of atoms and cell dimensions
+    # ### Check if data exists, get init_* datasets and extract number of atoms and cell dimensions
     initial_datasets_apath = [
         _ for _ in (training_iterative_apath / "data").glob("init_*")
     ]
@@ -139,7 +136,7 @@ def main(
     logging.debug(config_json)
     logging.debug(initial_datasets_json)
 
-    ### Dump the dicts
+    # ### Dump the dicts
     logging.info(f"-" * 88)
     json_dump(config_json, (control_apath / "config.json"), True)
     json_dump(initial_datasets_json, (control_apath / "initial_datasets.json"), True)

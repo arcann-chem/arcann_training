@@ -2,10 +2,10 @@ from pathlib import Path
 import logging
 import sys
 
-### Non-standard imports
+# ### Non-standard imports
 import numpy as np
 
-### deepmd_iterative imports
+# ### deepmd_iterative imports
 from deepmd_iterative.common.json import (
     json_read,
     json_dump,
@@ -31,24 +31,24 @@ def main(
     logging.debug(f"Program path: {deepmd_iterative_apath}")
     logging.info(f"-" * 88)
 
-    ### Check if correct folder
+    # ### Check if correct folder
     if step_name not in current_apath.name:
         logging.error(f"The folder doesn't seems to be for this step: {step_name.capitalize()}")
         logging.error(f"Aborting...")
         return 1
 
-    ### Get iteration
+    # ### Get iteration
     current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
     current_iteration = int(current_iteration_zfill)
 
-    ### Get control path and config_json
+    # ### Get control path and config_json
     control_apath = training_iterative_apath / "control"
     config_json = json_read((control_apath / "config.json"), True, True)
     training_json = json_read(
-        (control_apath / (f"training_{current_iteration_zfill}.json")), True, True
+        (control_apath / f"training_{current_iteration_zfill}.json"), True, True
     )
 
-    ### Checks
+    # ### Checks
     if not training_json["is_checked"]:
         logging.error(f"Lock found. Run/Check first: training check")
         logging.error(f"Aborting...")
@@ -76,13 +76,13 @@ def main(
         return 1
     del check
 
-    json_dump(training_json,(control_apath/(f"training_{current_iteration_zfill}.json")),True)
+    json_dump(training_json, (control_apath/f"training_{current_iteration_zfill}.json"), True)
 
     logging.info(
         f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
     )
 
-    #### Cleaning
+    # ### Cleaning
     del control_apath
     del config_json
     del current_iteration, current_iteration_zfill
@@ -90,6 +90,7 @@ def main(
     del training_iterative_apath, current_apath
 
     return 0
+
 
 if __name__ == "__main__":
     if len(sys.argv) == 4:

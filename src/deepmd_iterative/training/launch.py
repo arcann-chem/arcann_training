@@ -4,7 +4,7 @@ import sys
 import copy
 import subprocess
 
-### deepmd_iterative imports
+# ### deepmd_iterative imports
 from deepmd_iterative.common.json import (
     json_read,
     json_dump,
@@ -34,17 +34,17 @@ def main(
     logging.debug(f"Program path: {deepmd_iterative_apath}")
     logging.info(f"-" * 88)
 
-    ### Check if correct folder
+    # ### Check if correct folder
     if step_name not in current_apath.name:
         logging.error(f"The folder doesn't seems to be for this step: {step_name.capitalize()}")
         logging.error(f"Aborting...")
         return 1
 
-    ### Get iteration
+    # ### Get iteration
     current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
     current_iteration = int(current_iteration_zfill)
 
-    ### Get default inputs json
+    # ### Get default inputs json
     default_present = False
     default_input_json = read_default_input_json(
         deepmd_iterative_apath / "data" / "inputs.json"
@@ -52,21 +52,21 @@ def main(
     if bool(default_input_json):
         default_present = True
 
-    ### Get input json (user one)
+    # ### Get input json (user one)
     if (current_apath / input_fn).is_file():
         input_json = json_read((current_apath / input_fn), True, True)
     else:
         input_json = {}
     new_input_json = copy.deepcopy(input_json)
 
-    ### Get control path and config_json
+    # ### Get control path and config_json
     control_apath = training_iterative_apath / "control"
     config_json = json_read((control_apath / "config.json"), True, True)
     training_json = json_read(
-        (control_apath / (f"training_{current_iteration_zfill}.json")), True, True
+        (control_apath / f"training_{current_iteration_zfill}.json"), True, True
     )
 
-    ### Get machine info
+    # ### Get machine info
     user_spec = read_key_input_json(
         input_json,
         new_input_json,
@@ -77,7 +77,7 @@ def main(
     )
     user_spec = None if isinstance(user_spec, bool) else user_spec
 
-    ### Read cluster info
+    # ### Read cluster info
     cluster = clusterize(
         deepmd_iterative_apath,
         training_iterative_apath,
@@ -92,10 +92,10 @@ def main(
         logging.info(f"Cluster is {cluster}")
     del fake_cluster
 
-    ### Check prep/launch
+    # ### Check prep/launch
     check_same_cluster(cluster, training_json)
 
-    ### Checks
+    # ### Checks
     if training_json["is_launched"]:
         logging.critical(f"Already launched.")
         continuing = input(
@@ -112,13 +112,13 @@ def main(
         logging.error(f"Aborting...")
         return 1
 
-    ### Launch the jobs
+    # ### Launch the jobs
     check = 0
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
         local_apath = Path(".").resolve() / str(it_nnp)
         if (
             local_apath
-            / (f"job_deepmd_train_{training_json['arch_type']}_{cluster}.sh")
+            / f"job_deepmd_train_{training_json['arch_type']}_{cluster}.sh"
         ).is_file():
             change_dir(local_apath)
             # subprocess.call(
@@ -140,7 +140,7 @@ def main(
 
     json_dump(
         training_json,
-        (control_apath / (f"training_{current_iteration_zfill}.json")),
+        (control_apath / f"training_{current_iteration_zfill}.json"),
         True,
     )
 
@@ -160,7 +160,7 @@ def main(
         )
     del check
 
-    ### Cleaning
+    # ### Cleaning
     del control_apath
     del input_json, default_input_json, default_present, new_input_json
     del config_json

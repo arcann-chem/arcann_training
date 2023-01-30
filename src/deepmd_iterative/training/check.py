@@ -2,10 +2,10 @@ from pathlib import Path
 import logging
 import sys
 
-### Non-standard imports
+# ### Non-standard imports
 import numpy as np
 
-### deepmd_iterative imports
+# ### deepmd_iterative imports
 from deepmd_iterative.common.json import (
     json_read,
     json_dump,
@@ -31,21 +31,21 @@ def main(
     logging.debug(f"Program path: {deepmd_iterative_apath}")
     logging.info(f"-" * 88)
 
-    ### Check if correct folder
+    # ### Check if correct folder
     if step_name not in current_apath.name:
         logging.error(f"The folder doesn't seems to be for this step: {step_name.capitalize()}")
         logging.error(f"Aborting...")
         return 1
 
-    ### Get iteration
+    # ### Get iteration
     current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
     current_iteration = int(current_iteration_zfill)
 
-    ### Get control path and config_json
+    # ### Get control path and config_json
     control_apath = training_iterative_apath / "control"
     config_json = json_read((control_apath / "config.json"), True, True)
     training_json = json_read(
-        (control_apath / (f"training_{current_iteration_zfill}.json")), True, True
+        (control_apath / f"training_{current_iteration_zfill}.json"), True, True
     )
 
     if not training_json["is_launched"]:
@@ -53,24 +53,24 @@ def main(
         logging.error(f"Aborting...")
         return 1
 
-    ## Check the normal termination of the training phase
-    s_per_step_per_step_size=[]
+    # ### Check the normal termination of the training phase
+    s_per_step_per_step_size = []
     check = 0
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
         local_apath = Path(".").resolve()/str(it_nnp)
         if (local_apath/"training.out").is_file():
             training_out = file_to_strings((local_apath/"training.out"))
             if any("finished training" in s for s in training_out):
-                training_out_time=[s for s in training_out if "training time" in s]
-                training_out_time_split=[]
-                for n in range(0,len(training_out_time)):
+                training_out_time = [s for s in training_out if "training time" in s]
+                training_out_time_split = []
+                for n in range(0, len(training_out_time)):
                     training_out_time_split.append(training_out_time[n].split(" "))
-                    training_out_time_split[n]=" ".join(training_out_time_split[n]).split()
-                if (local_apath/(f"model.ckpt-{training_out_time_split[-1][3]}.index")).is_file():
-                    (local_apath/(f"model.ckpt-{training_out_time_split[-1][3]}.index")).rename(local_apath/"model.ckpt.index")
-                    (local_apath/(f"model.ckpt-{training_out_time_split[-1][3]}.meta")).rename(local_apath/"model.ckpt.meta")
-                    (local_apath/(f"model.ckpt-{training_out_time_split[-1][3]}.data-00000-of-00001")).rename(local_apath/"model.ckpt.data-00000-of-00001")
-                for n in range(0,len(training_out_time_split)):
+                    training_out_time_split[n] = " ".join(training_out_time_split[n]).split()
+                if (local_apath/f"model.ckpt-{training_out_time_split[-1][3]}.index").is_file():
+                    (local_apath/f"model.ckpt-{training_out_time_split[-1][3]}.index").rename(local_apath/"model.ckpt.index")
+                    (local_apath/f"model.ckpt-{training_out_time_split[-1][3]}.meta").rename(local_apath/"model.ckpt.meta")
+                    (local_apath/f"model.ckpt-{training_out_time_split[-1][3]}.data-00000-of-00001").rename(local_apath/"model.ckpt.data-00000-of-00001")
+                for n in range(0, len(training_out_time_split)):
                     s_per_step_per_step_size.append(float(training_out_time_split[n][6]))
                 del n
                 step_size = float(training_out_time_split[-1][3])-float(training_out_time_split[-2][3])
@@ -96,16 +96,16 @@ def main(
         return 1
     del check
 
-    if ( "s_per_step_per_step_size" in globals() ) and ( "step_size" in globals() ):
-        training_json["s_per_step"]=np.average(s_per_step_per_step_size)/(step_size)
+    if ("s_per_step_per_step_size" in globals()) and ("step_size" in globals()):
+        training_json["s_per_step"] = np.average(s_per_step_per_step_size)/step_size
         del s_per_step_per_step_size, step_size
 
-    json_dump(training_json,(control_apath/(f"training_{current_iteration_zfill}.json")),True)
+    json_dump(training_json, (control_apath/f"training_{current_iteration_zfill}.json"), True)
 
     logging.info(
         f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
     )
-    #### Cleaning
+    # ### Cleaning
     del control_apath
     del config_json
     del current_iteration, current_iteration_zfill

@@ -4,7 +4,7 @@ import sys
 import copy
 import subprocess
 
-### deepmd_iterative imports
+# ### deepmd_iterative imports
 from deepmd_iterative.common.json import (
     json_read,
     json_dump,
@@ -39,17 +39,17 @@ def main(
     logging.debug(f"Program path: {deepmd_iterative_apath}")
     logging.info(f"-" * 88)
 
-    ### Check if correct folder
+    # ### Check if correct folder
     if step_name not in current_apath.name:
         logging.error(f"The folder doesn't seems to be for this step: {step_name.capitalize()}")
         logging.error(f"Aborting...")
         return 1
 
-    ### Get iteration
+    # ### Get iteration
     current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
     current_iteration = int(current_iteration_zfill)
 
-    ### Get default inputs json
+    # ### Get default inputs json
     default_present = False
     default_input_json = read_default_input_json(
         deepmd_iterative_apath / "data" / "inputs.json"
@@ -57,23 +57,23 @@ def main(
     if bool(default_input_json):
         default_present = True
 
-    ### Get input json (user one)
+    # ### Get input json (user one)
     if (current_apath / input_fn).is_file():
         input_json = json_read((current_apath / input_fn), True, True)
     else:
         input_json = {}
     new_input_json = copy.deepcopy(input_json)
 
-    ### Get control path and config_json
+    # ### Get control path and config_json
     control_apath = training_iterative_apath / "control"
     config_json = json_read((control_apath / "config.json"), True, True)
     training_json = json_read(
-        (control_apath / (f"training_{current_iteration_zfill}.json")), True, True
+        (control_apath / f"training_{current_iteration_zfill}.json"), True, True
     )
     jobs_apath = deepmd_iterative_apath / "data" / "jobs" / "training"
 
 
-### Get machine info
+# ### Get machine info
     user_spec = read_key_input_json(
         input_json,
         new_input_json,
@@ -84,7 +84,7 @@ def main(
     )
     user_spec = None if isinstance(user_spec, bool) else user_spec
 
-    ### Read cluster info
+    # ### Read cluster info
     (
         cluster,
         cluster_spec,
@@ -104,37 +104,36 @@ def main(
         logging.info(f"Cluster is {cluster}")
     del fake_cluster
     if cluster_error != 0:
-        ### #FIXME: Better errors for clusterize
+        # ### #FIXME: Better errors for clusterize
         logging.error(f"Error in machine_file.json")
         logging.error(f"Aborting...")
         return 1
     del cluster_error
 
-    ### Checks
+    # ### Checks
     if not training_json["is_checked"]:
         logging.error(f"Lock found. Run/Check first: training check")
         logging.error(f"Aborting...")
         return 1
 
     check_file(
-        jobs_apath / (f"job_deepmd_freeze_{cluster_spec['arch_type']}_{cluster}.sh"),
+        jobs_apath / f"job_deepmd_freeze_{cluster_spec['arch_type']}_{cluster}.sh",
         True,
         True,
         f"No SLURM file present for {step_name.capitalize()} / {phase_name.capitalize()} on this cluster.",
     )
     slurm_file_master = file_to_strings(
-        jobs_apath / (f"job_deepmd_freeze_{cluster_spec['arch_type']}_{cluster}.sh")
+        jobs_apath / f"job_deepmd_freeze_{cluster_spec['arch_type']}_{cluster}.sh"
     )
     del jobs_apath
 
-    ### Prep and launch DP Freeze
+    # ### Prep and launch DP Freeze
     check = 0
     walltime_approx_s = 7200
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
         local_apath = Path(".").resolve()/str(it_nnp)
 
-
-        check_file(local_apath/"model.ckpt.index",True,True)
+        check_file(local_apath/"model.ckpt.index", True, True)
 
         slurm_file = copy.deepcopy(slurm_file_master)
         slurm_file = replace_in_list(
@@ -214,7 +213,7 @@ def main(
 
         write_file(
             local_apath
-            / (f"job_deepmd_freeze_{cluster_spec['arch_type']}_{cluster}.sh"),
+            / f"job_deepmd_freeze_{cluster_spec['arch_type']}_{cluster}.sh",
             slurm_file,
         )
         del slurm_file
@@ -225,7 +224,7 @@ def main(
         del f
         if (local_apath/("job_deepmd_freeze_"+cluster_spec["arch_type"]+"_"+cluster+".sh")).is_file():
             change_dir(local_apath)
-            subprocess.call(["sbatch","./job_deepmd_freeze_"+cluster_spec["arch_type"]+"_"+cluster+".sh"])
+            subprocess.call(["sbatch", "./job_deepmd_freeze_"+cluster_spec["arch_type"]+"_"+cluster+".sh"])
             change_dir(local_apath.parent)
             logging.info(f"DP Freeze - {it_nnp} launched")
             check = check + 1
@@ -235,13 +234,12 @@ def main(
 
     del it_nnp, slurm_file, slurm_file_master
 
-
-    ## Dump the dicts
+    # ### Dump the dicts
     logging.info(f"-" * 88)
     json_dump(config_json, (control_apath / "config.json"), True)
     json_dump(
         training_json,
-        (control_apath / (f"training_{current_iteration_zfill}.json")),
+        (control_apath / f"training_{current_iteration_zfill}.json"),
         True,
     )
     json_dump_bak(new_input_json, (current_apath / input_fn), True)
@@ -260,7 +258,7 @@ def main(
         f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
     )
 
-    #### Cleaning
+    # ### Cleaning
     del control_apath
     del config_json
     del current_iteration, current_iteration_zfill
@@ -268,6 +266,7 @@ def main(
     del training_iterative_apath, current_apath
 
     return 0
+
 
 if __name__ == "__main__":
     if len(sys.argv) == 4:

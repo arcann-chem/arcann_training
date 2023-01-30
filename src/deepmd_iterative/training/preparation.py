@@ -5,10 +5,10 @@ import copy
 import subprocess
 import random
 
-### Non-standard imports
+# ### Non-standard imports
 import numpy as np
 
-### deepmd_iterative imports
+# ### deepmd_iterative imports
 from deepmd_iterative.common.json import (
     json_read,
     json_dump,
@@ -49,17 +49,17 @@ def main(
     logging.debug(f"Program path: {deepmd_iterative_apath}")
     logging.info(f"-" * 88)
 
-    ### Check if correct folder
+    # ### Check if correct folder
     if step_name not in current_apath.name:
         logging.error(f"The folder doesn't seems to be for this step: {step_name.capitalize()}")
         logging.critical("Aborting...")
         return 1
 
-    ### Get iteration
+    # ### Get iteration
     current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
     current_iteration = int(current_iteration_zfill)
 
-    ### Get default inputs json
+    # ### Get default inputs json
     default_present = False
     default_input_json = read_default_input_json(
         deepmd_iterative_apath / "data" / "inputs.json"
@@ -67,21 +67,21 @@ def main(
     if bool(default_input_json):
         default_present = True
 
-    ### Get input json (user one)
+    # ### Get input json (user one)
     if (current_apath / input_fn).is_file():
         input_json = json_read((current_apath / input_fn), True, True)
     else:
         input_json = {}
     new_input_json = copy.deepcopy(input_json)
 
-    ### Get control path and config_json
+    # ### Get control path and config_json
     control_apath = training_iterative_apath / "control"
     config_json = json_read((control_apath / "config.json"), True, True)
 
-    ### Get extra needed paths
+    # ### Get extra needed paths
     jobs_apath = deepmd_iterative_apath / "data" / "jobs" / "training"
 
-    ### Get machine info
+    # ### Get machine info
     user_spec = read_key_input_json(
         input_json,
         new_input_json,
@@ -92,7 +92,7 @@ def main(
     )
     user_spec = None if isinstance(user_spec, bool) else user_spec
 
-    ### Read cluster info
+    # ### Read cluster info
     (
         cluster,
         cluster_spec,
@@ -112,25 +112,25 @@ def main(
         logging.info(f"Cluster is {cluster}")
     del fake_cluster
     if cluster_error != 0:
-        ### #FIXME: Better errors for clusterize
+        # ### #FIXME: Better errors for clusterize
         logging.error(f"Error in machine_file.json")
         logging.error(f"Aborting...")
         return 1
     del cluster_error
 
-    ### Checks
+    # ### Checks
     if current_iteration > 0:
         labeling_json = json_read(
-            (control_apath / (f"labeling_{current_iteration_zfill}.json")), True, True
+            (control_apath / f"labeling_{current_iteration_zfill}.json"), True, True
         )
         if not labeling_json["is_extracted"]:
             logging.error("Lock found. Run/Check first: labeling extract")
             logging.error("Aborting...")
             return 1
 
-    ### Get/Create training parameters
+    # ### Get/Create training parameters
     training_json = json_read(
-        (control_apath / (f"training_{current_iteration_zfill}.json")), False, True
+        (control_apath / f"training_{current_iteration_zfill}.json"), False, True
     )
     training_json["use_initial_datasets"] = read_key_input_json(
         input_json,
@@ -230,17 +230,17 @@ def main(
     training_json["launch_command"] = cluster_launch_command
 
     check_file(
-        jobs_apath / (f"job_deepmd_train_{cluster_spec['arch_type']}_{cluster}.sh"),
+        jobs_apath / f"job_deepmd_train_{cluster_spec['arch_type']}_{cluster}.sh",
         True,
         True,
         f"No SLURM file present for {step_name.capitalize()} / {phase_name.capitalize()} on this cluster.",
     )
     slurm_file_master = file_to_strings(
-        jobs_apath / (f"job_deepmd_train_{cluster_spec['arch_type']}_{cluster}.sh")
+        jobs_apath / f"job_deepmd_train_{cluster_spec['arch_type']}_{cluster}.sh"
     )
     del jobs_apath
 
-    ### Check DeePMD version
+    # ### Check DeePMD version
     if training_json["deepmd_model_version"] not in [2.0, 2.1]:
         logging.critical(
             f"Invalid deepmd model version (2.0 or 2.1): {training_json['deepmd_model_version']}"
@@ -248,7 +248,7 @@ def main(
         logging.critical("Aborting...")
         return 1
 
-    ### Check DeePMD descriptor type
+    # ### Check DeePMD descriptor type
     if training_json["deepmd_model_type_descriptor"] not in ["se_e2_a"]:
         logging.critical(
             f"Invalid deepmd type descriptor (se_e2_a): {training_json['deepmd_model_type_descriptor']}"
@@ -256,7 +256,7 @@ def main(
         logging.critical("Aborting...")
         return 1
 
-    ### Check mismatch between cluster/arch_name/arch and DeePMD
+    # ### Check mismatch between cluster/arch_name/arch and DeePMD
     if training_json["deepmd_model_version"] < 2.0:
         logging.critical("Only version >= 2.0 on Jean Zay!")
         logging.critical("Aborting...")
@@ -269,7 +269,7 @@ def main(
         logging.critical("Aborting...")
         return 1
 
-    ### Check if the default input json file exists
+    # ### Check if the default input json file exists
     input_file_fpath = (
         training_iterative_apath
         / "files"
@@ -282,10 +282,10 @@ def main(
     config_json["type_map"] = training_input_json["model"]["type_map"]
     del input_file_fpath
 
-    ### Check the initial sets json file
+    # ### Check the initial sets json file
     datasets_initial_json = check_initial_datasets(training_iterative_apath)
 
-    ### Let us find what is in data
+    # ### Let us find what is in data
     data_apath = training_iterative_apath / "data"
     check_dir(data_apath, True)
     subsys_name = []
@@ -294,43 +294,44 @@ def main(
     datasets_validation = []
     for it_data_folders in data_apath.iterdir():
         if it_data_folders.is_dir():
-            ### Escape initial/extra sets, because initial get added first and extra as last, and also escape init_ not in initial_json (in case of removal)
+            # ### Escape initial/extra sets, because initial get added first and extra as last, and also escape init_ not in initial_json (in case of removal)
             if (
                 it_data_folders.name not in datasets_initial_json.keys()
                 and "extra_" != it_data_folders.name[:6]
                 and "init_" != it_data_folders.name[:5]
             ):
-                ### Escape test sets
+                # ### Escape test sets
                 if "test_" != it_data_folders.name[:5]:
-                    ### Escape if set iter is superior as iter, it is only for reprocessing old stuff.
+                    # ### Escape if set iter is superior as iter, it is only for reprocessing old stuff.
                     try:
                         if (
                             int(it_data_folders.name.rsplit("_", 1)[-1])
                             <= current_iteration
                         ):
                             subsys_name.append(it_data_folders.name.rsplit("_", 1)[0])
+                    # ### #TODO: Better except clause
                     except:
                         pass
                 else:
                     datasets_validation.append(it_data_folders.name)
-            ### Get the extra sets !
+            # ### Get the extra sets !
             elif "extra_" == it_data_folders.name[:6]:
                 datasets_extra.append(it_data_folders.name)
     del it_data_folders
 
     del datasets_validation
 
-    ### Training sets list construction
+    # ### Training sets list construction
     datasets_training = []
     datasets_training_json = []
-    ### Initial
+    # ### Initial
     nb_initial = 0
     if training_json["use_initial_datasets"]:
         for it_datasets_initial_json in datasets_initial_json.keys():
             if (data_apath / it_datasets_initial_json).is_dir():
-                ### #TODO: Here we don't Path because too complex
+                # ### #TODO: Here we don't Path because too complex
                 datasets_training.append(f"{(Path(data_apath.parts[-1]) / 'it_datasets_initial_json' / '_')}"[:-1])
-                #datasets_training.append(f"data/{it_datasets_initial_json}/")
+                # datasets_training.append(f"data/{it_datasets_initial_json}/")
                 datasets_training_json.append(it_datasets_initial_json)
                 nb_initial = (
                     nb_initial + datasets_initial_json[it_datasets_initial_json]
@@ -338,14 +339,14 @@ def main(
         del it_datasets_initial_json
     del datasets_initial_json
 
-    ### Non-Reactive (aka subsys_nr in the initialization first) && all the others are REACTIVE !
-    ### Total and what is added just for this iteration
+    # ### Non-Reactive (aka subsys_nr in the initialization first) && all the others are REACTIVE !
+    # ### Total and what is added just for this iteration
     nb_added_nr = 0
     nb_added_r = 0
     nb_added_nr_iter = 0
     nb_added_r_iter = 0
 
-    ### This trick remove duplicates from list via set
+    # ### This trick remove duplicates from list via set
     subsys_name = list(set(subsys_name))
     subsys_name = [i for i in subsys_name if i not in config_json["subsys_nr"]]
     subsys_name = [
@@ -363,9 +364,9 @@ def main(
             try:
                 for system_it in config_json["subsys_nr"]:
                     if (
-                        data_apath / (f"{system_it}_{it_iteration_zfill}")
+                        data_apath / f"{system_it}_{it_iteration_zfill}"
                     ).is_dir():
-                        ### #TODO: Here we don't Path because too complex
+                        # ### #TODO: Here we don't Path because too complex
                         datasets_training.append(
                             f"data/{system_it}_{it_iteration_zfill}/"
                         )
@@ -377,7 +378,7 @@ def main(
                             + np.load(
                                 str(
                                     data_apath
-                                    / (f"{system_it}_{it_iteration_zfill}")
+                                    / f"{system_it}_{it_iteration_zfill}"
                                     / "set.000"
                                     / "box.npy"
                                 )
@@ -389,7 +390,7 @@ def main(
                                 + np.load(
                                     str(
                                         data_apath
-                                        / (f"{system_it}_{it_iteration_zfill}")
+                                        / f"{system_it}_{it_iteration_zfill}"
                                         / "set.000"
                                         / "box.npy"
                                     )
@@ -403,9 +404,9 @@ def main(
                     zzz + "-disturbed" for zzz in config_json["subsys_nr"]
                 ]:
                     if (
-                        data_apath / (f"{system_it}_{it_iteration_zfill}")
+                        data_apath / f"{system_it}_{it_iteration_zfill}"
                     ).is_dir():
-                        ### #TODO: Here we don't Path because too complex
+                        # ### #TODO: Here we don't Path because too complex
                         datasets_training.append(
                             f"data/{system_it}_{it_iteration_zfill}/"
                         )
@@ -417,7 +418,7 @@ def main(
                             + np.load(
                                 str(
                                     data_apath
-                                    / (f"{system_it}_{it_iteration_zfill}")
+                                    / f"{system_it}_{it_iteration_zfill}"
                                     / "set.000"
                                     / "box.npy"
                                 )
@@ -429,7 +430,7 @@ def main(
                                 + np.load(
                                     str(
                                         data_apath
-                                        / (f"{system_it}_{it_iteration_zfill}")
+                                        / f"{system_it}_{it_iteration_zfill}"
                                         / "set.000"
                                         / "box.npy"
                                     )
@@ -441,9 +442,9 @@ def main(
             try:
                 for system_it in config_json["subsys_r"]:
                     if (
-                        data_apath / (f"{system_it}_{it_iteration_zfill}")
+                        data_apath / f"{system_it}_{it_iteration_zfill}"
                     ).is_dir():
-                        ### #TODO: Here we don't Path because too complex
+                        # ### #TODO: Here we don't Path because too complex
                         datasets_training.append(
                             f"data/{system_it}_{it_iteration_zfill}/"
                         )
@@ -455,7 +456,7 @@ def main(
                             + np.load(
                                 str(
                                     data_apath
-                                    / (f"{system_it}_{it_iteration_zfill}")
+                                    / f"{system_it}_{it_iteration_zfill}"
                                     / "set.000"
                                     / "box.npy"
                                 )
@@ -467,7 +468,7 @@ def main(
                                 + np.load(
                                     str(
                                         data_apath
-                                        / (f"{system_it}_{it_iteration_zfill}")
+                                        / f"{system_it}_{it_iteration_zfill}"
                                         / "set.000"
                                         / "box.npy"
                                     )
@@ -478,13 +479,13 @@ def main(
                 pass
         del it_iteration, it_iteration_zfill
 
-    ### Finally the extra sets !
+    # ### Finally the extra sets !
     nb_extra = 0
     if training_json["use_extra_datasets"]:
         config_json["datasets_extra"] = datasets_extra
         del datasets_extra
         for it_datasets_extra in config_json["datasets_extra"]:
-            ### #TODO: Here we don't Path because too complex
+            # ### #TODO: Here we don't Path because too complex
             datasets_training.append("data/" + it_datasets_extra + "/")
             datasets_training_json.append(it_datasets_extra)
             nb_extra = (
@@ -497,7 +498,7 @@ def main(
     else:
         del datasets_extra
 
-    ### Total
+    # ### Total
     nb_trained = nb_initial + nb_added_nr + nb_added_r + nb_extra
 
     training_input_json["training"]["training_data"]["systems"] = datasets_training
@@ -555,7 +556,7 @@ def main(
     training_input_json["learning_rate"]["decay_steps"] = training_json["decay_steps"]
     training_input_json["learning_rate"]["stop_lr"] = training_json["stop_lr"]
 
-    ### Set frozen/compressed bool !
+    # ### Set frozen/compressed bool !
     training_json["is_locked"] = True
     training_json["is_launched"] = False
     training_json["is_checked"] = False
@@ -565,30 +566,30 @@ def main(
     logging.debug(training_json)
     logging.debug(datasets_training)
 
-    ### Rsync data to local data
+    # ### Rsync data to local data
     localdata_apath = Path(".").resolve() / "data"
     localdata_apath.mkdir(exist_ok=True)
     for it_datasets_training in datasets_training:
         subprocess.call(
             [
                 "rsync",
-                "-a",f"{training_iterative_apath}/{it_datasets_training.rsplit('/', 1)[0]}",
+                "-a", f"{training_iterative_apath}/{it_datasets_training.rsplit('/', 1)[0]}",
                 str(localdata_apath),
             ]
         )
     del it_datasets_training, localdata_apath, datasets_training
 
-    ### Change some inside output
+    # ### Change some inside output
     training_input_json["training"]["disp_file"] = "lcurve.out"
     training_input_json["training"]["save_ckpt"] = "model.ckpt"
 
-    ### Create the inputs/jobfiles for each NNP with random SEED inf the form of NNP_number + random(0,1000) + current_iteration.zfil(3) so between 10000 and unlimited1000999 (at iteration 999 !!)
+    # ### Create the inputs/jobfiles for each NNP with random SEED inf the form of NNP_number + random(0,1000) + current_iteration.zfil(3) so between 10000 and unlimited1000999 (at iteration 999 !!)
     if current_iteration > 0:
         previous_iteration = current_iteration - 1
         previous_iteration_zfill = str(previous_iteration).zfill(3)
         prevtraining_json = json_read(
-            (control_apath / (f"training_{previous_iteration_zfill}.json")),
-            #(control_apath / ("training_" + previous_iteration_zfill + ".json")),
+            (control_apath / f"training_{previous_iteration_zfill}.json"),
+            # (control_apath / ("training_" + previous_iteration_zfill + ".json")),
             True,
             True,
         )
@@ -616,25 +617,25 @@ def main(
         check_dir(local_apath, True)
 
         random.seed()
-        RAND = random.randrange(0, 1000)
+        random_0_1000 = random.randrange(0, 1000)
         if training_json["deepmd_model_type_descriptor"] == "se_ar":
             training_input_json["model"]["descriptor"]["a"]["seed"] = int(
-                str(it_nnp) + str(RAND) + current_iteration_zfill
+                str(it_nnp) + str(random_0_1000) + current_iteration_zfill
             )
             training_input_json["model"]["descriptor"]["r"]["seed"] = int(
-                str(it_nnp) + str(RAND) + current_iteration_zfill
+                str(it_nnp) + str(random_0_1000) + current_iteration_zfill
             )
         else:
             training_input_json["model"]["descriptor"]["seed"] = int(
-                str(it_nnp) + str(RAND) + current_iteration_zfill
+                str(it_nnp) + str(random_0_1000) + current_iteration_zfill
             )
 
         training_input_json["model"]["fitting_net"]["seed"] = int(
-            str(it_nnp) + str(RAND) + current_iteration_zfill
+            str(it_nnp) + str(random_0_1000) + current_iteration_zfill
         )
 
         training_input_json["training"]["seed"] = int(
-            str(it_nnp) + str(RAND) + current_iteration_zfill
+            str(it_nnp) + str(random_0_1000) + current_iteration_zfill
         )
 
         training_input_json_fpath = Path(str(it_nnp) + "/training.json").resolve()
@@ -652,7 +653,7 @@ def main(
             slurm_file, "_R_ALLOC_", cluster_spec["allocation_name"]
         )
         slurm_file = (
-            delete_in_list(slurm_file, "_R_PARTITON_")
+            delete_in_list(slurm_file, "_R_PARTITION_")
             if cluster_spec["partition"] is None
             else replace_in_list(slurm_file, "_R_PARTITION_", cluster_spec["partition"])
         )
@@ -714,19 +715,19 @@ def main(
 
         write_file(
             local_apath
-            / (f"job_deepmd_train_{cluster_spec['arch_type']}_{cluster}.sh"),
+            / f"job_deepmd_train_{cluster_spec['arch_type']}_{cluster}.sh",
             slurm_file,
         )
-        del slurm_file, local_apath, training_input_json_fpath, RAND
+        del slurm_file, local_apath, training_input_json_fpath, random_0_1000
 
     del it_nnp, walltime_approx_s, training_input_json
 
-    ## Dump the dicts
+    # ### Dump the dicts
     logging.info(f"-" * 88)
     json_dump(config_json, (control_apath / "config.json"), True)
     json_dump(
         training_json,
-        (control_apath / (f"training_{current_iteration_zfill}.json")),
+        (control_apath / f"training_{current_iteration_zfill}.json"),
         True,
     )
     json_dump_bak(new_input_json, (current_apath / input_fn), True)
@@ -736,7 +737,7 @@ def main(
         f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
     )
 
-    ### Cleaning
+    # ### Cleaning
     del control_apath
     del data_apath
     del input_json, default_input_json, default_present, new_input_json
