@@ -7,6 +7,6 @@ def seconds_to_walltime(seconds: float) -> str:
     Returns:
         str: string in HH:MM:SS format
     """
-    min, sec = divmod(seconds, 60)
-    hour, min = divmod(min, 60)
-    return "%d:%02d:%02d" % (hour, min, sec)
+    minutes, sec = divmod(seconds, 60)
+    hour, minutes = divmod(minutes, 60)
+    return "%d:%02d:%02d" % (hour, minutes, sec)

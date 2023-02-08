@@ -33,13 +33,12 @@ from deepmd_iterative.common.tools import seconds_to_walltime
 
 
 def main(
-    step_name,
-    phase_name,
-    deepmd_iterative_apath,
-    fake_cluster=None,
-    input_fn="input.json",
+        step_name,
+        phase_name,
+        deepmd_iterative_apath,
+        fake_cluster=None,
+        input_fn="input.json",
 ):
-
     current_apath = Path(".").resolve()
     training_iterative_apath = current_apath.parent
 
@@ -262,8 +261,8 @@ def main(
         logging.critical("Aborting...")
         return 1
     if (
-        training_json["deepmd_model_version"] < 2.1
-        and training_json["arch_name"] == "a100"
+            training_json["deepmd_model_version"] < 2.1
+            and training_json["arch_name"] == "a100"
     ):
         logging.critical("Only version >= 2.1 on Jean Zay A100 !")
         logging.critical("Aborting...")
@@ -271,11 +270,11 @@ def main(
 
     # ### Check if the default input json file exists
     input_file_fpath = (
-        training_iterative_apath
-        / "files"
-        / (
-            f"dptrain_{training_json['deepmd_model_version']}_{training_json['deepmd_model_type_descriptor']}.json"
-        )
+            training_iterative_apath
+            / "files"
+            / (
+                f"dptrain_{training_json['deepmd_model_version']}_{training_json['deepmd_model_type_descriptor']}.json"
+            )
     ).resolve()
     training_input_json = json_read(input_file_fpath, True, True)
     config_json["type_map"] = {}
@@ -296,17 +295,17 @@ def main(
         if it_data_folders.is_dir():
             # ### Escape initial/extra sets, because initial get added first and extra as last, and also escape init_ not in initial_json (in case of removal)
             if (
-                it_data_folders.name not in datasets_initial_json.keys()
-                and "extra_" != it_data_folders.name[:6]
-                and "init_" != it_data_folders.name[:5]
+                    it_data_folders.name not in datasets_initial_json.keys()
+                    and "extra_" != it_data_folders.name[:6]
+                    and "init_" != it_data_folders.name[:5]
             ):
                 # ### Escape test sets
                 if "test_" != it_data_folders.name[:5]:
                     # ### Escape if set iter is superior as iter, it is only for reprocessing old stuff.
                     try:
                         if (
-                            int(it_data_folders.name.rsplit("_", 1)[-1])
-                            <= current_iteration
+                                int(it_data_folders.name.rsplit("_", 1)[-1])
+                                <= current_iteration
                         ):
                             subsys_name.append(it_data_folders.name.rsplit("_", 1)[0])
                     # ### #TODO: Better except clause
@@ -334,7 +333,7 @@ def main(
                 # datasets_training.append(f"data/{it_datasets_initial_json}/")
                 datasets_training_json.append(it_datasets_initial_json)
                 nb_initial = (
-                    nb_initial + datasets_initial_json[it_datasets_initial_json]
+                        nb_initial + datasets_initial_json[it_datasets_initial_json]
                 )
         del it_datasets_initial_json
     del datasets_initial_json
@@ -364,7 +363,7 @@ def main(
             try:
                 for system_it in config_json["subsys_nr"]:
                     if (
-                        data_apath / f"{system_it}_{it_iteration_zfill}"
+                            data_apath / f"{system_it}_{it_iteration_zfill}"
                     ).is_dir():
                         # ### #TODO: Here we don't Path because too complex
                         datasets_training.append(
@@ -374,8 +373,20 @@ def main(
                             f"{system_it}_{it_iteration_zfill}"
                         )
                         nb_added_nr = (
-                            nb_added_nr
-                            + np.load(
+                                nb_added_nr
+                                + np.load(
+                            str(
+                                data_apath
+                                / f"{system_it}_{it_iteration_zfill}"
+                                / "set.000"
+                                / "box.npy"
+                            )
+                        ).shape[0]
+                        )
+                        if it_iteration == current_iteration:
+                            nb_added_nr_iter = (
+                                    nb_added_nr_iter
+                                    + np.load(
                                 str(
                                     data_apath
                                     / f"{system_it}_{it_iteration_zfill}"
@@ -383,18 +394,6 @@ def main(
                                     / "box.npy"
                                 )
                             ).shape[0]
-                        )
-                        if it_iteration == current_iteration:
-                            nb_added_nr_iter = (
-                                nb_added_nr_iter
-                                + np.load(
-                                    str(
-                                        data_apath
-                                        / f"{system_it}_{it_iteration_zfill}"
-                                        / "set.000"
-                                        / "box.npy"
-                                    )
-                                ).shape[0]
                             )
                 del system_it
             except (KeyError, NameError):
@@ -404,7 +403,7 @@ def main(
                     zzz + "-disturbed" for zzz in config_json["subsys_nr"]
                 ]:
                     if (
-                        data_apath / f"{system_it}_{it_iteration_zfill}"
+                            data_apath / f"{system_it}_{it_iteration_zfill}"
                     ).is_dir():
                         # ### #TODO: Here we don't Path because too complex
                         datasets_training.append(
@@ -414,8 +413,20 @@ def main(
                             f"{system_it}_{it_iteration_zfill}"
                         )
                         nb_added_nr = (
-                            nb_added_nr
-                            + np.load(
+                                nb_added_nr
+                                + np.load(
+                            str(
+                                data_apath
+                                / f"{system_it}_{it_iteration_zfill}"
+                                / "set.000"
+                                / "box.npy"
+                            )
+                        ).shape[0]
+                        )
+                        if it_iteration == current_iteration:
+                            nb_added_nr_iter = (
+                                    nb_added_nr_iter
+                                    + np.load(
                                 str(
                                     data_apath
                                     / f"{system_it}_{it_iteration_zfill}"
@@ -423,18 +434,6 @@ def main(
                                     / "box.npy"
                                 )
                             ).shape[0]
-                        )
-                        if it_iteration == current_iteration:
-                            nb_added_nr_iter = (
-                                nb_added_nr_iter
-                                + np.load(
-                                    str(
-                                        data_apath
-                                        / f"{system_it}_{it_iteration_zfill}"
-                                        / "set.000"
-                                        / "box.npy"
-                                    )
-                                ).shape[0]
                             )
                 del system_it
             except (KeyError, NameError):
@@ -442,7 +441,7 @@ def main(
             try:
                 for system_it in config_json["subsys_r"]:
                     if (
-                        data_apath / f"{system_it}_{it_iteration_zfill}"
+                            data_apath / f"{system_it}_{it_iteration_zfill}"
                     ).is_dir():
                         # ### #TODO: Here we don't Path because too complex
                         datasets_training.append(
@@ -452,8 +451,20 @@ def main(
                             f"{system_it}_{it_iteration_zfill}"
                         )
                         nb_added_nr = (
-                            nb_added_nr
-                            + np.load(
+                                nb_added_nr
+                                + np.load(
+                            str(
+                                data_apath
+                                / f"{system_it}_{it_iteration_zfill}"
+                                / "set.000"
+                                / "box.npy"
+                            )
+                        ).shape[0]
+                        )
+                        if it_iteration == current_iteration:
+                            nb_added_nr_iter = (
+                                    nb_added_nr_iter
+                                    + np.load(
                                 str(
                                     data_apath
                                     / f"{system_it}_{it_iteration_zfill}"
@@ -461,18 +472,6 @@ def main(
                                     / "box.npy"
                                 )
                             ).shape[0]
-                        )
-                        if it_iteration == current_iteration:
-                            nb_added_nr_iter = (
-                                nb_added_nr_iter
-                                + np.load(
-                                    str(
-                                        data_apath
-                                        / f"{system_it}_{it_iteration_zfill}"
-                                        / "set.000"
-                                        / "box.npy"
-                                    )
-                                ).shape[0]
                             )
                 del system_it
             except (KeyError, NameError):
@@ -489,10 +488,10 @@ def main(
             datasets_training.append("data/" + it_datasets_extra + "/")
             datasets_training_json.append(it_datasets_extra)
             nb_extra = (
-                nb_extra
-                + np.load(
-                    str(data_apath / it_datasets_extra / "set.000" / "box.npy")
-                ).shape[0]
+                    nb_extra
+                    + np.load(
+                str(data_apath / it_datasets_extra / "set.000" / "box.npy")
+            ).shape[0]
             )
         del it_datasets_extra
     else:
@@ -518,9 +517,9 @@ def main(
 
     if default_present:
         if (
-            default_input_json["training"]["decay_steps"]
-            == training_json["decay_steps"]
-            and not training_json["decay_steps_fixed"]
+                default_input_json["training"]["decay_steps"]
+                == training_json["decay_steps"]
+                and not training_json["decay_steps_fixed"]
         ):
             decay_steps = int(
                 get_decay_steps(

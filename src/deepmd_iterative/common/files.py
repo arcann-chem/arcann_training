@@ -7,14 +7,14 @@ import os
 def check_file(file_path: Path, exists: bool, abort: bool, error_msg: str = "default"):
     """Check if a file exists or not, abort or not
         exists/abort:
-        True/True: if the file does't exist, abort
+        True/True: if the file doesn't exist, abort
         False/True: if the file does exist, abort
-        True/False: if the file does't exist, log only
+        True/False: if the file doesn't exist, log only
         False/False: if the file does exist, log only
 
     Args:
         file_path (Path): Path object to the file
-        exists (bool):  True to check if it should exists, False to check if it shouldn't
+        exists (bool):  True to check if it should exist, False to check if it shouldn't
         abort (bool): True to abort, False to log only
         error_msg (str, optional): To override default error message. Defaults to "default".
     """
@@ -114,6 +114,7 @@ def remove_tree(directory_path: Path):
 
     Args:
         pth (Path): _description_
+        :param directory_path:
     """
     for child in directory_path.iterdir():
         if child.is_file():

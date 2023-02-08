@@ -10,8 +10,8 @@ setup(
     package_data={
         "deepmd_iterative.data": ["*.json"],
         "deepmd_iterative.data.jobs": ["training/*.sh"],
-        "deepmd_iterative.data.others": ["*.in","*.tcl"]
-        },
+        "deepmd_iterative.data.others": ["*.in", "*.tcl"]
+    },
     author="Rolf David",
     author_email="rolf.david23@gmail.com",
 )

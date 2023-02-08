@@ -102,15 +102,15 @@ def add_key_value_to_new_input(json_dict: dict, key: str, value):
 
 
 def read_key_input_json(
-    input_json: dict,
-    new_input_json: dict,
-    key: str,
-    default_inputs_json: dict,
-    step: str,
-    default_present: bool = True,
-    subsys_index: int = -1,
-    subsys_number: int = 0,
-)  -> Union[str,float,int,None]:
+        input_json: dict,
+        new_input_json: dict,
+        key: str,
+        default_inputs_json: dict,
+        step: str,
+        default_present: bool = True,
+        subsys_index: int = -1,
+        subsys_number: int = 0,
+) -> Union[str, float, int, None]:
     """_summary_
 
     Args:
@@ -183,7 +183,7 @@ def read_key_input_json(
                 if subsys_index == -1:
                     ## Check if the type correspond to the default
                     if isinstance(
-                        input_json[key]["value"], type(default_inputs_json[step][key])
+                            input_json[key]["value"], type(default_inputs_json[step][key])
                     ):
                         add_key_value_to_new_input(
                             new_input_json, key, input_json[key]["value"]
@@ -202,7 +202,7 @@ def read_key_input_json(
                 else:
                     ## Check if it has the same type (meaning same value get propagated)
                     if isinstance(input_json[key]["value"], list) and isinstance(
-                        input_json[key]["value"], type(default_inputs_json[step][key])
+                            input_json[key]["value"], type(default_inputs_json[step][key])
                     ):
                         add_key_value_to_new_input(
                             new_input_json, key, input_json[key]["value"]
@@ -210,30 +210,30 @@ def read_key_input_json(
                         return input_json[key]["value"]
                     ## If not check if is a list, and if the type inside the list matches, and return index
                     elif (
-                        isinstance(input_json[key]["value"], list)
-                        and [
-                            isinstance(
-                                input_json[key]["value"][_],
-                                type(default_inputs_json[step][key]),
-                            )
-                            for _ in range(len(input_json[key]["value"]))
-                        ]
-                        and subsys_number == len(input_json[key]["value"])
+                            isinstance(input_json[key]["value"], list)
+                            and [
+                                isinstance(
+                                    input_json[key]["value"][_],
+                                    type(default_inputs_json[step][key]),
+                                )
+                                for _ in range(len(input_json[key]["value"]))
+                            ]
+                            and subsys_number == len(input_json[key]["value"])
                     ):
                         add_key_value_to_new_input(
                             new_input_json, key, input_json[key]["value"]
                         )
                         return input_json[key]["value"][subsys_index]
                     elif (
-                        isinstance(input_json[key]["value"], list)
-                        and [
-                            isinstance(
-                                input_json[key]["value"][_],
-                                type(default_inputs_json[step][key]),
-                            )
-                            for _ in range(len(input_json[key]["value"]))
-                        ]
-                        and subsys_number != len(input_json[key]["value"])
+                            isinstance(input_json[key]["value"], list)
+                            and [
+                                isinstance(
+                                    input_json[key]["value"][_],
+                                    type(default_inputs_json[step][key]),
+                                )
+                                for _ in range(len(input_json[key]["value"]))
+                            ]
+                            and subsys_number != len(input_json[key]["value"])
                     ):
                         logging.error(
                             f"Wrong size: The length of the list is {len(input_json[key]['value'])}"
@@ -283,7 +283,6 @@ def read_key_input_json(
                 new_input_json, key, default_inputs_json[step][key]
             )
             return default_inputs_json[step][key]
-
 
 # def json_read_input(
 #     file_path: Path, default_file: Path, is_logged: bool = False

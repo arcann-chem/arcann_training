@@ -65,11 +65,11 @@ def import_xyz(file_path: Path):
 
 
 def write_xyz_from_index(
-    file_path: Path,
-    idx: int,
-    traj_nb_atoms: np.ndarray,
-    traj_atm_coords: np.ndarray,
-    traj_atm_symbol: np.ndarray,
+        file_path: Path,
+        idx: int,
+        traj_nb_atoms: np.ndarray,
+        traj_atm_coords: np.ndarray,
+        traj_atm_symbol: np.ndarray,
 ):
     """_summary_
 
@@ -86,6 +86,6 @@ def write_xyz_from_index(
         x = 0
         for ii in range(traj_nb_atoms[idx]):
             xyz.write(
-                f"{traj_atm_symbol[idx,ii]} {traj_atm_coords[idx,ii,0]} {traj_atm_coords[idx,ii,1]} {traj_atm_coords[idx,ii,2]} \n"
+                f"{traj_atm_symbol[idx, ii]} {traj_atm_coords[idx, ii, 0]} {traj_atm_coords[idx, ii, 1]} {traj_atm_coords[idx, ii, 2]} \n"
             )
             x = x + 1

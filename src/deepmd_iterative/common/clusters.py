@@ -3,7 +3,7 @@ import logging
 import sys
 import socket
 
-### deepmd_iterative imports
+#### deepmd_iterative imports
 from deepmd_iterative.common.json import json_read
 
 
@@ -20,12 +20,12 @@ def get_hostname() -> str:
 
 
 def clusterize(
-    deepmd_iterative_apath: Path,
-    training_iterative_apath: Path,
-    step: str,
-    input_cluster=None,
-    user_keyword=None,
-    check_only=False,
+        deepmd_iterative_apath: Path,
+        training_iterative_apath: Path,
+        step: str,
+        input_cluster=None,
+        user_keyword=None,
+        check_only=False,
 ):
     """_summary_
 
@@ -38,6 +38,7 @@ def clusterize(
 
     Returns:
         tuple: cluster_short, cluster_spec, cluster_walltime_format, error_code
+        :param check_only:
     """
     clusters_files = []
     if (training_iterative_apath / "user_inputs" / "clusters.json").is_file():
@@ -76,9 +77,9 @@ def clusterize(
         if user_keyword is None:
             for zzz in clusters_file[cluster].keys():
                 if (
-                    zzz != "hostname"
-                    and zzz != "walltime_format"
-                    and zzz != "launch_command"
+                        zzz != "hostname"
+                        and zzz != "walltime_format"
+                        and zzz != "launch_command"
                 ):
                     if "default" in clusters_file[cluster][zzz].keys():
                         for yyy in clusters_file[cluster][zzz]["default"]:
@@ -101,18 +102,18 @@ def clusterize(
         elif type(user_keyword) == list and len(user_keyword) == 3:
             for zzz in clusters_file[cluster].keys():
                 if (
-                    zzz != "hostname"
-                    and zzz != "walltime_format"
-                    and zzz != "launch_command"
+                        zzz != "hostname"
+                        and zzz != "walltime_format"
+                        and zzz != "launch_command"
                 ):
                     if (
-                        (clusters_file[cluster][zzz]["project_name"] == user_keyword[0])
-                        and (
+                            (clusters_file[cluster][zzz]["project_name"] == user_keyword[0])
+                            and (
                             clusters_file[cluster][zzz]["allocation_name"]
                             == user_keyword[1]
-                        )
-                        and (clusters_file[cluster][zzz]["arch_name"] == user_keyword[2])
-                        and (step in clusters_file[cluster][zzz]["valid_for"])
+                    )
+                            and (clusters_file[cluster][zzz]["arch_name"] == user_keyword[2])
+                            and (step in clusters_file[cluster][zzz]["valid_for"])
                     ):
                         return (
                             cluster,
@@ -127,7 +128,7 @@ def clusterize(
                 pass
         elif type(user_keyword) == str:
             if (user_keyword in clusters_file[cluster].keys()) and (
-                step in clusters_file[cluster][user_keyword]["valid_for"]
+                    step in clusters_file[cluster][user_keyword]["valid_for"]
             ):
                 return (
                     cluster,

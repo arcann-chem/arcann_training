@@ -7,7 +7,7 @@ import json
 import numpy as np
 
 
-def get_decay_steps(nb_structures: int, min: int) -> int:
+def get_decay_steps(nb_structures: int, min_decay: int) -> int:
     """Calculate decay steps in function of nb_structures:
         Floor the number of total trained structures to nearest 10000: floored_nb_structures
         If floored_nb_structures < 20 000, decay_steps = min
@@ -18,16 +18,16 @@ def get_decay_steps(nb_structures: int, min: int) -> int:
 
     Args:
         nb_structures (int): Number of total structures to train
-        min (int, optional): Minimum decay steps.
+        min_decay (int, optional): Minimum decay steps.
 
     Returns:
         decay_steps (int): decay steps (tau)
     """
-    decay_steps = min
+    decay_steps = min_decay
     power_val = np.power(10, np.int64(np.log10(nb_structures)))
     floored_nb_structures = int(np.floor(nb_structures / power_val) * power_val)
     if floored_nb_structures < 20000:
-        decay_steps = min
+        decay_steps = min_decay
     elif floored_nb_structures < 100000:
         decay_steps = floored_nb_structures / 4
     else:
@@ -36,7 +36,7 @@ def get_decay_steps(nb_structures: int, min: int) -> int:
 
 
 def get_decay_rate(
-    stop_batch: int, start_lr: float, stop_lr: float, decay_steps: int
+        stop_batch: int, start_lr: float, stop_lr: float, decay_steps: int
 ) -> float:
     """Get the decay rate (lambda)
 
@@ -53,7 +53,7 @@ def get_decay_rate(
 
 
 def get_learning_rate(
-    training_step: int, start_lr: float, decay_rate: float, decay_steps: int
+        training_step: int, start_lr: float, decay_rate: float, decay_steps: int
 ) -> float:
     """Get the learning rate at step t
 
@@ -93,16 +93,16 @@ def check_initial_datasets(training_iterative_apath: Path) -> dict:
                 sys.exit(1)
             else:
                 if (
-                    np.load(
-                        str(
-                            training_iterative_apath
-                            / "data"
-                            / f
-                            / "set.000"
-                            / "box.npy"
-                        )
-                    ).shape[0]
-                    != initial_datasets_json[f]
+                        np.load(
+                            str(
+                                training_iterative_apath
+                                / "data"
+                                / f
+                                / "set.000"
+                                / "box.npy"
+                            )
+                        ).shape[0]
+                        != initial_datasets_json[f]
                 ):
                     logging.critical(f"Missmatch in count for the set: {f}")
                     logging.critical(f"Aborting...")
