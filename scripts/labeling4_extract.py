@@ -168,7 +168,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
     np.save(str(data_apath/"set.000"/"box"),box_array_raw)
     np.savetxt(str(subsys_path/"virial.raw"),virial_array_raw,delimiter=" ") if is_virial else False
     np.save(str(data_apath/"set.000"/"virial"),virial_array_raw) if is_virial else False
-    np.savetxt(str(subsys_path/"force.raw"),virial_array_raw,delimiter=" ")
+    np.savetxt(str(subsys_path/"force.raw"),force_array_raw,delimiter=" ")
     np.save(str(data_apath/"set.000"/"force"),force_array_raw)
     np.savetxt(str(subsys_path/"energy.raw"),energy_array_raw,delimiter=" ")
     np.save(str(data_apath/"set.000"/"energy"),energy_array_raw)
@@ -178,7 +178,9 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
     np.save(str(data_apath/"set.000"/"wannier"),wannier_array_raw) if is_wannier else True
     cf.write_file((data_apath/"set.000"/"wannier_not-converged.txt"),wannier_not_converged) if len(wannier_not_converged) > 1 else True
 
-    del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw,wannier_array_raw
+    del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw
+    if is_wannier:
+        del wannier_array_raw
 
     if labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"] != 0 :
         data_apath = training_iterative_apath/"data"/(it_subsys_nr+"-disturbed_"+current_iteration_zfill)
@@ -285,9 +287,9 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
 
         np.savetxt(str(subsys_path/"box-disturbed.raw"),box_array_raw,delimiter=" ")
         np.save(str(data_apath/"set.000"/"box"),box_array_raw)
-        np.savetxt(str(subsys_path/"virial-disturbed.raw"),virial_array_raw,delimiter=" ")
+        np.savetxt(str(subsys_path/"virial-disturbed.raw"),virial_array_raw,delimiter=" ") if is_virial else True
         np.save(str(data_apath/"set.000"/"virial"),virial_array_raw) if is_virial else True
-        np.savetxt(str(subsys_path/"force-disturbed.raw"),virial_array_raw,delimiter=" ") if is_virial else True
+        np.savetxt(str(subsys_path/"force-disturbed.raw"),force_array_raw,delimiter=" ")
         np.save(str(data_apath/"set.000"/"force"),force_array_raw)
         np.savetxt(str(subsys_path/"energy-disturbed.raw"),energy_array_raw,delimiter=" ")
         np.save(str(data_apath/"set.000"/"energy"),energy_array_raw)
@@ -297,7 +299,9 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
         np.save(str(data_apath/"set.000"/"wannier"),wannier_array_raw) if is_wannier else True
         cf.write_file((data_apath/"set.000"/"wannier_not-converged.txt"),wannier_not_converged) if len(wannier_not_converged) > 1 else True
 
-        del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw, wannier_array_raw, count
+        del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw, count
+        if is_wannier:
+            del wannier_array_raw
 del volume, cp2k_version, subsys_path, data_apath, it_subsys_nr
 del Ha_to_eV, Bohr_to_A, au_to_eV_per_A,eV_per_A3_to_GPa
 
