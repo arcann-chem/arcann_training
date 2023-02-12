@@ -112,7 +112,7 @@ def main(
 
     # ### Checks
     if not training_json["is_checked"]:
-        logging.error(f"Lock found. Run/Check first: training check")
+        logging.error(f"Lock found. Execute first: training check")
         logging.error(f"Aborting...")
         return 1
 

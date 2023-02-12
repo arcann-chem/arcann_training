@@ -108,7 +108,7 @@ def main(
             logging.error(f"Aborting...")
             return 1
     if not training_json["is_locked"]:
-        logging.error(f"Lock found. Run/Check first: training preparation")
+        logging.error(f"Lock found. Execute first: training preparation")
         logging.error(f"Aborting...")
         return 1
 

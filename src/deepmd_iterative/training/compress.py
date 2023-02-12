@@ -112,7 +112,7 @@ def main(
 
     # ### Checks
     if not training_json["is_frozen"]:
-        logging.error(f"Lock found. Run/Check first: training checkfreeze")
+        logging.error(f"Lock found. Execute first: training check_freeze")
         logging.error(f"Aborting...")
         return 1
 

@@ -3,15 +3,11 @@ import logging
 import sys
 
 # ### Non-standard imports
-import numpy as np
 
 # ### deepmd_iterative imports
 from deepmd_iterative.common.json import (
     json_read,
     json_dump,
-)
-from deepmd_iterative.common.files import (
-    file_to_strings,
 )
 
 
@@ -49,28 +45,28 @@ def main(
     )
 
     # ### Checks
-    if not training_json["is_checked"]:
-        logging.error(f"Lock found. Run/Check first: training check")
+    if not training_json["is_frozen"]:
+        logging.error(f"Lock found. Execute first: training check_freeze")
         logging.error(f"Aborting...")
         return 1
 
     check = 0
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
         local_apath = Path(".").resolve()/str(it_nnp)
-        if (local_apath/("graph_"+str(it_nnp)+"_"+current_iteration_zfill+".pb")).is_file():
+        if (local_apath/("graph_"+str(it_nnp)+"_"+current_iteration_zfill+"_compressed.pb")).is_file():
             check = check + 1
         else:
-            logging.critical("DP Freeze - "+str(it_nnp)+" not finished/failed")
+            logging.critical("DP Compress - "+str(it_nnp)+" not finished/failed")
         del local_apath
     del it_nnp
 
     if check == config_json["nb_nnp"]:
-        training_json["is_frozen"] = True
+        training_json["is_compressed"] = True
     else:
         logging.error(
             f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a failure !"
         )
-        logging.error("Some DP Freeze did not finished correctly")
+        logging.error("Some DP Compress did not finished correctly")
         logging.error("Please check manually before relaunching this step")
         logging.error(f"Aborting...")
         return 1
@@ -96,7 +92,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 4:
         main(
             "training",
-            "checkfreeze",
+            "check_compress",
             Path(sys.argv[1]),
             fake_cluster=sys.argv[2],
             input_fn=sys.argv[3],
