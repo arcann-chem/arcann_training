@@ -3,7 +3,7 @@ import logging
 import sys
 import socket
 
-#### deepmd_iterative imports
+# ### deepmd_iterative imports
 from deepmd_iterative.common.json import json_read
 
 
@@ -35,10 +35,10 @@ def clusterize(
         step (str): _description_
         input_cluster (str, optional): _description_. Defaults to None.
         user_keyword (_type_, optional): _description_. Defaults to None.
+        check_only: (bool, optional): _description_
 
     Returns:
         tuple: cluster_short, cluster_spec, cluster_walltime_format, error_code
-        :param check_only:
     """
     clusters_files = []
     if (training_iterative_apath / "user_inputs" / "clusters.json").is_file():
@@ -109,9 +109,9 @@ def clusterize(
                     if (
                             (clusters_file[cluster][zzz]["project_name"] == user_keyword[0])
                             and (
-                            clusters_file[cluster][zzz]["allocation_name"]
-                            == user_keyword[1]
-                    )
+                                clusters_file[cluster][zzz]["allocation_name"]
+                                == user_keyword[1]
+                            )
                             and (clusters_file[cluster][zzz]["arch_name"] == user_keyword[2])
                             and (step in clusters_file[cluster][zzz]["valid_for"])
                     ):

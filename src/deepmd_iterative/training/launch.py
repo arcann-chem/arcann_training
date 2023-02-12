@@ -93,7 +93,7 @@ def main(
     del fake_cluster
 
     # ### Check prep/launch
-    check_same_cluster(cluster, training_json)
+    check_same_cluster(str(cluster[0]), training_json)
 
     # ### Checks
     if training_json["is_launched"]:
@@ -103,7 +103,6 @@ def main(
         )
         if continuing == "Y":
             del continuing
-            True
         else:
             logging.error(f"Aborting...")
             return 1
@@ -121,12 +120,12 @@ def main(
             / f"job_deepmd_train_{training_json['arch_type']}_{cluster}.sh"
         ).is_file():
             change_dir(local_apath)
-            # subprocess.call(
-            #     [
-            #         training_json["launch_command"],
-            #         f"./job_deepmd_train_{training_json['arch_type']}_{cluster}.sh",
-            #     ]
-            # )
+            subprocess.call(
+                [
+                    training_json["launch_command"],
+                    f"./job_deepmd_train_{training_json['arch_type']}_{cluster}.sh",
+                ]
+            )
             change_dir(local_apath.parent)
             logging.info(f"DP Train - {it_nnp} launched")
             check = check + 1

@@ -65,13 +65,12 @@ def json_dump(json_dict: dict, file_path: Path, is_logged: bool = False):
             logging.info(f"Writing {file_path.name} in {file_path.parent}")
 
 
-def json_dump_bak(json_dict: dict, file_path: Path, is_logged: bool = False):
+def json_dump_bak(json_dict: dict, file_path: Path):
     """_summary_
 
     Args:
         json_dict (dict): _description_
         file_path (Path): _description_
-        is_logged (bool, optional): _description_. Defaults to False.
     """
     if file_path.is_file() and not file_path.is_symlink():
         file_path.rename(file_path.parent / (file_path.name + ".bak"))
@@ -126,7 +125,7 @@ def read_key_input_json(
     Returns:
         _type_: _description_
     """
-    ## Special keys first:
+    # ### Special keys first:
     if "system" in key and key in input_json and "value" in input_json[key]:
         if isinstance(input_json[key]["value"], str):
             add_key_value_to_new_input(new_input_json, key, input_json[key]["value"])
@@ -173,15 +172,15 @@ def read_key_input_json(
             logging.error(f"Aborting...")
             sys.exit(1)
 
-    ## Check if the key is in the user input
+    # ### Check if the key is in the user input
     if key in input_json:
-        ## Check if the key has a key called 'value'
+        # ### Check if the key has a key called 'value'
         if "value" in input_json[key]:
             if input_json[key]["value"] is not None:
-                ## Check if the key is subsys dependent (can be a list of values)
-                ## If -1 it means no list
+                # ### Check if the key is subsys dependent (can be a list of values)
+                # ### If -1 it means no list
                 if subsys_index == -1:
-                    ## Check if the type correspond to the default
+                    # ### Check if the type correspond to the default
                     if isinstance(
                             input_json[key]["value"], type(default_inputs_json[step][key])
                     ):
@@ -198,9 +197,9 @@ def read_key_input_json(
                         )
                         logging.error(f"Aborting...")
                         sys.exit(1)
-                ## If not then it is list
+                # ### If not then it is list
                 else:
-                    ## Check if it has the same type (meaning same value get propagated)
+                    # ### Check if it has the same type (meaning same value get propagated)
                     if isinstance(input_json[key]["value"], list) and isinstance(
                             input_json[key]["value"], type(default_inputs_json[step][key])
                     ):
@@ -208,7 +207,7 @@ def read_key_input_json(
                             new_input_json, key, input_json[key]["value"]
                         )
                         return input_json[key]["value"]
-                    ## If not check if is a list, and if the type inside the list matches, and return index
+                    # ### If not check if it is a list, and if the type inside the list matches, and return index
                     elif (
                             isinstance(input_json[key]["value"], list)
                             and [
@@ -248,7 +247,8 @@ def read_key_input_json(
                             f'Wrong type: "{key}" is {type(input_json[key]["value"])}'
                         )
                         logging.error(
-                            f'Wrong type: "{key}" should be {type(default_inputs_json[step][key])} [Will be repeated on all subsys]'
+                            f'Wrong type: "{key}" should be {type(default_inputs_json[step][key])} '
+                            f'[Will be repeated on all subsys] '
                         )
                         logging.error(f"Aborting...")
                         sys.exit(1)
@@ -262,7 +262,7 @@ def read_key_input_json(
                         logging.error(f"Aborting...")
                         sys.exit(1)
             else:
-                True
+                pass
         else:
             logging.error(f'The key "{key}" does not have a value subkey')
             logging.error(f"Check your structure")

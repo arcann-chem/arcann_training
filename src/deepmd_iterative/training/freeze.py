@@ -242,7 +242,7 @@ def main(
         (control_apath / f"training_{current_iteration_zfill}.json"),
         True,
     )
-    json_dump_bak(new_input_json, (current_apath / input_fn), True)
+    json_dump_bak(new_input_json, (current_apath / input_fn))
     logging.info(f"-" * 88)
     if check == config_json["nb_nnp"]:
         pass

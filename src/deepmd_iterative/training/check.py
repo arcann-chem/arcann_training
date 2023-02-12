@@ -67,9 +67,12 @@ def main(
                     training_out_time_split.append(training_out_time[n].split(" "))
                     training_out_time_split[n] = " ".join(training_out_time_split[n]).split()
                 if (local_apath/f"model.ckpt-{training_out_time_split[-1][3]}.index").is_file():
-                    (local_apath/f"model.ckpt-{training_out_time_split[-1][3]}.index").rename(local_apath/"model.ckpt.index")
-                    (local_apath/f"model.ckpt-{training_out_time_split[-1][3]}.meta").rename(local_apath/"model.ckpt.meta")
-                    (local_apath/f"model.ckpt-{training_out_time_split[-1][3]}.data-00000-of-00001").rename(local_apath/"model.ckpt.data-00000-of-00001")
+                    (local_apath/f"model.ckpt-{training_out_time_split[-1][3]}.index").rename(
+                        local_apath/"model.ckpt.index")
+                    (local_apath/f"model.ckpt-{training_out_time_split[-1][3]}.meta").rename(
+                        local_apath/"model.ckpt.meta")
+                    (local_apath/f"model.ckpt-{training_out_time_split[-1][3]}.data-00000-of-00001").rename(
+                        local_apath/"model.ckpt.data-00000-of-00001")
                 for n in range(0, len(training_out_time_split)):
                     s_per_step_per_step_size.append(float(training_out_time_split[n][6]))
                 del n

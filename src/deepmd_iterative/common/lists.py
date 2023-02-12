@@ -23,5 +23,5 @@ def delete_in_list(input_list: list, substring_in: str) -> list:
     Returns:
         list: output list of strings
     """
-    output_list = [zzz for zzz in input_list if not substring_in in zzz]
+    output_list = [zzz for zzz in input_list if substring_in not in zzz]
     return output_list

@@ -293,7 +293,8 @@ def main(
     datasets_validation = []
     for it_data_folders in data_apath.iterdir():
         if it_data_folders.is_dir():
-            # ### Escape initial/extra sets, because initial get added first and extra as last, and also escape init_ not in initial_json (in case of removal)
+            # ### Escape initial/extra sets, because initial get added first and extra as last, and also escape init_
+            # not in initial_json (in case of removal)
             if (
                     it_data_folders.name not in datasets_initial_json.keys()
                     and "extra_" != it_data_folders.name[:6]
@@ -373,20 +374,8 @@ def main(
                             f"{system_it}_{it_iteration_zfill}"
                         )
                         nb_added_nr = (
-                                nb_added_nr
-                                + np.load(
-                            str(
-                                data_apath
-                                / f"{system_it}_{it_iteration_zfill}"
-                                / "set.000"
-                                / "box.npy"
-                            )
-                        ).shape[0]
-                        )
-                        if it_iteration == current_iteration:
-                            nb_added_nr_iter = (
-                                    nb_added_nr_iter
-                                    + np.load(
+                            nb_added_nr
+                            + np.load(
                                 str(
                                     data_apath
                                     / f"{system_it}_{it_iteration_zfill}"
@@ -394,6 +383,18 @@ def main(
                                     / "box.npy"
                                 )
                             ).shape[0]
+                        )
+                        if it_iteration == current_iteration:
+                            nb_added_nr_iter = (
+                                nb_added_nr_iter
+                                + np.load(
+                                    str(
+                                        data_apath
+                                        / f"{system_it}_{it_iteration_zfill}"
+                                        / "set.000"
+                                        / "box.npy"
+                                    )
+                                ).shape[0]
                             )
                 del system_it
             except (KeyError, NameError):
@@ -413,20 +414,8 @@ def main(
                             f"{system_it}_{it_iteration_zfill}"
                         )
                         nb_added_nr = (
-                                nb_added_nr
-                                + np.load(
-                            str(
-                                data_apath
-                                / f"{system_it}_{it_iteration_zfill}"
-                                / "set.000"
-                                / "box.npy"
-                            )
-                        ).shape[0]
-                        )
-                        if it_iteration == current_iteration:
-                            nb_added_nr_iter = (
-                                    nb_added_nr_iter
-                                    + np.load(
+                            nb_added_nr
+                            + np.load(
                                 str(
                                     data_apath
                                     / f"{system_it}_{it_iteration_zfill}"
@@ -434,6 +423,18 @@ def main(
                                     / "box.npy"
                                 )
                             ).shape[0]
+                        )
+                        if it_iteration == current_iteration:
+                            nb_added_nr_iter = (
+                                nb_added_nr_iter
+                                + np.load(
+                                    str(
+                                        data_apath
+                                        / f"{system_it}_{it_iteration_zfill}"
+                                        / "set.000"
+                                        / "box.npy"
+                                    )
+                                ).shape[0]
                             )
                 del system_it
             except (KeyError, NameError):
@@ -451,20 +452,8 @@ def main(
                             f"{system_it}_{it_iteration_zfill}"
                         )
                         nb_added_nr = (
-                                nb_added_nr
-                                + np.load(
-                            str(
-                                data_apath
-                                / f"{system_it}_{it_iteration_zfill}"
-                                / "set.000"
-                                / "box.npy"
-                            )
-                        ).shape[0]
-                        )
-                        if it_iteration == current_iteration:
-                            nb_added_nr_iter = (
-                                    nb_added_nr_iter
-                                    + np.load(
+                            nb_added_nr
+                            + np.load(
                                 str(
                                     data_apath
                                     / f"{system_it}_{it_iteration_zfill}"
@@ -472,6 +461,18 @@ def main(
                                     / "box.npy"
                                 )
                             ).shape[0]
+                        )
+                        if it_iteration == current_iteration:
+                            nb_added_nr_iter = (
+                                nb_added_nr_iter
+                                + np.load(
+                                    str(
+                                        data_apath
+                                        / f"{system_it}_{it_iteration_zfill}"
+                                        / "set.000"
+                                        / "box.npy"
+                                    )
+                                ).shape[0]
                             )
                 del system_it
             except (KeyError, NameError):
@@ -488,10 +489,10 @@ def main(
             datasets_training.append("data/" + it_datasets_extra + "/")
             datasets_training_json.append(it_datasets_extra)
             nb_extra = (
-                    nb_extra
-                    + np.load(
-                str(data_apath / it_datasets_extra / "set.000" / "box.npy")
-            ).shape[0]
+                nb_extra
+                + np.load(
+                    str(data_apath / it_datasets_extra / "set.000" / "box.npy")
+                ).shape[0]
             )
         del it_datasets_extra
     else:
@@ -582,7 +583,8 @@ def main(
     training_input_json["training"]["disp_file"] = "lcurve.out"
     training_input_json["training"]["save_ckpt"] = "model.ckpt"
 
-    # ### Create the inputs/jobfiles for each NNP with random SEED inf the form of NNP_number + random(0,1000) + current_iteration.zfil(3) so between 10000 and unlimited1000999 (at iteration 999 !!)
+    # ### Create the inputs/jobfiles for each NNP with random SEED inf the form of NNP_number + random(0,
+    # 1000) + current_iteration.zfil(3) so between 10000 and unlimited1000999 (at iteration 999 !!)
     if current_iteration > 0:
         previous_iteration = current_iteration - 1
         previous_iteration_zfill = str(previous_iteration).zfill(3)
@@ -729,7 +731,7 @@ def main(
         (control_apath / f"training_{current_iteration_zfill}.json"),
         True,
     )
-    json_dump_bak(new_input_json, (current_apath / input_fn), True)
+    json_dump_bak(new_input_json, (current_apath / input_fn))
 
     logging.info(f"-" * 88)
     logging.info(

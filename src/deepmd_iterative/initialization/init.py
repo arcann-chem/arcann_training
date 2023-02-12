@@ -140,7 +140,7 @@ def main(
     logging.info(f"-" * 88)
     json_dump(config_json, (control_apath / "config.json"), True)
     json_dump(initial_datasets_json, (control_apath / "initial_datasets.json"), True)
-    json_dump_bak(new_input_json, (current_apath / input_fn), True)
+    json_dump_bak(new_input_json, (current_apath / input_fn))
 
     del control_apath
     del input_json, default_input_json, default_present, new_input_json
