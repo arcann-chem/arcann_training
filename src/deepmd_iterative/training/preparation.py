@@ -111,7 +111,6 @@ def main(
         logging.info(f"Cluster is {cluster}")
     del fake_cluster
     if cluster_error != 0:
-        # ### #FIXME: Better errors for clusterize
         logging.error(f"Error in machine_file.json")
         logging.error(f"Aborting...")
         return 1
@@ -329,9 +328,7 @@ def main(
     if training_json["use_initial_datasets"]:
         for it_datasets_initial_json in datasets_initial_json.keys():
             if (data_apath / it_datasets_initial_json).is_dir():
-                # ### #TODO: Here we don't Path because too complex
-                datasets_training.append(f"{(Path(data_apath.parts[-1]) / 'it_datasets_initial_json' / '_')}"[:-1])
-                # datasets_training.append(f"data/{it_datasets_initial_json}/")
+                datasets_training.append(f"{(Path(data_apath.parts[-1]) / it_datasets_initial_json / '_')}"[:-1])
                 datasets_training_json.append(it_datasets_initial_json)
                 nb_initial = (
                         nb_initial + datasets_initial_json[it_datasets_initial_json]
@@ -366,9 +363,8 @@ def main(
                     if (
                             data_apath / f"{system_it}_{it_iteration_zfill}"
                     ).is_dir():
-                        # ### #TODO: Here we don't Path because too complex
                         datasets_training.append(
-                            f"data/{system_it}_{it_iteration_zfill}/"
+                            f"{(Path(data_apath.parts[-1]) / (system_it+'_'+it_iteration_zfill) / '_')}"[:-1]
                         )
                         datasets_training_json.append(
                             f"{system_it}_{it_iteration_zfill}"
@@ -406,9 +402,8 @@ def main(
                     if (
                             data_apath / f"{system_it}_{it_iteration_zfill}"
                     ).is_dir():
-                        # ### #TODO: Here we don't Path because too complex
                         datasets_training.append(
-                            f"data/{system_it}_{it_iteration_zfill}/"
+                            f"{(Path(data_apath.parts[-1]) / (system_it+'_'+it_iteration_zfill) / '_')}"[:-1]
                         )
                         datasets_training_json.append(
                             f"{system_it}_{it_iteration_zfill}"
@@ -444,9 +439,8 @@ def main(
                     if (
                             data_apath / f"{system_it}_{it_iteration_zfill}"
                     ).is_dir():
-                        # ### #TODO: Here we don't Path because too complex
                         datasets_training.append(
-                            f"data/{system_it}_{it_iteration_zfill}/"
+                            f"{(Path(data_apath.parts[-1]) / (system_it+'_'+it_iteration_zfill) / '_')}"[:-1]
                         )
                         datasets_training_json.append(
                             f"{system_it}_{it_iteration_zfill}"
@@ -485,8 +479,7 @@ def main(
         config_json["datasets_extra"] = datasets_extra
         del datasets_extra
         for it_datasets_extra in config_json["datasets_extra"]:
-            # ### #TODO: Here we don't Path because too complex
-            datasets_training.append("data/" + it_datasets_extra + "/")
+            datasets_training.append(f"{(Path(data_apath.parts[-1]) / it_datasets_extra / '_')}"[:-1])
             datasets_training_json.append(it_datasets_extra)
             nb_extra = (
                 nb_extra
@@ -749,7 +742,6 @@ def main(
     del slurm_file_master
     del training_iterative_apath, current_apath
 
-    print(globals())
     return 0
 
 

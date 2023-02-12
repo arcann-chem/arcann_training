@@ -99,7 +99,7 @@ def main(
         return 1
     del check
 
-    if ("s_per_step_per_step_size" in globals()) and ("step_size" in globals()):
+    if ("s_per_step_per_step_size" in locals()) and ("step_size" in locals()):
         training_json["s_per_step"] = np.average(s_per_step_per_step_size)/step_size
         del s_per_step_per_step_size, step_size
 

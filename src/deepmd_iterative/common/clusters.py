@@ -19,6 +19,7 @@ def get_hostname() -> str:
         return socket.gethostbyaddr(socket.gethostname())[0]
 
 
+# ### #FIXME: Better errors for clusterize
 def clusterize(
         deepmd_iterative_apath: Path,
         training_iterative_apath: Path,
@@ -71,7 +72,7 @@ def clusterize(
         sys.exit(1)
 
     if check_only:
-        return cluster
+        return cluster, [], "", "", 0
 
     for clusters_file in clusters_files:
         if user_keyword is None:

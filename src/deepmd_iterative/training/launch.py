@@ -78,7 +78,13 @@ def main(
     user_spec = None if isinstance(user_spec, bool) else user_spec
 
     # ### Read cluster info
-    cluster = clusterize(
+    (
+        cluster,
+        cluster_spec,
+        cluster_walltime_format,
+        cluster_launch_command,
+        cluster_error,
+    ) = clusterize(
         deepmd_iterative_apath,
         training_iterative_apath,
         step="training",
@@ -93,7 +99,7 @@ def main(
     del fake_cluster
 
     # ### Check prep/launch
-    check_same_cluster(str(cluster[0]), training_json)
+    check_same_cluster(cluster, training_json)
 
     # ### Checks
     if training_json["is_launched"]:
@@ -120,17 +126,20 @@ def main(
             / f"job_deepmd_train_{training_json['arch_type']}_{cluster}.sh"
         ).is_file():
             change_dir(local_apath)
-            subprocess.call(
-                [
-                    training_json["launch_command"],
-                    f"./job_deepmd_train_{training_json['arch_type']}_{cluster}.sh",
-                ]
-            )
+            try:
+                subprocess.call(
+                    [
+                        training_json["launch_command"],
+                        f"./job_deepmd_train_{training_json['arch_type']}_{cluster}.sh",
+                    ]
+                )
+                logging.info(f"DP Train - {it_nnp} launched")
+                check = check + 1
+            except FileNotFoundError:
+                logging.critical(f"DP Train - {it_nnp} NOT launched - {training_json['launch_command']} not found")
             change_dir(local_apath.parent)
-            logging.info(f"DP Train - {it_nnp} launched")
-            check = check + 1
         else:
-            logging.critical(f"DP Train - {it_nnp} NOT launched")
+            logging.critical(f"DP Train - {it_nnp} NOT launched - No job file")
         del local_apath
     del it_nnp
 
@@ -167,8 +176,6 @@ def main(
     del training_json
     del cluster
     del training_iterative_apath, current_apath
-
-    print(globals())
 
     return 0
 

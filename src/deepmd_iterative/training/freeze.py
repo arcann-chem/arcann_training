@@ -104,7 +104,6 @@ def main(
         logging.info(f"Cluster is {cluster}")
     del fake_cluster
     if cluster_error != 0:
-        # ### #FIXME: Better errors for clusterize
         logging.error(f"Error in machine_file.json")
         logging.error(f"Aborting...")
         return 1
@@ -224,15 +223,23 @@ def main(
         del f
         if (local_apath/("job_deepmd_freeze_"+cluster_spec["arch_type"]+"_"+cluster+".sh")).is_file():
             change_dir(local_apath)
-            subprocess.call(["sbatch", "./job_deepmd_freeze_"+cluster_spec["arch_type"]+"_"+cluster+".sh"])
+            try:
+                subprocess.call(
+                    [
+                        cluster_launch_command,
+                        f"./job_deepmd_freeze_{cluster_spec['arch_type']}_{cluster}.sh",
+                    ]
+                )
+                logging.info(f"DP Freeze - {it_nnp} launched")
+                check = check + 1
+            except FileNotFoundError:
+                logging.critical(f"DP Freeze - {it_nnp} NOT launched - {training_json['launch_command']} not found")
             change_dir(local_apath.parent)
-            logging.info(f"DP Freeze - {it_nnp} launched")
-            check = check + 1
         else:
-            logging.critical(f"DP Freeze - {it_nnp} NOT launched")
+            logging.critical(f"DP Freeze - {it_nnp} NOT launched - No job file")
         del local_apath
 
-    del it_nnp, slurm_file, slurm_file_master
+    del it_nnp, slurm_file_master
 
     # ### Dump the dicts
     logging.info(f"-" * 88)
