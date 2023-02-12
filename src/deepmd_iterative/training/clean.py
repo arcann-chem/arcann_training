@@ -1,11 +1,14 @@
 from pathlib import Path
 import logging
 import sys
+import subprocess
 
 # ### deepmd_iterative imports
 from deepmd_iterative.common.json import (
-    json_read,
-    json_dump,
+    json_read
+)
+from deepmd_iterative.common.files import (
+    remove_file_glob
 )
 
 
@@ -18,13 +21,13 @@ def main(
 ):
     current_apath = Path(".").resolve()
     training_iterative_apath = current_apath.parent
-
+    
     logging.info(f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()}")
     logging.debug(f"Current path :{current_apath}")
     logging.debug(f"Training path: {training_iterative_apath}")
     logging.debug(f"Program path: {deepmd_iterative_apath}")
     logging.info(f"-" * 88)
-
+    
     # ### Check if correct folder
     if step_name not in current_apath.name:
         logging.error(f"The folder doesn't seems to be for this step: {step_name.capitalize()}")
@@ -43,39 +46,31 @@ def main(
     )
 
     # ### Checks
-    if not training_json["is_frozen"]:
-        logging.error(f"Lock found. Execute first: training check_freeze")
-        logging.error(f"Aborting...")
-        return 1
-
-    check = 0
-    for it_nnp in range(1, config_json["nb_nnp"] + 1):
-        local_apath = Path(".").resolve()/str(it_nnp)
-        if (local_apath/("graph_"+str(it_nnp)+"_"+current_iteration_zfill+"_compressed.pb")).is_file():
-            check = check + 1
-        else:
-            logging.critical("DP Compress - "+str(it_nnp)+" not finished/failed")
-        del local_apath
-    del it_nnp
-
-    if check == config_json["nb_nnp"]:
-        training_json["is_compressed"] = True
+    logging.critical(f"This is cleaning step. It should be run after training update_iter")
+    continuing = input(
+        f"Are you sur? (Y for Yes, anything else to abort)"
+    )
+    if continuing == "Y":
+        del continuing
+        True
     else:
-        logging.error(
-            f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a failure !"
-        )
-        logging.error("Some DP Compress did not finished correctly")
-        logging.error("Please check manually before relaunching this step")
         logging.error(f"Aborting...")
         return 1
-    del check
 
-    json_dump(training_json, (control_apath/f"training_{current_iteration_zfill}.json"), True)
+    # ### Delete
+    logging.info("Deleting DP-Freeze related error files...")
+    remove_file_glob(current_apath,"**/graph*freeze.out")
+    logging.info("Deleting DP-Compress related error files...")
+    remove_file_glob(current_apath,"**/graph*compress.out")
+    logging.info("Deleting DP-Train related error files...")
+    remove_file_glob(current_apath,"**/training.out")
+    logging.info("Deleting SLURM launch files...")
+    remove_file_glob(current_apath,"**/*.sh")
 
     logging.info(
         f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
     )
-
+    
     # ### Cleaning
     del control_apath
     del config_json
@@ -90,7 +85,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 4:
         main(
             "training",
-            "check_compress",
+            "clean",
             Path(sys.argv[1]),
             fake_cluster=sys.argv[2],
             input_fn=sys.argv[3],

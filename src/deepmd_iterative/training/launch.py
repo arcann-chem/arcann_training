@@ -99,7 +99,7 @@ def main(
     if training_json["is_launched"]:
         logging.critical(f"Already launched.")
         continuing = input(
-            f"Should it be run again? (Y for Yes, anythin else to abort)"
+            f"Should it be run again? (Y for Yes, anything else to abort)"
         )
         if continuing == "Y":
             del continuing

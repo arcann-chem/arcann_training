@@ -2,8 +2,6 @@ from pathlib import Path
 import logging
 import sys
 
-# ### Non-standard imports
-
 # ### deepmd_iterative imports
 from deepmd_iterative.common.json import (
     json_read,

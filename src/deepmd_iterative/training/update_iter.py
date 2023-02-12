@@ -1,8 +1,6 @@
 from pathlib import Path
 import logging
 import sys
-
-# ### Non-standard imports
 import subprocess
 
 # ### deepmd_iterative imports
@@ -15,9 +13,7 @@ from deepmd_iterative.common.files import (
     remove_file,
     remove_file_glob,
     remove_tree,
-    file_to_strings,
     check_dir,
-    write_file,
 )
 
 def main(
