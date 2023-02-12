@@ -109,6 +109,7 @@ def read_key_input_json(
         default_present: bool = True,
         subsys_index: int = -1,
         subsys_number: int = 0,
+        exploration_dep: int = -1
 ) -> Union[str, float, int, None]:
     """_summary_
 
@@ -121,6 +122,7 @@ def read_key_input_json(
         default_present (bool, optional): _description_. Defaults to True.
         subsys_index (int, optional): _description_. Defaults to -1.
         subsys_number (int, optional): _description_. Defaults to 0.
+        exploration_dep (int, optional): _description. Defaults to 1.
 
     Returns:
         _type_: _description_
@@ -171,7 +173,6 @@ def read_key_input_json(
             )
             logging.error(f"Aborting...")
             sys.exit(1)
-
     # ### Check if the key is in the user input
     if key in input_json:
         # ### Check if the key has a key called 'value'
@@ -279,10 +280,22 @@ def read_key_input_json(
             logging.error(f"Aborting...")
             sys.exit(1)
         else:
-            add_key_value_to_new_input(
-                new_input_json, key, default_inputs_json[step][key]
-            )
-            return default_inputs_json[step][key]
+            if exploration_dep == -1:
+                add_key_value_to_new_input(
+                    new_input_json, key, default_inputs_json[step][key]
+                )
+                return default_inputs_json[step][key]
+            elif exploration_dep == 0:
+                add_key_value_to_new_input(
+                    new_input_json, key, default_inputs_json[step][key][0]
+                )
+                return default_inputs_json[step][key][0]
+            else:
+                add_key_value_to_new_input(
+                    new_input_json, key, default_inputs_json[step][key][1]
+                )
+                return default_inputs_json[step][key][1]
+            
 
 # def json_read_input(
 #     file_path: Path, default_file: Path, is_logged: bool = False

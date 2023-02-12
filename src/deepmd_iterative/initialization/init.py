@@ -74,7 +74,15 @@ def main(
         default_input_json,
         step_name,
         default_present,
-    ), "current_iteration": 0}
+    ), "exploration_type": read_key_input_json(
+        input_json,
+        new_input_json,
+        "exploration_type",
+        default_input_json,
+        step_name,
+        default_present,
+    ), 
+    "current_iteration": 0}
     current_iteration_zfill = str(config_json["current_iteration"]).zfill(3)
     config_json["subsys_nr"] = {}
     for it0_subsys_nr, it_subsys_nr in enumerate(

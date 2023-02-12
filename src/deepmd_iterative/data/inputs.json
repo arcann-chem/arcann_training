@@ -3,7 +3,8 @@
     {
         "system": null,
         "subsys_nr": null,
-        "nb_nnp": 3
+        "nb_nnp": 3,
+        "exploration_type": "lammps"
     },
     "training":
     {
@@ -21,5 +22,22 @@
         "numb_steps": 400000,
         "numb_test": 0,
         "s_per_step": 0.10
+    },
+    "exploration":
+    {
+        "slurm_email": "",
+        "user_spec": false,
+        "atomsk_fpath": "",
+        "vmd_fpath": "",
+        "nb_traj": 2,
+        "temperature_K": [298.15, -1],
+        "timestep_ps": [0.0005, 0.00025],
+        "disturbed_start":[false, false],
+        "print_every_x_steps": 0.01,
+        "job_walltime_h": [-1, -1],
+        "exploration_time_ps":[-1, -1],
+        "max_exploration_time_ps": [400, 100],
+        "initial_exploration_time_ps": [10, 10],
+        "init_job_walltime_h": [1, 10]
     }
 }
