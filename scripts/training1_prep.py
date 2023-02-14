@@ -269,9 +269,9 @@ nb_trained = nb_initial+nb_added_nr+nb_added_r+nb_extra
 if ( training_json["deepmd_model_version"] < 2.0 ):
     training_input_json["training"]["numb_test"] = training_json["numb_test"]
 
-### #TODO: Auto validiation: If there is validation/test sets for 2.0, maybe enforce numb_test to not 0??
+### #TODO: Auto validation: If there is validation/test sets for 2.0, maybe enforce numb_test to not 0??
 
-### Because changes beteween version
+### Because changes between version
 if ( training_json["deepmd_model_version"] >= 2.0 ):
     training_input_json["training"]["training_data"]["systems"] = datasets_training
 else:
@@ -303,7 +303,7 @@ decay_steps = int(decay_steps)
 ### If the decay_rate is overridden and stop_lr is not
 if "decay_rate" in globals() and "stop_lr" not in globals():
     ### Here: playing with stop_lr and numb_steps
-    ### Calculcate the new stop_lr
+    ### Calculate the new stop_lr
     stop_lr_new = cf.get_learning_rate(training_json["numb_steps"],training_json["start_lr"],decay_rate,training_json["decay_steps"])
     ### If numb_steps was not overridden, recalculate stop_lr and augment numb_steps if needed to approach the default stop_lr (going up)
     if "numb_steps" not in globals():
@@ -384,7 +384,7 @@ training_input_json["training"]["save_ckpt"]="model.ckpt"
 if training_json["deepmd_model_version"] < 2.0:
     training_input_json["training"]["load_ckpt"]="model.ckpt"
 
-### Create the inputs/jobfiles for each NNP with random SEED inf the form of NNP_number + random(0,1000) + current_iteration.zfil(3) so between 10000 and unlimited1000999 (at iteration 999 !!)
+### Create the inputs/jobfiles for each NNP with random SEED inf the form of NNP_number + random(0,1000) + current_iteration.zfill(3) so between 10000 and unlimited1000999 (at iteration 999 !!)
 if current_iteration > 0:
     previous_iteration = current_iteration - 1
     previous_iteration_zfill = str(previous_iteration).zfill(3)

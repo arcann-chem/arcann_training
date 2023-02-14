@@ -67,6 +67,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
     coord_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"], config_json["subsys_nr"][it_subsys_nr]["nb_atm"] * 3 ))
     box_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"], 9))
     virial_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"], 9))
+    is_virial = False
 
     box_array_raw[:,0] = config_json["subsys_nr"][it_subsys_nr]["cell"][0]
     box_array_raw[:,4] = config_json["subsys_nr"][it_subsys_nr]["cell"][1]
@@ -101,18 +102,21 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
             cp2k_version = float(cp2k_out[0])
             del lammps_data, cp2k_out, type_atom_array, index
 
-        stress_xyz = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Stress_Tensor.st"))
-        if cp2k_version < 8.1:
-            del stress_xyz[0:4]
-            stress_xyz = stress_xyz[0:3]
-            stress_xyz = [" ".join(f.replace("\n","").split()) for f in stress_xyz]
-            stress_xyz = [g.split(" ")[1:4] for g in stress_xyz]
-            stress_xyz_array = np.asarray(stress_xyz,dtype=np.float64).flatten()
-            virial_array_raw[it_step-1,:] = stress_xyz_array * volume[it_step-1] / eV_per_A3_to_GPa
-            del stress_xyz, stress_xyz_array
-        else:
-            True
-            ### #TODO: cp2k_version > 8.1 for stress
+        if (local_apath/("2_labeling_"+it_step_zfill+"-Stress_Tensor.st")).is_file():
+            stress_xyz = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Stress_Tensor.st"))
+            if cp2k_version < 8.1:
+                del stress_xyz[0:4]
+                stress_xyz = stress_xyz[0:3]
+                stress_xyz = [" ".join(f.replace("\n","").split()) for f in stress_xyz]
+                stress_xyz = [g.split(" ")[1:4] for g in stress_xyz]
+                stress_xyz_array = np.asarray(stress_xyz,dtype=np.float64).flatten()
+                virial_array_raw[it_step-1,:] = stress_xyz_array * volume[it_step-1] / eV_per_A3_to_GPa
+                is_virial = True
+                del stress_xyz, stress_xyz_array
+            else:
+                True
+                logging.info("Stress tensors are currently not supported for CP2K version 8.1 or above")
+                ### #TODO: cp2k_version > 8.1 for stress
 
         force_cp2k = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Forces.for"))
         del force_cp2k[0:4]
@@ -162,9 +166,9 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
 
     np.savetxt(str(subsys_path/"box.raw"),box_array_raw,delimiter=" ")
     np.save(str(data_apath/"set.000"/"box"),box_array_raw)
-    np.savetxt(str(subsys_path/"virial.raw"),virial_array_raw,delimiter=" ")
-    np.save(str(data_apath/"set.000"/"virial"),virial_array_raw)
-    np.savetxt(str(subsys_path/"force.raw"),virial_array_raw,delimiter=" ")
+    np.savetxt(str(subsys_path/"virial.raw"),virial_array_raw,delimiter=" ") if is_virial else False
+    np.save(str(data_apath/"set.000"/"virial"),virial_array_raw) if is_virial else False
+    np.savetxt(str(subsys_path/"force.raw"),force_array_raw,delimiter=" ")
     np.save(str(data_apath/"set.000"/"force"),force_array_raw)
     np.savetxt(str(subsys_path/"energy.raw"),energy_array_raw,delimiter=" ")
     np.save(str(data_apath/"set.000"/"energy"),energy_array_raw)
@@ -174,7 +178,9 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
     np.save(str(data_apath/"set.000"/"wannier"),wannier_array_raw) if is_wannier else True
     cf.write_file((data_apath/"set.000"/"wannier_not-converged.txt"),wannier_not_converged) if len(wannier_not_converged) > 1 else True
 
-    del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw,wannier_array_raw
+    del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw
+    if is_wannier:
+        del wannier_array_raw
 
     if labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"] != 0 :
         data_apath = training_iterative_apath/"data"/(it_subsys_nr+"-disturbed_"+current_iteration_zfill)
@@ -186,6 +192,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
         coord_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"], config_json["subsys_nr"][it_subsys_nr]["nb_atm"] * 3 ))
         box_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"], 9))
         virial_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"], 9))
+        is_virial = False
 
         wannier_not_converged = ["#Indexes start at 0\n"]
         is_wannier = False
@@ -212,18 +219,21 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
                 cp2k_version = float(cp2k_out[0])
                 del lammps_data, cp2k_out, type_atom_array, index
 
-            stress_xyz = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Stress_Tensor.st"))
-            if cp2k_version < 8.1:
-                del stress_xyz[0:4]
-                stress_xyz = stress_xyz[0:3]
-                stress_xyz = [" ".join(f.replace("\n","").split()) for f in stress_xyz]
-                stress_xyz = [g.split(" ")[1:4] for g in stress_xyz]
-                stress_xyz_array = np.asarray(stress_xyz,dtype=np.float64).flatten()
-                virial_array_raw[count,:] = stress_xyz_array * volume[count] / eV_per_A3_to_GPa
-                del stress_xyz, stress_xyz_array
-            else:
-                True
-                ### #TODO: cp2k_version > 8.1 for stress
+            if (local_apath/("2_labeling_"+it_step_zfill+"-Stress_Tensor.st")).is_file():
+                stress_xyz = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Stress_Tensor.st"))
+                if cp2k_version < 8.1:
+                    del stress_xyz[0:4]
+                    stress_xyz = stress_xyz[0:3]
+                    stress_xyz = [" ".join(f.replace("\n","").split()) for f in stress_xyz]
+                    stress_xyz = [g.split(" ")[1:4] for g in stress_xyz]
+                    stress_xyz_array = np.asarray(stress_xyz,dtype=np.float64).flatten()
+                    virial_array_raw[count,:] = stress_xyz_array * volume[count] / eV_per_A3_to_GPa
+                    is_virial = True
+                    del stress_xyz, stress_xyz_array
+                else:
+                    True
+                    logging.info("Stress tensors are currently not supported for CP2K version 8.1 or above")
+                    ### #TODO: cp2k_version > 8.1 for stress
 
             force_cp2k = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Forces.for"))
             del force_cp2k[0:4]
@@ -277,9 +287,9 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
 
         np.savetxt(str(subsys_path/"box-disturbed.raw"),box_array_raw,delimiter=" ")
         np.save(str(data_apath/"set.000"/"box"),box_array_raw)
-        np.savetxt(str(subsys_path/"virial-disturbed.raw"),virial_array_raw,delimiter=" ")
-        np.save(str(data_apath/"set.000"/"virial"),virial_array_raw)
-        np.savetxt(str(subsys_path/"force-disturbed.raw"),virial_array_raw,delimiter=" ")
+        np.savetxt(str(subsys_path/"virial-disturbed.raw"),virial_array_raw,delimiter=" ") if is_virial else True
+        np.save(str(data_apath/"set.000"/"virial"),virial_array_raw) if is_virial else True
+        np.savetxt(str(subsys_path/"force-disturbed.raw"),force_array_raw,delimiter=" ")
         np.save(str(data_apath/"set.000"/"force"),force_array_raw)
         np.savetxt(str(subsys_path/"energy-disturbed.raw"),energy_array_raw,delimiter=" ")
         np.save(str(data_apath/"set.000"/"energy"),energy_array_raw)
@@ -289,7 +299,9 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
         np.save(str(data_apath/"set.000"/"wannier"),wannier_array_raw) if is_wannier else True
         cf.write_file((data_apath/"set.000"/"wannier_not-converged.txt"),wannier_not_converged) if len(wannier_not_converged) > 1 else True
 
-        del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw, wannier_array_raw, count
+        del box_array_raw, virial_array_raw, force_array_raw, energy_array_raw, coord_array_raw, count
+        if is_wannier:
+            del wannier_array_raw
 del volume, cp2k_version, subsys_path, data_apath, it_subsys_nr
 del Ha_to_eV, Bohr_to_A, au_to_eV_per_A,eV_per_A3_to_GPa
 
