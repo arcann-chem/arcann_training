@@ -3,36 +3,52 @@ import logging
 import sys
 import json
 
-# ### Non-standard imports
+# Non-standard imports
 import numpy as np
 
 
-def get_decay_steps(nb_structures: int, min_decay: int) -> int:
-    """Calculate decay steps in function of nb_structures:
-        Floor the number of total trained structures to nearest 10000: floored_nb_structures
-        If floored_nb_structures < 20 000, decay_steps = min
-        if floored_nb_structures is => 20 000 and < 100000, decay_steps = floored_nb_structures / 4
-        If floored_nb_structures >= 100 000, decay_steps = 20 000 + min for each 50 000 increments over 50 000
-            100 000 >= floored_nb_structures < 150 000, decay_steps = 20 000 + 2 * min
-            200 000 >= floored_nb_structures < 250 000 decay_steps = 20 000 + 3 * min
+def get_decay_steps(nb_structures: int, decay_steps_min: int = 5000) -> int:
+    """
+    Calculate the number of decay steps (tau) for a given number of structures to train (N).
 
     Args:
-        nb_structures (int): Number of total structures to train
-        min_decay (int, optional): Minimum decay steps.
+        nb_structures (int): The total number of structures to train (N).
+        decay_steps_min (int, optional): The minimum number of decay steps (tau_min). Default is 5000.
 
     Returns:
-        decay_steps (int): decay steps (tau)
+        int: The calculated number of decay steps (tau).
+
+    Raises:
+        ValueError: If nb_structures is not a positive integer, or if decay_steps_min is not a positive integer.
     """
-    decay_steps = min_decay
-    power_val = np.power(10, np.int64(np.log10(nb_structures)))
-    floored_nb_structures = int(np.floor(nb_structures / power_val) * power_val)
+
+    # Check if nb_structures is a positive integer
+    if not isinstance(nb_structures, int) or nb_structures <= 0:
+        logging.critical("nb_structures must be a positive integer")
+        logging.critical("Aborting...")
+        sys.exit(1)
+        #raise ValueError("nb_structures must be a positive integer")
+
+    # Check if decay_steps_min is a positive integer
+    if not isinstance(decay_steps_min, int) or decay_steps_min <= 0:
+        logging.critical("decay_steps_min must be a positive integer")
+        logging.critical("Aborting...")
+        sys.exit(1)
+        #raise ValueError("decay_steps_min must be a positive integer")
+
+    # Round down to the nearest multiple of 10000
+    floored_nb_structures = nb_structures // 10000 * 10000
+
+    # Calculate the decay steps based on the number of structures
     if floored_nb_structures < 20000:
-        decay_steps = min_decay
+        decay_steps = decay_steps_min
     elif floored_nb_structures < 100000:
-        decay_steps = floored_nb_structures / 4
+        decay_steps = floored_nb_structures // 4
     else:
-        decay_steps = 20000 + ((floored_nb_structures - 50000) / 100000) * 10000
-    return int(decay_steps)
+        extra_decay_steps = (floored_nb_structures - 50000) // 50000 * decay_steps_min
+        decay_steps = 20000 + extra_decay_steps
+
+    return decay_steps
 
 
 def get_decay_rate(stop_batch: int, start_lr: float, stop_lr: float, decay_steps: int) -> float:
@@ -40,35 +56,61 @@ def get_decay_rate(stop_batch: int, start_lr: float, stop_lr: float, decay_steps
     Calculate the decay rate (lambda) based on the given training parameters.
 
     Args:
-        stop_batch: The final training step (tfinal).
-        start_lr: The starting learning rate (alpha0).
-        stop_lr: The ending learning rate (alpha(tfinal)).
-        decay_steps: The number of decay steps (tau).
+        stop_batch (int): The final training step (tfinal).
+        start_lr (float): The starting learning rate (alpha0).
+        stop_lr (float): The ending learning rate (alpha(tfinal)).
+        decay_steps (int): The number of decay steps (tau).
 
     Returns:
-        The calculated decay rate (lambda).
+        float: The calculated decay rate (lambda).
+
+    Raises:
+        ValueError: The start learning rate must be a positive number.
+
     """
-    result = np.log(stop_lr / start_lr)
-    result /= stop_batch / decay_steps
-    result = np.exp(result)
-    return result
+    # Check that the start learning rate is a positive number.
+    if start_lr <= 0:
+        logging.critical("The start learning rate must be a positive number.")
+        logging.critical("Aborting...")
+        sys.exit(1)
+        #raise ValueError("The start learning rate must be a positive number.")
+
+    # Calculate the decay rate using the given training parameters
+    decay_rate = np.exp(np.log(stop_lr / start_lr) / (stop_batch / decay_steps))
+
+    return decay_rate
 
 
-def get_learning_rate(
-        training_step: int, start_lr: float, decay_rate: float, decay_steps: int
-) -> float:
-    """Get the learning rate at step t
+def get_learning_rate(training_step: int, start_lr: float, decay_rate: float, decay_steps: int) -> float:
+    """
+    Calculate the learning rate (alpha) at a given training step (t), based on the given parameters.
 
     Args:
-        training_step (int): training step (t)
-        start_lr (float): starting learning rate (alpha0)
-        decay_rate (float): decay rate (lambda)
-        decay_steps (int): decay steps (tau)
+        training_step (int): The current training step (t).
+        start_lr (float): The starting learning rate (alpha0).
+        decay_rate (float): The decay rate (labmda).
+        decay_steps (int): The number of decay steps (tau).
 
     Returns:
-        (float): learning rate (alpha(t)) at step t
+        The learning rate at the current training step.
+
+    Raises:
+        ValueError: If any of the arguments are not positive
     """
-    return start_lr * decay_rate ** (training_step / decay_steps)
+
+    # Check that all arguments are positive
+    if not all(arg > 0 for arg in (training_step, start_lr, decay_rate, decay_steps)):
+        logging.critical("All arguments must be positive.")
+        logging.critical("Aborting...")
+        sys.exit(1)
+        #raise ValueError("All arguments must be positive.")
+
+    # Calculate the learning rate based on the current training step
+    step_ratio = training_step / decay_steps
+    decay_factor = decay_rate ** step_ratio
+    learning_rate = start_lr * decay_factor
+
+    return learning_rate
 
 
 def check_initial_datasets(training_iterative_apath: Path) -> dict:
