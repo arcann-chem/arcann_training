@@ -16,7 +16,7 @@ from deepmd_iterative.common.json import (
     read_default_input_json,
     read_key_input_json,
 )
-from deepmd_iterative.common.lists import replace_in_list, delete_in_list
+from deepmd_iterative.common.lists import replace_substring_in_list, delete_substring_from_list
 from deepmd_iterative.common.clusters import clusterize
 from deepmd_iterative.common.files import (
     check_file,
@@ -29,8 +29,9 @@ from deepmd_iterative.common.training import (
     get_decay_steps,
     check_initial_datasets,
 )
-from deepmd_iterative.common.tools import seconds_to_walltime
+from deepmd_iterative.common.tools import convert_seconds_to_hh_mm_ss
 
+from deepmd_iterative.common.checks import validate_step_folder
 
 def main(
         step_name,
@@ -49,10 +50,7 @@ def main(
     logging.info(f"-" * 88)
 
     # ### Check if correct folder
-    if step_name not in current_apath.name:
-        logging.error(f"The folder doesn't seems to be for this step: {step_name.capitalize()}")
-        logging.critical("Aborting...")
-        return 1
+    validate_step_folder()
 
     # ### Get iteration
     current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
@@ -636,25 +634,25 @@ def main(
         json_dump(training_input_json, training_input_json_fpath, False)
 
         slurm_file = copy.deepcopy(slurm_file_master)
-        slurm_file = replace_in_list(
+        slurm_file = replace_substring_in_list(
             slurm_file, "_R_DEEPMD_VERSION_", str(training_json["deepmd_model_version"])
         )
 
-        slurm_file = replace_in_list(
+        slurm_file = replace_substring_in_list(
             slurm_file, "_R_PROJECT_", cluster_spec["project_name"]
         )
-        slurm_file = replace_in_list(
+        slurm_file = replace_substring_in_list(
             slurm_file, "_R_ALLOC_", cluster_spec["allocation_name"]
         )
         slurm_file = (
-            delete_in_list(slurm_file, "_R_PARTITION_")
+            delete_substring_from_list(slurm_file, "_R_PARTITION_")
             if cluster_spec["partition"] is None
-            else replace_in_list(slurm_file, "_R_PARTITION_", cluster_spec["partition"])
+            else replace_substring_in_list(slurm_file, "_R_PARTITION_", cluster_spec["partition"])
         )
         slurm_file = (
-            delete_in_list(slurm_file, "_R_SUBPARTITION_")
+            delete_substring_from_list(slurm_file, "_R_SUBPARTITION_")
             if cluster_spec["subpartition"] is None
-            else replace_in_list(
+            else replace_substring_in_list(
                 slurm_file, "_R_SUBPARTITION_", cluster_spec["subpartition"]
             )
         )
@@ -662,7 +660,7 @@ def main(
         max_qos = 0
         for it_qos in cluster_spec["qos"]:
             if cluster_spec["qos"][it_qos] >= walltime_approx_s:
-                slurm_file = replace_in_list(slurm_file, "_R_QOS_", it_qos)
+                slurm_file = replace_substring_in_list(slurm_file, "_R_QOS_", it_qos)
                 qos_ok = True
             else:
                 max_qos = (
@@ -676,19 +674,19 @@ def main(
             )
             logging.warning("Settign the maximum QoS time as walltime")
             slurm_file = (
-                replace_in_list(
-                    slurm_file, "_R_WALLTIME_", seconds_to_walltime(max_qos_time)
+                replace_substring_in_list(
+                    slurm_file, "_R_WALLTIME_", convert_seconds_to_hh_mm_ss(max_qos_time)
                 )
                 if "hours" in cluster_walltime_format
-                else replace_in_list(slurm_file, "_R_WALLTIME_", str(max_qos_time))
+                else replace_substring_in_list(slurm_file, "_R_WALLTIME_", str(max_qos_time))
             )
         else:
             slurm_file = (
-                replace_in_list(
-                    slurm_file, "_R_WALLTIME_", seconds_to_walltime(walltime_approx_s)
+                replace_substring_in_list(
+                    slurm_file, "_R_WALLTIME_", convert_seconds_to_hh_mm_ss(walltime_approx_s)
                 )
                 if "hours" in cluster_walltime_format
-                else replace_in_list(slurm_file, "_R_WALLTIME_", str(walltime_approx_s))
+                else replace_substring_in_list(slurm_file, "_R_WALLTIME_", str(walltime_approx_s))
             )
         del qos_ok, max_qos_time, max_qos
 
@@ -701,10 +699,10 @@ def main(
             default_present,
         )
         if slurm_email != "":
-            slurm_file = replace_in_list(slurm_file, "_R_EMAIL_", slurm_email)
+            slurm_file = replace_substring_in_list(slurm_file, "_R_EMAIL_", slurm_email)
         else:
-            slurm_file = delete_in_list(slurm_file, "_R_EMAIL_")
-            slurm_file = delete_in_list(slurm_file, "mail")
+            slurm_file = delete_substring_from_list(slurm_file, "_R_EMAIL_")
+            slurm_file = delete_substring_from_list(slurm_file, "mail")
         del slurm_email
 
         write_file(

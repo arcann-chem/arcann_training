@@ -1,7 +1,7 @@
 {
     "step_name": "initialization",
     "system": { "value": null, "_comment": "str"},
-    "subsys_nr": { "value": null, "_comment":"list of str"},
+    "subsys_nr": { "value": null, "_comment": "list of str"},
     "nb_nnp": { "value": null, "_comment": "int", "_default": 3},
     "exploration_type": { "value": null, "_comment": "str, lammps or i-PI", "_default": "lammps"}
 }
