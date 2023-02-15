@@ -1,14 +1,14 @@
 <simulation verbosity="medium">
     <output prefix="_R_SUBSYS_">
-        <properties shape="(7)" filename="out" stride="_R_print_every_x_steps_">
+        <properties shape="(7)" filename="out" stride="_R_PRINT_FREQ_">
        [ step, time{picosecond}, conserved, temperature{kelvin}, kinetic_cv,
          potential, pressure_cv{megapascal} ]
         </properties>
-        <trajectory filename="center" cell_units="angstrom" stride="_R_print_every_x_steps_"> x_centroid{angstrom} </trajectory>
-        <trajectory filename="beads" cell_units="angstrom" stride="_R_print_every_x_steps_"> positions{angstrom} </trajectory>
+        <trajectory filename="center" cell_units="angstrom" stride="_R_PRINT_FREQ_"> x_centroid{angstrom} </trajectory>
+        <trajectory filename="beads" cell_units="angstrom" stride="_R_PRINT_FREQ_"> positions{angstrom} </trajectory>
     </output>
     <total_time>0</total_time>
-    <total_steps>_R_NB_STEPS_</total_steps>
+    <total_steps>_R_NUMBER_OF_STEPS_</total_steps>
     <prng>
         <seed>_R_NB_SEED_</seed>
     </prng>

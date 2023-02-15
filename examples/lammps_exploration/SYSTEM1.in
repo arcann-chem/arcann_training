@@ -12,7 +12,7 @@ pair_coeff * *
 
 timestep _R_TIMESTEP_
 
-dump dcd all dcd _R_PRINT_FREQ_ _DCD_OUT_
+dump dcd all dcd _R_PRINT_FREQ_ _R_DCD_OUT_
 
 thermo_style custom step time etotal ke pe temp press vol density cella cellb cellc cpuremain
 thermo_modify flush yes
