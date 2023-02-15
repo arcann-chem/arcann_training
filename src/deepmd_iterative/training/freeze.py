@@ -12,7 +12,7 @@ from deepmd_iterative.common.json import (
     read_default_input_json,
     read_key_input_json,
 )
-from deepmd_iterative.common.lists import replace_in_list, delete_in_list
+from deepmd_iterative.common.lists import replace_substring_in_list, delete_substring_from_list
 from deepmd_iterative.common.clusters import clusterize
 from deepmd_iterative.common.files import (
     check_file,
@@ -133,29 +133,29 @@ def main(
         check_file(local_apath/"model.ckpt.index", True, True)
 
         slurm_file = copy.deepcopy(slurm_file_master)
-        slurm_file = replace_in_list(
+        slurm_file = replace_substring_in_list(
             slurm_file, "_R_DEEPMD_VERSION_", str(training_json["deepmd_model_version"])
         )
 
-        slurm_file = replace_in_list(
+        slurm_file = replace_substring_in_list(
             slurm_file, "_R_DEEPMD_MODEL_", f"graph_{it_nnp}_{current_iteration_zfill}"
         )
 
-        slurm_file = replace_in_list(
+        slurm_file = replace_substring_in_list(
             slurm_file, "_R_PROJECT_", cluster_spec["project_name"]
         )
-        slurm_file = replace_in_list(
+        slurm_file = replace_substring_in_list(
             slurm_file, "_R_ALLOC_", cluster_spec["allocation_name"]
         )
         slurm_file = (
-            delete_in_list(slurm_file, "_R_PARTITON_")
+            delete_substring_from_list(slurm_file, "_R_PARTITON_")
             if cluster_spec["partition"] is None
-            else replace_in_list(slurm_file, "_R_PARTITION_", cluster_spec["partition"])
+            else replace_substring_in_list(slurm_file, "_R_PARTITION_", cluster_spec["partition"])
         )
         slurm_file = (
-            delete_in_list(slurm_file, "_R_SUBPARTITION_")
+            delete_substring_from_list(slurm_file, "_R_SUBPARTITION_")
             if cluster_spec["subpartition"] is None
-            else replace_in_list(
+            else replace_substring_in_list(
                 slurm_file, "_R_SUBPARTITION_", cluster_spec["subpartition"]
             )
         )
@@ -163,7 +163,7 @@ def main(
         max_qos = 0
         for it_qos in cluster_spec["qos"]:
             if cluster_spec["qos"][it_qos] >= walltime_approx_s:
-                slurm_file = replace_in_list(slurm_file, "_R_QOS_", it_qos)
+                slurm_file = replace_substring_in_list(slurm_file, "_R_QOS_", it_qos)
                 qos_ok = True
             else:
                 max_qos = (
@@ -177,19 +177,19 @@ def main(
             )
             logging.warning("Settign the maximum QoS time as walltime")
             slurm_file = (
-                replace_in_list(
+                replace_substring_in_list(
                     slurm_file, "_R_WALLTIME_", convert_seconds_to_hh_mm_ss(max_qos_time)
                 )
                 if "hours" in cluster_walltime_format
-                else replace_in_list(slurm_file, "_R_WALLTIME_", str(max_qos_time))
+                else replace_substring_in_list(slurm_file, "_R_WALLTIME_", str(max_qos_time))
             )
         else:
             slurm_file = (
-                replace_in_list(
+                replace_substring_in_list(
                     slurm_file, "_R_WALLTIME_", convert_seconds_to_hh_mm_ss(walltime_approx_s)
                 )
                 if "hours" in cluster_walltime_format
-                else replace_in_list(slurm_file, "_R_WALLTIME_", str(walltime_approx_s))
+                else replace_substring_in_list(slurm_file, "_R_WALLTIME_", str(walltime_approx_s))
             )
         del qos_ok, max_qos_time, max_qos
 
@@ -202,10 +202,10 @@ def main(
             default_present,
         )
         if slurm_email != "":
-            slurm_file = replace_in_list(slurm_file, "_R_EMAIL_", slurm_email)
+            slurm_file = replace_substring_in_list(slurm_file, "_R_EMAIL_", slurm_email)
         else:
-            slurm_file = delete_in_list(slurm_file, "_R_EMAIL_")
-            slurm_file = delete_in_list(slurm_file, "mail")
+            slurm_file = delete_substring_from_list(slurm_file, "_R_EMAIL_")
+            slurm_file = delete_substring_from_list(slurm_file, "mail")
         del slurm_email
 
         write_file(
