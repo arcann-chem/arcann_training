@@ -35,21 +35,23 @@ def get_decay_steps(nb_structures: int, min_decay: int) -> int:
     return int(decay_steps)
 
 
-def get_decay_rate(
-        stop_batch: int, start_lr: float, stop_lr: float, decay_steps: int
-) -> float:
-    """Get the decay rate (lambda)
+def get_decay_rate(stop_batch: int, start_lr: float, stop_lr: float, decay_steps: int) -> float:
+    """
+    Calculate the decay rate (lambda) based on the given training parameters.
 
     Args:
-        stop_batch (int): final training step (tfinal)
-        start_lr (float): starting learning rate (alpha0)
-        stop_lr (float): ending learning rate (alpha(tfinal))
-        decay_steps (int): decay steps (tau)
+        stop_batch: The final training step (tfinal).
+        start_lr: The starting learning rate (alpha0).
+        stop_lr: The ending learning rate (alpha(tfinal)).
+        decay_steps: The number of decay steps (tau).
 
     Returns:
-        (float): decay_rate (lambda)
+        The calculated decay rate (lambda).
     """
-    return np.exp(np.log(stop_lr / start_lr) / (stop_batch / decay_steps))
+    result = np.log(stop_lr / start_lr)
+    result /= stop_batch / decay_steps
+    result = np.exp(result)
+    return result
 
 
 def get_learning_rate(
