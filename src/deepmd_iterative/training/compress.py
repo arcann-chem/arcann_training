@@ -20,7 +20,8 @@ from deepmd_iterative.common.files import (
     change_dir,
     write_file,
 )
-from deepmd_iterative.common.tools import seconds_to_walltime
+from deepmd_iterative.common.tools import convert_seconds_to_hh_mm_ss
+from deepmd_iterative.common.checks import validate_step_folder
 
 
 def main(
@@ -40,10 +41,7 @@ def main(
     logging.info(f"-" * 88)
 
     # ### Check if correct folder
-    if step_name not in current_apath.name:
-        logging.error(f"The folder doesn't seems to be for this step: {step_name.capitalize()}")
-        logging.error(f"Aborting...")
-        return 1
+    validate_step_folder()
 
     # ### Get iteration
     current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
@@ -180,7 +178,7 @@ def main(
             logging.warning("Settign the maximum QoS time as walltime")
             slurm_file = (
                 replace_in_list(
-                    slurm_file, "_R_WALLTIME_", seconds_to_walltime(max_qos_time)
+                    slurm_file, "_R_WALLTIME_", convert_seconds_to_hh_mm_ss(max_qos_time)
                 )
                 if "hours" in cluster_walltime_format
                 else replace_in_list(slurm_file, "_R_WALLTIME_", str(max_qos_time))
@@ -188,7 +186,7 @@ def main(
         else:
             slurm_file = (
                 replace_in_list(
-                    slurm_file, "_R_WALLTIME_", seconds_to_walltime(walltime_approx_s)
+                    slurm_file, "_R_WALLTIME_", convert_seconds_to_hh_mm_ss(walltime_approx_s)
                 )
                 if "hours" in cluster_walltime_format
                 else replace_in_list(slurm_file, "_R_WALLTIME_", str(walltime_approx_s))

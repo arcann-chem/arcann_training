@@ -9,6 +9,7 @@ from deepmd_iterative.common.json import (
 from deepmd_iterative.common.files import (
     remove_file_glob
 )
+from deepmd_iterative.common.checks import validate_step_folder
 
 
 def main(
@@ -28,10 +29,7 @@ def main(
     logging.info(f"-" * 88)
     
     # ### Check if correct folder
-    if step_name not in current_apath.name:
-        logging.error(f"The folder doesn't seems to be for this step: {step_name.capitalize()}")
-        logging.error(f"Aborting...")
-        return 1
+    validate_step_folder()
 
     # ### Get iteration
     current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
