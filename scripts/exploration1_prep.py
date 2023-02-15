@@ -407,7 +407,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
 
                 cf.write_file(local_apath/("job_deepmd_"+exploration_type+"_"+cluster_spec["arch_type"]+"_"+cluster+".sh"),slurm_file)
 
-                del exploration_input, slurm_file, models_list_job
+                del exploration_input, models_list_job
 
             ### #12
             elif exploration_type == "i-PI":
