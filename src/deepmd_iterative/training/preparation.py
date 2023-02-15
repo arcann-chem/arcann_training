@@ -29,7 +29,7 @@ from deepmd_iterative.common.training import (
     get_decay_steps,
     check_initial_datasets,
 )
-from deepmd_iterative.common.tools import seconds_to_walltime
+from deepmd_iterative.common.tools import convert_seconds_to_hh_mm_ss
 
 
 def main(
@@ -677,7 +677,7 @@ def main(
             logging.warning("Settign the maximum QoS time as walltime")
             slurm_file = (
                 replace_in_list(
-                    slurm_file, "_R_WALLTIME_", seconds_to_walltime(max_qos_time)
+                    slurm_file, "_R_WALLTIME_", convert_seconds_to_hh_mm_ss(max_qos_time)
                 )
                 if "hours" in cluster_walltime_format
                 else replace_in_list(slurm_file, "_R_WALLTIME_", str(max_qos_time))
@@ -685,7 +685,7 @@ def main(
         else:
             slurm_file = (
                 replace_in_list(
-                    slurm_file, "_R_WALLTIME_", seconds_to_walltime(walltime_approx_s)
+                    slurm_file, "_R_WALLTIME_", convert_seconds_to_hh_mm_ss(walltime_approx_s)
                 )
                 if "hours" in cluster_walltime_format
                 else replace_in_list(slurm_file, "_R_WALLTIME_", str(walltime_approx_s))

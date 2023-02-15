@@ -1,12 +1,16 @@
-def seconds_to_walltime(seconds: float) -> str:
-    """Convert a time in seconds to a HH:MM:SS format
+def convert_seconds_to_hh_mm_ss(seconds: float) -> str:
+    """
+    Convert a time in seconds to a string in the format of HH:MM:SS.
 
     Args:
-        seconds (float): Float in seconds
+        seconds (float): The time duration in seconds.
 
     Returns:
-        str: string in HH:MM:SS format
+        str: The equivalent time duration in hours, minutes, and seconds in the format of HH:MM:SS.
     """
-    minutes, sec = divmod(seconds, 60)
-    hour, minutes = divmod(minutes, 60)
-    return "%d:%02d:%02d" % (hour, minutes, sec)
+    # Convert the duration to hours, minutes, and seconds
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+
+    # Return the time duration as a string in the format of HH:MM:SS
+    return "%d:%02d:%02d" % (hours, minutes, seconds)
