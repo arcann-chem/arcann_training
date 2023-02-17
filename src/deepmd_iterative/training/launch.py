@@ -6,37 +6,40 @@ import subprocess
 
 # ### deepmd_iterative imports
 from deepmd_iterative.common.json import (
-    json_read,
-    json_dump,
-    read_default_input_json,
+    load_json_file,
+    write_json_file,
+    load_default_json_file,
     read_key_input_json,
 )
-from deepmd_iterative.common.files import (
-    change_dir,
+from deepmd_iterative.common.file import (
+    change_directory,
 )
 
-from deepmd_iterative.common.clusters import clusterize, check_same_cluster
-from deepmd_iterative.common.checks import validate_step_folder
+from deepmd_iterative.common.cluster import (
+    get_cluster_spec_for_step,
+    assert_same_cluster,
+)
+from deepmd_iterative.common.check import validate_step_folder
 
 
 def main(
     step_name,
     phase_name,
-    deepmd_iterative_apath,
+    deepmd_iterative_path,
     fake_cluster=None,
     input_fn="input.json",
 ):
-    current_apath = Path(".").resolve()
-    training_iterative_apath = current_apath.parent
+    current_path = Path(".").resolve()
+    training_path = current_path.parent
 
     logging.info(f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()}")
-    logging.debug(f"Current path :{current_apath}")
-    logging.debug(f"Training path: {training_iterative_apath}")
-    logging.debug(f"Program path: {deepmd_iterative_apath}")
+    logging.debug(f"Current path :{current_path}")
+    logging.debug(f"Training path: {training_path}")
+    logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
     # ### Check if correct folder
-    validate_step_folder()
+    validate_step_folder(step_name)
 
     # ### Get iteration
     current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
@@ -44,23 +47,23 @@ def main(
 
     # ### Get default inputs json
     default_present = False
-    default_input_json = read_default_input_json(
-        deepmd_iterative_apath / "data" / "inputs.json"
+    default_input_json = load_default_json_file(
+        deepmd_iterative_path / "data" / "inputs.json"
     )
     if bool(default_input_json):
         default_present = True
 
     # ### Get input json (user one)
-    if (current_apath / input_fn).is_file():
-        input_json = json_read((current_apath / input_fn), True, True)
+    if (current_path / input_fn).is_file():
+        input_json = load_json_file((current_path / input_fn), True, True)
     else:
         input_json = {}
     new_input_json = copy.deepcopy(input_json)
 
     # ### Get control path and config_json
-    control_apath = training_iterative_apath / "control"
-    config_json = json_read((control_apath / "config.json"), True, True)
-    training_json = json_read(
+    control_apath = training_path / "control"
+    config_json = load_json_file((control_apath / "config.json"), True, True)
+    training_json = load_json_file(
         (control_apath / f"training_{current_iteration_zfill}.json"), True, True
     )
 
@@ -81,14 +84,13 @@ def main(
         cluster_spec,
         cluster_walltime_format,
         cluster_launch_command,
-        cluster_error,
-    ) = clusterize(
-        deepmd_iterative_apath,
-        training_iterative_apath,
-        step="training",
-        input_cluster=fake_cluster,
-        user_keyword=user_spec,
-        check_only=True,
+    ) = get_cluster_spec_for_step(
+        deepmd_iterative_path,
+        training_path,
+        "training",
+        fake_cluster,
+        user_spec,
+        True,
     )
     if fake_cluster is not None:
         logging.info(f"Pretending to be on {fake_cluster}")
@@ -97,7 +99,7 @@ def main(
     del fake_cluster
 
     # ### Check prep/launch
-    check_same_cluster(cluster, training_json)
+    assert_same_cluster(cluster, training_json)
 
     # ### Checks
     if training_json["is_launched"]:
@@ -120,10 +122,9 @@ def main(
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
         local_apath = Path(".").resolve() / str(it_nnp)
         if (
-            local_apath
-            / f"job_deepmd_train_{training_json['arch_type']}_{cluster}.sh"
+            local_apath / f"job_deepmd_train_{training_json['arch_type']}_{cluster}.sh"
         ).is_file():
-            change_dir(local_apath)
+            change_directory(local_apath)
             try:
                 subprocess.call(
                     [
@@ -134,8 +135,10 @@ def main(
                 logging.info(f"DP Train - {it_nnp} launched")
                 check = check + 1
             except FileNotFoundError:
-                logging.critical(f"DP Train - {it_nnp} NOT launched - {training_json['launch_command']} not found")
-            change_dir(local_apath.parent)
+                logging.critical(
+                    f"DP Train - {it_nnp} NOT launched - {training_json['launch_command']} not found"
+                )
+            change_directory(local_apath.parent)
         else:
             logging.critical(f"DP Train - {it_nnp} NOT launched - No job file")
         del local_apath
@@ -144,7 +147,7 @@ def main(
     if check == config_json["nb_nnp"]:
         training_json["is_launched"] = True
 
-    json_dump(
+    write_json_file(
         training_json,
         (control_apath / f"training_{current_iteration_zfill}.json"),
         True,
@@ -173,7 +176,7 @@ def main(
     del current_iteration, current_iteration_zfill
     del training_json
     del cluster
-    del training_iterative_apath, current_apath
+    del training_path, current_path
 
     return 0
 

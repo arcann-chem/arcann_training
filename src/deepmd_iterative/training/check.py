@@ -7,42 +7,42 @@ import numpy as np
 
 # ### deepmd_iterative imports
 from deepmd_iterative.common.json import (
-    json_read,
-    json_dump,
+    load_json_file,
+    write_json_file,
 )
-from deepmd_iterative.common.files import (
+from deepmd_iterative.common.file import (
     file_to_strings,
 )
-from deepmd_iterative.common.checks import validate_step_folder
+from deepmd_iterative.common.check import validate_step_folder
 
 
 def main(
     step_name,
     phase_name,
-    deepmd_iterative_apath,
+    deepmd_iterative_path,
     fake_cluster=None,
     input_fn="input.json",
 ):
-    current_apath = Path(".").resolve()
-    training_iterative_apath = current_apath.parent
+    current_path = Path(".").resolve()
+    training_path = current_path.parent
 
     logging.info(f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()}")
-    logging.debug(f"Current path :{current_apath}")
-    logging.debug(f"Training path: {training_iterative_apath}")
-    logging.debug(f"Program path: {deepmd_iterative_apath}")
+    logging.debug(f"Current path :{current_path}")
+    logging.debug(f"Training path: {training_path}")
+    logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
     # ### Check if correct folder
-    validate_step_folder()
+    validate_step_folder(step_name)
 
     # ### Get iteration
     current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
     current_iteration = int(current_iteration_zfill)
 
     # ### Get control path and config_json
-    control_apath = training_iterative_apath / "control"
-    config_json = json_read((control_apath / "config.json"), True, True)
-    training_json = json_read(
+    control_apath = training_path / "control"
+    config_json = load_json_file((control_apath / "config.json"), True, True)
+    training_json = load_json_file(
         (control_apath / f"training_{current_iteration_zfill}.json"), True, True
     )
 
@@ -55,26 +55,40 @@ def main(
     s_per_step_per_step_size = []
     check = 0
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
-        local_apath = Path(".").resolve()/str(it_nnp)
-        if (local_apath/"training.out").is_file():
-            training_out = file_to_strings((local_apath/"training.out"))
+        local_apath = Path(".").resolve() / str(it_nnp)
+        if (local_apath / "training.out").is_file():
+            training_out = file_to_strings((local_apath / "training.out"))
             if any("finished training" in s for s in training_out):
                 training_out_time = [s for s in training_out if "training time" in s]
                 training_out_time_split = []
                 for n in range(0, len(training_out_time)):
                     training_out_time_split.append(training_out_time[n].split(" "))
-                    training_out_time_split[n] = " ".join(training_out_time_split[n]).split()
-                if (local_apath/f"model.ckpt-{training_out_time_split[-1][3]}.index").is_file():
-                    (local_apath/f"model.ckpt-{training_out_time_split[-1][3]}.index").rename(
-                        local_apath/"model.ckpt.index")
-                    (local_apath/f"model.ckpt-{training_out_time_split[-1][3]}.meta").rename(
-                        local_apath/"model.ckpt.meta")
-                    (local_apath/f"model.ckpt-{training_out_time_split[-1][3]}.data-00000-of-00001").rename(
-                        local_apath/"model.ckpt.data-00000-of-00001")
+                    training_out_time_split[n] = " ".join(
+                        training_out_time_split[n]
+                    ).split()
+                if (
+                    local_apath / f"model.ckpt-{training_out_time_split[-1][3]}.index"
+                ).is_file():
+                    (
+                        local_apath
+                        / f"model.ckpt-{training_out_time_split[-1][3]}.index"
+                    ).rename(local_apath / "model.ckpt.index")
+                    (
+                        local_apath
+                        / f"model.ckpt-{training_out_time_split[-1][3]}.meta"
+                    ).rename(local_apath / "model.ckpt.meta")
+                    (
+                        local_apath
+                        / f"model.ckpt-{training_out_time_split[-1][3]}.data-00000-of-00001"
+                    ).rename(local_apath / "model.ckpt.data-00000-of-00001")
                 for n in range(0, len(training_out_time_split)):
-                    s_per_step_per_step_size.append(float(training_out_time_split[n][6]))
+                    s_per_step_per_step_size.append(
+                        float(training_out_time_split[n][6])
+                    )
                 del n
-                step_size = float(training_out_time_split[-1][3])-float(training_out_time_split[-2][3])
+                step_size = float(training_out_time_split[-1][3]) - float(
+                    training_out_time_split[-2][3]
+                )
                 check = check + 1
             else:
                 logging.critical(f"DP Train - {it_nnp} not finished/failed")
@@ -98,10 +112,14 @@ def main(
     del check
 
     if ("s_per_step_per_step_size" in locals()) and ("step_size" in locals()):
-        training_json["s_per_step"] = np.average(s_per_step_per_step_size)/step_size
+        training_json["s_per_step"] = np.average(s_per_step_per_step_size) / step_size
         del s_per_step_per_step_size, step_size
 
-    json_dump(training_json, (control_apath/f"training_{current_iteration_zfill}.json"), True)
+    write_json_file(
+        training_json,
+        (control_apath / f"training_{current_iteration_zfill}.json"),
+        True,
+    )
 
     logging.info(
         f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
@@ -111,7 +129,7 @@ def main(
     del config_json
     del current_iteration, current_iteration_zfill
     del training_json
-    del training_iterative_apath, current_apath
+    del training_path, current_path
 
     return 0
 

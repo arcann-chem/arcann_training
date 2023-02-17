@@ -23,9 +23,11 @@ def replace_substring_in_list(
     return output_list
 
 
-def delete_substring_from_list(input_list: List[str], substring: str) -> List[str]:
+def remove_strings_containing_substring_in_list(
+    input_list: List[str], substring: str
+) -> List[str]:
     """
-    Delete all the strings in the input list that contain a given substring.
+    Returns a new list of strings with all strings containing a given substring removed.
 
     Args:
         input_list (List[str]): The input list of strings.

@@ -13,14 +13,12 @@ def validate_step_folder(step_name: str) -> None:
     Raises:
         ValueError: If the current directory name does not contain the step name.
     """
-    # Get the path of the current directory
+    # get the path of the current directory
     current_directory = Path(".").resolve()
 
-    # Check if the current directory name contains the step name
+    # check if the current directory name contains the step name
     if step_name not in current_directory.name:
-        logging.error(
-            f"The current directory ({current_directory}) does not match the expected directory for the {step_name} step."
-        )
-        logging.error("Aborting...")
+        error_msg = f"The current directory ({current_directory}) does not match the expected directory for the {step_name} step."
+        logging.error(f"{error_msg}\nAborting...")
         sys.exit(1)
-        # raise ValueError(f"The current directory ({current_directory}) does not match the expected directory for the {step_name} step.")
+        # raise ValueError(error_msg)
