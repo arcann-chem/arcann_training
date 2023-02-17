@@ -7,7 +7,7 @@
     },
     "training":
     {
-        "user_spec": false,
+        "user_cluster_keyword": false,
         "slurm_email": "",
         "use_initial_datasets": true,
         "use_extra_datasets": false,

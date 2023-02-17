@@ -4,39 +4,39 @@ import sys
 
 # ### deepmd_iterative imports
 from deepmd_iterative.common.json import (
-    json_read,
-    json_dump,
+    load_json_file,
+    write_json_file,
 )
-from deepmd_iterative.common.checks import validate_step_folder
+from deepmd_iterative.common.check import validate_step_folder
 
 
 def main(
     step_name,
     phase_name,
-    deepmd_iterative_apath,
+    deepmd_iterative_path,
     fake_cluster=None,
     input_fn="input.json",
 ):
-    current_apath = Path(".").resolve()
-    training_iterative_apath = current_apath.parent
+    current_path = Path(".").resolve()
+    training_path = current_path.parent
 
     logging.info(f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()}")
-    logging.debug(f"Current path :{current_apath}")
-    logging.debug(f"Training path: {training_iterative_apath}")
-    logging.debug(f"Program path: {deepmd_iterative_apath}")
+    logging.debug(f"Current path :{current_path}")
+    logging.debug(f"Training path: {training_path}")
+    logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
     # ### Check if correct folder
-    validate_step_folder()
+    validate_step_folder(step_name)
 
     # ### Get iteration
     current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
     current_iteration = int(current_iteration_zfill)
 
     # ### Get control path and config_json
-    control_apath = training_iterative_apath / "control"
-    config_json = json_read((control_apath / "config.json"), True, True)
-    training_json = json_read(
+    control_apath = training_path / "control"
+    config_json = load_json_file((control_apath / "config.json"), True, True)
+    training_json = load_json_file(
         (control_apath / f"training_{current_iteration_zfill}.json"), True, True
     )
 
@@ -48,11 +48,20 @@ def main(
 
     check = 0
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
-        local_apath = Path(".").resolve()/str(it_nnp)
-        if (local_apath/("graph_"+str(it_nnp)+"_"+current_iteration_zfill+"_compressed.pb")).is_file():
+        local_apath = Path(".").resolve() / str(it_nnp)
+        if (
+            local_apath
+            / (
+                "graph_"
+                + str(it_nnp)
+                + "_"
+                + current_iteration_zfill
+                + "_compressed.pb"
+            )
+        ).is_file():
             check = check + 1
         else:
-            logging.critical("DP Compress - "+str(it_nnp)+" not finished/failed")
+            logging.critical("DP Compress - " + str(it_nnp) + " not finished/failed")
         del local_apath
     del it_nnp
 
@@ -68,7 +77,11 @@ def main(
         return 1
     del check
 
-    json_dump(training_json, (control_apath/f"training_{current_iteration_zfill}.json"), True)
+    write_json_file(
+        training_json,
+        (control_apath / f"training_{current_iteration_zfill}.json"),
+        True,
+    )
 
     logging.info(
         f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
@@ -79,7 +92,7 @@ def main(
     del config_json
     del current_iteration, current_iteration_zfill
     del training_json
-    del training_iterative_apath, current_apath
+    del training_path, current_path
 
     return 0
 

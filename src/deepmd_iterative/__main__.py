@@ -4,7 +4,7 @@ import argparse
 import importlib
 
 # ### Non-standard imports
-from deepmd_iterative.common.checks import step_path_match
+from deepmd_iterative.common.check import validate_step_folder
 
 # ### Parsing
 parser = argparse.ArgumentParser(description="Deepmd iterative program suite")
@@ -36,7 +36,7 @@ parser.add_argument(
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    deepmd_iterative_apath = Path(__file__).parent
+    deepmd_iterative_path = Path(__file__).parent
 
     if int(args.verbose) == 1:
         logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     # ### Check if corect folder (skiped for init)
     if "init" not in phase_name:
-        step_path_match(step_name)
+        validate_step_folder(step_name)
 
     # ### Input
     input_fn: str = args.input
@@ -74,11 +74,11 @@ if __name__ == "__main__":
     # ### Launch the module
     submodule = importlib.import_module(submodule_name)
     exit_code = submodule.main(
-        step_name, phase_name, deepmd_iterative_apath, fake_cluster, input_fn
+        step_name, phase_name, deepmd_iterative_path, fake_cluster, input_fn
     )
 
     del submodule, submodule_name
-    del deepmd_iterative_apath, fake_cluster, input_fn
+    del deepmd_iterative_path, fake_cluster, input_fn
 
     # ### Exit
     logging.info(f"-" * 88)
