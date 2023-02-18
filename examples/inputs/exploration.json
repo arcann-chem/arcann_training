@@ -1,7 +1,7 @@
 {
     "step_name": "exploration",
+    "user_cluster_keyword": { "value": null, "_comment": "null (use machine.json default), str (shortcut used in machine.json (ex: v100), list of str (project,allocation,arch, ex [nvs,v100,v100]) ", "_default": null},
     "slurm_email": { "value": null, "_comment": "str", "_default": ""},
-    "user_spec": { "value": null, "_comment": "null (use machine.json default), str (shortcut used in machine.json (ex: v100), list of str (project,allocation,arch, ex [nvs,v100,v100]) ", "_default": null},
     "atomsk_fpath": { "value": null, "_comment": "str", "_default": ""},
     "vmd_fpath": { "value": null, "_comment": "str", "_default": ""},
     "nb_traj": { "value": null, "_comment": "int", "_default": 2},

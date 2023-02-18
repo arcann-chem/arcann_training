@@ -1,7 +1,7 @@
 {
     "step_name": "training",
-    "user_cluster_keyword": { "value": null, "_comment": "null (use cluster_config.json default), str (shortcut used in cluster_config.json (ex: v100), list of str (project,allocation,arch, ex [nvs,v100,v100]) ", "_default": null},
     "slurm_email": { "value": null, "_comment": "str", "_default": ""},
+    "user_cluster_keyword": { "value": null, "_comment": "null (use cluster_config.json default), str (shortcut used in cluster_config.json (ex: v100), list of str (project,allocation,arch, ex [nvs,v100,v100]) ", "_default": null},
     "use_initial_datasets": { "value": null, "_comment": "boolean", "_default": true},
     "use_extra_datasets": { "value": null, "_comment": "boolean", "_default": false},
     "deepmd_model_version": { "value": null, "_comment": "float, values: 2.0 or 2.1", "_default": 2.1},
