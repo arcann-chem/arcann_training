@@ -86,7 +86,9 @@ if __name__ == "__main__":
     if exit_code == 0:
         logging.info(f"{step_name.capitalize()} - {phase_name.capitalize()} finished")
     else:
-        logging.critical(f"{step_name.capitalize()} - {phase_name.capitalize()} encountered an error")
+        logging.critical(
+            f"{step_name.capitalize()} - {phase_name.capitalize()} encountered an error"
+        )
     logging.info(f"-" * 88)
     logging.info(f"-" * 88)
 

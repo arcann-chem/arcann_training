@@ -15,9 +15,9 @@ from deepmd_iterative.common.json import (
 from deepmd_iterative.common.cluster import get_cluster_spec_for_step
 from deepmd_iterative.common.file import (
     check_file_existence,
-    file_to_strings,
+    file_to_list_of_strings,
     change_directory,
-    write_list_to_file,
+    write_list_of_strings_to_file,
 )
 from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.slurm import replace_in_slurm_file
@@ -113,7 +113,7 @@ def main(
         True,
         f"No SLURM file present for {step_name.capitalize()} / {phase_name.capitalize()} on this cluster.",
     )
-    slurm_file_master = file_to_strings(
+    slurm_file_master = file_to_list_of_strings(
         jobs_apath / f"job_deepmd_freeze_{cluster_spec['arch_type']}_{cluster}.sh"
     )
     del jobs_apath
@@ -143,7 +143,7 @@ def main(
             slurm_email,
         )
 
-        write_list_to_file(
+        write_list_of_strings_to_file(
             local_apath / f"job_deepmd_freeze_{cluster_spec['arch_type']}_{cluster}.sh",
             slurm_file,
         )

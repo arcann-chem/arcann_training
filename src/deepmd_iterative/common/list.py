@@ -1,7 +1,7 @@
 from typing import List
 
 
-def replace_substring_in_list(
+def replace_substring_in_list_of_strings(
     input_list: List[str], substring_in: str, substring_out: str
 ) -> List[str]:
     """
@@ -17,13 +17,15 @@ def replace_substring_in_list(
     """
 
     # Use a list comprehension to create a new list with the updated strings
-    output_list = [string.replace(substring_in, substring_out) for string in input_list]
+    output_list = [
+        string.replace(substring_in, substring_out).strip() for string in input_list
+    ]
 
     # Return the updated list
     return output_list
 
 
-def remove_strings_containing_substring_in_list(
+def remove_strings_containing_substring_in_list_of_strings(
     input_list: List[str], substring: str
 ) -> List[str]:
     """
@@ -38,7 +40,7 @@ def remove_strings_containing_substring_in_list(
     """
 
     # Use a list comprehension to create a new list with the updated strings
-    output_list = [string for string in input_list if substring not in string]
+    output_list = [string.strip() for string in input_list if substring not in string]
 
     # Return the updated list
     return output_list

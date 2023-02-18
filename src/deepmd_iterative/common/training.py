@@ -68,12 +68,18 @@ def calculate_decay_rate(
         float: The calculated decay rate (lambda).
 
     Raises:
-        ValueError: The start learning rate must be a positive number.
+        ValueError: The start learning rate and number of decay steps must be positive numbers.
 
     """
+
     # Check that the start learning rate is a positive number.
     if start_lr <= 0:
         error_msg = "The start learning rate must be a positive number."
+        logging.error(f"{error_msg}\nAborting...")
+        sys.exit(1)
+        # raise ValueError(error_msg)
+    if decay_steps <= 0:
+        error_msg = "The number of decay steps  must be a positive number."
         logging.error(f"{error_msg}\nAborting...")
         sys.exit(1)
         # raise ValueError(error_msg)
@@ -129,8 +135,8 @@ def check_initial_datasets(training_dir: Path) -> Dict[str, int]:
         Dict[str, int]: A dictionary containing the name of each initial dataset and the expected number of samples in each.
 
     Raises:
-        FileNotFoundError: If the 'initial_datasets.json' file is not found in the 'control' subfolder, or if any of the initial datasets is missing from the 'data' subfolder.
-        ValueError: If the number of samples in any of the initial datasets does not match the expected count.
+        2: FileNotFoundError: If the 'initial_datasets.json' file is not found in the 'control' subfolder, or if any of the initial datasets is missing from the 'data' subfolder.
+        1: ValueError: If the number of samples in any of the initial datasets does not match the expected count.
 
     """
 
@@ -140,7 +146,7 @@ def check_initial_datasets(training_dir: Path) -> Dict[str, int]:
     if not initial_datasets_json_file.is_file():
         error_msg = f"The 'initial_datasets.json' file is missing from '{initial_datasets_json_file.parent}'."
         logging.error(f"{error_msg}\nAborting...")
-        sys.exit(1)
+        sys.exit(2)
         # raise FileNotFoundError(error_msg)
 
     # Load the 'initial_datasets.json' file
@@ -155,16 +161,16 @@ def check_initial_datasets(training_dir: Path) -> Dict[str, int]:
         if not dataset_path.is_dir():
             error_msg = f"Initial dataset '{dataset_name}' is missing from the 'data' subfolder."
             logging.error(f"{error_msg}\nAborting...")
-            sys.exit(1)
-            # raise ValueError(error_msg)
+            sys.exit(2)
+            # raise FileNotFoundError(error_msg)
 
         # Check if the number of samples in the dataset matches the expected count
         box_path = dataset_path / "set.000" / "box.npy"
         if not box_path.is_file():
             error_msg = f"No box.npy found in the dataset '{dataset_name}'."
             logging.error(f"{error_msg}\nAborting...")
-            sys.exit(1)
-            # raise ValueError(error_msg)
+            sys.exit(2)
+            # raise FileNotFoundError(error_msg)
 
         num_samples = len(np.load(str(box_path)))
         if num_samples != expected_num_samples:

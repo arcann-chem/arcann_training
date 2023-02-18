@@ -11,7 +11,7 @@ from deepmd_iterative.common.json import (
     write_json_file,
 )
 from deepmd_iterative.common.file import (
-    file_to_strings,
+    file_to_list_of_strings,
 )
 from deepmd_iterative.common.check import validate_step_folder
 
@@ -57,7 +57,7 @@ def main(
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
         local_apath = Path(".").resolve() / str(it_nnp)
         if (local_apath / "training.out").is_file():
-            training_out = file_to_strings((local_apath / "training.out"))
+            training_out = file_to_list_of_strings((local_apath / "training.out"))
             if any("finished training" in s for s in training_out):
                 training_out_time = [s for s in training_out if "training time" in s]
                 training_out_time_split = []

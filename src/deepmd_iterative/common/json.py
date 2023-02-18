@@ -22,7 +22,7 @@ def load_json_file(
         Dict: A dictionary containing the contents of the JSON file.
 
     Raises:
-        FileNotFoundError: If the file cannot be found and abort_on_error is True.
+        2: FileNotFoundError: If the file cannot be found and abort_on_error is True.
     """
     # Check if the file exists and is a file
     if file_path.is_file():
@@ -31,13 +31,17 @@ def load_json_file(
             logging.info(f"Loading {file_path.name} from {file_path.parent}")
         # Open the file and load the contents as a dictionary
         with file_path.open(encoding="UTF-8") as json_file:
-            return json.load(json_file)
+            # Check if the file is empty
+            file_content = json_file.read().strip()
+            if len(file_content) == 0:
+                return {}
+            return json.loads(file_content)
     else:
         # If the file cannot be found and abort_on_error is True, log an error message and exit with an error code
         if abort_on_error:
             error_msg = f"File {file_path.name} not found in {file_path.parent}."
             logging.error(f"{error_msg}\nAborting...")
-            sys.exit(1)
+            sys.exit(2)
             # raise FileNotFoundError(error_msg)
         # If abort_on_error is False, return an empty dictionary
         else:
@@ -64,7 +68,11 @@ def load_default_json_file(file_path: Path) -> Dict:
     if file_path.is_file():
         # Open the file and load the contents as a dictionary
         with file_path.open(encoding="UTF-8") as json_file:
-            return json.load(json_file)
+            # Check if the file is empty
+            file_content = json_file.read().strip()
+            if len(file_content) == 0:
+                return {}
+            return json.loads(file_content)
     else:
         # If the file cannot be found, return an empty dictionary and log a warning
         logging.warning(
@@ -84,15 +92,24 @@ def write_json_file(
         json_dict (dict): A dictionary containing data to be written to the JSON file.
         file_path (Path): A path object representing the file to write the JSON data to.
         log_write (bool, optional): If True, log a message indicating the file and path that the JSON data is being written to.
+    Raises:
+        2: IOError: If the file path is not valid or the file cannot be written.
     """
 
-    # Open the file specified by the file_path argument in write mode
-    with file_path.open("w", encoding="UTF-8") as json_file:
-        # Use the json.dump() method to write the JSON data to the file
-        json.dump(json_dict, json_file, indent=4)
-        # If log_write is True, log a message indicating the file and path that the JSON data is being written to
-        if enable_logging:
-            logging.info(f"JSON data written to {file_path.absolute()}")
+    try:
+        # Open the file specified by the file_path argument in write mode
+        with file_path.open("w", encoding="UTF-8") as json_file:
+            # Use the json.dump() method to write the JSON data to the file
+            json.dump(json_dict, json_file, indent=4)
+            # If log_write is True, log a message indicating the file and path that the JSON data is being written to
+            if enable_logging:
+                logging.info(f"JSON data written to {file_path.absolute()}")
+    except (OSError, IOError) as e:
+        # Raise an exception if the file path is not valid or the file cannot be written
+        error_msg = f"Error writing JSON data to file {file_path}: {str(e)}"
+        logging.error(f"{error_msg}\nAborting...")
+        sys.exit(2)
+        # raise OSError(error_msg) from e
 
 
 def backup_and_overwrite_json_file(
@@ -145,15 +162,15 @@ def add_key_value_to_dict(dictionary: dict, key: str, value: Any) -> None:
 
 ############################################
 def read_key_input_json(
-        input_json: dict,
-        new_input_json: dict,
-        key: str,
-        default_inputs_json: dict,
-        step: str,
-        default_present: bool = True,
-        subsys_index: int = -1,
-        subsys_number: int = 0,
-        exploration_dep: int = -1
+    input_json: dict,
+    new_input_json: dict,
+    key: str,
+    default_inputs_json: dict,
+    step: str,
+    default_present: bool = True,
+    subsys_index: int = -1,
+    subsys_number: int = 0,
+    exploration_dep: int = -1,
 ) -> Union[str, float, int, None]:
     """_summary_
 
@@ -329,116 +346,17 @@ def read_key_input_json(
             sys.exit(1)
         else:
             if exploration_dep == -1:
-                add_key_value_to_new_input(
+                add_key_value_to_dict(
                     new_input_json, key, default_inputs_json[step][key]
                 )
                 return default_inputs_json[step][key]
             elif exploration_dep == 0:
-                add_key_value_to_new_input(
+                add_key_value_to_dict(
                     new_input_json, key, default_inputs_json[step][key][0]
                 )
                 return default_inputs_json[step][key][0]
             else:
-                add_key_value_to_new_input(
+                add_key_value_to_dict(
                     new_input_json, key, default_inputs_json[step][key][1]
                 )
                 return default_inputs_json[step][key][1]
-            
-
-# def json_read_input(
-#     file_path: Path, default_file: Path, is_logged: bool = False
-# ) -> dict:
-#     """Read a JSON file to a JSON dict. Special for inputs (read a default one if not present)
-
-#     Args:
-#         file_path (Path): Path object to the file
-#         default_file (Path): Path object to the default one
-#         is_logged (bool, optional): _description_. Defaults to False.
-
-#     Returns:
-#         dict: _description_
-#     """
-#     if file_path.is_file():
-#         if is_logged:
-#             logging.info(f"Loading {file_path.name} from {file_path.parent}")
-#         user_input_json = json.load(file_path.open())
-#         if default_file.is_file():
-#             default_input_json = json.load(default_file.open())
-#         else:
-#             default_input_json = {}
-#         return user_input_json, default_input_json
-#     elif default_file.is_file():
-#         if is_logged:
-#             logging.info(
-#                 f"Loading {default_file.name} from {default_file.parent}"
-#             )
-#         return json.load(default_file.open())
-#     else:
-#         logging.error(f"No input files found (user an")
-#         logging.error(f"Aborting...")
-#         sys.exit(1)
-
-
-# def json_check_key_and_return_default(
-#     json_dict: dict,
-#     new_json_dict: dict,
-#     key: str,
-#     default_value=None,
-#     list_index: int = -1,
-# ):
-#     """Check a key in dict and return values or default values
-
-#     Args:
-#         json_dict (dict): the dict
-#         key (str): the key (must be in the first depth of the dict (something returned by dict.keys()))
-#         default_value (_type_, optional): the default value trigger. Defaults to None.
-#         list_index (int, optional): the index of the list (for subsys). Defaults to -1.
-
-#     Returns:
-#         Any: the value
-#     """
-#     default: bool
-#     if type(default_value) is int or type(default_value) is float:
-#         if json_dict[key]['value'] == default_value:
-#             default = True
-#         else:
-#             default = False
-#             add_key_value_to_new_input(new_json_dict, key, json_dict[key]['value'])
-#             return json_dict[key]['value']
-#     elif type(default_value) is list:
-#         if len(json_dict[key]['value']) == 0:
-#             default = True
-#         else:
-#             default = False
-#     elif type(default_value) is str:
-#         if json_dict[key]['value'] == default_value:
-#             default = True
-#         else:
-#             default = False
-#     elif json_dict[key]['value'] is None:
-#         logging.error(f"There is no default value for this {key}")
-#         logging.error("Aborting...")
-#         sys.exit(1)
-#     else:
-#         default = False
-#     if default:
-#         if list_index == -1:
-#             add_key_value_to_new_input(new_json_dict, key, json_dict[key]['_default'])
-#             return json_dict[key]['_default']
-#         elif type(json_dict[key]['_default']) is not list:
-#             add_key_value_to_new_input(new_json_dict, key, json_dict[key]['_default'])
-#             return json_dict[key]['_default']
-#         else:
-#             add_key_value_to_new_input(
-#                 new_json_dict, key, json_dict[key]['_default'][list_index]
-#             )
-#             return json_dict[key]['_default'][list_index]
-#     else:
-#         if list_index == -1:
-#             add_key_value_to_new_input(new_json_dict, key, json_dict[key]['value'])
-#             return json_dict[key]['value']
-#         else:
-#             add_key_value_to_new_input(
-#                 new_json_dict, key, json_dict[key]['value'][list_index]
-#             )
-#             return json_dict[key]['value'][list_index]

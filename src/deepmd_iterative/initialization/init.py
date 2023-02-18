@@ -60,29 +60,33 @@ def main(
     )
 
     # ### Create the config.json (and set everything)
-    config_json = {"system": read_key_input_json(
-        input_json,
-        new_input_json,
-        "system",
-        default_input_json,
-        step_name,
-        default_present,
-    ), "nb_nnp": read_key_input_json(
-        input_json,
-        new_input_json,
-        "nb_nnp",
-        default_input_json,
-        step_name,
-        default_present,
-    ), "exploration_type": read_key_input_json(
-        input_json,
-        new_input_json,
-        "exploration_type",
-        default_input_json,
-        step_name,
-        default_present,
-    ), 
-    "current_iteration": 0}
+    config_json = {
+        "system": read_key_input_json(
+            input_json,
+            new_input_json,
+            "system",
+            default_input_json,
+            step_name,
+            default_present,
+        ),
+        "nb_nnp": read_key_input_json(
+            input_json,
+            new_input_json,
+            "nb_nnp",
+            default_input_json,
+            step_name,
+            default_present,
+        ),
+        "exploration_type": read_key_input_json(
+            input_json,
+            new_input_json,
+            "exploration_type",
+            default_input_json,
+            step_name,
+            default_present,
+        ),
+        "current_iteration": 0,
+    }
     current_iteration_zfill = str(config_json["current_iteration"]).zfill(3)
     config_json["subsys_nr"] = {}
     for it0_subsys_nr, it_subsys_nr in enumerate(

@@ -73,7 +73,7 @@ def check_directory(
             # raise FileNotFoundError(error_msg)
 
 
-def file_to_strings(file_path: Path) -> List[str]:
+def file_to_list_of_strings(file_path: Path) -> List[str]:
     """
     Reads a file and returns its contents as a list of strings.
 
@@ -96,7 +96,26 @@ def file_to_strings(file_path: Path) -> List[str]:
     else:
         # If the file exists, open it and read its lines into a list
         with file_path.open() as f:
-            return f.readlines()
+            return [line.strip() for line in f.readlines()]
+
+
+def write_list_of_strings_to_file(file_path: Path, list_of_strings: List[str]) -> None:
+    """
+    Write a list of strings to a file.
+
+    Args:
+        file_path (Path): The path to the file to be written.
+        list_of_strings (list): The list of strings to write to the file.
+    """
+    try:
+        # Write the strings to the file
+        with file_path.open(mode="w") as file:
+            file.write("\n".join(list_of_strings) + "\n")
+    except (OSError, IOError) as e:
+        # Handle any errors that occur during file writing
+        error_msg = f"Error writing to file {file_path}: {e}"
+        logging.error(f"{error_msg}\nAborting...")
+        sys.exit(1)
 
 
 def remove_file(file_path: Path) -> None:
@@ -160,25 +179,6 @@ def remove_tree(directory_path: Path) -> None:
 
     # Remove the now-empty directory
     directory_path.rmdir()
-
-
-def write_list_to_file(file_path: Path, list_of_strings: List[str]) -> None:
-    """
-    Write a list of strings to a file.
-
-    Args:
-        file_path (Path): The path to the file to be written.
-        list_of_strings (list): The list of strings to write to the file.
-    """
-    try:
-        # Write the strings to the file
-        with file_path.open(mode="w") as file:
-            file.write("".join(list_of_strings))
-    except (OSError, IOError) as e:
-        # Handle any errors that occur during file writing
-        error_msg = f"Error writing to file {file_path}: {e}"
-        logging.error(f"{error_msg}\nAborting...")
-        sys.exit(1)
 
 
 def change_directory(directory_path: Path) -> None:
