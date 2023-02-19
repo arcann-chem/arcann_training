@@ -1,8 +1,8 @@
 from pathlib import Path
 import logging
 import sys
-import re
 from typing import Tuple
+import re
 
 # Non-standard imports
 import numpy as np

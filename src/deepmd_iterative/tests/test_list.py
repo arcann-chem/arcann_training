@@ -1,7 +1,8 @@
+from pathlib import Path
 import unittest
 import tempfile
-from pathlib import Path
 
+# deepmd_iterative imports
 from deepmd_iterative.common.list import (
     replace_substring_in_list_of_strings,
     remove_strings_containing_substring_in_list_of_strings,

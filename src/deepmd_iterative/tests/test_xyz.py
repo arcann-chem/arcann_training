@@ -1,7 +1,12 @@
+from pathlib import Path
 import unittest
-import numpy as np
 import tempfile
 from pathlib import Path
+
+# Non-standard imports
+import numpy as np
+
+# deepmd_iterative imports
 from deepmd_iterative.common.xyz import read_xyz_trajectory, write_xyz_frame_to_file
 
 

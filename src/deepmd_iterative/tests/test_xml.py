@@ -1,10 +1,10 @@
+from pathlib import Path
 import unittest
 import tempfile
-
-from pathlib import Path
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 
+# deepmd_iterative imports
 from deepmd_iterative.common.xml import (
     parse_xml_file,
     convert_xml_to_list_of_strings,

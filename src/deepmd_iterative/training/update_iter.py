@@ -22,7 +22,7 @@ def main(
     step_name,
     phase_name,
     deepmd_iterative_path,
-    fake_cluster=None,
+    fake_machine=None,
     input_fn="input.json",
 ):
     current_path = Path(".").resolve()
@@ -42,11 +42,9 @@ def main(
     current_iteration = int(current_iteration_zfill)
 
     # ### Get control path and config_json
-    control_apath = training_path / "control"
-    config_json = load_json_file((control_apath / "config.json"), True, True)
-    training_json = load_json_file(
-        (control_apath / f"training_{current_iteration_zfill}.json"), True, True
-    )
+    control_path = training_path / "control"
+    config_json = load_json_file((control_path / "config.json"))
+    training_json = load_json_file((control_path / f"training_{current_iteration_zfill}.json"))
 
     # ### Checks
     if not training_json["is_frozen"]:
@@ -56,39 +54,23 @@ def main(
 
     # ### Check if pb files are present and delete temp files
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
-        local_apath = Path(".").resolve() / str(it_nnp)
-        check_file_existence(
-            local_apath
-            / ("graph_" + str(it_nnp) + "_" + current_iteration_zfill + ".pb"),
-            True,
-            True,
-        )
+        local_path = Path(".").resolve() / str(it_nnp)
+        check_file_existence(local_path / ("graph_" + str(it_nnp) + "_" + current_iteration_zfill + ".pb"))
         if training_json["is_compressed"]:
-            check_file_existence(
-                local_apath
-                / (
-                    "graph_"
-                    + str(it_nnp)
-                    + "_"
-                    + current_iteration_zfill
-                    + "_compressed.pb"
-                ),
-                True,
-                True,
-            )
-        remove_file(local_apath / "checkpoint")
-        remove_file(local_apath / "input_v2_compat")
+            check_file_existence(local_path / ("graph_" + str(it_nnp) + "_" + current_iteration_zfill + "_compressed.pb"))
+        remove_file(local_path / "checkpoint")
+        remove_file(local_path / "input_v2_compat")
         logging.info("Deleting SLURM out/error files...")
-        remove_files_matching_glob(local_apath, "DeepMD_*")
+        remove_files_matching_glob(local_path, "DeepMD_*")
         logging.info("Deleting the previous model.ckpt...")
-        remove_files_matching_glob(local_apath, "model.ckpt-*")
-        if (local_apath / "model-compression").is_dir():
+        remove_files_matching_glob(local_path, "model.ckpt-*")
+        if (local_path / "model-compression").is_dir():
             logging.info("Deleting the temp model-compression folder...")
-            remove_tree(local_apath / "model-compression")
+            remove_tree(local_path / "model-compression")
 
     # ### Prepare the test folder
     (training_path / (current_iteration_zfill + "-test")).mkdir(exist_ok=True)
-    check_directory((training_path / (current_iteration_zfill + "-test")), True)
+    check_directory((training_path / (current_iteration_zfill + "-test")))
 
     subprocess.call(
         [
@@ -101,9 +83,9 @@ def main(
 
     # ### Copy the pb files to the NNP meta folder
     (training_path / "NNP").mkdir(exist_ok=True)
-    check_directory(training_path / "NNP", True)
+    check_directory(training_path / "NNP")
 
-    local_apath = Path(".").resolve()
+    local_path = Path(".").resolve()
 
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
         if training_json["is_compressed"]:
@@ -112,7 +94,7 @@ def main(
                     "rsync",
                     "-a",
                     str(
-                        local_apath
+                        local_path
                         / (
                             str(it_nnp)
                             + "/graph_"
@@ -130,7 +112,7 @@ def main(
                 "rsync",
                 "-a",
                 str(
-                    local_apath
+                    local_path
                     / (
                         str(it_nnp)
                         + "/graph_"
@@ -154,27 +136,25 @@ def main(
         (training_path / (current_iteration_zfill + "-" + it_steps)).mkdir(
             exist_ok=True
         )
-        check_directory(
-            training_path / (current_iteration_zfill + "-" + it_steps), True
-        )
+        check_directory(training_path / (current_iteration_zfill + "-" + it_steps))
     del it_steps
 
     # ### Delete the temp data folder
-    if (local_apath / "data").is_dir():
+    if (local_path / "data").is_dir():
         logging.info("Deleting the temp data folder...")
-        remove_tree(local_apath / "data")
+        remove_tree(local_path / "data")
         logging.info("Cleaning done!")
-    del local_apath
+    del local_path
 
     # ### Update the config.json
-    write_json_file(config_json, (control_apath / "config.json"), True)
+    write_json_file(config_json, (control_path / "config.json"))
 
     logging.info(
         f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
     )
 
     # ### Cleaning
-    del control_apath
+    del control_path
     del config_json
     del current_iteration, current_iteration_zfill
     del training_json
@@ -189,7 +169,7 @@ if __name__ == "__main__":
             "training",
             "update_iter",
             Path(sys.argv[1]),
-            fake_cluster=sys.argv[2],
+            fake_machine=sys.argv[2],
             input_fn=sys.argv[3],
         )
     else:

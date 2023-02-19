@@ -15,19 +15,19 @@ from deepmd_iterative.common.file import (
     change_directory,
 )
 
-from deepmd_iterative.common.cluster import (
-    get_cluster_spec_for_step,
-    assert_same_cluster,
+from deepmd_iterative.common.machine import (
+    get_machine_spec_for_step,
+    assert_same_machine,
 )
 from deepmd_iterative.common.check import validate_step_folder
 
 
 def main(
-    step_name,
-    phase_name,
+    step_name: str,
+    phase_name: str,
     deepmd_iterative_path,
-    fake_cluster=None,
-    input_fn="input.json",
+    fake_machine=None,
+    input_fn: str="input.json",
 ):
     current_path = Path(".").resolve()
     training_path = current_path.parent
@@ -55,17 +55,15 @@ def main(
 
     # ### Get input json (user one)
     if (current_path / input_fn).is_file():
-        input_json = load_json_file((current_path / input_fn), True, True)
+        input_json = load_json_file((current_path / input_fn))
     else:
         input_json = {}
     new_input_json = copy.deepcopy(input_json)
 
     # ### Get control path and config_json
-    control_apath = training_path / "control"
-    config_json = load_json_file((control_apath / "config.json"), True, True)
-    training_json = load_json_file(
-        (control_apath / f"training_{current_iteration_zfill}.json"), True, True
-    )
+    control_path = training_path / "control"
+    config_json = load_json_file((control_path / "config.json"))
+    training_json = load_json_file((control_path / f"training_{current_iteration_zfill}.json"))
 
     # ### Get machine info
     user_spec = read_key_input_json(
@@ -78,28 +76,28 @@ def main(
     )
     user_spec = None if isinstance(user_spec, bool) else user_spec
 
-    # ### Read cluster info
+    # ### Read machine info
     (
-        cluster,
-        cluster_spec,
-        cluster_walltime_format,
-        cluster_launch_command,
-    ) = get_cluster_spec_for_step(
+        machine,
+        machine_spec,
+        machine_walltime_format,
+        machine_launch_command,
+    ) = get_machine_spec_for_step(
         deepmd_iterative_path,
         training_path,
         "training",
-        fake_cluster,
+        fake_machine,
         user_spec,
         True,
     )
-    if fake_cluster is not None:
-        logging.info(f"Pretending to be on {fake_cluster}")
+    if fake_machine is not None:
+        logging.info(f"Pretending to be on {fake_machine}")
     else:
-        logging.info(f"Cluster is {cluster}")
-    del fake_cluster
+        logging.info(f"machine is {machine}")
+    del fake_machine
 
     # ### Check prep/launch
-    assert_same_cluster(cluster, training_json)
+    assert_same_machine(machine, training_json)
 
     # ### Checks
     if training_json["is_launched"]:
@@ -120,16 +118,16 @@ def main(
     # ### Launch the jobs
     check = 0
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
-        local_apath = Path(".").resolve() / str(it_nnp)
+        local_path = Path(".").resolve() / str(it_nnp)
         if (
-            local_apath / f"job_deepmd_train_{training_json['arch_type']}_{cluster}.sh"
+            local_path / f"job_deepmd_train_{training_json['arch_type']}_{machine}.sh"
         ).is_file():
-            change_directory(local_apath)
+            change_directory(local_path)
             try:
                 subprocess.call(
                     [
                         training_json["launch_command"],
-                        f"./job_deepmd_train_{training_json['arch_type']}_{cluster}.sh",
+                        f"./job_deepmd_train_{training_json['arch_type']}_{machine}.sh",
                     ]
                 )
                 logging.info(f"DP Train - {it_nnp} launched")
@@ -138,10 +136,10 @@ def main(
                 logging.critical(
                     f"DP Train - {it_nnp} NOT launched - {training_json['launch_command']} not found"
                 )
-            change_directory(local_apath.parent)
+            change_directory(local_path.parent)
         else:
             logging.critical(f"DP Train - {it_nnp} NOT launched - No job file")
-        del local_apath
+        del local_path
     del it_nnp
 
     if check == config_json["nb_nnp"]:
@@ -149,8 +147,7 @@ def main(
 
     write_json_file(
         training_json,
-        (control_apath / f"training_{current_iteration_zfill}.json"),
-        True,
+        (control_path / f"training_{current_iteration_zfill}.json")
     )
 
     logging.info(f"-" * 88)
@@ -170,12 +167,12 @@ def main(
     del check
 
     # ### Cleaning
-    del control_apath
+    del control_path
     del input_json, default_input_json, default_present, new_input_json
     del config_json
     del current_iteration, current_iteration_zfill
     del training_json
-    del cluster
+    del machine
     del training_path, current_path
 
     return 0
@@ -187,7 +184,7 @@ if __name__ == "__main__":
             "training",
             "launch",
             Path(sys.argv[1]),
-            fake_cluster=sys.argv[2],
+            fake_machine=sys.argv[2],
             input_fn=sys.argv[3],
         )
     else:

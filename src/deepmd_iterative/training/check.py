@@ -20,7 +20,7 @@ def main(
     step_name,
     phase_name,
     deepmd_iterative_path,
-    fake_cluster=None,
+    fake_machine=None,
     input_fn="input.json",
 ):
     current_path = Path(".").resolve()
@@ -40,11 +40,9 @@ def main(
     current_iteration = int(current_iteration_zfill)
 
     # ### Get control path and config_json
-    control_apath = training_path / "control"
-    config_json = load_json_file((control_apath / "config.json"), True, True)
-    training_json = load_json_file(
-        (control_apath / f"training_{current_iteration_zfill}.json"), True, True
-    )
+    control_path = training_path / "control"
+    config_json = load_json_file((control_path / "config.json"))
+    training_json = load_json_file((control_path / f"training_{current_iteration_zfill}.json"))
 
     if not training_json["is_launched"]:
         logging.error(f"Lock found. Execute first: training preparation")
@@ -55,9 +53,9 @@ def main(
     s_per_step_per_step_size = []
     check = 0
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
-        local_apath = Path(".").resolve() / str(it_nnp)
-        if (local_apath / "training.out").is_file():
-            training_out = file_to_list_of_strings((local_apath / "training.out"))
+        local_path = Path(".").resolve() / str(it_nnp)
+        if (local_path / "training.out").is_file():
+            training_out = file_to_list_of_strings((local_path / "training.out"))
             if any("finished training" in s for s in training_out):
                 training_out_time = [s for s in training_out if "training time" in s]
                 training_out_time_split = []
@@ -67,20 +65,20 @@ def main(
                         training_out_time_split[n]
                     ).split()
                 if (
-                    local_apath / f"model.ckpt-{training_out_time_split[-1][3]}.index"
+                    local_path / f"model.ckpt-{training_out_time_split[-1][3]}.index"
                 ).is_file():
                     (
-                        local_apath
+                        local_path
                         / f"model.ckpt-{training_out_time_split[-1][3]}.index"
-                    ).rename(local_apath / "model.ckpt.index")
+                    ).rename(local_path / "model.ckpt.index")
                     (
-                        local_apath
+                        local_path
                         / f"model.ckpt-{training_out_time_split[-1][3]}.meta"
-                    ).rename(local_apath / "model.ckpt.meta")
+                    ).rename(local_path / "model.ckpt.meta")
                     (
-                        local_apath
+                        local_path
                         / f"model.ckpt-{training_out_time_split[-1][3]}.data-00000-of-00001"
-                    ).rename(local_apath / "model.ckpt.data-00000-of-00001")
+                    ).rename(local_path / "model.ckpt.data-00000-of-00001")
                 for n in range(0, len(training_out_time_split)):
                     s_per_step_per_step_size.append(
                         float(training_out_time_split[n][6])
@@ -95,7 +93,7 @@ def main(
             del training_out, training_out_time, training_out_time_split
         else:
             logging.critical(f"DP Train - {it_nnp} still running/no outfile")
-        del local_apath
+        del local_path
     del it_nnp
 
     logging.info(f"-" * 88)
@@ -117,15 +115,14 @@ def main(
 
     write_json_file(
         training_json,
-        (control_apath / f"training_{current_iteration_zfill}.json"),
-        True,
+        (control_path / f"training_{current_iteration_zfill}.json")
     )
 
     logging.info(
         f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
     )
     # ### Cleaning
-    del control_apath
+    del control_path
     del config_json
     del current_iteration, current_iteration_zfill
     del training_json
@@ -140,7 +137,7 @@ if __name__ == "__main__":
             "training",
             "check",
             Path(sys.argv[1]),
-            fake_cluster=sys.argv[2],
+            fake_machine=sys.argv[2],
             input_fn=sys.argv[3],
         )
     else:

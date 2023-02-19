@@ -18,7 +18,7 @@ from deepmd_iterative.common.json import (
 )
 from deepmd_iterative.common.list import replace_substring_in_list_of_strings
 from deepmd_iterative.common.xml import parse_xml_file, convert_xml_to_list_of_strings
-from deepmd_iterative.common.cluster import get_cluster_spec_for_step
+from deepmd_iterative.common.machine import get_cluster_spec_for_step
 from deepmd_iterative.common.file import (
     check_file_existence,
     file_to_list_of_strings,
@@ -26,8 +26,8 @@ from deepmd_iterative.common.file import (
     write_list_of_strings_to_file,
 )
 
-from deepmd_iterative.common.slurm import replace_in_slurm_file
-from deepmd_iterative.common.check import validate_step_folder
+from deepmd_iterative.common.slurm import replace_in_slurm_file_training
+from deepmd_iterative.common.check import validate_step_folder, check_atomsk
 
 
 def main(
@@ -63,24 +63,22 @@ def main(
 
     # ### Get input json (user one)
     if (current_path / input_fn).is_file():
-        input_json = load_json_file((current_path / input_fn), True, True)
+        input_json = load_json_file((current_path / input_fn))
     else:
         input_json = {}
     new_input_json = copy.deepcopy(input_json)
+    
+    
+    # ###
+    atomsk_bin = check_atomsk(str(input_json['atomsk_path']))
 
     # ### Get control path and config_json
     control_path = training_path / "control"
-    config_json = load_json_file((control_path / "config.json"), True, True)
+    config_json = load_json_file((control_path / "config.json"))
     previous_iteration_zfill = str(current_iteration - 1).zfill(3)
-    prevtraining_json = load_json_file(
-        (control_path / ("training_" + previous_iteration_zfill + ".json")), True, True
-    )
+    prevtraining_json = load_json_file((control_path / ("training_" + previous_iteration_zfill + ".json")))
     if int(previous_iteration_zfill) > 0:
-        prevexploration_json = load_json_file(
-            (control_path / ("exploration_" + previous_iteration_zfill + ".json")),
-            True,
-            True,
-        )
+        prevexploration_json = load_json_file((control_path / ("exploration_" + previous_iteration_zfill + ".json")))
 
     # ### Get extra needed paths
     jobs_path = deepmd_iterative_path / "data" / "jobs" / "exploration"
@@ -128,9 +126,7 @@ def main(
     #         return 1
 
     # ### Get/Create exploration parameters
-    exploration_json = load_json_file(
-        (control_path / f"exploration_{current_iteration_zfill}.json"), False, True
-    )
+    exploration_json = load_json_file((control_path / f"exploration_{current_iteration_zfill}.json"), abort_on_error=False)
 
     exploration_json["deepmd_model_version"] = prevtraining_json["deepmd_model_version"]
     exploration_json["nb_nnp"] = config_json["nb_nnp"]
@@ -152,31 +148,11 @@ def main(
     exploration_json["launch_command"] = cluster_launch_command
 
     check_file_existence(
-        jobs_path
-        / (
-            "job_deepmd_"
-            + exploration_json["exploration_type"]
-            + "_"
-            + exploration_json["arch_type"]
-            + "_"
-            + cluster
-            + ".sh"
-        ),
-        True,
-        True,
-        "No SLURM file present for the exploration step on this cluster.",
+        jobs_path / ("job_deepmd_" + exploration_json["exploration_type"] + "_" + exploration_json["arch_type"] + "_" + cluster + ".sh"),
+        error_msg = "No SLURM file present for the exploration step on this cluster."
     )
     slurm_file_master = file_to_list_of_strings(
-        jobs_path
-        / (
-            "job_deepmd_"
-            + exploration_json["exploration_type"]
-            + "_"
-            + exploration_json["arch_type"]
-            + "_"
-            + cluster
-            + ".sh"
-        )
+        jobs_path / ("job_deepmd_" + exploration_json["exploration_type"] + "_" + exploration_json["arch_type"] + "_" + cluster + ".sh")
     )
     del jobs_path
 

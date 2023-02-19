@@ -1,9 +1,13 @@
+from pathlib import Path
 import unittest
 import tempfile
 import os
 import shutil
+
+# Non-standard imports
 import numpy as np
-from pathlib import Path
+
+# deepmd_iterative imports
 from deepmd_iterative.common.training import (
     calculate_decay_steps,
     calculate_decay_rate,

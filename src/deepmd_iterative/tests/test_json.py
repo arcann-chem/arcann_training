@@ -1,9 +1,10 @@
+from pathlib import Path
+import unittest
+import tempfile
 import os
 import json
-import tempfile
-import unittest
-from pathlib import Path
 
+# deepmd_iterative imports
 from deepmd_iterative.common.json import (
     load_json_file,
     load_default_json_file,

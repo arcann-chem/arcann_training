@@ -1,24 +1,32 @@
 from pathlib import Path
 import logging
 import sys
-import os
 from typing import List
+import os
 
 
 def check_file_existence(
     file_path: Path,
-    expected_existence: bool,
-    abort_on_error: bool,
+    expected_existence: bool =True,
+    abort_on_error: bool = True,
     error_msg: str = "default",
 ) -> None:
-    """Checks if a file exists or not, logs a message or aborts the program depending on the parameters.
+    """
+    Checks if a file exists or not, logs a message or aborts the program depending on the parameters.
 
     Args:
         file_path (Path): The path to the file to check.
         expected_existence (bool): True if the file is expected to exist, False if it is expected not to exist.
         abort_on_error (bool): True if the program should abort if the file does not exist (or exists, depending on expected_existence), False otherwise.
         error_msg (str, optional): A custom error message to display in case of error. Defaults to "default".
+
+    Returns:
+        None
+
+    Raises:
+        SystemExit(1): If the directory does not exist and `abort_on_error` is True.
     """
+
     exists = file_path.is_file()
     if exists != expected_existence:
         if expected_existence:
@@ -41,7 +49,9 @@ def check_file_existence(
 
 
 def check_directory(
-    directory_path: Path, abort: bool, error_msg: str = "default"
+    directory_path: Path,
+    abort_on_error: bool = True,
+    error_msg: str = "default"
 ) -> None:
     """
     Check if the given directory exists and logs an error or aborts execution if it does not.
@@ -55,7 +65,7 @@ def check_directory(
         None
 
     Raises:
-        SystemExit: If the directory does not exist and `abort` is True.
+        SystemExit(1): If the directory does not exist and `abort_on_error` is True.
     """
 
     # Check if the directory exists
@@ -65,12 +75,11 @@ def check_directory(
             error_msg = f"Directory not found: {directory_path}"
 
         # Log or raise error and abort if needed
-        if abort:
+        if abort_on_error:
             logging.error(f"{error_msg}\nAborting...")
             sys.exit(1)
         else:
             logging.warning(error_msg)
-            # raise FileNotFoundError(error_msg)
 
 
 def file_to_list_of_strings(file_path: Path) -> List[str]:
@@ -84,7 +93,7 @@ def file_to_list_of_strings(file_path: Path) -> List[str]:
         List[str]: A list of strings, where each string is a line from the file.
 
     Raises:
-        ValueError: If the specified file does not exist.
+        SystemExit(1): If the specified file does not exist.
     """
 
     if not file_path.is_file():
@@ -92,7 +101,6 @@ def file_to_list_of_strings(file_path: Path) -> List[str]:
         error_msg = f"File not found {file_path.name} not in {file_path.parent}"
         logging.error(f"{error_msg}\nAborting...")
         sys.exit(1)
-        # raise ValueError(error_msg)
     else:
         # If the file exists, open it and read its lines into a list
         with file_path.open() as f:
@@ -106,6 +114,12 @@ def write_list_of_strings_to_file(file_path: Path, list_of_strings: List[str]) -
     Args:
         file_path (Path): The path to the file to be written.
         list_of_strings (list): The list of strings to write to the file.
+
+    Returns:
+        None
+
+    Raises:
+        SystemExit(1): If the specified file does not exist.
     """
     try:
         # Write the strings to the file
@@ -124,6 +138,9 @@ def remove_file(file_path: Path) -> None:
 
     Args:
         file_path (Path): The path to the file to delete.
+        
+    Returns:
+        None
     """
 
     # Delete the file
@@ -139,15 +156,12 @@ def remove_files_matching_glob(directory_path: Path, file_glob: str) -> None:
         directory_path (Path): The directory where the files are located.
         file_glob (str): The file glob pattern to match.
 
-    Raises:
-        ValueError: If the directory does not exist or is not a directory.
-    """
+    Returns:
+        None
 
-    # Check that the directory exists and is a directory
-    # if not directory_path.exists():
-    #     raise ValueError(f"Directory not found: {directory_path}")
-    # if not directory_path.is_dir():
-    #     raise ValueError(f"Not a directory: {directory_path}")
+    Raises:
+        SystemExit(1): If the directory does not exist or is not a directory.
+    """
 
     # Remove the matching files
     for file_path in directory_path.glob(file_glob):
@@ -166,6 +180,9 @@ def remove_tree(directory_path: Path) -> None:
 
     Args:
         directory_path (Path): The path to the directory to remove.
+
+    Returns:
+        None
     """
 
     # Iterate over each child of the directory
@@ -182,20 +199,24 @@ def remove_tree(directory_path: Path) -> None:
 
 
 def change_directory(directory_path: Path) -> None:
-    """Change the current working directory to the given path.
+    """
+    Change the current working directory to the given path.
 
     Args:
         directory_path (Path): The path to the directory to change to.
 
+    Returns:
+        None
+
     Raises:
-        ValueError: If the directory does not exist or there is an error in changing the directory.
+        SysExit(1): If the directory does not exist or there is an error in changing the directory.
     """
+
     # Check if the directory exists
     if not directory_path.is_dir():
         error_msg = f"Directory not found: {directory_path}"
         logging.error(f"{error_msg}\nAborting...")
         sys.exit(1)
-        # raise ValueError(error_msg)
 
     # Try to change the directory
     try:
@@ -204,4 +225,3 @@ def change_directory(directory_path: Path) -> None:
         error_msg = f"Error in changing directory to {directory_path}: {e}"
         logging.error(f"{error_msg}\nAborting...")
         sys.exit(1)
-        # raise ValueError(error_msg) from e

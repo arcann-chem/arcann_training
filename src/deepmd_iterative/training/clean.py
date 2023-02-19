@@ -12,7 +12,7 @@ def main(
     step_name,
     phase_name,
     deepmd_iterative_path,
-    fake_cluster=None,
+    fake_machine=None,
     input_fn="input.json",
 ):
     current_path = Path(".").resolve()
@@ -31,10 +31,8 @@ def main(
     current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
 
     # ### Get control path and config_json
-    control_apath = training_path / "control"
-    training_json = load_json_file(
-        (control_apath / f"training_{current_iteration_zfill}.json"), True, True
-    )
+    control_path = training_path / "control"
+    training_json = load_json_file((control_path / f"training_{current_iteration_zfill}.json"))
 
     # ### Checks
     if not training_json["is_frozen"]:
@@ -66,7 +64,7 @@ def main(
     )
 
     # ### Cleaning
-    del control_apath
+    del control_path
     del current_iteration_zfill
     del training_json
     del training_path, current_path
@@ -80,7 +78,7 @@ if __name__ == "__main__":
             "training",
             "clean",
             Path(sys.argv[1]),
-            fake_cluster=sys.argv[2],
+            fake_machine=sys.argv[2],
             input_fn=sys.argv[3],
         )
     else:

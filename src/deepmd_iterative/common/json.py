@@ -1,12 +1,12 @@
 from pathlib import Path
 import logging
 import sys
-import json
 from typing import Union, Dict, Any
+import json
 
 
 def load_json_file(
-    file_path: Path, abort_on_error: bool = True, enable_logging: bool = False
+    file_path: Path, abort_on_error: bool = True, enable_logging: bool = True
 ) -> Dict:
     """
     Load a JSON file from the given file path and return its contents as a dictionary.
@@ -16,13 +16,13 @@ def load_json_file(
         abort_on_error (bool, optional): Whether to abort the program if the file cannot be found. If True, an error
             message is logged and the program exits with an error code. If False, an empty dictionary is returned.
             Defaults to True.
-        enable_logging (bool, optional): Whether to log information about the loading process. Defaults to False.
+        enable_logging (bool, optional): Whether to log information about the loading process. Defaults to True.
 
     Returns:
         Dict: A dictionary containing the contents of the JSON file.
 
     Raises:
-        2: FileNotFoundError: If the file cannot be found and abort_on_error is True.
+        SystemExit(2): If the file cannot be found and abort_on_error is True.
     """
     # Check if the file exists and is a file
     if file_path.is_file():
@@ -42,7 +42,6 @@ def load_json_file(
             error_msg = f"File {file_path.name} not found in {file_path.parent}."
             logging.error(f"{error_msg}\nAborting...")
             sys.exit(2)
-            # raise FileNotFoundError(error_msg)
         # If abort_on_error is False, return an empty dictionary
         else:
             # If logging is enabled, log information about the creation of the empty dictionary
@@ -83,7 +82,7 @@ def load_default_json_file(file_path: Path) -> Dict:
 
 
 def write_json_file(
-    json_dict: dict, file_path: Path, enable_logging: bool = False
+    json_dict: dict, file_path: Path, enable_logging: bool = True
 ) -> None:
     """
     Write a dictionary to a JSON file.
@@ -113,7 +112,7 @@ def write_json_file(
 
 
 def backup_and_overwrite_json_file(
-    json_dict: dict, file_path: Path, enable_logging: bool = False
+    json_dict: dict, file_path: Path, enable_logging: bool = True
 ) -> None:
     """
     Write a dictionary to a JSON file after creating a backup of the existing file.

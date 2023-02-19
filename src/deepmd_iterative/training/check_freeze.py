@@ -14,7 +14,7 @@ def main(
     step_name,
     phase_name,
     deepmd_iterative_path,
-    fake_cluster=None,
+    fake_machine=None,
     input_fn="input.json",
 ):
     current_path = Path(".").resolve()
@@ -34,11 +34,9 @@ def main(
     current_iteration = int(current_iteration_zfill)
 
     # ### Get control path and config_json
-    control_apath = training_path / "control"
-    config_json = load_json_file((control_apath / "config.json"), True, True)
-    training_json = load_json_file(
-        (control_apath / f"training_{current_iteration_zfill}.json"), True, True
-    )
+    control_path = training_path / "control"
+    config_json = load_json_file((control_path / "config.json"))
+    training_json = load_json_file((control_path / f"training_{current_iteration_zfill}.json"))
 
     # ### Checks
     if not training_json["is_checked"]:
@@ -48,15 +46,15 @@ def main(
 
     check = 0
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
-        local_apath = Path(".").resolve() / str(it_nnp)
+        local_path = Path(".").resolve() / str(it_nnp)
         if (
-            local_apath
+            local_path
             / ("graph_" + str(it_nnp) + "_" + current_iteration_zfill + ".pb")
         ).is_file():
             check = check + 1
         else:
             logging.critical("DP Freeze - " + str(it_nnp) + " not finished/failed")
-        del local_apath
+        del local_path
     del it_nnp
 
     if check == config_json["nb_nnp"]:
@@ -73,8 +71,7 @@ def main(
 
     write_json_file(
         training_json,
-        (control_apath / f"training_{current_iteration_zfill}.json"),
-        True,
+        (control_path / f"training_{current_iteration_zfill}.json")
     )
 
     logging.info(
@@ -82,7 +79,7 @@ def main(
     )
 
     # ### Cleaning
-    del control_apath
+    del control_path
     del config_json
     del current_iteration, current_iteration_zfill
     del training_json
@@ -97,7 +94,7 @@ if __name__ == "__main__":
             "training",
             "check_freeze",
             Path(sys.argv[1]),
-            fake_cluster=sys.argv[2],
+            fake_machine=sys.argv[2],
             input_fn=sys.argv[3],
         )
     else:

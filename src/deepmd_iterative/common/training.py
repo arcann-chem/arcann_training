@@ -1,8 +1,8 @@
 from pathlib import Path
 import logging
 import sys
-import json
 from typing import Dict
+import json
 
 # Non-standard imports
 import numpy as np

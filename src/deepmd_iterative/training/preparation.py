@@ -16,7 +16,7 @@ from deepmd_iterative.common.json import (
     load_default_json_file,
     read_key_input_json,
 )
-from deepmd_iterative.common.cluster import get_cluster_spec_for_step
+from deepmd_iterative.common.machine import get_machine_spec_for_step
 from deepmd_iterative.common.file import (
     check_file_existence,
     file_to_list_of_strings,
@@ -28,16 +28,18 @@ from deepmd_iterative.common.training import (
     calculate_decay_steps,
     check_initial_datasets,
 )
-from deepmd_iterative.common.slurm import replace_in_slurm_file
+from deepmd_iterative.common.list import replace_substring_in_list_of_strings
+from deepmd_iterative.common.slurm import replace_in_slurm_file_general
 from deepmd_iterative.common.check import validate_step_folder
+from deepmd_iterative.common.generate_config import get_or_generate_training_json
 
 
 def main(
-    step_name,
-    phase_name,
+    step_name: str,
+    phase_name: str,
     deepmd_iterative_path,
-    fake_cluster=None,
-    input_fn="input.json",
+    fake_machine=None,
+    input_fn: str="input.json",
 ):
     current_path = Path(".").resolve()
     training_path = current_path.parent
@@ -57,180 +59,86 @@ def main(
 
     # ### Get default inputs json
     default_present = False
-    default_input_json = load_default_json_file(
-        deepmd_iterative_path / "data" / "inputs.json"
-    )
+    default_input_json = load_default_json_file(deepmd_iterative_path / "data" / "inputs.json")
     if bool(default_input_json):
         default_present = True
 
     # ### Get input json (user one)
     if (current_path / input_fn).is_file():
-        input_json = load_json_file((current_path / input_fn), True, True)
+        input_json = load_json_file((current_path / input_fn))
     else:
         input_json = {}
     new_input_json = copy.deepcopy(input_json)
 
     # ### Get control path and config_json
     control_path = training_path / "control"
-    config_json = load_json_file((control_path / "config.json"), True, True)
+    config_json = load_json_file((control_path / "config.json"))
 
     # ### Get extra needed paths
-    jobs_apath = deepmd_iterative_path / "data" / "jobs" / "training"
+    jobs_path = deepmd_iterative_path / "data" / "jobs" / "training"
 
-    # ### Get user cluster keyword
-    user_cluster_keyword = read_key_input_json(
+    # ### Get user machine keyword
+    user_machine_keyword = read_key_input_json(
         input_json,
         new_input_json,
-        "user_cluster_keyword",
+        "user_machine_keyword",
         default_input_json,
         step_name,
         default_present,
     )
-    user_cluster_keyword = (
-        None if isinstance(user_cluster_keyword, bool) else user_cluster_keyword
+    user_machine_keyword = (
+        None if isinstance(user_machine_keyword, bool) else user_machine_keyword
     )
 
-    # ### Read cluster spec
+    # ### Read machine spec
     (
-        cluster,
-        cluster_spec,
-        cluster_walltime_format,
-        cluster_launch_command,
-    ) = get_cluster_spec_for_step(
+        machine,
+        machine_spec,
+        machine_walltime_format,
+        machine_launch_command,
+    ) = get_machine_spec_for_step(
         deepmd_iterative_path,
         training_path,
         "training",
-        fake_cluster,
-        user_cluster_keyword,
+        fake_machine,
+        user_machine_keyword,
     )
 
-    if fake_cluster is not None:
-        logging.info(f"Pretending to be on {fake_cluster}")
+    if fake_machine is not None:
+        logging.info(f"Pretending to be on: {fake_machine}")
     else:
-        logging.info(f"Cluster is {cluster}")
-    del fake_cluster
+        logging.info(f"We are on: {machine}")
+    del fake_machine
 
     # ### Checks
     if current_iteration > 0:
-        labeling_json = load_json_file(
-            (control_path / f"labeling_{current_iteration_zfill}.json"), True, True
-        )
+        labeling_json = load_json_file((control_path / f"labeling_{current_iteration_zfill}.json"))
         if not labeling_json["is_extracted"]:
             logging.error("Lock found. Run/Check first: labeling extract")
             logging.error("Aborting...")
             return 1
 
     # ### Get/Create training parameters
-    training_json = load_json_file(
-        (control_path / f"training_{current_iteration_zfill}.json"), False, True
-    )
-    training_json["use_initial_datasets"] = read_key_input_json(
-        input_json,
-        new_input_json,
-        "use_initial_datasets",
+    training_json = get_or_generate_training_json(
+        control_path,
+        current_iteration_zfill,
+        input_json,new_input_json,
         default_input_json,
         step_name,
         default_present,
+        machine,
+        machine_spec,
+        machine_launch_command
     )
-    training_json["use_extra_datasets"] = read_key_input_json(
-        input_json,
-        new_input_json,
-        "use_extra_datasets",
-        default_input_json,
-        step_name,
-        default_present,
-    )
-    training_json["deepmd_model_version"] = read_key_input_json(
-        input_json,
-        new_input_json,
-        "deepmd_model_version",
-        default_input_json,
-        step_name,
-        default_present,
-    )
-    training_json["deepmd_model_type_descriptor"] = read_key_input_json(
-        input_json,
-        new_input_json,
-        "deepmd_model_type_descriptor",
-        default_input_json,
-        step_name,
-        default_present,
-    )
-    training_json["start_lr"] = read_key_input_json(
-        input_json,
-        new_input_json,
-        "start_lr",
-        default_input_json,
-        step_name,
-        default_present,
-    )
-    training_json["stop_lr"] = read_key_input_json(
-        input_json,
-        new_input_json,
-        "stop_lr",
-        default_input_json,
-        step_name,
-        default_present,
-    )
-    training_json["decay_rate"] = read_key_input_json(
-        input_json,
-        new_input_json,
-        "decay_rate",
-        default_input_json,
-        step_name,
-        default_present,
-    )
-    training_json["decay_steps"] = read_key_input_json(
-        input_json,
-        new_input_json,
-        "decay_steps",
-        default_input_json,
-        step_name,
-        default_present,
-    )
-    training_json["decay_steps_fixed"] = read_key_input_json(
-        input_json,
-        new_input_json,
-        "decay_steps_fixed",
-        default_input_json,
-        step_name,
-        default_present,
-    )
-
-    training_json["numb_steps"] = read_key_input_json(
-        input_json,
-        new_input_json,
-        "numb_steps",
-        default_input_json,
-        step_name,
-        default_present,
-    )
-    training_json["numb_test"] = read_key_input_json(
-        input_json,
-        new_input_json,
-        "numb_test",
-        default_input_json,
-        step_name,
-        default_present,
-    )
-
-    training_json["cluster"] = cluster
-    training_json["project_name"] = cluster_spec["project_name"]
-    training_json["allocation_name"] = cluster_spec["allocation_name"]
-    training_json["arch_name"] = cluster_spec["arch_name"]
-    training_json["arch_type"] = cluster_spec["arch_type"]
-    training_json["launch_command"] = cluster_launch_command
 
     check_file_existence(
-        jobs_apath / f"job_deepmd_train_{cluster_spec['arch_type']}_{cluster}.sh",
-        True,
-        True,
-        f"No SLURM file present for {step_name.capitalize()} / {phase_name.capitalize()} on this cluster.",
+        jobs_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh",
+        error_msg=f"No SLURM file present for {step_name.capitalize()} / {phase_name.capitalize()} on this machine."
     )
     slurm_file_master = file_to_list_of_strings(
-        jobs_apath / f"job_deepmd_train_{cluster_spec['arch_type']}_{cluster}.sh"
+        jobs_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh"
     )
-    del jobs_apath
+    del jobs_path
 
     # ### Check DeePMD version
     if training_json["deepmd_model_version"] not in [2.0, 2.1]:
@@ -248,7 +156,7 @@ def main(
         logging.critical("Aborting...")
         return 1
 
-    # ### Check mismatch between cluster/arch_name/arch and DeePMD
+    # ### Check mismatch between machine/arch_name/arch and DeePMD
     if training_json["deepmd_model_version"] < 2.0:
         logging.critical("Only version >= 2.0 on Jean Zay!")
         logging.critical("Aborting...")
@@ -269,7 +177,7 @@ def main(
             f"dptrain_{training_json['deepmd_model_version']}_{training_json['deepmd_model_type_descriptor']}.json"
         )
     ).resolve()
-    training_input_json = load_json_file(input_file_fpath, True, True)
+    training_input_json = load_json_file(input_file_fpath)
     config_json["type_map"] = {}
     config_json["type_map"] = training_input_json["model"]["type_map"]
     del input_file_fpath
@@ -279,7 +187,7 @@ def main(
 
     # ### Let us find what is in data
     data_path = training_path / "data"
-    check_directory(data_path, True)
+    check_directory(data_path)
     subsys_name = []
 
     datasets_extra = []
@@ -560,18 +468,18 @@ def main(
     logging.debug(datasets_training)
 
     # ### Rsync data to local data
-    localdata_apath = Path(".").resolve() / "data"
-    localdata_apath.mkdir(exist_ok=True)
+    localdata_path = Path(".").resolve() / "data"
+    localdata_path.mkdir(exist_ok=True)
     for it_datasets_training in datasets_training:
         subprocess.call(
             [
                 "rsync",
                 "-a",
                 f"{training_path}/{it_datasets_training.rsplit('/', 1)[0]}",
-                str(localdata_apath),
+                str(localdata_path),
             ]
         )
-    del it_datasets_training, localdata_apath, datasets_training
+    del it_datasets_training, localdata_path, datasets_training
 
     # ### Change some inside output
     training_input_json["training"]["disp_file"] = "lcurve.out"
@@ -582,11 +490,7 @@ def main(
     if current_iteration > 0:
         previous_iteration = current_iteration - 1
         previous_iteration_zfill = str(previous_iteration).zfill(3)
-        prevtraining_json = load_json_file(
-            (control_path / f"training_{previous_iteration_zfill}.json"),
-            True,
-            True,
-        )
+        prevtraining_json = load_json_file((control_path / f"training_{previous_iteration_zfill}.json"))
         walltime_approx_s = int(
             np.ceil(
                 (training_json["numb_steps"] * (prevtraining_json["s_per_step"] * 1.50))
@@ -606,9 +510,9 @@ def main(
         del s_per_step
 
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
-        local_apath = Path(".").resolve() / str(it_nnp)
-        local_apath.mkdir(exist_ok=True)
-        check_directory(local_apath, True)
+        local_path = Path(".").resolve() / str(it_nnp)
+        local_path.mkdir(exist_ok=True)
+        check_directory(local_path)
 
         random.seed()
         random_0_1000 = random.randrange(0, 1000)
@@ -633,40 +537,43 @@ def main(
         )
 
         training_input_json_fpath = Path(str(it_nnp) + "/training.json").resolve()
+
         write_json_file(training_input_json, training_input_json_fpath, False)
 
-        slurm_email = read_key_input_json(
+        # ### Slurm file
+        job_email = read_key_input_json(
             input_json,
             new_input_json,
-            "slurm_email",
+            "job_email",
             default_input_json,
             step_name,
             default_present,
         )
-        slurm_file = replace_in_slurm_file(
+        slurm_file = replace_in_slurm_file_general(
             slurm_file_master,
-            training_json,
-            cluster_spec,
+            machine_spec,
             walltime_approx_s,
-            cluster_walltime_format,
-            slurm_email,
+            machine_walltime_format,
+            job_email,
         )
-
+        
+        slurm_file = replace_substring_in_list_of_strings(
+            slurm_file, "_R_DEEPMD_VERSION_", str(training_json["deepmd_model_version"])
+        )
         write_list_of_strings_to_file(
-            local_apath / f"job_deepmd_train_{cluster_spec['arch_type']}_{cluster}.sh",
+            local_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh",
             slurm_file,
         )
-        del slurm_file, local_apath, training_input_json_fpath, random_0_1000
+        del slurm_file, local_path, training_input_json_fpath, random_0_1000
 
     del it_nnp, walltime_approx_s, training_input_json
 
     # ### Dump the dicts
     logging.info(f"-" * 88)
-    write_json_file(config_json, (control_path / "config.json"), True)
+    write_json_file(config_json, (control_path / "config.json"))
     write_json_file(
         training_json,
-        (control_path / f"training_{current_iteration_zfill}.json"),
-        True,
+        (control_path / f"training_{current_iteration_zfill}.json")
     )
     backup_and_overwrite_json_file(new_input_json, (current_path / input_fn))
 
@@ -682,7 +589,7 @@ def main(
     del config_json
     del current_iteration, current_iteration_zfill
     del training_json
-    del cluster, cluster_spec, cluster_walltime_format, cluster_launch_command
+    del machine, machine_spec, machine_walltime_format, machine_launch_command
     del slurm_file_master
     del training_path, current_path
 
@@ -695,7 +602,7 @@ if __name__ == "__main__":
             "training",
             "preparation",
             Path(sys.argv[1]),
-            fake_cluster=sys.argv[2],
+            fake_machine=sys.argv[2],
             input_fn=sys.argv[3],
         )
     else:

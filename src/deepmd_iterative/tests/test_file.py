@@ -1,6 +1,8 @@
+from pathlib import Path
 import unittest
 import tempfile
-from pathlib import Path
+
+# deepmd_iterative imports
 from deepmd_iterative.common.file import (
     file_to_list_of_strings,
     write_list_of_strings_to_file,
