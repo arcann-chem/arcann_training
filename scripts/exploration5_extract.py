@@ -111,6 +111,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
             stdout=subprocess.DEVNULL,\
             stderr=subprocess.STDOUT)
         topo_file=training_iterative_apath/"inputs"/(it_subsys_nr+".pdb")
+        print(topo_file)
     elif exploration_json["exploration_type"] == "i-PI":
         cf.check_file(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp"),True,True)
         subprocess.call([atomsk_bin,str(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp")),"pdb",str(training_iterative_apath/"inputs"/it_subsys_nr),"-ow"],\
@@ -225,7 +226,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     stdout=subprocess.DEVNULL,\
                     stderr=subprocess.STDOUT)
                 cf.remove_file((local_apath/"vmd.tcl"))
-                cf.remove_file((local_apath/"min.vmd"))
+                cf.remove_file((local_apath/"label.vmd"))
 
                 cf.remove_file(local_apath/("temp_candidates_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+".xyz"))
                 ### #TODO: Not Path friendly / Replace with either subprocess call or read python
