@@ -107,17 +107,20 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
     print_every_x_steps = exploration_json["subsys_nr"][it_subsys_nr]["print_every_x_steps"]
     if exploration_json["exploration_type"] == "lammps":
         cf.check_file(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp"),True,True)
-        subprocess.call([atomsk_bin,str(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp")),"pdb",str(training_iterative_apath/"inputs"/it_subsys_nr),"-ow"],\
-            stdout=subprocess.DEVNULL,\
-            stderr=subprocess.STDOUT)
+        with open(training_iterative_apath/"atomsk.log", "a") as log_file:
+            subprocess.call([atomsk_bin,str(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp")),"pdb",str(training_iterative_apath/"inputs"/it_subsys_nr),"-ow"],\
+                stdout=log_file,\
+                stderr=subprocess.STDOUT)
         topo_file=training_iterative_apath/"inputs"/(it_subsys_nr+".pdb")
-        print(topo_file)
+        cf.check_file(topo_file,True,True)
     elif exploration_json["exploration_type"] == "i-PI":
         cf.check_file(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp"),True,True)
-        subprocess.call([atomsk_bin,str(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp")),"pdb",str(training_iterative_apath/"inputs"/it_subsys_nr),"-ow"],\
-            stdout=subprocess.DEVNULL,\
-            stderr=subprocess.STDOUT)
+        with open(training_iterative_apath/"atomsk.log", "a") as log_file:
+            subprocess.call([atomsk_bin,str(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp")),"pdb",str(training_iterative_apath/"inputs"/it_subsys_nr),"-ow"],\
+                stdout=log_file,\
+                stderr=subprocess.STDOUT)
         topo_file=training_iterative_apath/"inputs"/(it_subsys_nr+".pdb")
+        cf.check_file(topo_file,True,True)
 
     for it_nnp in range(1,  exploration_json["nb_nnp"] + 1):
         for it_each in range(1, exploration_json["nb_traj"]+1):
@@ -151,21 +154,23 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
 
                 ### VMD DCD -> XYZ
                 cf.remove_file(starting_structures_apath/(min_file_name+".xyz"))
-                subprocess.call([vmd_bin,"-e",str((local_apath/"vmd.tcl")),"-dispdev", "text"],\
-                    stdout=subprocess.DEVNULL,\
-                    stderr=subprocess.STDOUT)
+                with open(training_iterative_apath/"vmd.log", "a") as log_file:
+                    subprocess.call([vmd_bin,"-e",str((local_apath/"vmd.tcl")),"-dispdev", "text"],\
+                        stdout=log_file,\
+                        stderr=subprocess.STDOUT)
                 cf.remove_file((local_apath/"vmd.tcl"))
                 cf.remove_file((local_apath/"min.vmd"))
 
                 ### Atomsk XYZ -> LMP
                 cf.remove_file(starting_structures_apath/(min_file_name+".lmp"))
-                subprocess.call([atomsk_bin, "-ow", str(starting_structures_apath/(min_file_name+".xyz")),\
-                        "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][0]), "H1",\
-                        "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][1]), "H2",\
-                        "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][2]), "H3",\
-                        str(starting_structures_apath/(min_file_name+".lmp"))],\
-                        stdout=subprocess.DEVNULL,\
-                        stderr=subprocess.STDOUT)
+                with open(training_iterative_apath/"atomsk.log", "a") as log_file:
+                    subprocess.call([atomsk_bin, "-ow", str(starting_structures_apath/(min_file_name+".xyz")),\
+                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][0]), "H1",\
+                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][1]), "H2",\
+                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][2]), "H3",\
+                            str(starting_structures_apath/(min_file_name+".lmp"))],\
+                            stdout=log_file,\
+                            stderr=subprocess.STDOUT)
 
                 if ("disturbed_min_value" in globals() and disturbed_min_value[it0_subsys_nr] != 0) \
                         or (int(current_iteration_zfill) > 1 and prevexploration_json["subsys_nr"][it_subsys_nr]["disturbed_min"]):
@@ -175,23 +180,25 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     (starting_structures_apath/(min_file_name+"_disturbed.xyz")).write_text((starting_structures_apath/(min_file_name+".xyz")).read_text())
 
                     ### Atomsk XYZ ==> XYZ_disturbed
-                    subprocess.call([atomsk_bin, "-ow", str(starting_structures_apath/(min_file_name+"_disturbed.xyz")),\
-                        "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][0]), "H1",\
-                        "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][1]), "H2",\
-                        "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][2]), "H3",\
-                        "-disturb", str(disturbed_min_value_subsys),\
-                        "xyz"],\
-                        stdout=subprocess.DEVNULL,\
-                        stderr=subprocess.STDOUT)
+                    with open(training_iterative_apath/"atomsk.log", "a") as log_file:
+                        subprocess.call([atomsk_bin, "-ow", str(starting_structures_apath/(min_file_name+"_disturbed.xyz")),\
+                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][0]), "H1",\
+                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][1]), "H2",\
+                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][2]), "H3",\
+                            "-disturb", str(disturbed_min_value_subsys),\
+                            "xyz"],\
+                            stdout=log_file,\
+                            stderr=subprocess.STDOUT)
                     ### Atomsk XYZ -> LMP
                     cf.remove_file((starting_structures_apath/(min_file_name+"_disturbed.lmp")))
-                    subprocess.call([atomsk_bin, "-ow", str(starting_structures_apath/(min_file_name+"_disturbed.xyz")),\
-                        "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][0]), "H1",\
-                        "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][1]), "H2",\
-                        "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][2]), "H3",\
-                        str(starting_structures_apath/(min_file_name+"_disturbed.lmp"))],\
-                        stdout=subprocess.DEVNULL,\
-                        stderr=subprocess.STDOUT)
+                    with open(training_iterative_apath/"atomsk.log", "a") as log_file:
+                        subprocess.call([atomsk_bin, "-ow", str(starting_structures_apath/(min_file_name+"_disturbed.xyz")),\
+                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][0]), "H1",\
+                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][1]), "H2",\
+                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][2]), "H3",\
+                            str(starting_structures_apath/(min_file_name+"_disturbed.lmp"))],\
+                            stdout=log_file,\
+                            stderr=subprocess.STDOUT)
 
                     del disturbed_min_value_subsys
                 del min_file_name
@@ -222,9 +229,10 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                 del vmd_tcl, traj_file
 
                 ### VMD DCD -> A lot of XYZ
-                subprocess.call([vmd_bin,"-e",str((local_apath/"vmd.tcl")),"-dispdev", "text"],\
-                    stdout=subprocess.DEVNULL,\
-                    stderr=subprocess.STDOUT)
+                with open(training_iterative_apath/"vmd.log", "a") as log_file:
+                    subprocess.call([vmd_bin,"-e",str((local_apath/"vmd.tcl")),"-dispdev", "text"],\
+                        stdout=log_file,\
+                        stderr=subprocess.STDOUT)
                 cf.remove_file((local_apath/"vmd.tcl"))
                 cf.remove_file((local_apath/"label.vmd"))
 
@@ -236,14 +244,15 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     vmd_xyz_files = [zzz for zzz in local_apath.glob("vmd_*")]
                     for it_vmd_xyz_files in vmd_xyz_files:
                         ### Atomsk XYZ ==> XYZ_disturbed
-                        subprocess.call([atomsk_bin, "-ow", str(it_vmd_xyz_files),\
-                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][0]), "H1",\
-                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][1]), "H2",\
-                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][2]), "H3",\
-                            "-disturb", str(disturbed_candidates_value[it0_subsys_nr]),\
-                            "xyz", str(it_vmd_xyz_files)+"_disturbed"],\
-                            stdout=subprocess.DEVNULL,\
-                            stderr=subprocess.STDOUT)
+                        with open(training_iterative_apath/"atomsk.log", "a") as log_file:
+                            subprocess.call([atomsk_bin, "-ow", str(it_vmd_xyz_files),\
+                                "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][0]), "H1",\
+                                "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][1]), "H2",\
+                                "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][2]), "H3",\
+                                "-disturb", str(disturbed_candidates_value[it0_subsys_nr]),\
+                                "xyz", str(it_vmd_xyz_files)+"_disturbed"],\
+                                stdout=log_file,\
+                                stderr=subprocess.STDOUT)
                     del it_vmd_xyz_files, vmd_xyz_files
 
                     cf.remove_file(local_apath/("temp_candidates_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+"_disturbed.xyz"))
