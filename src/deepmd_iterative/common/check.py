@@ -64,7 +64,7 @@ def check_atomsk(atomsk_path: str = None) -> str:
     # Check if atomsk is available in system path
     try:
         atomsk = subprocess.check_output(['command', '-v', 'atomsk'], stderr=subprocess.STDOUT)
-        return str(Path(atomsk.strip()).resolve())
+        return str(Path(atomsk.strip().decode()).resolve())
     except subprocess.CalledProcessError:
         error_msg = "Atomsk not found."
         logging.error(f"{error_msg}\nAborting...")
@@ -109,7 +109,7 @@ def check_vmd(vmd_path: str = None) -> str:
     # Check if vmd is available in system path
     try:
         vmd = subprocess.check_output(['command', '-v', 'vmd'], stderr=subprocess.STDOUT)
-        return str(Path(vmd.strip()).resolve())
+        return str(Path(vmd.strip().decode()).resolve())
     except subprocess.CalledProcessError:
         error_msg = "VMD not found."
         logging.error(f"{error_msg}\nAborting...")

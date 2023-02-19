@@ -3,6 +3,7 @@ import unittest
 import tempfile
 import shutil
 import os
+import logging
 from unittest.mock import patch
 
 # deepmd_iterative imports
