@@ -245,87 +245,171 @@ def read_key_input_json(
                 # ### Check if the key is subsys dependent (can be a list of values)
                 # ### If -1 it means no list
                 if subsys_index == -1:
-                    # ### Check if the type correspond to the default
-                    if isinstance(
-                        input_json[key]["value"], type(default_inputs_json[step][key])
-                    ):
-                        add_key_value_to_dict(
-                            new_input_json, key, input_json[key]["value"]
-                        )
-                        return input_json[key]["value"]
+                    if exploration_dep == -1:
+                        # ### Check if the type correspond to the default
+                        if isinstance(
+                            input_json[key]["value"], type(default_inputs_json[step][key])
+                        ):
+                            add_key_value_to_dict(
+                                new_input_json, key, input_json[key]["value"]
+                            )
+                            return input_json[key]["value"]
+                        else:
+                            logging.error(
+                                f"Wrong type: \"{key}\" is {type(input_json[key]['value'])}"
+                            )
+                            logging.error(
+                                f'Wrong type: "{key}" should be {type(default_inputs_json[step][key])}'
+                            )
+                            logging.error(f"Aborting...")
+                            sys.exit(1)
                     else:
-                        logging.error(
-                            f"Wrong type: \"{key}\" is {type(input_json[key]['value'])}"
-                        )
-                        logging.error(
-                            f'Wrong type: "{key}" should be {type(default_inputs_json[step][key])}'
-                        )
-                        logging.error(f"Aborting...")
-                        sys.exit(1)
+                        # ### Check if the type correspond to the default
+                        if isinstance(
+                            input_json[key]["value"], type(default_inputs_json[step][key][exploration_dep])
+                        ):
+                            add_key_value_to_dict(
+                                new_input_json, key, input_json[key]["value"]
+                            )
+                            return input_json[key]["value"]
+                        else:
+                            logging.error(
+                                f"Wrong type: \"{key}\" is {type(input_json[key]['value'])}"
+                            )
+                            logging.error(
+                                f'Wrong type: "{key}" should be {type(default_inputs_json[step][key][exploration_dep])}'
+                            )
+                            logging.error(f"Aborting...")
+                            sys.exit(1)
                 # ### If not then it is list
                 else:
-                    # ### Check if it has the same type (meaning same value get propagated)
-                    if isinstance(input_json[key]["value"], list) and isinstance(
-                        input_json[key]["value"], type(default_inputs_json[step][key])
-                    ):
-                        add_key_value_to_dict(
-                            new_input_json, key, input_json[key]["value"]
-                        )
-                        return input_json[key]["value"]
-                    # ### If not check if it is a list, and if the type inside the list matches, and return index
-                    elif (
-                        isinstance(input_json[key]["value"], list)
-                        and [
-                            isinstance(
-                                input_json[key]["value"][_],
-                                type(default_inputs_json[step][key]),
+                    if exploration_dep == -1:
+                        # ### Check if it has the same type (meaning same value get propagated)
+                        if not isinstance(input_json[key]["value"], list) and isinstance(
+                            input_json[key]["value"], type(default_inputs_json[step][key])
+                        ):
+                            add_key_value_to_dict(
+                                new_input_json, key, input_json[key]["value"]
                             )
-                            for _ in range(len(input_json[key]["value"]))
-                        ]
-                        and subsys_number == len(input_json[key]["value"])
-                    ):
-                        add_key_value_to_dict(
-                            new_input_json, key, input_json[key]["value"]
-                        )
-                        return input_json[key]["value"][subsys_index]
-                    elif (
-                        isinstance(input_json[key]["value"], list)
-                        and [
-                            isinstance(
-                                input_json[key]["value"][_],
-                                type(default_inputs_json[step][key]),
+                            return input_json[key]["value"]
+                        # ### If not check if it is a list, and if the type inside the list matches, and return index
+                        elif (
+                            isinstance(input_json[key]["value"], list)
+                            and [
+                                isinstance(
+                                    input_json[key]["value"][_],
+                                    type(default_inputs_json[step][key]),
+                                )
+                                for _ in range(len(input_json[key]["value"]))
+                            ]
+                            and subsys_number == len(input_json[key]["value"])
+                        ):
+                            add_key_value_to_dict(
+                                new_input_json, key, input_json[key]["value"]
                             )
-                            for _ in range(len(input_json[key]["value"]))
-                        ]
-                        and subsys_number != len(input_json[key]["value"])
-                    ):
-                        logging.error(
-                            f"Wrong size: The length of the list is {len(input_json[key]['value'])}"
-                        )
-                        logging.error(
-                            f"Wrong size: The length of the list should be {subsys_number} [Subsys number]"
-                        )
-                        logging.error(f"Aborting...")
-                        sys.exit(1)
-                    elif not isinstance(input_json[key]["value"], list):
-                        logging.error(
-                            f'Wrong type: "{key}" is {type(input_json[key]["value"])}'
-                        )
-                        logging.error(
-                            f'Wrong type: "{key}" should be {type(default_inputs_json[step][key])} '
-                            f"[Will be repeated on all subsys] "
-                        )
-                        logging.error(f"Aborting...")
-                        sys.exit(1)
-                    elif isinstance(input_json[key]["value"], list):
-                        logging.error(
-                            f'Wrong type: "{key}" is a {list} of {type(input_json[key]["value"][subsys_index])}'
-                        )
-                        logging.error(
-                            f'Wrong type: "{key}" should a {list} of {type(default_inputs_json[step][key])}'
-                        )
-                        logging.error(f"Aborting...")
-                        sys.exit(1)
+                            return input_json[key]["value"][subsys_index]
+                        elif (
+                            isinstance(input_json[key]["value"], list)
+                            and [
+                                isinstance(
+                                    input_json[key]["value"][_],
+                                    type(default_inputs_json[step][key]),
+                                )
+                                for _ in range(len(input_json[key]["value"]))
+                            ]
+                            and subsys_number != len(input_json[key]["value"])
+                        ):
+                            logging.error(
+                                f"Wrong size: The length of the list is {len(input_json[key]['value'])}"
+                            )
+                            logging.error(
+                                f"Wrong size: The length of the list should be {subsys_number} [Subsys number]"
+                            )
+                            logging.error(f"Aborting...")
+                            sys.exit(1)
+                        elif not isinstance(input_json[key]["value"], list):
+                            logging.error(
+                                f'Wrong type: "{key}" is {type(input_json[key]["value"])}'
+                            )
+                            logging.error(
+                                f'Wrong type: "{key}" should be {type(default_inputs_json[step][key])} '
+                                f"[Will be repeated on all subsys] "
+                            )
+                            logging.error(f"Aborting...")
+                            sys.exit(1)
+                        elif isinstance(input_json[key]["value"], list):
+                            logging.error(
+                                f'Wrong type: "{key}" is a {list} of {type(input_json[key]["value"][subsys_index])}'
+                            )
+                            logging.error(
+                                f'Wrong type: "{key}" should a {list} of {type(default_inputs_json[step][key])}'
+                            )
+                            logging.error(f"Aborting...")
+                            sys.exit(1)
+                        
+                    else:
+                        # ### Check if it has the same type (meaning same value get propagated)
+                        if not isinstance(input_json[key]["value"], list) and isinstance(
+                            input_json[key]["value"], type(default_inputs_json[step][key][exploration_dep])
+                        ):
+                            add_key_value_to_dict(
+                                new_input_json, key, input_json[key]["value"]
+                            )
+                            return input_json[key]["value"]
+                        # ### If not check if it is a list, and if the type inside the list matches, and return index
+                        elif (
+                            isinstance(input_json[key]["value"], list)
+                            and [
+                                isinstance(
+                                    input_json[key]["value"][_],
+                                    type(default_inputs_json[step][key][exploration_dep]),
+                                )
+                                for _ in range(len(input_json[key]["value"]))
+                            ]
+                            and subsys_number == len(input_json[key]["value"])
+                        ):
+                            add_key_value_to_dict(
+                                new_input_json, key, input_json[key]["value"]
+                            )
+                            return input_json[key]["value"][subsys_index]
+                        elif (
+                            isinstance(input_json[key]["value"], list)
+                            and [
+                                isinstance(
+                                    input_json[key]["value"][_],
+                                    type(default_inputs_json[step][key][exploration_dep]),
+                                )
+                                for _ in range(len(input_json[key]["value"]))
+                            ]
+                            and subsys_number != len(input_json[key]["value"])
+                        ):
+                            logging.error(
+                                f"Wrong size: The length of the list is {len(input_json[key]['value'])}"
+                            )
+                            logging.error(
+                                f"Wrong size: The length of the list should be {subsys_number} [Subsys number]"
+                            )
+                            logging.error(f"Aborting...")
+                            sys.exit(1)
+                        elif not isinstance(input_json[key]["value"], list):
+                            logging.error(
+                                f'Wrong type: "{key}" is {type(input_json[key]["value"])}'
+                            )
+                            logging.error(
+                                f'Wrong type: "{key}" should be {type(default_inputs_json[step][key][exploration_dep])} '
+                                f"[Will be repeated on all subsys] "
+                            )
+                            logging.error(f"Aborting...")
+                            sys.exit(1)
+                        elif isinstance(input_json[key]["value"], list):
+                            logging.error(
+                                f'Wrong type: "{key}" is a {list} of {type(input_json[key]["value"][subsys_index])}'
+                            )
+                            logging.error(
+                                f'Wrong type: "{key}" should a {list} of {type(default_inputs_json[step][key][exploration_dep])}'
+                            )
+                            logging.error(f"Aborting...")
+                            sys.exit(1)
             else:
                 pass
         else:
