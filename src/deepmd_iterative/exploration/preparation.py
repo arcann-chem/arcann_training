@@ -222,6 +222,7 @@ def main(
                 plumed_input[it_plumed_files_list.name] = file_to_list_of_strings(
                     it_plumed_files_list
                 )
+            for it_plumed_files_list in plumed_files_list:
                 plumed[1], plumed[2] = analyze_plumed_file_for_movres(plumed_input[it_plumed_files_list.name])
                 if plumed[1] and plumed[2] !=0:
                     break
@@ -434,7 +435,7 @@ def main(
                     training_path / "inputs" / subsys_lammps_data_fn
                 )
                 subsys_ipi_xyz_fn = it_subsys_nr + ".xyz"
-                input_replace_dict['_R_XYZ_'] = subsys_ipi_xyz_fn
+                input_replace_dict['_R_DATA_FILE_'] = subsys_ipi_xyz_fn
                 subsys_ipi_json["coord_file"] = subsys_ipi_xyz_fn
                 # ### Get the XYZ file from LMP
                 subprocess.call(
@@ -530,6 +531,7 @@ def main(
                         input_replace_dict['_R_PLUMED_OUT_'] = f"plumed_{it_subsys_nr}_{it_nnp}_{current_iteration_zfill}.log"
                         for it_plumed_input in plumed_input:
                             plumed_input[it_plumed_input] = replace_substring_in_list_of_strings(plumed_input[it_plumed_input], "_R_PRINT_FREQ_",f"{int(subsys_print_every_x_steps)}")
+                            print(it_plumed_input)
                             write_list_of_strings_to_file(local_path/it_plumed_input,plumed_input[it_plumed_input])
 
                     # ### Write DATA file
