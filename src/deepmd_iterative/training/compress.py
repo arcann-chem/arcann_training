@@ -116,7 +116,7 @@ def main(
     del jobs_path
 
     # ### Prep and launch DP Compress
-    check = 0
+    completed_count = 0
     walltime_approx_s = 7200
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
         local_path = Path(".").resolve() / str(it_nnp)
@@ -172,7 +172,7 @@ def main(
                     ]
                 )
                 logging.info(f"DP Compress - {it_nnp} launched")
-                check = check + 1
+                completed_count += 1
             except FileNotFoundError:
                 logging.critical(
                     f"DP Compress - {it_nnp} NOT launched - {training_json['launch_command']} not found"
@@ -193,7 +193,7 @@ def main(
     )
     backup_and_overwrite_json_file(new_input_json, (current_path / input_fn))
     logging.info(f"-" * 88)
-    if check == config_json["nb_nnp"]:
+    if completed_count == config_json["nb_nnp"]:
         pass
     else:
         logging.critical(
@@ -201,7 +201,7 @@ def main(
         )
         logging.critical(f"Some SLURM jobs did not launch correctly")
         logging.critical(f"Please launch manually before continuing to the next step")
-    del check
+    del completed_count
 
     logging.info(
         f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"

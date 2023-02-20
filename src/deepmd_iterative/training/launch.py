@@ -116,7 +116,7 @@ def main(
         return 1
 
     # ### Launch the jobs
-    check = 0
+    completed_count = 0
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
         local_path = Path(".").resolve() / str(it_nnp)
         if (
@@ -131,7 +131,7 @@ def main(
                     ]
                 )
                 logging.info(f"DP Train - {it_nnp} launched")
-                check = check + 1
+                completed_count += 1
             except FileNotFoundError:
                 logging.critical(
                     f"DP Train - {it_nnp} NOT launched - {training_json['launch_command']} not found"
@@ -142,7 +142,7 @@ def main(
         del local_path
     del it_nnp
 
-    if check == config_json["nb_nnp"]:
+    if completed_count == config_json["nb_nnp"]:
         training_json["is_launched"] = True
 
     write_json_file(
@@ -151,7 +151,7 @@ def main(
     )
 
     logging.info(f"-" * 88)
-    if check == config_json["nb_nnp"]:
+    if completed_count == config_json["nb_nnp"]:
         logging.info(
             f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
         )
@@ -164,7 +164,7 @@ def main(
         logging.critical(
             f'Replace the key "is_launched" to True in the training_{current_iteration_zfill}.json.'
         )
-    del check
+    del completed_count
 
     # ### Cleaning
     del control_path

@@ -44,7 +44,7 @@ def main(
         logging.error(f"Aborting...")
         return 1
 
-    check = 0
+    completed_count = 0
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
         local_path = Path(".").resolve() / str(it_nnp)
         if (
@@ -57,13 +57,13 @@ def main(
                 + "_compressed.pb"
             )
         ).is_file():
-            check = check + 1
+            completed_count += 1
         else:
             logging.critical("DP Compress - " + str(it_nnp) + " not finished/failed")
         del local_path
     del it_nnp
 
-    if check == config_json["nb_nnp"]:
+    if completed_count == config_json["nb_nnp"]:
         training_json["is_compressed"] = True
     else:
         logging.error(
@@ -73,7 +73,7 @@ def main(
         logging.error("Please check manually before relaunching this step")
         logging.error(f"Aborting...")
         return 1
-    del check
+    del completed_count
 
     write_json_file(
         training_json,

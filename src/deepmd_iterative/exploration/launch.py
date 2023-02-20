@@ -98,7 +98,7 @@ def main(
 
     # ### Check prep/launch
     assert_same_machine(machine, exploration_json)
-    print(exploration_json["is_launched"])
+
     # ### Checks
     if exploration_json["is_launched"]:
         logging.critical(f"Already launched.")
@@ -116,7 +116,7 @@ def main(
         return 1
 
     # ### Launch the jobs
-    check = 0
+    completed_count = 0
     for it0_subsys_nr, it_subsys_nr in enumerate(config_json["subsys_nr"]):
         for it_nnp in range(1, config_json["nb_nnp"] + 1 ):
             for it_number in range(1, exploration_json["nb_traj"] + 1):
@@ -135,7 +135,7 @@ def main(
                             ]
                         )
                         logging.info(f"Exploration - {it_subsys_nr} {it_nnp} {it_number} launched")
-                        check = check + 1
+                        completed_count += 1
                     except FileNotFoundError:
                         logging.critical(
                             f"Exploration - {it_subsys_nr} {it_nnp} {it_number} NOT launched - {exploration_json['launch_command']} not found"
@@ -148,7 +148,7 @@ def main(
         del it_nnp
     del it0_subsys_nr, it_subsys_nr
 
-    if check == (len(exploration_json["subsys_nr"]) * exploration_json["nb_nnp"] * exploration_json["nb_traj"] ):
+    if completed_count == (len(exploration_json["subsys_nr"]) * exploration_json["nb_nnp"] * exploration_json["nb_traj"] ):
         exploration_json["is_launched"] = True
 
     write_json_file(
@@ -157,7 +157,7 @@ def main(
     )
 
     logging.info(f"-" * 88)
-    if check ==  (len(exploration_json["subsys_nr"]) * exploration_json["nb_nnp"] * exploration_json["nb_traj"] ):
+    if completed_count == (len(exploration_json["subsys_nr"]) * exploration_json["nb_nnp"] * exploration_json["nb_traj"] ):
         logging.info(
             f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
         )
@@ -170,7 +170,7 @@ def main(
         logging.critical(
             f'Replace the key "is_launched" to True in the training_{current_iteration_zfill}.json.'
         )
-    del check
+    del completed_count
 
     # ### Cleaning
     del control_path
@@ -187,7 +187,7 @@ def main(
 if __name__ == "__main__":
     if len(sys.argv) == 4:
         main(
-            "training",
+            "exploration",
             "launch",
             Path(sys.argv[1]),
             fake_machine=sys.argv[2],

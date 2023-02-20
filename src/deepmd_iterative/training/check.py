@@ -51,7 +51,7 @@ def main(
 
     # ### Check the normal termination of the training phase
     s_per_step_per_step_size = []
-    check = 0
+    completed_count = 0
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
         local_path = Path(".").resolve() / str(it_nnp)
         if (local_path / "training.out").is_file():
@@ -87,7 +87,7 @@ def main(
                 step_size = float(training_out_time_split[-1][3]) - float(
                     training_out_time_split[-2][3]
                 )
-                check = check + 1
+                completed_count += 1
             else:
                 logging.critical(f"DP Train - {it_nnp} not finished/failed")
             del training_out, training_out_time, training_out_time_split
@@ -97,7 +97,7 @@ def main(
     del it_nnp
 
     logging.info(f"-" * 88)
-    if check == config_json["nb_nnp"]:
+    if completed_count == config_json["nb_nnp"]:
         training_json["is_checked"] = True
     else:
         logging.critical(
@@ -107,7 +107,7 @@ def main(
         logging.critical(f"Please check manually before relaunching this step")
         logging.critical(f"Aborting...")
         return 1
-    del check
+    del completed_count
 
     if ("s_per_step_per_step_size" in locals()) and ("step_size" in locals()):
         training_json["s_per_step"] = np.average(s_per_step_per_step_size) / step_size
