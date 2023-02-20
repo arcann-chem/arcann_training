@@ -531,7 +531,6 @@ def main(
                         input_replace_dict['_R_PLUMED_OUT_'] = f"plumed_{it_subsys_nr}_{it_nnp}_{current_iteration_zfill}.log"
                         for it_plumed_input in plumed_input:
                             plumed_input[it_plumed_input] = replace_substring_in_list_of_strings(plumed_input[it_plumed_input], "_R_PRINT_FREQ_",f"{int(subsys_print_every_x_steps)}")
-                            print(it_plumed_input)
                             write_list_of_strings_to_file(local_path/it_plumed_input,plumed_input[it_plumed_input])
 
                     # ### Write DATA file
