@@ -44,7 +44,9 @@ def main(
     # ### Get control path and config_json
     control_path = training_path / "control"
     config_json = load_json_file((control_path / "config.json"))
-    training_json = load_json_file((control_path / f"training_{current_iteration_zfill}.json"))
+    training_json = load_json_file(
+        (control_path / f"training_{current_iteration_zfill}.json")
+    )
 
     # ### Checks
     if not training_json["is_frozen"]:
@@ -55,9 +57,21 @@ def main(
     # ### Check if pb files are present and delete temp files
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
         local_path = Path(".").resolve() / str(it_nnp)
-        check_file_existence(local_path / ("graph_" + str(it_nnp) + "_" + current_iteration_zfill + ".pb"))
+        check_file_existence(
+            local_path
+            / ("graph_" + str(it_nnp) + "_" + current_iteration_zfill + ".pb")
+        )
         if training_json["is_compressed"]:
-            check_file_existence(local_path / ("graph_" + str(it_nnp) + "_" + current_iteration_zfill + "_compressed.pb"))
+            check_file_existence(
+                local_path
+                / (
+                    "graph_"
+                    + str(it_nnp)
+                    + "_"
+                    + current_iteration_zfill
+                    + "_compressed.pb"
+                )
+            )
         remove_file(local_path / "checkpoint")
         remove_file(local_path / "input_v2_compat")
         logging.info("Deleting SLURM out/error files...")

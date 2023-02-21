@@ -7,7 +7,7 @@ import logging
 from unittest.mock import patch
 
 # deepmd_iterative imports
-from deepmd_iterative.common.check import validate_step_folder,check_atomsk,check_vmd
+from deepmd_iterative.common.check import validate_step_folder, check_atomsk, check_vmd
 
 
 class TestValidateStepFolder(unittest.TestCase):
@@ -32,6 +32,7 @@ class TestValidateStepFolder(unittest.TestCase):
             validate_step_folder("step2")
         self.assertEqual(cm.exception.code, 1)
 
+
 class TestCheckAtomsk(unittest.TestCase):
     def setUp(self):
         # Create a temporary directory
@@ -47,12 +48,12 @@ class TestCheckAtomsk(unittest.TestCase):
         # Remove the temporary directory and its contents
         shutil.rmtree(self.tempdir)
 
-    @patch('subprocess.check_output')
+    @patch("subprocess.check_output")
     def test_system_path(self, mock_check_output):
         # Test that the function finds atomsk in the system path and returns the full path
-        mock_check_output.return_value = b'/usr/bin/atomsk\n'
+        mock_check_output.return_value = b"/usr/bin/atomsk\n"
         atomsk_bin = check_atomsk()
-        self.assertEqual(atomsk_bin, str(Path('/usr/bin/atomsk').resolve()))
+        self.assertEqual(atomsk_bin, str(Path("/usr/bin/atomsk").resolve()))
 
     def test_atomsk_path(self):
         # Test that the function finds atomsk at a specified path and returns the full path
@@ -96,12 +97,12 @@ class TestCheckVMD(unittest.TestCase):
         # Remove the temporary directory and its contents
         shutil.rmtree(self.tempdir)
 
-    @patch('subprocess.check_output')
+    @patch("subprocess.check_output")
     def test_system_path(self, mock_check_output):
         # Test that the function finds vmd in the system path and returns the full path
-        mock_check_output.return_value = b'/usr/bin/vmd\n'
+        mock_check_output.return_value = b"/usr/bin/vmd\n"
         vmd_bin = check_vmd()
-        self.assertEqual(vmd_bin, str(Path('/usr/bin/vmd').resolve()))
+        self.assertEqual(vmd_bin, str(Path("/usr/bin/vmd").resolve()))
 
     def test_vmd_path(self):
         # Test that the function finds vmd at a specified path and returns the full path
@@ -128,4 +129,3 @@ class TestCheckVMD(unittest.TestCase):
         os.environ["VMD_PATH"] = str(vmd_path)
         vmd_bin = check_vmd()
         self.assertEqual(vmd_bin, str(vmd_path.resolve()))
-

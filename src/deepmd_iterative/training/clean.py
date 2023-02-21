@@ -32,7 +32,9 @@ def main(
 
     # ### Get control path and config_json
     control_path = training_path / "control"
-    training_json = load_json_file((control_path / f"training_{current_iteration_zfill}.json"))
+    training_json = load_json_file(
+        (control_path / f"training_{current_iteration_zfill}.json")
+    )
 
     # ### Checks
     if not training_json["is_frozen"]:

@@ -16,12 +16,13 @@ from deepmd_iterative.common.json import (
 from deepmd_iterative.common.file import check_directory, check_file_existence
 from deepmd_iterative.common.generate_config import generate_config_json
 
+
 def main(
     step_name: str,
     phase_name: str,
     deepmd_iterative_path,
     fake_machine=None,
-    input_fn: str="input.json",
+    input_fn: str = "input.json",
 ):
 
     current_path = Path(".").resolve()
@@ -35,7 +36,9 @@ def main(
 
     # ### Get default inputs json
     default_present = False
-    default_input_json = load_default_json_file(deepmd_iterative_path / "data" / "inputs.json")
+    default_input_json = load_default_json_file(
+        deepmd_iterative_path / "data" / "inputs.json"
+    )
     if bool(default_input_json):
         default_present = True
 
@@ -57,11 +60,7 @@ def main(
 
     # ### Create the config.json (and set everything)
     config_json, current_iteration_zfill = generate_config_json(
-        input_json,
-        new_input_json,
-        default_input_json,
-        step_name,
-        default_present
+        input_json, new_input_json, default_input_json, step_name, default_present
     )
 
     # ### Create the control directory

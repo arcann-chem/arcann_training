@@ -4,7 +4,9 @@ import re
 from typing import List, Tuple, Union
 
 
-def analyze_plumed_file_for_movres(plumed_lines: List[str]) -> Tuple[bool, Union[int, bool]]:
+def analyze_plumed_file_for_movres(
+    plumed_lines: List[str],
+) -> Tuple[bool, Union[int, bool]]:
 
     """
     Analyzes a Plumed file to extract information about the MOVINGRESTRAINT keyword and the last STEP value used.
@@ -25,13 +27,13 @@ def analyze_plumed_file_for_movres(plumed_lines: List[str]) -> Tuple[bool, Union
     # Find if MOVINGRESTRAINT is present
     movres_found = False
     for line in plumed_lines:
-        if 'MOVINGRESTRAINT' in line:
+        if "MOVINGRESTRAINT" in line:
             movres_found = True
             break
 
     if movres_found:
         # Find the last value of the STEP keyword
-        step_matches = re.findall(r'STEP\d*\s*=\s*(\d+)', ''.join(plumed_lines))
+        step_matches = re.findall(r"STEP\d*\s*=\s*(\d+)", "".join(plumed_lines))
         if len(step_matches) > 0:
             last_step = int(step_matches[-1])
             return True, last_step

@@ -27,7 +27,7 @@ def main(
     phase_name: str,
     deepmd_iterative_path,
     fake_machine=None,
-    input_fn: str="input.json",
+    input_fn: str = "input.json",
 ):
     current_path = Path(".").resolve()
     training_path = current_path.parent
@@ -63,7 +63,9 @@ def main(
     # ### Get control path and config_json
     control_path = training_path / "control"
     config_json = load_json_file((control_path / "config.json"))
-    exploration_json = load_json_file((control_path / f"exploration_{current_iteration_zfill}.json"))
+    exploration_json = load_json_file(
+        (control_path / f"exploration_{current_iteration_zfill}.json")
+    )
 
     # ### Get machine info
     user_spec = read_key_input_json(
@@ -118,13 +120,19 @@ def main(
     # ### Launch the jobs
     completed_count = 0
     for it0_subsys_nr, it_subsys_nr in enumerate(config_json["subsys_nr"]):
-        for it_nnp in range(1, config_json["nb_nnp"] + 1 ):
+        for it_nnp in range(1, config_json["nb_nnp"] + 1):
             for it_number in range(1, exploration_json["nb_traj"] + 1):
 
-                local_path = Path(".").resolve()/str(it_subsys_nr)/str(it_nnp)/(str(it_number).zfill(5))
+                local_path = (
+                    Path(".").resolve()
+                    / str(it_subsys_nr)
+                    / str(it_nnp)
+                    / (str(it_number).zfill(5))
+                )
 
                 if (
-                    local_path / f"job_deepmd_{exploration_json['exploration_type']}_{exploration_json['arch_type']}_{machine}.sh"
+                    local_path
+                    / f"job_deepmd_{exploration_json['exploration_type']}_{exploration_json['arch_type']}_{machine}.sh"
                 ).is_file():
                     change_directory(local_path)
                     try:
@@ -134,7 +142,9 @@ def main(
                                 f"./job_deepmd_{exploration_json['exploration_type']}_{exploration_json['arch_type']}_{machine}.sh",
                             ]
                         )
-                        logging.info(f"Exploration - {it_subsys_nr} {it_nnp} {it_number} launched")
+                        logging.info(
+                            f"Exploration - {it_subsys_nr} {it_nnp} {it_number} launched"
+                        )
                         completed_count += 1
                     except FileNotFoundError:
                         logging.critical(
@@ -142,22 +152,31 @@ def main(
                         )
                     change_directory(local_path.parent.parent.parent)
                 else:
-                    logging.critical(f"Exploration - {it_subsys_nr} {it_nnp} {it_number} NOT launched - No job file")
+                    logging.critical(
+                        f"Exploration - {it_subsys_nr} {it_nnp} {it_number} NOT launched - No job file"
+                    )
                 del local_path
             del it_number
         del it_nnp
     del it0_subsys_nr, it_subsys_nr
 
-    if completed_count == (len(exploration_json["subsys_nr"]) * exploration_json["nb_nnp"] * exploration_json["nb_traj"] ):
+    if completed_count == (
+        len(exploration_json["subsys_nr"])
+        * exploration_json["nb_nnp"]
+        * exploration_json["nb_traj"]
+    ):
         exploration_json["is_launched"] = True
 
     write_json_file(
-        exploration_json,
-        (control_path / f"exploration_{current_iteration_zfill}.json")
+        exploration_json, (control_path / f"exploration_{current_iteration_zfill}.json")
     )
 
     logging.info(f"-" * 88)
-    if completed_count == (len(exploration_json["subsys_nr"]) * exploration_json["nb_nnp"] * exploration_json["nb_traj"] ):
+    if completed_count == (
+        len(exploration_json["subsys_nr"])
+        * exploration_json["nb_nnp"]
+        * exploration_json["nb_traj"]
+    ):
         logging.info(
             f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
         )

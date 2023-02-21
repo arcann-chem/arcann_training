@@ -42,7 +42,9 @@ def main(
     # ### Get control path and config_json
     control_path = training_path / "control"
     config_json = load_json_file((control_path / "config.json"))
-    training_json = load_json_file((control_path / f"training_{current_iteration_zfill}.json"))
+    training_json = load_json_file(
+        (control_path / f"training_{current_iteration_zfill}.json")
+    )
 
     if not training_json["is_launched"]:
         logging.error(f"Lock found. Execute first: training preparation")
@@ -72,8 +74,7 @@ def main(
                         / f"model.ckpt-{training_out_time_split[-1][3]}.index"
                     ).rename(local_path / "model.ckpt.index")
                     (
-                        local_path
-                        / f"model.ckpt-{training_out_time_split[-1][3]}.meta"
+                        local_path / f"model.ckpt-{training_out_time_split[-1][3]}.meta"
                     ).rename(local_path / "model.ckpt.meta")
                     (
                         local_path
@@ -114,8 +115,7 @@ def main(
         del s_per_step_per_step_size, step_size
 
     write_json_file(
-        training_json,
-        (control_path / f"training_{current_iteration_zfill}.json")
+        training_json, (control_path / f"training_{current_iteration_zfill}.json")
     )
 
     logging.info(

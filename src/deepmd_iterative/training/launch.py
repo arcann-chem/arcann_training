@@ -27,7 +27,7 @@ def main(
     phase_name: str,
     deepmd_iterative_path,
     fake_machine=None,
-    input_fn: str="input.json",
+    input_fn: str = "input.json",
 ):
     current_path = Path(".").resolve()
     training_path = current_path.parent
@@ -63,7 +63,9 @@ def main(
     # ### Get control path and config_json
     control_path = training_path / "control"
     config_json = load_json_file((control_path / "config.json"))
-    training_json = load_json_file((control_path / f"training_{current_iteration_zfill}.json"))
+    training_json = load_json_file(
+        (control_path / f"training_{current_iteration_zfill}.json")
+    )
 
     # ### Get machine info
     user_spec = read_key_input_json(
@@ -146,8 +148,7 @@ def main(
         training_json["is_launched"] = True
 
     write_json_file(
-        training_json,
-        (control_path / f"training_{current_iteration_zfill}.json")
+        training_json, (control_path / f"training_{current_iteration_zfill}.json")
     )
 
     logging.info(f"-" * 88)

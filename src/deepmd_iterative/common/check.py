@@ -53,17 +53,21 @@ def check_atomsk(atomsk_path: str = None) -> str:
         if Path(atomsk_path).is_file():
             return str(Path(atomsk_path).resolve())
         else:
-            logging.warning(f"Atomsk path {atomsk_path} is invalid. Checking environment variable and system path...")
+            logging.warning(
+                f"Atomsk path {atomsk_path} is invalid. Checking environment variable and system path..."
+            )
 
     # Check if ATMSK_PATH is defined and is valid
-    atomsk_path = os.environ.get('ATMSK_PATH')
+    atomsk_path = os.environ.get("ATMSK_PATH")
     if atomsk_path is not None:
         if Path(atomsk_path).is_file():
             return str(Path(atomsk_path).resolve())
 
     # Check if atomsk is available in system path
     try:
-        atomsk = subprocess.check_output(['command', '-v', 'atomsk'], stderr=subprocess.STDOUT)
+        atomsk = subprocess.check_output(
+            ["command", "-v", "atomsk"], stderr=subprocess.STDOUT
+        )
         return str(Path(atomsk.strip().decode()).resolve())
     except subprocess.CalledProcessError:
         error_msg = "Atomsk not found."
@@ -98,17 +102,21 @@ def check_vmd(vmd_path: str = None) -> str:
         if Path(vmd_path).is_file():
             return str(Path(vmd_path).resolve())
         else:
-            logging.warning(f"VMD path {vmd_path} is invalid. Checking environment variable and system path...")
+            logging.warning(
+                f"VMD path {vmd_path} is invalid. Checking environment variable and system path..."
+            )
 
     # Check if VMD_PATH is defined and is valid
-    vmd_path = os.environ.get('VMD_PATH')
+    vmd_path = os.environ.get("VMD_PATH")
     if vmd_path is not None:
         if Path(vmd_path).is_file():
             return str(Path(vmd_path).resolve())
 
     # Check if vmd is available in system path
     try:
-        vmd = subprocess.check_output(['command', '-v', 'vmd'], stderr=subprocess.STDOUT)
+        vmd = subprocess.check_output(
+            ["command", "-v", "vmd"], stderr=subprocess.STDOUT
+        )
         return str(Path(vmd.strip().decode()).resolve())
     except subprocess.CalledProcessError:
         error_msg = "VMD not found."

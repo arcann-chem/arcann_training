@@ -13,7 +13,7 @@ def parse_lammps_data(lines):
     atoms = []
     in_atoms_section = False
     in_masses_section = False
-    
+
     # Parse input file
     for line in lines:
         if len(line) == 0:
@@ -36,13 +36,19 @@ def parse_lammps_data(lines):
         if "zlo" in line:
             zlo, zhi = map(float, line.split()[0:2])
         if "xy" in line:
-             xy, xz, yz = map(float, line.split()[0:3])
+            xy, xz, yz = map(float, line.split()[0:3])
         if "atome type" in line:
             num_atom_types = int(line.split()[0])
         if "atoms" in line:
             num_atoms = int(line.split()[0])
     # Convert lists to NumPy arrays
     atoms = np.array(atoms, dtype=float)
-    
+
     # Return results
-    return num_atoms, num_atom_types, np.array([xlo, xhi, ylo, yhi, zlo, zhi, xy, xz, yz]), masses, atoms
+    return (
+        num_atoms,
+        num_atom_types,
+        np.array([xlo, xhi, ylo, yhi, zlo, zhi, xy, xz, yz]),
+        masses,
+        atoms,
+    )

@@ -248,7 +248,8 @@ def read_key_input_json(
                     if exploration_dep == -1:
                         # ### Check if the type correspond to the default
                         if isinstance(
-                            input_json[key]["value"], type(default_inputs_json[step][key])
+                            input_json[key]["value"],
+                            type(default_inputs_json[step][key]),
                         ):
                             add_key_value_to_dict(
                                 new_input_json, key, input_json[key]["value"]
@@ -266,7 +267,8 @@ def read_key_input_json(
                     else:
                         # ### Check if the type correspond to the default
                         if isinstance(
-                            input_json[key]["value"], type(default_inputs_json[step][key][exploration_dep])
+                            input_json[key]["value"],
+                            type(default_inputs_json[step][key][exploration_dep]),
                         ):
                             add_key_value_to_dict(
                                 new_input_json, key, input_json[key]["value"]
@@ -285,8 +287,11 @@ def read_key_input_json(
                 else:
                     if exploration_dep == -1:
                         # ### Check if it has the same type (meaning same value get propagated)
-                        if not isinstance(input_json[key]["value"], list) and isinstance(
-                            input_json[key]["value"], type(default_inputs_json[step][key])
+                        if not isinstance(
+                            input_json[key]["value"], list
+                        ) and isinstance(
+                            input_json[key]["value"],
+                            type(default_inputs_json[step][key]),
                         ):
                             add_key_value_to_dict(
                                 new_input_json, key, input_json[key]["value"]
@@ -346,11 +351,14 @@ def read_key_input_json(
                             )
                             logging.error(f"Aborting...")
                             sys.exit(1)
-                        
+
                     else:
                         # ### Check if it has the same type (meaning same value get propagated)
-                        if not isinstance(input_json[key]["value"], list) and isinstance(
-                            input_json[key]["value"], type(default_inputs_json[step][key][exploration_dep])
+                        if not isinstance(
+                            input_json[key]["value"], list
+                        ) and isinstance(
+                            input_json[key]["value"],
+                            type(default_inputs_json[step][key][exploration_dep]),
                         ):
                             add_key_value_to_dict(
                                 new_input_json, key, input_json[key]["value"]
@@ -362,7 +370,9 @@ def read_key_input_json(
                             and [
                                 isinstance(
                                     input_json[key]["value"][_],
-                                    type(default_inputs_json[step][key][exploration_dep]),
+                                    type(
+                                        default_inputs_json[step][key][exploration_dep]
+                                    ),
                                 )
                                 for _ in range(len(input_json[key]["value"]))
                             ]
@@ -377,7 +387,9 @@ def read_key_input_json(
                             and [
                                 isinstance(
                                     input_json[key]["value"][_],
-                                    type(default_inputs_json[step][key][exploration_dep]),
+                                    type(
+                                        default_inputs_json[step][key][exploration_dep]
+                                    ),
                                 )
                                 for _ in range(len(input_json[key]["value"]))
                             ]

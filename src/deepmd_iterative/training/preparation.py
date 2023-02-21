@@ -39,7 +39,7 @@ def main(
     phase_name: str,
     deepmd_iterative_path,
     fake_machine=None,
-    input_fn: str="input.json",
+    input_fn: str = "input.json",
 ):
     current_path = Path(".").resolve()
     training_path = current_path.parent
@@ -59,7 +59,9 @@ def main(
 
     # ### Get default inputs json
     default_present = False
-    default_input_json = load_default_json_file(deepmd_iterative_path / "data" / "inputs.json")
+    default_input_json = load_default_json_file(
+        deepmd_iterative_path / "data" / "inputs.json"
+    )
     if bool(default_input_json):
         default_present = True
 
@@ -112,7 +114,9 @@ def main(
 
     # ### Checks
     if current_iteration > 0:
-        labeling_json = load_json_file((control_path / f"labeling_{current_iteration_zfill}.json"))
+        labeling_json = load_json_file(
+            (control_path / f"labeling_{current_iteration_zfill}.json")
+        )
         if not labeling_json["is_extracted"]:
             logging.error("Lock found. Run/Check first: labeling extract")
             logging.error("Aborting...")
@@ -122,18 +126,19 @@ def main(
     training_json = get_or_generate_training_json(
         control_path,
         current_iteration_zfill,
-        input_json,new_input_json,
+        input_json,
+        new_input_json,
         default_input_json,
         step_name,
         default_present,
         machine,
         machine_spec,
-        machine_launch_command
+        machine_launch_command,
     )
 
     check_file_existence(
         jobs_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh",
-        error_msg=f"No SLURM file present for {step_name.capitalize()} / {phase_name.capitalize()} on this machine."
+        error_msg=f"No SLURM file present for {step_name.capitalize()} / {phase_name.capitalize()} on this machine.",
     )
     slurm_file_master = file_to_list_of_strings(
         jobs_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh"
@@ -490,7 +495,9 @@ def main(
     if current_iteration > 0:
         previous_iteration = current_iteration - 1
         previous_iteration_zfill = str(previous_iteration).zfill(3)
-        prevtraining_json = load_json_file((control_path / f"training_{previous_iteration_zfill}.json"))
+        prevtraining_json = load_json_file(
+            (control_path / f"training_{previous_iteration_zfill}.json")
+        )
         walltime_approx_s = int(
             np.ceil(
                 (training_json["numb_steps"] * (prevtraining_json["s_per_step"] * 1.50))
@@ -556,7 +563,7 @@ def main(
             machine_walltime_format,
             job_email,
         )
-        
+
         slurm_file = replace_substring_in_list_of_strings(
             slurm_file, "_R_DEEPMD_VERSION_", str(training_json["deepmd_model_version"])
         )
@@ -572,8 +579,7 @@ def main(
     logging.info(f"-" * 88)
     write_json_file(config_json, (control_path / "config.json"))
     write_json_file(
-        training_json,
-        (control_path / f"training_{current_iteration_zfill}.json")
+        training_json, (control_path / f"training_{current_iteration_zfill}.json")
     )
     backup_and_overwrite_json_file(new_input_json, (current_path / input_fn))
 

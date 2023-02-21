@@ -87,9 +87,7 @@ def get_machine_config_files(
 
     # If no 'machine.json' file is found, raise a FileNotFoundError.
     if not machine_configs:
-        error_msg = (
-            "No 'machine.json' file found. Please check the installation."
-        )
+        error_msg = "No 'machine.json' file found. Please check the installation."
         logging.error(f"{error_msg}\nAborting...")
         sys.exit(1)
         # raise FileNotFoundError(error_msg)

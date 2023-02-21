@@ -1,10 +1,15 @@
-
-
 from typing import Dict, Tuple
 
 from deepmd_iterative.common.json import read_key_input_json, load_json_file
 
-def generate_config_json(input_json: Dict, new_input_json: Dict, default_input_json: Dict, step_name: str, default_present: bool) -> Tuple[Dict, str]:
+
+def generate_config_json(
+    input_json: Dict,
+    new_input_json: Dict,
+    default_input_json: Dict,
+    step_name: str,
+    default_present: bool,
+) -> Tuple[Dict, str]:
     """
     Generate a config JSON configuration dictionary.
 
@@ -53,14 +58,16 @@ def generate_config_json(input_json: Dict, new_input_json: Dict, default_input_j
     }
 
     config_json["subsys_nr"] = {}
-    for it_subsys_nr, subsys_nr in enumerate(read_key_input_json(
+    for it_subsys_nr, subsys_nr in enumerate(
+        read_key_input_json(
             input_json,
             new_input_json,
             "subsys_nr",
             default_input_json,
             step_name,
             default_present,
-        )):
+        )
+    ):
         config_json["subsys_nr"][subsys_nr] = {}
 
     current_iteration_zfill: str = str(config_json["current_iteration"]).zfill(3)
@@ -78,7 +85,7 @@ def get_or_generate_training_json(
     default_present: bool,
     machine: str,
     machine_spec: Dict,
-    machine_launch_command: str
+    machine_launch_command: str,
 ) -> Dict:
     """
     Load or create a training JSON configuration file, updating various fields based on input JSON configuration files.
@@ -105,7 +112,10 @@ def get_or_generate_training_json(
     """
 
     # Load or create the training JSON configuration file
-    training_json = load_json_file((control_path / f"training_{current_iteration_zfill}.json"), abort_on_error=False)
+    training_json = load_json_file(
+        (control_path / f"training_{current_iteration_zfill}.json"),
+        abort_on_error=False,
+    )
     if not training_json:
         training_json = {}
 
@@ -175,12 +185,12 @@ def get_or_generate_training_json(
         default_present,
     )
     training_json["decay_steps_fixed"] = read_key_input_json(
-    input_json,
-    new_input_json,
-    "decay_steps_fixed",
-    default_input_json,
-    step_name,
-    default_present,
+        input_json,
+        new_input_json,
+        "decay_steps_fixed",
+        default_input_json,
+        step_name,
+        default_present,
     )
     training_json["numb_steps"] = read_key_input_json(
         input_json,

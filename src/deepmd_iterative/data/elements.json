@@ -1,0 +1,187 @@
+{
+    "hydrogen": {
+      "symbol": "H",
+      "atomic_number": 1,
+      "atomic_mass": 1.00794
+    },
+    "deuterium": {
+      "symbol": "D",
+      "atomic_number": 1,
+      "atomic_mass": 2.0141
+    },
+    "helium": {
+      "symbol": "He",
+      "atomic_number": 2,
+      "atomic_mass": 4.0026
+    },
+    "lithium": {
+      "symbol": "Li",
+      "atomic_number": 3,
+      "atomic_mass": 6.939
+    },
+    "beryllium": {
+      "symbol": "Be",
+      "atomic_number": 4,
+      "atomic_mass": 9.01218
+    },
+    "boron": {
+      "symbol": "B",
+      "atomic_number": 5,
+      "atomic_mass": 10.81
+    },
+    "carbon": {
+      "symbol": "C",
+      "atomic_number": 6,
+      "atomic_mass": 12.011
+    },
+    "nitrogen": {
+      "symbol": "N",
+      "atomic_number": 7,
+      "atomic_mass": 14.0067
+    },
+    "oxygen": {
+      "symbol": "O",
+      "atomic_number": 8,
+      "atomic_mass": 15.9994
+    },
+    "fluorine": {
+      "symbol": "F",
+      "atomic_number": 9,
+      "atomic_mass": 18.9984
+    },
+    "neon": {
+      "symbol": "Ne",
+      "atomic_number": 10,
+      "atomic_mass": 20.1797
+    },
+    "sodium": {
+      "symbol": "Na",
+      "atomic_number": 11,
+      "atomic_mass": 22.98977
+    },
+    "magnesium": {
+      "symbol": "Mg",
+      "atomic_number": 12,
+      "atomic_mass": 24.305
+    },
+    "aluminum": {
+      "symbol": "Al",
+      "atomic_number": 13,
+      "atomic_mass": 26.98154
+    },
+    "silicon": {
+      "symbol": "Si",
+      "atomic_number": 14,
+      "atomic_mass": 28.0855
+    },
+    "phosphorus": {
+      "symbol": "P",
+      "atomic_number": 15,
+      "atomic_mass": 30.97376
+    },
+    "sulfur": {
+      "symbol": "S",
+      "atomic_number": 16,
+      "atomic_mass": 32.06
+    },
+    "chlorine": {
+      "symbol": "Cl",
+      "atomic_number": 17,
+      "atomic_mass": 35.45
+    },
+    "argon": {
+      "symbol": "Ar",
+      "atomic_number": 18,
+      "atomic_mass": 39.948
+    },
+    "potassium": {
+      "symbol": "K",
+      "atomic_number": 19,
+      "atomic_mass": 39.0983
+    },
+    "calcium": {
+      "symbol": "Ca",
+      "atomic_number": 20,
+      "atomic_mass": 40.078
+    },
+    "scandium": {
+      "symbol": "Sc",
+      "atomic_number": 21,
+      "atomic_mass": 44.95591
+    },
+    "titanium": {
+      "symbol": "Ti",
+      "atomic_number": 22,
+      "atomic_mass": 47.867
+    },
+    "vanadium": {
+      "symbol": "V",
+      "atomic_number": 23,
+      "atomic_mass": 50.9415
+    },
+    "chromium": {
+      "symbol": "Cr",
+      "atomic_number": 24,
+      "atomic_mass": 52
+    },
+    "manganese": {
+      "symbol": "Mn",
+      "atomic_number": 25,
+      "atomic_mass": 54.93804
+    },
+    "iron": {
+      "symbol": "Fe",
+      "atomic_number": 26,
+      "atomic_mass": 55.845
+    },
+    "cobalt": {
+      "symbol": "Co",
+      "atomic_number": 27,
+      "atomic_mass": 58.93319
+    },
+    "nickel": {
+      "symbol": "Ni",
+      "atomic_number": 28,
+      "atomic_mass": 58.6934
+    },
+    "copper": {
+      "symbol": "Cu",
+      "atomic_number": 29,
+      "atomic_mass": 63.546
+    },
+    "zinc": {
+      "symbol": "Zn",
+      "atomic_number": 30,
+      "atomic_mass": 65.38
+    },
+    "gallium": {
+      "symbol": "Ga",
+      "atomic_number": 31,
+      "atomic_mass": 69.723
+    },
+    "germanium": {
+      "symbol": "Ge",
+      "atomic_number": 32,
+      "atomic_mass": 72.63
+    },
+    "arsenic": {
+      "symbol": "As",
+      "atomic_number": 33,
+      "atomic_mass": 74.9216
+    },
+    "selenium": {
+      "symbol": "Se",
+      "atomic_number": 34,
+      "atomic_mass": 78.96
+    },
+    "bromine": {
+      "symbol": "Br",
+      "atomic_number": 35,
+      "atomic_mass": 79.904
+    },
+    "krypton": {
+      "symbol": "Kr",
+      "atomic_number": 36,
+      "atomic_mass": 83.798
+    }
+}

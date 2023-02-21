@@ -7,7 +7,7 @@ import os
 
 def check_file_existence(
     file_path: Path,
-    expected_existence: bool =True,
+    expected_existence: bool = True,
     abort_on_error: bool = True,
     error_msg: str = "default",
 ) -> None:
@@ -49,9 +49,7 @@ def check_file_existence(
 
 
 def check_directory(
-    directory_path: Path,
-    abort_on_error: bool = True,
-    error_msg: str = "default"
+    directory_path: Path, abort_on_error: bool = True, error_msg: str = "default"
 ) -> None:
     """
     Check if the given directory exists and logs an error or aborts execution if it does not.
@@ -138,7 +136,7 @@ def remove_file(file_path: Path) -> None:
 
     Args:
         file_path (Path): The path to the file to delete.
-        
+
     Returns:
         None
     """

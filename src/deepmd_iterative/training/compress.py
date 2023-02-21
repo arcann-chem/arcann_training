@@ -65,7 +65,9 @@ def main(
     # ### Get control path and config_json
     control_path = training_path / "control"
     config_json = load_json_file((control_path / "config.json"))
-    training_json = load_json_file((control_path / f"training_{current_iteration_zfill}.json"))
+    training_json = load_json_file(
+        (control_path / f"training_{current_iteration_zfill}.json")
+    )
     jobs_path = deepmd_iterative_path / "data" / "jobs" / "training"
 
     # ### Get user machine keyword
@@ -108,7 +110,7 @@ def main(
 
     check_file_existence(
         jobs_path / f"job_deepmd_compress_{machine_spec['arch_type']}_{machine}.sh",
-        error_msg=f"No SLURM file present for {step_name.capitalize()} / {phase_name.capitalize()} on this machine."
+        error_msg=f"No SLURM file present for {step_name.capitalize()} / {phase_name.capitalize()} on this machine.",
     )
     slurm_file_master = file_to_list_of_strings(
         jobs_path / f"job_deepmd_compress_{machine_spec['arch_type']}_{machine}.sh"
@@ -139,9 +141,15 @@ def main(
             job_email,
         )
 
-        slurm_file = replace_substring_in_list_of_strings(slurm_file,"_R_DEEPMD_VERSION_",str(training_json["deepmd_model_version"]))
-        slurm_file = replace_substring_in_list_of_strings(slurm_file,"_R_DEEPMD_MODEL_","graph_"+str(it_nnp)+"_"+current_iteration_zfill)
-    
+        slurm_file = replace_substring_in_list_of_strings(
+            slurm_file, "_R_DEEPMD_VERSION_", str(training_json["deepmd_model_version"])
+        )
+        slurm_file = replace_substring_in_list_of_strings(
+            slurm_file,
+            "_R_DEEPMD_MODEL_",
+            "graph_" + str(it_nnp) + "_" + current_iteration_zfill,
+        )
+
         write_list_of_strings_to_file(
             local_path
             / f"job_deepmd_compress_{machine_spec['arch_type']}_{machine}.sh",
@@ -188,8 +196,7 @@ def main(
     logging.info(f"-" * 88)
     write_json_file(config_json, (control_path / "config.json"))
     write_json_file(
-        training_json,
-        (control_path / f"training_{current_iteration_zfill}.json")
+        training_json, (control_path / f"training_{current_iteration_zfill}.json")
     )
     backup_and_overwrite_json_file(new_input_json, (current_path / input_fn))
     logging.info(f"-" * 88)
