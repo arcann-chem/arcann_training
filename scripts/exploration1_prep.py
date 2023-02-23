@@ -320,7 +320,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
 
                     subsys_max_exploration_time_ps = 400 if "max_exploration_time_ps" not in globals() else max_exploration_time_ps[it0_subsys_nr]
                     if subsys_nb_steps > subsys_max_exploration_time_ps/subsys_timestep:
-                        subsys_nb_steps = int(subsys_max_exploration_time_ps/subsys_nb_steps)
+                        subsys_nb_steps = int(subsys_max_exploration_time_ps/subsys_timestep)
 
                     if with_plumed_smd == 1:
                         subsys_nb_steps = int(subsys_SMD_nb_steps)
@@ -444,7 +444,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
 
                     subsys_max_exploration_time_ps = 100 if "max_exploration_time_ps" not in globals() else max_exploration_time_ps[it0_subsys_nr]
                     if subsys_nb_steps > subsys_max_exploration_time_ps/subsys_timestep:
-                        subsys_nb_steps = int(subsys_max_exploration_time_ps/subsys_nb_steps)
+                        subsys_nb_steps = int(subsys_max_exploration_time_ps/subsys_timestep)
 
                     if with_plumed_smd == 1:
                         subsys_nb_steps = int(subsys_SMD_nb_steps)
