@@ -447,7 +447,7 @@ def main(
                     )
                     ### Update if over Max value
                     if subsys_nb_steps > subsys_max_exp_time_ps / subsys_timestep:
-                        subsys_nb_steps = subsys_max_exp_time_ps / subsys_nb_steps
+                        subsys_nb_steps = subsys_max_exp_time_ps / subsys_timestep
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(subsys_nb_steps)}"
 
                 # ### Walltime
@@ -536,7 +536,7 @@ def main(
                     )
                     ### Update if over Max value
                     if subsys_nb_steps > subsys_max_exp_time_ps / subsys_timestep:
-                        subsys_nb_steps = subsys_max_exp_time_ps / subsys_nb_steps
+                        subsys_nb_steps = subsys_max_exp_time_ps / subsys_timestep
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(subsys_nb_steps)}"
 
                 # ### Walltime
