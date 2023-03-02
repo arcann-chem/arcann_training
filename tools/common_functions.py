@@ -461,7 +461,7 @@ def get_decay_steps(total_trained: int,min: int=5000) -> int:
     if total_trained_floored < 20000:
         decay_steps = min
     elif total_trained_floored < 100000:
-        decay_steps = decay_steps / 4
+        decay_steps = total_trained_floored // 4
     else:
          decay_steps = 20000 + (( total_trained_floored - 50000 )/100000)*10000
     return int(decay_steps)
