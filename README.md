@@ -43,19 +43,22 @@ Very fancy DeepMD-based semi-automatic highly-customizable iterative training pr
 
 ### Prerequisites
 
-#<!-- TODO: Prerequisites  -->
+<!-- TODO: Prerequisites  -->
 
-* python >= 3.8 (all steps)
-* numpy >= 1.15 (exploration1_prep exploration4_devi exploration5_extract labeling4_extract training1_prep training3_check initialization)
-* VMD >= 1.9.4 (exploration5_extract)
-* Atomsk >= beta-0.11.2 (exploration5_extract)
-* scipy >= ? (test5_plot)
+* python>=3.7.3
+* numpy>=1.17.3
+* setuptools>=40.8.0
+* atomsk >= beta-0.11.2 <!-- TODO: List of steps  -->
+* VMD >= 1.9.4 <!-- TODO: List of steps  -->
 
 <div id="installation"></div>
 
 ### Installation
 
 <!-- TODO: Installation  -->
+```bash
+pip install -e .
+```
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -65,6 +68,32 @@ Very fancy DeepMD-based semi-automatic highly-customizable iterative training pr
 ## Usage
 
 <!-- TODO: Usage  -->
+
+<p align="right">(<a href="#top">back to top</a>)</p>
+
+## Inputs
+
+Default value are located in __inputs.json__ located in __src/deepmd_iterative/data/__
+
+* Initialization
+
+```json
+{
+    "step_name": "initialization",
+    "system": { "value": null },
+    "subsys_nr": { "value": null },
+    "nb_nnp": { "value": 3 },
+    "exploration_type": { "value": "lammps" }
+}
+```
+
+Fields:
+
+* __step_name__: The name of the step, which is always "initialization".
+* __system__: An object that contains the system information, represented as a string. The value is initially set to null and must be provided by the user.
+* __subsys_nr__: An object that contains the subsystem name list, represented as a list of strings. The value is initially set to null and must be provided by the user.
+* __nb_nnp__: An object that contains the number of NNP trained, represented as an integer. The default value is __3__ if not provided by the user.
+* __exploration_type__: An object that contains the exploration type, represented as a string that can be either "lammps" or "i-PI". The default value is __"lammps"__ if not provided by the user.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
