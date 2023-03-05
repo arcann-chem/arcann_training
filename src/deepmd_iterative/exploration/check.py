@@ -199,7 +199,9 @@ def main(
     write_json_file(
         exploration_json, (control_path / f"exploration_{current_iteration_zfill}.json")
     )
-
+    logging.info("Deleting SLURM out/error files...")
+    logging.info("Deleting NNP PB files...")
+    logging.info("Removing extra log/error files...")
     for it_subsys_nr in exploration_json["subsys_nr"]:
         for it_nnp in range(1, exploration_json["nb_nnp"] + 1):
             for it_number in range(1, exploration_json["nb_traj"] + 1):
@@ -210,15 +212,10 @@ def main(
                     / (str(it_number).zfill(5))
                 )
                 if exploration_json["exploration_type"] == "lammps":
-                    logging.info("Deleting SLURM out/error files...")
                     remove_files_matching_glob(local_path, "LAMMPS_*")
-                    logging.info("Deleting NNP PB files...")
                     remove_files_matching_glob(local_path, "*.pb")
-                    logging.info("Cleaning done!")
                 elif exploration_json["exploration_type"] == "i-PI":
-                    logging.info("Deleting SLURM out/error files...")
                     remove_files_matching_glob(local_path, "i-PI_DeepMD*")
-                    logging.info("Removing DP-i-PI log/error files...")
                     remove_files_matching_glob(local_path, "*.DP-i-PI.client_*.log")
                     remove_files_matching_glob(local_path, "*.DP-i-PI.client_*.err")
                 del local_path
@@ -226,6 +223,7 @@ def main(
         del it_nnp
     del it_subsys_nr
     del completed_count
+    logging.info("Cleaning done!")
 
     if (skipped_count + forced_count) != 0:
         logging.warning(f"{skipped_count} systems were skipped")

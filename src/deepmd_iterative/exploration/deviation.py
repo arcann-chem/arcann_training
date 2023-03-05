@@ -11,7 +11,7 @@ from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
     load_default_json_file,
-    read_key_input_json,
+    backup_and_overwrite_json_file,
 )
 from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.generate_config import set_subsys_params_deviation
@@ -105,8 +105,8 @@ def main(
             "sigma_high": sigma_high,
             "sigma_high_limit": sigma_high_limit,
             "ignore_first_x_ps": ignore_first_x_ps,
-            "mean_max_deviation_f": 0,
-            "std_max_deviation_f": 0,
+            "mean_deviation_max_f": 0,
+            "std_deviation_max_f": 0,
             "nb_total": 0,
             "nb_candidates": 0,
             "nb_rejected": 0
@@ -127,11 +127,14 @@ def main(
         skipped_traj = 0
         start_row_number = 0
 
-        while start_row_number * exploration_json["subsys_nr"][it_subsys_nr]["print_mult"] * exploration_json["subsys_nr"][it_subsys_nr]["timestep_ps"] < exploration_json["subsys_nr"][it_subsys_nr]["ignore_first_x_ps"]:
+        while start_row_number * exploration_json["subsys_nr"][it_subsys_nr]["print_every_x_steps"] * exploration_json["subsys_nr"][it_subsys_nr]["timestep_ps"] < exploration_json["subsys_nr"][it_subsys_nr]["ignore_first_x_ps"]:
             start_row_number = start_row_number + 1
+        logging.debug(f"start_row_number: {start_row_number}")
 
         for it_nnp in range(1, config_json["nb_nnp"] + 1):
             for it_number in range(1, exploration_json["nb_traj"] + 1):
+
+                logging.debug(f"{it_subsys_nr} / {it_nnp} / {it_number}")
 
                 # Get the local path and the name of model_deviation file
                 local_path = Path(".").resolve() / str(it_subsys_nr) / str(it_nnp) / str(it_number).zfill(5)
@@ -173,6 +176,7 @@ def main(
                         return 1
 
                     end_row_number = get_last_frame_number(model_deviation,sigma_high_limit,exploration_json["subsys_nr"][it_subsys_nr]["disturbed_start"])
+                    logging.debug(f"end_row_number: {end_row_number}, start_row_number: {start_row_number}")
 
                     # This part is when sigma_high_limit was never crossed
                     if end_row_number == -1:
@@ -200,22 +204,24 @@ def main(
                         rejected = model_deviation[start_row_number:end_row_number, :][model_deviation[start_row_number:end_row_number, 4] >= sigma_high]
                         candidates = model_deviation[start_row_number:end_row_number, :][(model_deviation[start_row_number:end_row_number, 4] > sigma_low) & (model_deviation[start_row_number:end_row_number, 4] < sigma_high)]
                         ### Add the rest to rejected
-                        rejected = np.hstack((rejected,model_deviation[end_row_number:, :]))
+                        rejected = np.vstack((rejected,model_deviation[end_row_number:, :]))
 
                     # Fill JSON files
-                        QbC_indexes = {
-                            "good_indexes": good[:,0].to_list(),
-                            "rejected_indexes": rejected[:,0].to_list(),
-                            "candidate_indexes": candidates[:,0].to_list()
-                        }
+                    QbC_indexes = {
+                        **QbC_indexes,
+                        "good_indexes": good[:, 0].astype(int).tolist() if good.size > 0 else [],
+                        "rejected_indexes": rejected[:, 0].astype(int).tolist() if rejected.size > 0 else [],
+                        "candidate_indexes": candidates[:, 0].astype(int).tolist() if candidates.size > 0 else [],
+                    }
 
-                        QbC_stats = {
-                            "mean_deviation_max_f": mean_deviation_max_f,
-                            "std_deviation_max_f": std_deviation_max_f,
-                            "nb_good": len(good[:,0].to_list()),
-                            "nb_rejected": len(rejected[:,0].to_list()),
-                            "nb_candidates": len(candidates[:,0].to_list()),
-                        }
+                    QbC_stats = {
+                        **QbC_stats,
+                        "mean_deviation_max_f": mean_deviation_max_f,
+                        "std_deviation_max_f": std_deviation_max_f,
+                        "nb_good": len(good[:, 0].astype(int).tolist()) if good.size > 0 else 0,
+                        "nb_rejected":len(rejected[:, 0].astype(int).tolist()) if rejected.size > 0 else 0,
+                        "nb_candidates": len(candidates[:, 0].astype(int).tolist()) if candidates.size > 0 else 0
+                    }
 
                     # If the traj is smaller than expected (forced case) add the missing as rejected
                     if ( QbC_stats["nb_good"] + QbC_stats["nb_rejected"] + QbC_stats["nb_candidates"] ) < nb_steps_expected:
@@ -225,18 +231,21 @@ def main(
                     if  (end_row_number > start_row_number) or (end_row_number == -1) :
                         exploration_json["subsys_nr"][it_subsys_nr]["mean_deviation_max_f"] = exploration_json["subsys_nr"][it_subsys_nr]["mean_deviation_max_f"] + QbC_stats["mean_deviation_max_f"]
                         exploration_json["subsys_nr"][it_subsys_nr]["std_deviation_max_f"] = exploration_json["subsys_nr"][it_subsys_nr]["std_deviation_max_f"] + QbC_stats["std_deviation_max_f"]
+                    del end_row_number
 
                 else:
                 ### If the trajectory was used skiped, count everything as a failure
                     skipped_traj = skipped_traj + 1
                     # Fill JSON files
-                    QbC_stats = {
-                        "good": [],
-                        "rejected": [],
-                        "candidates": []
+                    QbC_indexes = {
+                        **QbC_indexes,
+                        "good_indexes": [],
+                        "rejected_indexes": [],
+                        "candidate_indexes": []
                     }
 
                     QbC_stats = {
+                        **QbC_stats,
                         "nb_total": nb_steps_expected,
                         "mean_deviation_max_f": 999.,
                         "std_deviation_max_f": 999.,
@@ -250,8 +259,8 @@ def main(
                 exploration_json["subsys_nr"][it_subsys_nr]["nb_rejected"] = exploration_json["subsys_nr"][it_subsys_nr]["nb_rejected"] + QbC_stats["nb_rejected"]
 
                 write_json_file(QbC_stats,local_path/"QbC_stats.json",False)
-                write_json_file(QbC_indexes,local_path/"QbC_indexes.json",False)
-                del local_path, model_deviation_filename, QbC_stats, QbC_indexes, nb_steps_expected, end_row_number
+                write_json_file(QbC_indexes,local_path/"QbC_indexes.json",False,indent=None)
+                del local_path, model_deviation_filename, QbC_stats, QbC_indexes, nb_steps_expected
 
             del it_number
 
@@ -263,7 +272,7 @@ def main(
         del max_candidates, sigma_low, sigma_high, sigma_high_limit, ignore_first_x_ps, skipped_traj, start_row_number
 
     del it0_subsys_nr, it_subsys_nr
-    for it0_subsys_nr,it_subsys_nr in enumerate(exploration_json["subsys_nr"]):
+    for it0_subsys_nr, it_subsys_nr in enumerate(exploration_json["subsys_nr"]):
 
         # Set the subsys params for deviation selection
         (
@@ -331,14 +340,15 @@ def main(
                     discarded_indexes  = np.setdiff1d(candidate_indexes,kept_indexes)
 
                     QbC_indexes = {
-                        "kept_indexes": kept_indexes.to_list(),
-                        "discarded_indexes": discarded_indexes.to_list()
+                        **QbC_indexes,
+                        "kept_indexes": kept_indexes.astype(int).tolist() if kept_indexes.size > 0 else [],
+                        "discarded_indexes": discarded_indexes.astype(int).tolist() if discarded_indexes.size > 0 else []
                     }
                     QbC_stats = {
-                        "nb_kept": len(kept_indexes.to_list()),
-                        "nb_discarded": len(discarded_indexes.to_list())
+                        **QbC_stats,
+                        "nb_kept": len(kept_indexes.astype(int).tolist()) if kept_indexes.size > 0 else 0,
+                        "nb_discarded": len(discarded_indexes.astype(int).tolist()) if discarded_indexes.size > 0 else 0,
                     }
-
 
                     # Now we get the starting point (the min of kept, or the last good)
                     # Min of kept
@@ -350,20 +360,22 @@ def main(
                             if temp_min < min_val:
                                 min_val = temp_min
                                 min_index = kept_idx
-                        QbC_indexes["minimum_index"] = min_index
+                        QbC_stats["minimum_index"] = int(min_index)
                     # Last of good
-                    elif len(QbC_indexes["good"]) > 0:
-                        QbC_indexes["minimum_index"] = QbC_indexes["good"][-1]
+                    elif len(QbC_indexes["good_indexes"]) > 0:
+                        QbC_stats["minimum_index"] = int(QbC_indexes["good_indexes"][-1])
                     # Nothing
                     else:
-                        QbC_indexes["minimum_index"] = -1
+                        QbC_stats["minimum_index"] = -1
 
                 else:
                     QbC_indexes = {
+                        **QbC_indexes,
                         "kept_indexes": [],
                         "discarded_indexes": []
                     }
                     QbC_stats = {
+                        **QbC_stats,
                         "selection_factor": 0,
                         "max_candidates_local": 0,
                         "nb_kept": 0,
@@ -375,18 +387,19 @@ def main(
                 exploration_json["subsys_nr"][it_subsys_nr]["nb_discarded"] = exploration_json["subsys_nr"][it_subsys_nr]["nb_discarded"] + QbC_stats["nb_discarded"]
 
                 write_json_file(QbC_stats,local_path/"QbC_stats.json",False)
-                write_json_file(QbC_indexes,local_path/"QbC_indexes.json",False)
+                write_json_file(QbC_indexes,local_path/"QbC_indexes.json",False,indent=None)
                 del local_path, model_deviation_filename, QbC_stats, QbC_indexes
             del it_number
         del it_nnp
 
         del max_candidates, sigma_low, sigma_high, sigma_high_limit, ignore_first_x_ps
-    del it0_subsys_nr, it0_subsys_nr
+    del it0_subsys_nr, it_subsys_nr
 
     exploration_json["is_deviated"] = True
     write_json_file(
         exploration_json, (control_path / f"exploration_{current_iteration_zfill}.json")
     )
+    backup_and_overwrite_json_file(new_input_json, (current_path / input_fn))
     logging.info(
         f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
     )

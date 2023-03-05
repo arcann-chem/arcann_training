@@ -82,7 +82,7 @@ def load_default_json_file(file_path: Path) -> Dict:
 
 
 def write_json_file(
-    json_dict: dict, file_path: Path, enable_logging: bool = True
+    json_dict: dict, file_path: Path, enable_logging: bool = True, **kwargs
 ) -> None:
     """
     Write a dictionary to a JSON file.
@@ -99,7 +99,7 @@ def write_json_file(
         # Open the file specified by the file_path argument in write mode
         with file_path.open("w", encoding="UTF-8") as json_file:
             # Use the json.dump() method to write the JSON data to the file
-            json.dump(json_dict, json_file, indent=4)
+            json.dump(json_dict, json_file, indent=kwargs.get('indent', 4))
             # If log_write is True, log a message indicating the file and path that the JSON data is being written to
             if enable_logging:
                 logging.info(f"JSON data written to {file_path.absolute()}")
