@@ -71,11 +71,11 @@ pip install -e .
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-## Inputs
+### Inputs
 
 Default value are located in __inputs.json__ located in __src/deepmd_iterative/data/__
 
-* Initialization
+Initialization
 
 ```json
 {
@@ -96,6 +96,7 @@ Fields:
 * __exploration_type__: An object that contains the exploration type, represented as a string that can be either "lammps" or "i-PI". The default value is __"lammps"__ if not provided by the user.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
+
 
 <!-- LICENSE -->
 <div id="license"></div>
