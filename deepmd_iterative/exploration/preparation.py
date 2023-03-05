@@ -41,6 +41,7 @@ from deepmd_iterative.common.exploration import (
     update_nb_steps_factor,
 )
 from deepmd_iterative.common.ipi import get_temperature_from_ipi_xml
+from deepmd_iterative.common.generate_config import read_subsys_params_exploration
 
 
 def main(
@@ -50,32 +51,33 @@ def main(
     fake_machine=None,
     input_fn: str = "input.json",
 ):
+    # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
     training_path = current_path.parent
 
+    # Log the step and phase of the program
     logging.info(f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()}")
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
-    # ### Check if correct folder
+    # Check if the current folder is correct for the current step
     validate_step_folder(step_name)
 
-    # ### Get iteration
+    # Get the current iteration number
     current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
     current_iteration = int(current_iteration_zfill)
 
-    # ### Get default inputs json
+    # Load the default input JSON file for the program
     default_present = False
     default_input_json = load_default_json_file(
         deepmd_iterative_path / "data" / "inputs.json"
     )
-
     if bool(default_input_json):
         default_present = True
 
-    # ### Get input json (user one)
+    # Check if the user input JSON file is present
     if (current_path / input_fn).is_file():
         input_json = load_json_file((current_path / input_fn))
         input_present = True
@@ -84,7 +86,7 @@ def main(
         input_present = False
     new_input_json = copy.deepcopy(input_json)
 
-    # ### Check if atomsk is present
+    # Check if the atomsk package is installed
     atomsk_bin = check_atomsk(
         read_key_input_json(
             input_json,
@@ -96,22 +98,24 @@ def main(
         )
     )
 
-    # ### Get control path and config_json
+    # Get the control path and load the config JSON file
     control_path = training_path / "control"
     config_json = load_json_file((control_path / "config.json"))
+    # Load the previous iteration training JSON file
     previous_iteration_zfill = str(current_iteration - 1).zfill(3)
     prevtraining_json = load_json_file(
         (control_path / ("training_" + previous_iteration_zfill + ".json"))
     )
+    # Load the previous iteration exploration JSON file
     if int(previous_iteration_zfill) > 0:
         prevexploration_json = load_json_file(
             (control_path / ("exploration_" + previous_iteration_zfill + ".json"))
         )
 
-    # ### Get extra needed paths
+    # Get the path for the exploration jobs
     jobs_path = deepmd_iterative_path / "data" / "jobs" / "exploration"
 
-    # ### Get user machine keyword
+    # Get the user machine keyword from the input JSON file
     user_machine_keyword = read_key_input_json(
         input_json,
         new_input_json,
@@ -124,7 +128,7 @@ def main(
         None if isinstance(user_machine_keyword, bool) else user_machine_keyword
     )
 
-    # ### Read machine info
+    # Get the machine specifications for the current step
     (
         machine,
         machine_spec,
@@ -137,6 +141,7 @@ def main(
         fake_machine,
         user_machine_keyword,
     )
+    # If a fake machine is being used
     if fake_machine is not None:
         logging.info(f"Pretending to be on {fake_machine}")
     else:
@@ -153,12 +158,13 @@ def main(
     #         logging.error("Aborting...")
     #         return 1
 
-    # ### Get/Create exploration parameters
+    # Get or create the exploration JSON object
     exploration_json = load_json_file(
         (control_path / f"exploration_{current_iteration_zfill}.json"),
         abort_on_error=False,
     )
 
+    # Set the exploration parameters in the JSON file
     exploration_json["deepmd_model_version"] = prevtraining_json["deepmd_model_version"]
     exploration_json["nb_nnp"] = config_json["nb_nnp"]
     exploration_json["exploration_type"] = config_json["exploration_type"]
@@ -171,6 +177,7 @@ def main(
         default_present,
     )
 
+    # Set additional machine-related parameters in the JSON file
     exploration_json["machine"] = machine
     exploration_json["project_name"] = machine_spec["project_name"]
     exploration_json["allocation_name"] = machine_spec["allocation_name"]
@@ -178,35 +185,16 @@ def main(
     exploration_json["arch_type"] = machine_spec["arch_type"]
     exploration_json["launch_command"] = machine_launch_command
 
-    check_file_existence(
-        jobs_path
-        / (
-            "job_deepmd_"
-            + exploration_json["exploration_type"]
-            + "_"
-            + exploration_json["arch_type"]
-            + "_"
-            + machine
-            + ".sh"
-        ),
-        error_msg="No SLURM file present for the exploration step on this machine.",
-    )
-    slurm_file_master = file_to_list_of_strings(
-        jobs_path
-        / (
-            "job_deepmd_"
-            + exploration_json["exploration_type"]
-            + "_"
-            + exploration_json["arch_type"]
-            + "_"
-            + machine
-            + ".sh"
-        )
-    )
+    # Get the path for the SLURM file for the current exploration step
+    slurm_file_path = jobs_path / f"job_deepmd_{exploration_json['exploration_type']}_{exploration_json['arch_type']}_{machine}.sh"
+    check_file_existence(slurm_file_path, error_msg="No SLURM file present for the exploration step on this machine.")
+    slurm_file_master = file_to_list_of_strings(slurm_file_path)
     del jobs_path
 
     ### Preparation of the exploration
     exploration_json["subsys_nr"] = {}
+
+    # Loop through each subsystem and set its exploration
     for it0_subsys_nr, it_subsys_nr in enumerate(config_json["subsys_nr"]):
 
         random.seed()
@@ -217,12 +205,13 @@ def main(
 
         input_replace_dict = {}
 
-        # ### Get the input file (.in or .xml) first and check if plumed
+        # Get the input file (.in or .xml) for the current subsystem and check if plumed is being used
         if exploration_json["exploration_type"] == "lammps":
             exploration_type = 0
             subsys_lammps_in = file_to_list_of_strings(
                 training_path / "files" / (it_subsys_nr + ".in")
             )
+            # Check if the LAMMPS input file contains any "plumed" lines
             if any("plumed" in zzz for zzz in subsys_lammps_in):
                 plumed[0] = True
         elif exploration_json["exploration_type"] == "i-PI":
@@ -231,6 +220,7 @@ def main(
                 training_path / "files" / (it_subsys_nr + ".xml")
             )
             subsys_ipi_xml_aslist = convert_xml_to_list_of_strings(subsys_ipi_xml)
+            # Create a JSON object with placeholders for the dp-i-PI input file parameters
             subsys_ipi_json = {
                 "verbose": False,
                 "use_unix": False,
@@ -240,121 +230,57 @@ def main(
                 "coord_file": "_R_XYZ_",
                 "atom_type": {},
             }
+            # Check if the XML input file contains any "plumed" lines
             if any("plumed" in zzz for zzz in subsys_ipi_xml_aslist):
                 plumed[0] = True
 
-        # ### Get plumed files
+        # If plumed is being used for the current subsystem, get the plumed input files
         if plumed[0] == 1:
+             # Find all plumed files associated with the current subsystem
             plumed_files_list = [
                 plumed_file
                 for plumed_file in (training_path / "files").glob(
                     f"plumed*_{it_subsys_nr}.dat"
                 )
             ]
+            # If no plumed files are found, print an error message and exit
             if len(plumed_files_list) == 0:
                 error_msg = "Plumed in (LAMMPS) input but no plumed files found."
                 logging.error(f"{error_msg}\nAborting...")
                 sys.exit(1)
+            # Read the contents of each plumed file into a dictionary
             plumed_input = {}
             for it_plumed_files_list in plumed_files_list:
                 plumed_input[it_plumed_files_list.name] = file_to_list_of_strings(
                     it_plumed_files_list
                 )
+            # Analyze each plumed file to determine whether it contains MOVINGRESTRAINTS keyword (SMD)
             for it_plumed_files_list in plumed_files_list:
                 plumed[1], plumed[2] = analyze_plumed_file_for_movres(
                     plumed_input[it_plumed_files_list.name]
                 )
                 if plumed[1] and plumed[2] != 0:
                     break
+                    
+            return subsys_timestep, 
 
-        # ### Timestep
-        subsys_timestep = read_key_input_json(
+        (
+            subsys_timestep,
+            subsys_temp,
+            subsys_exp_time_ps,
+            subsys_max_exp_time_ps,
+            subsys_job_walltime_h,
+            subsys_print_mult,
+            subsys_disturbed_start
+        ) = read_subsys_params_exploration(
             input_json,
             new_input_json,
-            "timestep_ps",
             default_input_json,
+            config_json,
             step_name,
             default_present,
-            subsys_index=it0_subsys_nr,
-            subsys_number=len(config_json["subsys_nr"]),
-            exploration_dep=exploration_type,
-        )
-
-        # ### Temperature
-        subsys_temp = read_key_input_json(
-            input_json,
-            new_input_json,
-            "temperature_K",
-            default_input_json,
-            step_name,
-            default_present,
-            subsys_index=it0_subsys_nr,
-            subsys_number=len(config_json["subsys_nr"]),
-            exploration_dep=exploration_type,
-        )
-
-        # ### exploration time
-        subsys_exp_time_ps = read_key_input_json(
-            input_json,
-            new_input_json,
-            "exp_time_ps",
-            default_input_json,
-            step_name,
-            default_present,
-            subsys_index=it0_subsys_nr,
-            subsys_number=len(config_json["subsys_nr"]),
-            exploration_dep=exploration_type,
-        )
-
-        # ### Max exploration time
-        subsys_max_exp_time_ps = read_key_input_json(
-            input_json,
-            new_input_json,
-            "max_exp_time_ps",
-            default_input_json,
-            step_name,
-            default_present,
-            subsys_index=it0_subsys_nr,
-            subsys_number=len(config_json["subsys_nr"]),
-            exploration_dep=exploration_type,
-        )
-
-        # ###  Wall Time
-        subsys_job_walltime_h = read_key_input_json(
-            input_json,
-            new_input_json,
-            "job_walltime_h",
-            default_input_json,
-            step_name,
-            default_present,
-            subsys_index=it0_subsys_nr,
-            subsys_number=len(config_json["subsys_nr"]),
-            exploration_dep=exploration_type,
-        )
-
-        # ### Print mult
-        subsys_print_mult = read_key_input_json(
-            input_json,
-            new_input_json,
-            "print_mult",
-            default_input_json,
-            step_name,
-            default_present,
-            subsys_index=it0_subsys_nr,
-            subsys_number=len(config_json["subsys_nr"]),
-        )
-
-        # ### Disturbed start
-        subsys_disturbed_start = read_key_input_json(
-            input_json,
-            new_input_json,
-            "disturbed_start",
-            default_input_json,
-            step_name,
-            default_present,
-            subsys_index=it0_subsys_nr,
-            subsys_number=len(config_json["subsys_nr"]),
-            exploration_dep=exploration_type,
+            it0_subsys_nr,
+            exploration_type
         )
 
         if current_iteration == 1:
@@ -439,7 +365,7 @@ def main(
                     subsys_nb_steps = plumed[2]
                 # ### User inputs
                 elif input_present:
-                    subsys_nb_steps = subsys_nb_steps
+                    subsys_nb_steps = subsys_exp_time_ps / subsys_timestep
                 # ### Auto value
                 else:
                     subsys_nb_steps *= update_nb_steps_factor(
@@ -528,7 +454,7 @@ def main(
                     subsys_nb_steps = plumed[2]
                 # ### User inputs
                 elif input_present:
-                    subsys_nb_steps = subsys_nb_steps
+                    subsys_nb_steps = subsys_max_exp_time_ps / subsys_timestep
                 # ### Auto value
                 else:
                     subsys_nb_steps *= update_nb_steps_factor(

@@ -216,3 +216,114 @@ def get_or_generate_training_json(
     training_json["launch_command"] = machine_launch_command
 
     return training_json
+
+
+
+def read_subsys_params_exploration(input_json: dict, new_input_json: dict, default_input_json: dict, config_json: dict, step_name: str, default_present: bool, it0_subsys_nr: int, exploration_type: int) -> Tuple[float, float, float, float, float, float, bool]:
+    """
+    Reads simulation parameters for a specific subsystem.
+
+    Args:
+        input_json (dict): The input JSON data.
+        new_input_json (dict): The new input JSON data.
+        default_input_json (dict): The default input JSON data.
+        config_json (dict): The config JSON data.
+        step_name (str): The name of the simulation step.
+        default_present (bool): Whether the default JSON data is present.
+        it0_subsys_nr (int): The subsystem index.
+        exploration_type (int): The exploration type.
+
+    Returns:
+        A tuple containing the following simulation parameters for the specified subsystem:
+        - timestep (float)
+        - temperature (float)
+        - exploration time (float)
+        - max exploration time (float)
+        - job wall time (float)
+        - print multiplier (float)
+        - disturbed start (bool)
+    """
+    subsys_timestep = read_key_input_json(
+        input_json,
+        new_input_json,
+        "timestep_ps",
+        default_input_json,
+        step_name,
+        default_present,
+        subsys_index=it0_subsys_nr,
+        subsys_number=len(config_json["subsys_nr"]),
+        exploration_dep=exploration_type,
+    )
+
+    subsys_temp = read_key_input_json(
+        input_json,
+        new_input_json,
+        "temperature_K",
+        default_input_json,
+        step_name,
+        default_present,
+        subsys_index=it0_subsys_nr,
+        subsys_number=len(config_json["subsys_nr"]),
+        exploration_dep=exploration_type,
+    )
+
+    subsys_exp_time_ps = read_key_input_json(
+        input_json,
+        new_input_json,
+        "exp_time_ps",
+        default_input_json,
+        step_name,
+        default_present,
+        subsys_index=it0_subsys_nr,
+        subsys_number=len(config_json["subsys_nr"]),
+        exploration_dep=exploration_type,
+    )
+
+    subsys_max_exp_time_ps = read_key_input_json(
+        input_json,
+        new_input_json,
+        "max_exp_time_ps",
+        default_input_json,
+        step_name,
+        default_present,
+        subsys_index=it0_subsys_nr,
+        subsys_number=len(config_json["subsys_nr"]),
+        exploration_dep=exploration_type,
+    )
+
+    subsys_job_walltime_h = read_key_input_json(
+        input_json,
+        new_input_json,
+        "job_walltime_h",
+        default_input_json,
+        step_name,
+        default_present,
+        subsys_index=it0_subsys_nr,
+        subsys_number=len(config_json["subsys_nr"]),
+        exploration_dep=exploration_type,
+    )
+
+    subsys_print_mult = read_key_input_json(
+        input_json,
+        new_input_json,
+        "print_mult",
+        default_input_json,
+        step_name,
+        default_present,
+        subsys_index=it0_subsys_nr,
+        subsys_number=len(config_json["subsys_nr"]),
+    )
+
+    subsys_disturbed_start = read_key_input_json(
+        input_json,
+        new_input_json,
+        "disturbed_start",
+        default_input_json,
+        step_name,
+        default_present,
+        subsys_index=it0_subsys_nr,
+        subsys_number=len(config_json["subsys_nr"]),
+        exploration_dep=exploration_type,
+    )
+
+    return subsys_timestep, subsys_temp, subsys_exp_time_ps, subsys_max_exp_time_ps, subsys_job_walltime_h, subsys_print_mult, subsys_disturbed_start
