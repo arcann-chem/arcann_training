@@ -165,25 +165,31 @@ def main(
     )
 
     # Set the exploration parameters in the JSON file
-    exploration_json["deepmd_model_version"] = prevtraining_json["deepmd_model_version"]
-    exploration_json["nb_nnp"] = config_json["nb_nnp"]
-    exploration_json["exploration_type"] = config_json["exploration_type"]
-    exploration_json["nb_traj"] = read_key_input_json(
+    exploration_json = {
+        **exploration_json,
+        "deepmd_model_version": prevtraining_json["deepmd_model_version"],
+        "nb_nnp": config_json["nb_nnp"],
+        "exploration_type": config_json["exploration_type"],
+        "nb_traj": read_key_input_json(
         input_json,
         new_input_json,
         "nb_traj",
         default_input_json,
         step_name,
         default_present,
-    )
+        ),
+    }
 
     # Set additional machine-related parameters in the JSON file
-    exploration_json["machine"] = machine
-    exploration_json["project_name"] = machine_spec["project_name"]
-    exploration_json["allocation_name"] = machine_spec["allocation_name"]
-    exploration_json["arch_name"] = machine_spec["arch_name"]
-    exploration_json["arch_type"] = machine_spec["arch_type"]
-    exploration_json["launch_command"] = machine_launch_command
+    exploration_json = {
+        **exploration_json,
+        "machine": machine,
+        "project_name": machine_spec["project_name"],
+        "allocation_name": machine_spec["allocation_name"],
+        "arch_name": machine_spec["arch_name"],
+        "arch_type": machine_spec["arch_type"],
+        "launch_command": machine_launch_command,
+    }
 
     # Get the path for the SLURM file for the current exploration step
     slurm_file_path = jobs_path / f"job_deepmd_{exploration_json['exploration_type']}_{exploration_json['arch_type']}_{machine}.sh"

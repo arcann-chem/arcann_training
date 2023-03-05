@@ -409,14 +409,17 @@ def main(
 
     training_input_json["training"]["training_data"]["systems"] = datasets_training
 
-    training_json["training_data"] = datasets_training_json
-    training_json["nb_trained"] = nb_trained
-    training_json["nb_initial"] = nb_initial
-    training_json["nb_added_nr"] = nb_added_nr
-    training_json["nb_added_r"] = nb_added_r
-    training_json["nb_added_nr_iter"] = nb_added_nr_iter
-    training_json["nb_added_r_iter"] = nb_added_r_iter
-    training_json["nb_extra"] = nb_extra
+    training_json = {
+        **training_json,
+        "training_data": datasets_training_json,
+        "nb_trained": nb_trained,
+        "nb_initial": nb_initial,
+        "nb_added_nr": nb_added_nr,
+        "nb_added_r": nb_added_r,
+        "nb_added_nr_iter": nb_added_nr_iter,
+        "nb_added_r_iter": nb_added_r_iter,
+        "nb_extra": nb_extra
+    }
 
     del datasets_training_json
     del nb_trained, nb_initial, nb_extra
@@ -463,11 +466,14 @@ def main(
     training_input_json["learning_rate"]["stop_lr"] = training_json["stop_lr"]
 
     # ### Set frozen/compressed bool !
-    training_json["is_locked"] = True
-    training_json["is_launched"] = False
-    training_json["is_checked"] = False
-    training_json["is_frozen"] = False
-    training_json["is_compressed"] = False
+    training_json = {
+        **training_json,
+        "is_locked": True,
+        "is_launched": False,
+        "is_checked": False,
+        "is_frozen": False,
+        "is_compressed": False
+    }
 
     logging.debug(training_json)
     logging.debug(datasets_training)

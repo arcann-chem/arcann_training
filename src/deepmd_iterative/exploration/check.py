@@ -65,9 +65,12 @@ def main(
         subsys_count = 0
         timings_sum = 0
         timings = []
-        exploration_json['subsys_nr'][it_subsys_nr]['nb_completed'] = 0
-        exploration_json['subsys_nr'][it_subsys_nr]['nb_forced'] = 0
-        exploration_json['subsys_nr'][it_subsys_nr]['nb_skipped'] = 0
+        exploration_json['subsys_nr'][it_subsys_nr] = {
+            **exploration_json['subsys_nr'][it_subsys_nr],
+            "nb_completed": 0,
+            "nb_forced": 0,
+            "nb_skipped": 0
+        }
 
         for it_nnp in range(1, config_json["nb_nnp"] + 1):
             for it_number in range(1, exploration_json["nb_traj"] + 1):
