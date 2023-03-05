@@ -41,7 +41,7 @@ from deepmd_iterative.common.exploration import (
     update_nb_steps_factor,
 )
 from deepmd_iterative.common.ipi import get_temperature_from_ipi_xml
-from deepmd_iterative.common.generate_config import read_subsys_params_exploration
+from deepmd_iterative.common.generate_config import set_subsys_params_exploration
 
 
 def main(
@@ -261,9 +261,10 @@ def main(
                 )
                 if plumed[1] and plumed[2] != 0:
                     break
-                    
-            return subsys_timestep, 
 
+            return subsys_timestep,
+
+        # Set the subsys params for exploration
         (
             subsys_timestep,
             subsys_temp,
@@ -272,7 +273,7 @@ def main(
             subsys_job_walltime_h,
             subsys_print_mult,
             subsys_disturbed_start
-        ) = read_subsys_params_exploration(
+        ) = set_subsys_params_exploration(
             input_json,
             new_input_json,
             default_input_json,
@@ -283,6 +284,7 @@ def main(
             exploration_type
         )
 
+        # Set the subsys params for exploration
         if current_iteration == 1:
             # ### Initial Exploration Time
             subsys_init_exp_time_ps = read_key_input_json(

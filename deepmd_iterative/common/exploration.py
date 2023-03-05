@@ -4,6 +4,7 @@ import sys
 from typing import List, Tuple
 import subprocess
 
+import numpy as np
 
 def generate_starting_points(
     exploration_type: int,
@@ -158,3 +159,31 @@ def update_nb_steps_factor(prevexploration_json: dict, it_subsys_nr: int) -> int
         return 2
     else:
         return 1
+
+
+def get_last_frame_number(model_deviation: np.ndarray, sigma_high_limit: float, is_start_disturbed: bool) -> int:
+    """
+    Returns the index of the last frame to be processed based on the given parameters.
+
+    Args:
+        model_deviation (np.ndarray): The model deviation data, represented as a NumPy array.
+        sigma_high_limit (float): The threshold value for the deviation data. Frames with deviation values above this 
+            threshold will be ignored.
+        is_start_disturbed (bool): Indicates whether the first frame should be ignored because it is considered "disturbed".
+
+    Returns:
+        int: The index of the last frame to be processed, based on the input parameters.
+    """
+    # Ignore the first frame if it's considered "disturbed"
+    if is_start_disturbed:
+        start_frame = 1
+    else:
+        start_frame = 0
+
+    # Check if any deviation values are over the sigma_high_limit threshold
+    if np.any(model_deviation[start_frame:, 4] >= sigma_high_limit):
+        last_frame = np.argmax(model_deviation[start_frame:, 4] >= sigma_high_limit)
+    else:
+        last_frame = -1
+
+    return last_frame
