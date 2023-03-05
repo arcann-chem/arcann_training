@@ -5,10 +5,10 @@ import copy
 import subprocess
 import random
 
-# ### Non-standard imports
+# Non-standard library imports
 import numpy as np
 
-# ### deepmd_iterative imports
+# deepmd_iterative imports
 from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
@@ -31,7 +31,7 @@ from deepmd_iterative.common.training import (
 from deepmd_iterative.common.list import replace_substring_in_list_of_strings
 from deepmd_iterative.common.slurm import replace_in_slurm_file_general
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.generate_config import get_or_generate_training_json
+from deepmd_iterative.common.generate_config import set_training_json
 
 
 def main(
@@ -50,14 +50,14 @@ def main(
     logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
-    # ### Check if correct folder
+    # Check if correct folder
     validate_step_folder(step_name)
 
-    # ### Get iteration
+    # Get iteration
     current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
     current_iteration = int(current_iteration_zfill)
 
-    # ### Get default inputs json
+    # Get default inputs json
     default_present = False
     default_input_json = load_default_json_file(
         deepmd_iterative_path / "data" / "inputs.json"
@@ -65,21 +65,21 @@ def main(
     if bool(default_input_json):
         default_present = True
 
-    # ### Get input json (user one)
+    # Get input json (user one)
     if (current_path / input_fn).is_file():
         input_json = load_json_file((current_path / input_fn))
     else:
         input_json = {}
     new_input_json = copy.deepcopy(input_json)
 
-    # ### Get control path and config_json
+    # Get control path and config_json
     control_path = training_path / "control"
     config_json = load_json_file((control_path / "config.json"))
 
-    # ### Get extra needed paths
+    # Get extra needed paths
     jobs_path = deepmd_iterative_path / "data" / "jobs" / "training"
 
-    # ### Get user machine keyword
+    # Get user machine keyword
     user_machine_keyword = read_key_input_json(
         input_json,
         new_input_json,
@@ -92,7 +92,7 @@ def main(
         None if isinstance(user_machine_keyword, bool) else user_machine_keyword
     )
 
-    # ### Read machine spec
+    # Read machine spec
     (
         machine,
         machine_spec,
@@ -112,7 +112,7 @@ def main(
         logging.info(f"We are on: {machine}")
     del fake_machine
 
-    # ### Checks
+    # Checks
     if current_iteration > 0:
         labeling_json = load_json_file(
             (control_path / f"labeling_{current_iteration_zfill}.json")
@@ -122,20 +122,27 @@ def main(
             logging.error("Aborting...")
             return 1
 
-    # ### Get/Create training parameters
-    training_json = get_or_generate_training_json(
+    # Get/Create training parameters
+    training_json = set_training_json(
         control_path,
         current_iteration_zfill,
         input_json,
         new_input_json,
         default_input_json,
         step_name,
-        default_present,
-        machine,
-        machine_spec,
-        machine_launch_command,
+        default_present
     )
 
+    training_json = {
+        **training_json,
+        "machine": machine,
+        "project_name": machine_spec["project_name"],
+        "allocation_name": machine_spec["allocation_name"],
+        "arch_name": machine_spec["arch_name"],
+        "arch_type": machine_spec["arch_type"],
+        "launch_command": machine_launch_command
+    }
+     
     check_file_existence(
         jobs_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh",
         error_msg=f"No SLURM file present for {step_name.capitalize()} / {phase_name.capitalize()} on this machine.",
@@ -145,7 +152,7 @@ def main(
     )
     del jobs_path
 
-    # ### Check DeePMD version
+    # Check DeePMD version
     if training_json["deepmd_model_version"] not in [2.0, 2.1]:
         logging.critical(
             f"Invalid deepmd model version (2.0 or 2.1): {training_json['deepmd_model_version']}"
@@ -153,7 +160,7 @@ def main(
         logging.critical("Aborting...")
         return 1
 
-    # ### Check DeePMD descriptor type
+    # Check DeePMD descriptor type
     if training_json["deepmd_model_type_descriptor"] not in ["se_e2_a"]:
         logging.critical(
             f"Invalid deepmd type descriptor (se_e2_a): {training_json['deepmd_model_type_descriptor']}"
@@ -161,7 +168,7 @@ def main(
         logging.critical("Aborting...")
         return 1
 
-    # ### Check mismatch between machine/arch_name/arch and DeePMD
+    # Check mismatch between machine/arch_name/arch and DeePMD
     if training_json["deepmd_model_version"] < 2.0:
         logging.critical("Only version >= 2.0 on Jean Zay!")
         logging.critical("Aborting...")
@@ -174,7 +181,7 @@ def main(
         logging.critical("Aborting...")
         return 1
 
-    # ### Check if the default input json file exists
+    # Check if the default input json file exists
     input_file_fpath = (
         training_path
         / "files"
@@ -187,10 +194,10 @@ def main(
     config_json["type_map"] = training_input_json["model"]["type_map"]
     del input_file_fpath
 
-    # ### Check the initial sets json file
+    # Check the initial sets json file
     datasets_initial_json = check_initial_datasets(training_path)
 
-    # ### Let us find what is in data
+    # Let us find what is in data
     data_path = training_path / "data"
     check_directory(data_path)
     subsys_name = []
@@ -199,38 +206,38 @@ def main(
     datasets_validation = []
     for it_data_folders in data_path.iterdir():
         if it_data_folders.is_dir():
-            # ### Escape initial/extra sets, because initial get added first and extra as last, and also escape init_
+            # Escape initial/extra sets, because initial get added first and extra as last, and also escape init_
             # not in initial_json (in case of removal)
             if (
                 it_data_folders.name not in datasets_initial_json.keys()
                 and "extra_" != it_data_folders.name[:6]
                 and "init_" != it_data_folders.name[:5]
             ):
-                # ### Escape test sets
+                # Escape test sets
                 if "test_" != it_data_folders.name[:5]:
-                    # ### Escape if set iter is superior as iter, it is only for reprocessing old stuff.
+                    # Escape if set iter is superior as iter, it is only for reprocessing old stuff.
                     try:
                         if (
                             int(it_data_folders.name.rsplit("_", 1)[-1])
                             <= current_iteration
                         ):
                             subsys_name.append(it_data_folders.name.rsplit("_", 1)[0])
-                    # ### #TODO: Better except clause
+                    # #TODO: Better except clause
                     except:
                         pass
                 else:
                     datasets_validation.append(it_data_folders.name)
-            # ### Get the extra sets !
+            # Get the extra sets !
             elif "extra_" == it_data_folders.name[:6]:
                 datasets_extra.append(it_data_folders.name)
     del it_data_folders
 
     del datasets_validation
 
-    # ### Training sets list construction
+    # Training sets list construction
     datasets_training = []
     datasets_training_json = []
-    # ### Initial
+    # Initial
     nb_initial = 0
     if training_json["use_initial_datasets"]:
         for it_datasets_initial_json in datasets_initial_json.keys():
@@ -247,14 +254,14 @@ def main(
         del it_datasets_initial_json
     del datasets_initial_json
 
-    # ### Non-Reactive (aka subsys_nr in the initialization first) && all the others are REACTIVE !
-    # ### Total and what is added just for this iteration
+    # Non-Reactive (aka subsys_nr in the initialization first) && all the others are REACTIVE !
+    # Total and what is added just for this iteration
     nb_added_nr = 0
     nb_added_r = 0
     nb_added_nr_iter = 0
     nb_added_r_iter = 0
 
-    # ### This trick remove duplicates from list via set
+    # This trick remove duplicates from list via set
     subsys_name = list(set(subsys_name))
     subsys_name = [i for i in subsys_name if i not in config_json["subsys_nr"]]
     subsys_name = [
@@ -384,7 +391,7 @@ def main(
                 pass
         del it_iteration, it_iteration_zfill
 
-    # ### Finally the extra sets !
+    # Finally the extra sets !
     nb_extra = 0
     if training_json["use_extra_datasets"]:
         config_json["datasets_extra"] = datasets_extra
@@ -404,7 +411,7 @@ def main(
     else:
         del datasets_extra
 
-    # ### Total
+    # Total
     nb_trained = nb_initial + nb_added_nr + nb_added_r + nb_extra
 
     training_input_json["training"]["training_data"]["systems"] = datasets_training
@@ -465,7 +472,7 @@ def main(
     training_input_json["learning_rate"]["decay_steps"] = training_json["decay_steps"]
     training_input_json["learning_rate"]["stop_lr"] = training_json["stop_lr"]
 
-    # ### Set frozen/compressed bool !
+    # Set frozen/compressed bool !
     training_json = {
         **training_json,
         "is_locked": True,
@@ -478,7 +485,7 @@ def main(
     logging.debug(training_json)
     logging.debug(datasets_training)
 
-    # ### Rsync data to local data
+    # Rsync data to local data
     localdata_path = Path(".").resolve() / "data"
     localdata_path.mkdir(exist_ok=True)
     for it_datasets_training in datasets_training:
@@ -492,11 +499,11 @@ def main(
         )
     del it_datasets_training, localdata_path, datasets_training
 
-    # ### Change some inside output
+    # Change some inside output
     training_input_json["training"]["disp_file"] = "lcurve.out"
     training_input_json["training"]["save_ckpt"] = "model.ckpt"
 
-    # ### Create the inputs/jobfiles for each NNP with random SEED inf the form of NNP_number + random(0,
+    # Create the inputs/jobfiles for each NNP with random SEED inf the form of NNP_number + random(0,
     # 1000) + current_iteration.zfil(3) so between 10000 and unlimited1000999 (at iteration 999 !!)
     if current_iteration > 0:
         previous_iteration = current_iteration - 1
@@ -553,7 +560,7 @@ def main(
 
         write_json_file(training_input_json, training_input_json_fpath, False)
 
-        # ### Slurm file
+        # Slurm file
         job_email = read_key_input_json(
             input_json,
             new_input_json,
@@ -581,7 +588,7 @@ def main(
 
     del it_nnp, walltime_approx_s, training_input_json
 
-    # ### Dump the dicts
+    # Dump the dicts
     logging.info(f"-" * 88)
     write_json_file(config_json, (control_path / "config.json"))
     write_json_file(
@@ -594,7 +601,7 @@ def main(
         f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
     )
 
-    # ### Cleaning
+    # Cleaning
     del control_path
     del data_path
     del input_json, default_input_json, default_present, new_input_json

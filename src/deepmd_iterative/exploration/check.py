@@ -2,10 +2,10 @@ from pathlib import Path
 import logging
 import sys
 
-# ### Non-standard imports
+# Non-standard library imports
 import numpy as np
 
-# ### deepmd_iterative imports
+# deepmd_iterative imports
 from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
@@ -33,34 +33,34 @@ def main(
     logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
-    # ### Check if correct folder
+    # Check if correct folder
     validate_step_folder(step_name)
 
-    # ### Get iteration
+    # Get iteration
     current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
     current_iteration = int(current_iteration_zfill)
 
-    # ### Get control path and config_json
+    # Get control path and config_json
     control_path = training_path / "control"
     config_json = load_json_file((control_path / "config.json"))
     exploration_json = load_json_file(
         (control_path / f"exploration_{current_iteration_zfill}.json")
     )
 
-    # ### Checks
+    # Checks
     if not exploration_json["is_launched"]:
         logging.error(f"Lock found. Execute first: exploration launch")
         logging.error(f"Aborting...")
         return 1
 
-    # ### Check the normal termination of the exploration phase
-    # ### Counters
+    # Check the normal termination of the exploration phase
+    # Counters
     completed_count = 0
     skipped_count = 0
     forced_count = 0
 
     for it0_subsys_nr, it_subsys_nr in enumerate(config_json["subsys_nr"]):
-        # ### Counters
+        # Counters
         average_per_step = 0
         subsys_count = 0
         timings_sum = 0
@@ -82,7 +82,7 @@ def main(
                     / (str(it_number).zfill(5))
                 )
 
-                # ### LAMMPS
+                # LAMMPS
                 if exploration_json["exploration_type"] == "lammps":
                     lammps_output_file = (
                         local_path
@@ -119,7 +119,7 @@ def main(
                         logging.critical(f"{lammps_output_file} failed. Check manually")
                     del lammps_output_file
 
-                # ### i-PI
+                # i-PI
                 elif exploration_json["exploration_type"] == "i-PI":
                     ipi_output_file = (
                         local_path
@@ -236,7 +236,7 @@ def main(
     )
     del skipped_count, forced_count
 
-    # ### Cleaning
+    # Cleaning
     del control_path
     del config_json
     del current_iteration, current_iteration_zfill

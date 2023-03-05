@@ -2,7 +2,7 @@ from pathlib import Path
 import logging
 import sys
 
-# ### deepmd_iterative imports
+# deepmd_iterative imports
 from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
@@ -26,21 +26,21 @@ def main(
     logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
-    # ### Check if correct folder
+    # Check if correct folder
     validate_step_folder(step_name)
 
-    # ### Get iteration
+    # Get iteration
     current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
     current_iteration = int(current_iteration_zfill)
 
-    # ### Get control path and config_json
+    # Get control path and config_json
     control_path = training_path / "control"
     config_json = load_json_file((control_path / "config.json"))
     training_json = load_json_file(
         (control_path / f"training_{current_iteration_zfill}.json")
     )
 
-    # ### Checks
+    # Checks
     if not training_json["is_checked"]:
         logging.error(f"Lock found. Execute first: training check")
         logging.error(f"Aborting...")
@@ -79,7 +79,7 @@ def main(
         f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
     )
 
-    # ### Cleaning
+    # Cleaning
     del control_path
     del config_json
     del current_iteration, current_iteration_zfill

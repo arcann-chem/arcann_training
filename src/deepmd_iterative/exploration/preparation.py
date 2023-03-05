@@ -5,10 +5,7 @@ import copy
 import subprocess
 import random
 
-# ### Non-standard imports
-import numpy as np
-
-# ### deepmd_iterative imports
+# deepmd_iterative imports
 from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
@@ -27,7 +24,6 @@ from deepmd_iterative.common.machine import get_machine_spec_for_step
 from deepmd_iterative.common.file import (
     check_file_existence,
     file_to_list_of_strings,
-    check_directory,
     write_list_of_strings_to_file,
 )
 
@@ -148,7 +144,7 @@ def main(
         logging.info(f"machine is {machine}")
     del fake_machine
 
-    # # ### Checks
+    # # Checks
     # if current_iteration > 0:
     #     labeling_json = load_json_file(
     #         (control_path / f"labeling_{current_iteration_zfill}.json"), True, True
@@ -268,12 +264,10 @@ def main(
                 if plumed[1] and plumed[2] != 0:
                     break
 
-            return subsys_timestep,
-
         # Set the subsys params for exploration
         (
-            subsys_timestep,
-            subsys_temp,
+            subsys_timestep_ps,
+            subsys_temperature_K,
             subsys_exp_time_ps,
             subsys_max_exp_time_ps,
             subsys_job_walltime_h,
@@ -292,7 +286,7 @@ def main(
 
         # Set the subsys params for exploration
         if current_iteration == 1:
-            # ### Initial Exploration Time
+            # Initial Exploration Time
             subsys_init_exp_time_ps = read_key_input_json(
                 input_json,
                 new_input_json,
@@ -305,7 +299,7 @@ def main(
                 exploration_dep=exploration_type,
             )
 
-            # ### Initial Wall Time
+            # Initial Wall Time
             subsys_init_job_walltime_h = read_key_input_json(
                 input_json,
                 new_input_json,
@@ -318,11 +312,11 @@ def main(
                 exploration_dep=exploration_type,
             )
 
-            # ### No distrubed start
+            # No distrubed start
             exploration_json["subsys_nr"][it_subsys_nr]["disturbed_start"] = False
 
         else:
-            # ### Get starting points
+            # Get starting points
             (
                 starting_points,
                 starting_points_bckp,
@@ -337,13 +331,13 @@ def main(
                 subsys_disturbed_start,
             )
 
-        # ### LAMMPS Input
-        input_replace_dict["_R_TIMESTEP_"] = f"{subsys_timestep}"
+        # LAMMPS Input
+        input_replace_dict["_R_TIMESTEP_"] = f"{subsys_timestep_ps}"
 
         if exploration_type == 0:
-            input_replace_dict["_R_TEMPERATURE_"] = f"{subsys_temp}"
+            input_replace_dict["_R_TEMPERATURE_"] = f"{subsys_temperature_K}"
 
-            # ### First exploration
+            # First exploration
             if current_iteration == 1:
                 subsys_lammps_data_fn = it_subsys_nr + ".lmp"
                 subsys_lammps_data = file_to_list_of_strings(
@@ -351,44 +345,44 @@ def main(
                 )
                 input_replace_dict["_R_DATA_FILE_"] = subsys_lammps_data_fn
 
-                # ### Default time and nb steps
+                # Default time and nb steps
                 if plumed[1]:
                     subsys_nb_steps = plumed[2]
                 else:
-                    subsys_nb_steps = subsys_init_exp_time_ps / subsys_timestep
+                    subsys_nb_steps = subsys_init_exp_time_ps / subsys_timestep_ps
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(subsys_nb_steps)}"
 
                 subsys_walltime_approx_s = subsys_init_job_walltime_h * 3600
 
-                # ### Get the cell and nb of atoms: It can be done now because the starting point is the same by NNP and by traj
+                # Get the cell and nb of atoms: It can be done now because the starting point is the same by NNP and by traj
                 subsys_nb_atm, num_atom_types, box, masses, coords = parse_lammps_data(
                     subsys_lammps_data
                 )
                 subsys_cell = [box[1] - box[0], box[3] - box[2], box[5] - box[4]]
 
-            # ### Subsequent ones
+            # Subsequent ones
             else:
-                # ### SMD wins
+                # SMD wins
                 if plumed[1]:
                     subsys_nb_steps = plumed[2]
-                # ### User inputs
+                # User inputs
                 elif input_present:
-                    subsys_nb_steps = subsys_exp_time_ps / subsys_timestep
-                # ### Auto value
+                    subsys_nb_steps = subsys_exp_time_ps / subsys_timestep_ps
+                # Auto value
                 else:
                     subsys_nb_steps *= update_nb_steps_factor(
                         prevexploration_json, it_subsys_nr
                     )
                     ### Update if over Max value
-                    if subsys_nb_steps > subsys_max_exp_time_ps / subsys_timestep:
-                        subsys_nb_steps = subsys_max_exp_time_ps / subsys_timestep
+                    if subsys_nb_steps > subsys_max_exp_time_ps / subsys_timestep_ps:
+                        subsys_nb_steps = subsys_max_exp_time_ps / subsys_timestep_ps
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(subsys_nb_steps)}"
 
-                # ### Walltime
+                # Walltime
                 if input_present:
                     subsys_walltime_approx_s = int(subsys_job_walltime_h * 3600)
                 else:
-                    # ### Abritary factor
+                    # Abritary factor
                     subsys_walltime_approx_s = int(
                         (
                             prevexploration_json["subsys_nr"][it_subsys_nr]["s_per_step"]
@@ -397,22 +391,22 @@ def main(
                         * 1.20
                     )
 
-            # ### Get print freq
+            # Get print freq
             subsys_print_every_x_steps = subsys_nb_steps * subsys_print_mult
             input_replace_dict["_R_PRINT_FREQ_"] = f"{int(subsys_print_every_x_steps)}"
 
-        # ### i-PI // UNTESTED
+        # i-PI // UNTESTED
         elif exploration_type == 1:
-            subsys_temp = float(get_temperature_from_ipi_xml(subsys_ipi_xml))
-            if subsys_temp == -1:
+            subsys_temperature_K = float(get_temperature_from_ipi_xml(subsys_ipi_xml))
+            if subsys_temperature_K == -1:
                 error_msg = f"No temperature found in the xml: {training_path / 'files' / (it_subsys_nr + '.xml')}."
                 logging.error(f"{error_msg}\nAborting...")
                 sys.exit(1)
 
-            # ### TODO: This should be read like temp
+            # TODO: This should be read like temp
             input_replace_dict["_R_NB_BEADS_"] = str(8)
 
-            # ### First exploration
+            # First exploration
             if current_iteration == 1:
                 subsys_lammps_data_fn = it_subsys_nr + ".lmp"
                 subsys_lammps_data = file_to_list_of_strings(
@@ -421,7 +415,7 @@ def main(
                 subsys_ipi_xyz_fn = it_subsys_nr + ".xyz"
                 input_replace_dict["_R_DATA_FILE_"] = subsys_ipi_xyz_fn
                 subsys_ipi_json["coord_file"] = subsys_ipi_xyz_fn
-                # ### Get the XYZ file from LMP
+                # Get the XYZ file from LMP
                 subprocess.run(
                     [
                         atomsk_bin,
@@ -436,48 +430,48 @@ def main(
                 subsys_ipi_xyz = file_to_list_of_strings(
                     training_path / "files" / subsys_ipi_xyz_fn
                 )
-                # ### Default time and nb steps
+                # Default time and nb steps
                 if plumed[1]:
                     subsys_nb_steps = plumed[2]
                 else:
-                    subsys_nb_steps = subsys_init_exp_time_ps / subsys_timestep
+                    subsys_nb_steps = subsys_init_exp_time_ps / subsys_timestep_ps
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(subsys_nb_steps)}"
 
                 subsys_walltime_approx_s = subsys_init_job_walltime_h * 3600
 
-                # ### Get the cell and nb of atoms: It can be done now because the starting point is the same by NNP and by traj
+                # Get the cell and nb of atoms: It can be done now because the starting point is the same by NNP and by traj
                 subsys_nb_atm, num_atom_types, box, masses, coords = parse_lammps_data(
                     subsys_lammps_data
                 )
                 subsys_cell = [box[1] - box[0], box[3] - box[2], box[5] - box[4]]
                 input_replace_dict["_R_CELL_"] = f"{subsys_cell}"
-                # ### Get the type_map from config (key added after first training)
+                # Get the type_map from config (key added after first training)
                 for it_zzz, zzz in enumerate(config_json["type_map"]):
                     subsys_ipi_json["atom_type"][str(zzz)] = it_zzz
 
-            # ### Subsequent ones
+            # Subsequent ones
             else:
-                # ### SMD wins
+                # SMD wins
                 if plumed[1]:
                     subsys_nb_steps = plumed[2]
-                # ### User inputs
+                # User inputs
                 elif input_present:
-                    subsys_nb_steps = subsys_max_exp_time_ps / subsys_timestep
-                # ### Auto value
+                    subsys_nb_steps = subsys_max_exp_time_ps / subsys_timestep_ps
+                # Auto value
                 else:
                     subsys_nb_steps *= update_nb_steps_factor(
                         prevexploration_json, it_subsys_nr
                     )
                     ### Update if over Max value
-                    if subsys_nb_steps > subsys_max_exp_time_ps / subsys_timestep:
-                        subsys_nb_steps = subsys_max_exp_time_ps / subsys_timestep
+                    if subsys_nb_steps > subsys_max_exp_time_ps / subsys_timestep_ps:
+                        subsys_nb_steps = subsys_max_exp_time_ps / subsys_timestep_ps
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(subsys_nb_steps)}"
 
-                # ### Walltime
+                # Walltime
                 if input_present:
                     subsys_walltime_approx_s = int(subsys_job_walltime_h * 3600)
                 else:
-                    # ### Abritary factor
+                    # Abritary factor
                     subsys_walltime_approx_s = int(
                         (
                             prevexploration_json["subsys_nr"][it_subsys_nr]["s_per_step"]
@@ -486,11 +480,11 @@ def main(
                         * 1.20
                     )
 
-            # ### Get print freq
+            # Get print freq
             subsys_print_every_x_steps = subsys_nb_steps * subsys_print_mult
             input_replace_dict["_R_PRINT_FREQ_"] = f"{int(subsys_print_every_x_steps)}"
 
-        # ### Now it is by NNP and by nb_traj
+        # Now it is by NNP and by nb_traj
         for it_nnp in range(1, config_json["nb_nnp"] + 1):
             for it_number in range(1, exploration_json["nb_traj"] + 1):
 
@@ -511,7 +505,7 @@ def main(
                     local_path,
                 )
 
-                # ### LAMMPS
+                # LAMMPS
                 if exploration_type == 0:
                     it_subsys_lammps_in = copy.deepcopy(subsys_lammps_in)
                     input_replace_dict[
@@ -530,7 +524,7 @@ def main(
                     input_replace_dict[
                         "_R_DEVI_OUT_"
                     ] = f"model_devi_{it_subsys_nr}_{it_nnp}_{current_iteration_zfill}.out"
-                    # ### Get data files (starting points) and number of steps
+                    # Get data files (starting points) and number of steps
                     if current_iteration > 1:
                         if len(starting_points) == 0:
                             starting_point_list = copy.deepcopy(starting_points_bckp)
@@ -543,7 +537,7 @@ def main(
                             / subsys_lammps_data_fn
                         )
                         input_replace_dict["_R_DATA_FILE_"] = subsys_lammps_data_fn
-                        # ### Get again the subsys_cell and nb_atom
+                        # Get again the subsys_cell and nb_atom
                         (
                             subsys_nb_atm,
                             num_atom_types,
@@ -557,7 +551,7 @@ def main(
                             box[5] - box[4],
                         ]
 
-                    # ### Plumed files
+                    # Plumed files
                     if plumed[0]:
                         input_replace_dict[
                             "_R_PLUMED_IN_"
@@ -578,7 +572,7 @@ def main(
                                 plumed_input[it_plumed_input],
                             )
 
-                    # ### Write DATA file
+                    # Write DATA file
                     write_list_of_strings_to_file(
                         local_path / subsys_lammps_data_fn, subsys_lammps_data
                     )
@@ -590,7 +584,7 @@ def main(
                         "print_every_x_steps"
                     ] = int(subsys_print_every_x_steps)
 
-                    # ###  Write INPUT file
+                    #  Write INPUT file
                     for key, value in input_replace_dict.items():
                         it_subsys_lammps_in = replace_substring_in_list_of_strings(
                             it_subsys_lammps_in, key, value
@@ -601,7 +595,7 @@ def main(
                         it_subsys_lammps_in,
                     )
 
-                    # ### Slurm file
+                    # Slurm file
                     job_email = read_key_input_json(
                         input_json,
                         new_input_json,
@@ -663,7 +657,7 @@ def main(
                     )
                     del it_subsys_lammps_in, job_email
                     del slurm_file
-                # ### i-PI
+                # i-PI
                 elif exploration_type == 1:
                     it_subsys_ipi_json = copy.deepcopy(subsys_ipi_json)
                     it_subsys_ipi_xml_aslist = copy.deepcopy(subsys_ipi_xml_aslist)
@@ -673,7 +667,7 @@ def main(
                     input_replace_dict[
                         "_R_SUBSYS_"
                     ] = f"{it_subsys_nr}_{it_nnp}_{current_iteration_zfill}"
-                    # ### Get data files (starting points) and number of steps
+                    # Get data files (starting points) and number of steps
                     if current_iteration > 1:
                         if len(starting_points) == 0:
                             starting_point_list = copy.deepcopy(starting_points_bckp)
@@ -692,7 +686,7 @@ def main(
                             / "starting_structures"
                             / subsys_ipi_xyz_fn.replace(".xyz", ".lmp")
                         )
-                        # ### Get again the subsys_cell and nb_atom
+                        # Get again the subsys_cell and nb_atom
                         (
                             subsys_nb_atm,
                             num_atom_types,
@@ -707,7 +701,7 @@ def main(
                         ]
                         input_replace_dict["_R_CELL_"] = f"{subsys_cell}"
 
-                    # ### Plumed files
+                    # Plumed files
                     if plumed[0]:
                         input_replace_dict[
                             "_R_PLUMED_IN_"
@@ -720,14 +714,14 @@ def main(
                                 "_R_PRINT_FREQ_",
                                 f"{int(subsys_print_every_x_steps)}",
                             )
-                            # ### Because of weird units of time
+                            # Because of weird units of time
                             plumed_input[
                                 it_plumed_input
                             ] = replace_substring_in_list_of_strings(
                                 plumed_input[it_plumed_input],
                                 "UNITS LENGTH",
                                 "UNITS TIME="
-                                + str(2.4188843e-05 / subsys_timestep)
+                                + str(2.4188843e-05 / subsys_timestep_ps)
                                 + " LENGTH",
                             )
                             write_list_of_strings_to_file(
@@ -738,7 +732,7 @@ def main(
 
                     it_subsys_ipi_json["graph_file"] = models_list[0]
 
-                    # ###  Write INPUT files
+                    #  Write INPUT files
                     for key, value in input_replace_dict.items():
                         it_subsys_ipi_xml_aslist = replace_substring_in_list_of_strings(
                             it_subsys_ipi_xml_aslist, key, value
@@ -758,7 +752,7 @@ def main(
                         / (f"{it_subsys_nr}_{it_nnp}_{current_iteration_zfill}.json"),
                     )
 
-                    # ### Slurm file
+                    # Slurm file
                     job_email = read_key_input_json(
                         input_json,
                         new_input_json,
@@ -830,16 +824,16 @@ def main(
 
         del it_nnp
 
-        exploration_json["subsys_nr"][it_subsys_nr]["temperature_K"] = subsys_temp
-        exploration_json["subsys_nr"][it_subsys_nr]["timestep_ps"] = subsys_timestep
+        exploration_json["subsys_nr"][it_subsys_nr]["temperature_K"] = subsys_temperature_K
+        exploration_json["subsys_nr"][it_subsys_nr]["timestep_ps"] = subsys_timestep_ps
 
         config_json["subsys_nr"][it_subsys_nr]["cell"] = subsys_cell
         config_json["subsys_nr"][it_subsys_nr]["nb_atm"] = subsys_nb_atm
 
         if plumed[0] == 1:
             del plumed_input, plumed
-        del subsys_temp, subsys_cell, subsys_nb_atm, subsys_nb_steps
-        del subsys_lammps_data, subsys_timestep, subsys_walltime_approx_s
+        del subsys_temperature_K, subsys_cell, subsys_nb_atm, subsys_nb_steps
+        del subsys_lammps_data, subsys_timestep_ps, subsys_walltime_approx_s
 
     del it0_subsys_nr, it_subsys_nr, slurm_file_master
 

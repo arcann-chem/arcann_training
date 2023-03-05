@@ -3,10 +3,10 @@ import logging
 import copy
 import sys
 
-# ### Non-standard imports
+# Non-standard library imports
 import numpy as np
 
-# ### deepmd_iterative imports
+# deepmd_iterative imports
 from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
@@ -404,7 +404,7 @@ def main(
         f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
     )
 
-    # ### Cleaning
+    # Cleaning
     del control_path
     del config_json
     del current_iteration, current_iteration_zfill

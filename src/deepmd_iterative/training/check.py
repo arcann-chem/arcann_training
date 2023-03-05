@@ -2,10 +2,10 @@ from pathlib import Path
 import logging
 import sys
 
-# ### Non-standard imports
+# Non-standard imports
 import numpy as np
 
-# ### deepmd_iterative imports
+# deepmd_iterative imports
 from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
@@ -32,14 +32,14 @@ def main(
     logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
-    # ### Check if correct folder
+    # Check if correct folder
     validate_step_folder(step_name)
 
-    # ### Get iteration
+    # Get iteration
     current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
     current_iteration = int(current_iteration_zfill)
 
-    # ### Get control path and config_json
+    # Get control path and config_json
     control_path = training_path / "control"
     config_json = load_json_file((control_path / "config.json"))
     training_json = load_json_file(
@@ -51,7 +51,7 @@ def main(
         logging.error(f"Aborting...")
         return 1
 
-    # ### Check the normal termination of the training phase
+    # Check the normal termination of the training phase
     s_per_step_per_step_size = []
     completed_count = 0
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
@@ -121,7 +121,7 @@ def main(
     logging.info(
         f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
     )
-    # ### Cleaning
+    # Cleaning
     del control_path
     del config_json
     del current_iteration, current_iteration_zfill

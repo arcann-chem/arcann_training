@@ -4,7 +4,7 @@ import sys
 import copy
 import subprocess
 
-# ### deepmd_iterative imports
+# deepmd_iterative imports
 from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
@@ -40,14 +40,14 @@ def main(
     logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
-    # ### Check if correct folder
+    # Check if correct folder
     validate_step_folder(step_name)
 
-    # ### Get iteration
+    # Get iteration
     current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
     current_iteration = int(current_iteration_zfill)
 
-    # ### Get default inputs json
+    # Get default inputs json
     default_present = False
     default_input_json = load_default_json_file(
         deepmd_iterative_path / "data" / "inputs.json"
@@ -55,14 +55,14 @@ def main(
     if bool(default_input_json):
         default_present = True
 
-    # ### Get input json (user one)
+    # Get input json (user one)
     if (current_path / input_fn).is_file():
         input_json = load_json_file((current_path / input_fn))
     else:
         input_json = {}
     new_input_json = copy.deepcopy(input_json)
 
-    # ### Get control path and config_json
+    # Get control path and config_json
     control_path = training_path / "control"
     config_json = load_json_file((control_path / "config.json"))
     training_json = load_json_file(
@@ -70,7 +70,7 @@ def main(
     )
     jobs_path = deepmd_iterative_path / "data" / "jobs" / "training"
 
-    # ### Get user machine keyword
+    # Get user machine keyword
     user_machine_keyword = read_key_input_json(
         input_json,
         new_input_json,
@@ -83,7 +83,7 @@ def main(
         None if isinstance(user_machine_keyword, bool) else user_machine_keyword
     )
 
-    # ### Read machine spec
+    # Read machine spec
     (
         machine,
         machine_spec,
@@ -102,7 +102,7 @@ def main(
         logging.info(f"We are on: {machine}")
     del fake_machine
 
-    # ### Checks
+    # Checks
     if not training_json["is_checked"]:
         logging.error(f"Lock found. Execute first: training check")
         logging.error(f"Aborting...")
@@ -117,7 +117,7 @@ def main(
     )
     del jobs_path
 
-    # ### Prep and launch DP Freeze
+    # Prep and launch DP Freeze
     completed_count = 0
     walltime_approx_s = 7200
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
@@ -185,7 +185,7 @@ def main(
 
     del it_nnp, slurm_file_master
 
-    # ### Dump the dicts
+    # Dump the dicts
     logging.info(f"-" * 88)
     write_json_file(config_json, (control_path / "config.json"))
     write_json_file(
@@ -207,7 +207,7 @@ def main(
         f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
     )
 
-    # ### Cleaning
+    # Cleaning
     del control_path
     del config_json
     del current_iteration, current_iteration_zfill

@@ -4,7 +4,7 @@ import sys
 import copy
 import subprocess
 
-# ### deepmd_iterative imports
+# deepmd_iterative imports
 from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
@@ -38,14 +38,14 @@ def main(
     logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
-    # ### Check if correct folder
+    # Check if correct folder
     validate_step_folder(step_name)
 
-    # ### Get iteration
+    # Get iteration
     current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
     current_iteration = int(current_iteration_zfill)
 
-    # ### Get default inputs json
+    # Get default inputs json
     default_present = False
     default_input_json = load_default_json_file(
         deepmd_iterative_path / "data" / "inputs.json"
@@ -53,21 +53,21 @@ def main(
     if bool(default_input_json):
         default_present = True
 
-    # ### Get input json (user one)
+    # Get input json (user one)
     if (current_path / input_fn).is_file():
         input_json = load_json_file((current_path / input_fn))
     else:
         input_json = {}
     new_input_json = copy.deepcopy(input_json)
 
-    # ### Get control path and config_json
+    # Get control path and config_json
     control_path = training_path / "control"
     config_json = load_json_file((control_path / "config.json"))
     exploration_json = load_json_file(
         (control_path / f"exploration_{current_iteration_zfill}.json")
     )
 
-    # ### Get machine info
+    # Get machine info
     user_spec = read_key_input_json(
         input_json,
         new_input_json,
@@ -78,7 +78,7 @@ def main(
     )
     user_spec = None if isinstance(user_spec, bool) else user_spec
 
-    # ### Read machine info
+    # Read machine info
     (
         machine,
         machine_spec,
@@ -98,10 +98,10 @@ def main(
         logging.info(f"machine is {machine}")
     del fake_machine
 
-    # ### Check prep/launch
+    # Check prep/launch
     assert_same_machine(machine, exploration_json)
 
-    # ### Checks
+    # Checks
     if exploration_json["is_launched"]:
         logging.critical(f"Already launched.")
         continuing = input(
@@ -117,7 +117,7 @@ def main(
         logging.error(f"Aborting...")
         return 1
 
-    # ### Launch the jobs
+    # Launch the jobs
     completed_count = 0
     for it0_subsys_nr, it_subsys_nr in enumerate(config_json["subsys_nr"]):
         for it_nnp in range(1, config_json["nb_nnp"] + 1):
@@ -191,7 +191,7 @@ def main(
         )
     del completed_count
 
-    # ### Cleaning
+    # Cleaning
     del control_path
     del input_json, default_input_json, default_present, new_input_json
     del config_json
