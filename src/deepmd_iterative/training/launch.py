@@ -126,7 +126,7 @@ def main(
         ).is_file():
             change_directory(local_path)
             try:
-                subprocess.call(
+                subprocess.run(
                     [
                         training_json["launch_command"],
                         f"./job_deepmd_train_{training_json['arch_type']}_{machine}.sh",

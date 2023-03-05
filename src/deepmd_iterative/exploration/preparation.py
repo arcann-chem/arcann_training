@@ -422,7 +422,7 @@ def main(
                 input_replace_dict["_R_DATA_FILE_"] = subsys_ipi_xyz_fn
                 subsys_ipi_json["coord_file"] = subsys_ipi_xyz_fn
                 # ### Get the XYZ file from LMP
-                subprocess.call(
+                subprocess.run(
                     [
                         atomsk_bin,
                         str(training_path / "files" / subsys_lammps_data_fn),

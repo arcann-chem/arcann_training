@@ -482,7 +482,7 @@ def main(
     localdata_path = Path(".").resolve() / "data"
     localdata_path.mkdir(exist_ok=True)
     for it_datasets_training in datasets_training:
-        subprocess.call(
+        subprocess.run(
             [
                 "rsync",
                 "-a",

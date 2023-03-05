@@ -136,7 +136,7 @@ def main(
                 ).is_file():
                     change_directory(local_path)
                     try:
-                        subprocess.call(
+                        subprocess.run(
                             [
                                 exploration_json["launch_command"],
                                 f"./job_deepmd_{exploration_json['exploration_type']}_{exploration_json['arch_type']}_{machine}.sh",

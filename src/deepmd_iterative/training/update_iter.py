@@ -86,7 +86,7 @@ def main(
     (training_path / (current_iteration_zfill + "-test")).mkdir(exist_ok=True)
     check_directory((training_path / (current_iteration_zfill + "-test")))
 
-    subprocess.call(
+    subprocess.run(
         [
             "rsync",
             "-a",
@@ -103,7 +103,7 @@ def main(
 
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
         if training_json["is_compressed"]:
-            subprocess.call(
+            subprocess.run(
                 [
                     "rsync",
                     "-a",
@@ -121,7 +121,7 @@ def main(
                     str((training_path / "NNP")),
                 ]
             )
-        subprocess.call(
+        subprocess.run(
             [
                 "rsync",
                 "-a",

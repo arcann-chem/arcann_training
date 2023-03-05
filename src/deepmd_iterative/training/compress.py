@@ -173,7 +173,7 @@ def main(
         ).is_file():
             change_directory(local_path)
             try:
-                subprocess.call(
+                subprocess.run(
                     [
                         machine_launch_command,
                         f"./job_deepmd_compress_{machine_spec['arch_type']}_{machine}.sh",
