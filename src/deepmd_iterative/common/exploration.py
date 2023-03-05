@@ -167,7 +167,7 @@ def get_last_frame_number(model_deviation: np.ndarray, sigma_high_limit: float, 
 
     Args:
         model_deviation (np.ndarray): The model deviation data, represented as a NumPy array.
-        sigma_high_limit (float): The threshold value for the deviation data. Frames with deviation values above this 
+        sigma_high_limit (float): The threshold value for the deviation data. Frames with deviation values above this
             threshold will be ignored.
         is_start_disturbed (bool): Indicates whether the first frame should be ignored because it is considered "disturbed".
 
