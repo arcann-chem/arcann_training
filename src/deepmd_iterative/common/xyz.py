@@ -4,7 +4,7 @@ import sys
 from typing import Tuple
 import re
 
-# Non-standard imports
+# Non-standard library imports
 import numpy as np
 
 

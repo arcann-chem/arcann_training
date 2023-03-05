@@ -82,13 +82,13 @@ def load_default_json_file(file_path: Path) -> Dict:
 
 
 def write_json_file(
-    json_dict: dict, file_path: Path, enable_logging: bool = True, **kwargs
+    json_dict: Dict, file_path: Path, enable_logging: bool = True, **kwargs
 ) -> None:
     """
     Write a dictionary to a JSON file.
 
     Args:
-        json_dict (dict): A dictionary containing data to be written to the JSON file.
+        json_dict (Dict): A dictionary containing data to be written to the JSON file.
         file_path (Path): A path object representing the file to write the JSON data to.
         log_write (bool, optional): If True, log a message indicating the file and path that the JSON data is being written to.
     Raises:
@@ -99,7 +99,7 @@ def write_json_file(
         # Open the file specified by the file_path argument in write mode
         with file_path.open("w", encoding="UTF-8") as json_file:
             # Use the json.dump() method to write the JSON data to the file
-            json.dump(json_dict, json_file, indent=kwargs.get('indent', 4))
+            json.dump(json_dict, json_file, indent=kwargs.get("indent", 4))
             # If log_write is True, log a message indicating the file and path that the JSON data is being written to
             if enable_logging:
                 logging.info(f"JSON data written to {file_path.absolute()}")
@@ -112,7 +112,7 @@ def write_json_file(
 
 
 def backup_and_overwrite_json_file(
-    json_dict: dict, file_path: Path, enable_logging: bool = True
+    json_dict: Dict, file_path: Path, enable_logging: bool = True
 ) -> None:
     """
     Write a dictionary to a JSON file after creating a backup of the existing file.
@@ -121,7 +121,7 @@ def backup_and_overwrite_json_file(
     file is a symbolic link, it will be removed before the new data is written.
 
     Args:
-        json_dict (dict): A dictionary containing data to be written to the JSON file.
+        json_dict (Dict): A dictionary containing data to be written to the JSON file.
         file_path (Path): A path object representing the file to write the JSON data to.
         enable_logging (bool, optional): Whether to log information about the writing process. Defaults to False.
     """
@@ -136,7 +136,7 @@ def backup_and_overwrite_json_file(
     write_json_file(json_dict, file_path, enable_logging)
 
 
-def add_key_value_to_dict(dictionary: dict, key: str, value: Any) -> None:
+def add_key_value_to_dict(dictionary: Dict, key: str, value: Any) -> None:
     """
     Add a new key-value pair to a dictionary.
 
@@ -145,11 +145,11 @@ def add_key_value_to_dict(dictionary: dict, key: str, value: Any) -> None:
     If the key already exists in the dictionary, the existing sub-dictionary's value will be updated.
 
     Args:
-        dictionary (dict): The dictionary to which the key-value pair should be added.
+        dictionary (Dict): The dictionary to which the key-value pair should be added.
         key (str): The key to use for the new or updated sub-dictionary.
         value (Any): The value to be associated with the new or updated sub-dictionary.
     """
-    if not isinstance(dictionary, dict):
+    if not isinstance(dictionary, Dict):
         raise TypeError('The "dictionary" argument must be a dictionary.')
     if not isinstance(key, str):
         raise TypeError('The "key" argument must be a string.')
@@ -187,7 +187,7 @@ def read_key_input_json(
     Returns:
         _type_: _description_
     """
-    # ### Special keys first:
+    # Special keys first:
     if "system" in key and key in input_json and "value" in input_json[key]:
         if isinstance(input_json[key]["value"], str):
             add_key_value_to_dict(new_input_json, key, input_json[key]["value"])
@@ -237,16 +237,16 @@ def read_key_input_json(
             )
             logging.error(f"Aborting...")
             sys.exit(1)
-    # ### Check if the key is in the user input
+    # Check if the key is in the user input
     if key in input_json:
-        # ### Check if the key has a key called 'value'
+        # Check if the key has a key called 'value'
         if "value" in input_json[key]:
             if input_json[key]["value"] is not None:
-                # ### Check if the key is subsys dependent (can be a list of values)
-                # ### If -1 it means no list
+                # Check if the key is subsys dependent (can be a list of values)
+                # If -1 it means no list
                 if subsys_index == -1:
                     if exploration_dep == -1:
-                        # ### Check if the type correspond to the default
+                        # Check if the type correspond to the default
                         if isinstance(
                             input_json[key]["value"],
                             type(default_inputs_json[step][key]),
@@ -265,7 +265,7 @@ def read_key_input_json(
                             logging.error(f"Aborting...")
                             sys.exit(1)
                     else:
-                        # ### Check if the type correspond to the default
+                        # Check if the type correspond to the default
                         if isinstance(
                             input_json[key]["value"],
                             type(default_inputs_json[step][key][exploration_dep]),
@@ -283,10 +283,10 @@ def read_key_input_json(
                             )
                             logging.error(f"Aborting...")
                             sys.exit(1)
-                # ### If not then it is list
+                # If not then it is list
                 else:
                     if exploration_dep == -1:
-                        # ### Check if it has the same type (meaning same value get propagated)
+                        # Check if it has the same type (meaning same value get propagated)
                         if not isinstance(
                             input_json[key]["value"], list
                         ) and isinstance(
@@ -297,7 +297,7 @@ def read_key_input_json(
                                 new_input_json, key, input_json[key]["value"]
                             )
                             return input_json[key]["value"]
-                        # ### If not check if it is a list, and if the type inside the list matches, and return index
+                        # If not check if it is a list, and if the type inside the list matches, and return index
                         elif (
                             isinstance(input_json[key]["value"], list)
                             and [
@@ -353,7 +353,7 @@ def read_key_input_json(
                             sys.exit(1)
 
                     else:
-                        # ### Check if it has the same type (meaning same value get propagated)
+                        # Check if it has the same type (meaning same value get propagated)
                         if not isinstance(
                             input_json[key]["value"], list
                         ) and isinstance(
@@ -364,7 +364,7 @@ def read_key_input_json(
                                 new_input_json, key, input_json[key]["value"]
                             )
                             return input_json[key]["value"]
-                        # ### If not check if it is a list, and if the type inside the list matches, and return index
+                        # If not check if it is a list, and if the type inside the list matches, and return index
                         elif (
                             isinstance(input_json[key]["value"], list)
                             and [

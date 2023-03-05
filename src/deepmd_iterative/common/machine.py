@@ -40,7 +40,7 @@ def assert_same_machine(expected_machine: str, machine_config: Dict) -> None:
 
     Args:
         expected_machine (str): The name of the expected machine.
-        machine_info (dict): A dictionary containing the machine information, with a "machine" key representing the machine name.
+        machine_info (Dict): A dictionary containing the machine information, with a "machine" key representing the machine name.
 
     Returns:
         None
@@ -148,7 +148,7 @@ def get_machine_spec_for_step(
         check_only (bool, optional): Whether to only check for a matching configuration without returning the machine specification. Defaults to False.
 
     Returns:
-        Tuple[str, dict, str, str, int]: A tuple containing the following elements:
+        Tuple[str, Dict, str, str, int]: A tuple containing the following elements:
             - machine_shortname: The short name of the machine.
             - machine_spec: The machine specification as a dictionary.
             - machine_walltime_format: The walltime format of the machine.

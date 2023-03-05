@@ -4,7 +4,7 @@ import sys
 from typing import Dict
 import json
 
-# Non-standard imports
+# Non-standard library imports
 import numpy as np
 
 

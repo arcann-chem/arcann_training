@@ -40,19 +40,18 @@ def set_config_json(
     current_iteration_zfill = str(config_json["current_iteration"]).zfill(3)
 
     config_json["subsys_nr"] = {}
-    for subsys_nr in (
-        read_key_input_json(
-            input_json,
-            new_input_json,
-            "subsys_nr",
-            default_input_json,
-            step_name,
-            default_present,
-        )
+    for subsys_nr in read_key_input_json(
+        input_json,
+        new_input_json,
+        "subsys_nr",
+        default_input_json,
+        step_name,
+        default_present,
     ):
         config_json["subsys_nr"][subsys_nr] = {}
 
     return config_json, current_iteration_zfill
+
 
 # Used in training - prepartion
 def set_training_json(
@@ -77,7 +76,7 @@ def set_training_json(
         default_present (bool): A flag indicating whether the default input JSON file is present.
 
     Returns:
-        The updated training JSON file (dict).
+        The updated training JSON file (Dict).
     """
 
     # Load or create the training JSON file
@@ -89,9 +88,18 @@ def set_training_json(
         training_json = {}
 
     # Update the training JSON configuration with values from the input JSON files
-    for key in ["use_initial_datasets", "use_extra_datasets", "deepmd_model_version",
-                "deepmd_model_type_descriptor", "start_lr", "stop_lr", "decay_rate",
-                "decay_steps_fixed", "numb_steps", "numb_test"]:
+    for key in [
+        "use_initial_datasets",
+        "use_extra_datasets",
+        "deepmd_model_version",
+        "deepmd_model_type_descriptor",
+        "start_lr",
+        "stop_lr",
+        "decay_rate",
+        "decay_steps_fixed",
+        "numb_steps",
+        "numb_test",
+    ]:
         training_json[key] = read_key_input_json(
             input_json,
             new_input_json,
@@ -112,7 +120,7 @@ def set_subsys_params_exploration(
     step_name: str,
     default_present: bool,
     it0_subsys_nr: int,
-    exploration_type: int
+    exploration_type: int,
 ) -> Tuple[float, float, float, float, float, float, bool]:
     """
     Sets exploration parameters for a specific subsystem.
@@ -140,21 +148,27 @@ def set_subsys_params_exploration(
 
     ## Order is important here
     subsys_values = []
-    for key in ["timestep_ps", "temperature_K", "exp_time_ps",
-                "max_exp_time_ps", "job_walltime_h", "disturbed_start"]:
-            subsys_values.append(
-                read_key_input_json(
-                    input_json,
-                    new_input_json,
-                    key,
-                    default_input_json,
-                    step_name,
-                    default_present,
-                    subsys_index=it0_subsys_nr,
-                    subsys_number=len(config_json["subsys_nr"]),
-                    exploration_dep=exploration_type,
-                )
+    for key in [
+        "timestep_ps",
+        "temperature_K",
+        "exp_time_ps",
+        "max_exp_time_ps",
+        "job_walltime_h",
+        "disturbed_start",
+    ]:
+        subsys_values.append(
+            read_key_input_json(
+                input_json,
+                new_input_json,
+                key,
+                default_input_json,
+                step_name,
+                default_present,
+                subsys_index=it0_subsys_nr,
+                subsys_number=len(config_json["subsys_nr"]),
+                exploration_dep=exploration_type,
             )
+        )
 
     subsys_values.append(
         read_key_input_json(
@@ -172,16 +186,23 @@ def set_subsys_params_exploration(
     return tuple(subsys_values)
 
 
-
-def set_subsys_params_deviation(input_json: dict, new_input_json: dict, default_input_json: dict, config_json: dict, step_name: str, default_present: bool, it0_subsys_nr: int) -> Tuple[int, float, float, float, float]:
+def set_subsys_params_deviation(
+    input_json: Dict,
+    new_input_json: Dict,
+    default_input_json: Dict,
+    config_json: Dict,
+    step_name: str,
+    default_present: bool,
+    it0_subsys_nr: int,
+) -> Tuple[int, float, float, float, float]:
     """
     Sets candidate selection parameters for a specific subsystem.
 
     Args:
-        input_json (dict): A dictionary containing the input JSON data.
-        new_input_json (dict): A dictionary containing the new input JSON data.
-        default_input_json (dict): A dictionary containing the default input JSON data.
-        config_json (dict): A dictionary containing the config JSON data.
+        input_json (Dict): A dictionary containing the input JSON data.
+        new_input_json (Dict): A dictionary containing the new input JSON data.
+        default_input_json (Dict): A dictionary containing the default input JSON data.
+        config_json (Dict): A dictionary containing the config JSON data.
         step_name (str): A string representing the name of the step.
         default_present (bool): A boolean indicating whether the default input JSON data is present.
         it0_subsys_nr (int): An integer representing the subsystem index.

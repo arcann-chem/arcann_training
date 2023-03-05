@@ -111,7 +111,7 @@ def write_list_of_strings_to_file(file_path: Path, list_of_strings: List[str]) -
 
     Args:
         file_path (Path): The path to the file to be written.
-        list_of_strings (list): The list of strings to write to the file.
+        list_of_strings (List): The list of strings to write to the file.
 
     Returns:
         None

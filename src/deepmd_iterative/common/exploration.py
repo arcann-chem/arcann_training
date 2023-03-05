@@ -1,17 +1,17 @@
 from pathlib import Path
-import logging
-import sys
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 import subprocess
 
+# Non-standard library imports
 import numpy as np
+
 
 def generate_starting_points(
     exploration_type: int,
     it_subsys_nr: int,
     training_path: str,
     previous_iteration_zfill: str,
-    prevexploration_json: dict,
+    prevexploration_json: Dict,
     input_present: bool,
     subsys_disturbed_start: bool,
 ) -> Tuple[List[str], List[str], bool]:
@@ -23,7 +23,7 @@ def generate_starting_points(
         it_subsys_nr (int): An integer representing the subsystem index.
         training_path (str): The path to the training directory.
         previous_iteration_zfill (str): A zero-padded string representing the previous iteration number.
-        prevexploration_json (dict): A dictionary containing information about the previous exploration.
+        prevexploration_json (Dict): A dictionary containing information about the previous exploration.
         input_present (bool): A boolean indicating whether an input file is present.
         subsys_disturbed_start (bool): A boolean indicating whether to start from a disturbed minimum.
 
@@ -76,8 +76,8 @@ def generate_starting_points(
 
 
 def create_models_list(
-    config_json: dict,
-    prevtraining_json: dict,
+    config_json: Dict,
+    prevtraining_json: Dict,
     it_nnp: int,
     previous_iteration_zfill: str,
     training_path: Path,
@@ -87,8 +87,8 @@ def create_models_list(
     Generate a list of model file names and create symbolic links to the corresponding model files.
 
     Args:
-        config_json (dict): A dictionary object containing configuration parameters.
-        prevtraining_json (dict): A dictionary object containing training data from previous iterations.
+        config_json (Dict): A dictionary object containing configuration parameters.
+        prevtraining_json (Dict): A dictionary object containing training data from previous iterations.
         it_nnp (int): An integer representing the index of the NNP model to start from.
         previous_iteration_zfill (str): A string representing the zero-padded iteration number of the previous training iteration.
         training_path (Path): The path to the training directory.
@@ -135,12 +135,12 @@ def create_models_list(
     return models_list, models_string
 
 
-def update_nb_steps_factor(prevexploration_json: dict, it_subsys_nr: int) -> int:
+def update_nb_steps_factor(prevexploration_json: Dict, it_subsys_nr: int) -> int:
     """
     Calculates a ratio based on information from a dictionary and returns a multiplying factor for subsys_nb_steps.
 
     Args:
-        prevexploration_json (dict): A dictionary containing information about a previous exploration.
+        prevexploration_json (Dict): A dictionary containing information about a previous exploration.
         it_subsys_nr (int): An integer representing the subsystem index.
 
     Returns:
@@ -161,7 +161,9 @@ def update_nb_steps_factor(prevexploration_json: dict, it_subsys_nr: int) -> int
         return 1
 
 
-def get_last_frame_number(model_deviation: np.ndarray, sigma_high_limit: float, is_start_disturbed: bool) -> int:
+def get_last_frame_number(
+    model_deviation: np.ndarray, sigma_high_limit: float, is_start_disturbed: bool
+) -> int:
     """
     Returns the index of the last frame to be processed based on the given parameters.
 
