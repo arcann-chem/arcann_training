@@ -214,3 +214,7 @@ class TestCheckInitialDatasets(unittest.TestCase):
         with self.assertRaises(SystemExit) as cm:
             check_initial_datasets(Path(self.temp_dir.name))
         self.assertEqual(cm.exception.code, 1)
+
+if __name__ == '__main__':
+    unittest.main()
+    

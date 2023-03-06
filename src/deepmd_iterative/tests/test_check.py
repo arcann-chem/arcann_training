@@ -129,3 +129,7 @@ class TestCheckVMD(unittest.TestCase):
         os.environ["VMD_PATH"] = str(vmd_path)
         vmd_bin = check_vmd()
         self.assertEqual(vmd_bin, str(vmd_path.resolve()))
+
+if __name__ == '__main__':
+    unittest.main()
+    

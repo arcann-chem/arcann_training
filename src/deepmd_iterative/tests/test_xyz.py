@@ -279,3 +279,7 @@ class TestWriteXYZFrameToFile(unittest.TestCase):
                 self.temp_file, frame_idx, num_atoms, atom_coords, atom_symbols
             )
         self.assertEqual(cm.exception.code, 1)
+
+if __name__ == '__main__':
+    unittest.main()
+    

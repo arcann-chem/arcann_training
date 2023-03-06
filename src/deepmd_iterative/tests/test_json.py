@@ -233,3 +233,6 @@ class TestAddKeyValueToDict(unittest.TestCase):
         self.assertEqual(
             d, {"key1": {"value": "value1"}, "key2": {"value": nested_dict}}
         )
+
+if __name__ == '__main__':
+    unittest.main()

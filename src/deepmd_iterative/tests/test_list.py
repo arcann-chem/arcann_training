@@ -71,3 +71,7 @@ class TestRemoveStringsContainingSubstringInList(unittest.TestCase):
             self.input_list, self.substring
         )
         self.assertListEqual(output_list, ["world", "goodbye"])
+
+
+if __name__ == '__main__':
+    unittest.main()

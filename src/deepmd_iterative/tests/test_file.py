@@ -55,3 +55,6 @@ class TestWriteListOfStringsToFile(unittest.TestCase):
         with input_file.open("r") as f:
             lines = f.readlines()
         self.assertEqual(lines, [f"{s}\n" for s in expected_output])
+
+if __name__ == '__main__':
+    unittest.main()

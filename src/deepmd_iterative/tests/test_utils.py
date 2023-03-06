@@ -18,3 +18,7 @@ class TestConvertSecondsToHhMmSs(unittest.TestCase):
         for seconds, expected_output in test_cases:
             with self.subTest(seconds=seconds, expected_output=expected_output):
                 self.assertEqual(convert_seconds_to_hh_mm_ss(seconds), expected_output)
+
+if __name__ == '__main__':
+    unittest.main()
+    

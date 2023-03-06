@@ -150,3 +150,6 @@ class TestWriteXml(unittest.TestCase):
         with self.tmp_file_path.open("r") as f:
             file_contents = f.read()
         self.assertEqual(file_contents, self.expected_xml_string)
+
+if __name__ == '__main__':
+    unittest.main()
