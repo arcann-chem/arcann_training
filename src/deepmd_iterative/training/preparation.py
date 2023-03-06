@@ -31,8 +31,8 @@ from deepmd_iterative.common.training import (
 from deepmd_iterative.common.list import replace_substring_in_list_of_strings
 from deepmd_iterative.common.slurm import replace_in_slurm_file_general
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.generate_config import set_training_json
-
+#from deepmd_iterative.common.generate_config import set_training_json
+from deepmd_iterative.common.json_parameters import get_machine_keyword, set_training_json
 
 def main(
     step_name: str,
@@ -41,9 +41,11 @@ def main(
     fake_machine=None,
     input_fn: str = "input.json",
 ):
+    # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
     training_path = current_path.parent
 
+    # Log the step and phase of the program
     logging.info(f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()}")
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
@@ -54,22 +56,28 @@ def main(
     validate_step_folder(step_name)
 
     # Get iteration
-    current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
-    current_iteration = int(current_iteration_zfill)
+    padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
+    curr_iter = int(padded_curr_iter)
 
-    # Get default inputs json
+    # Load the master input JSON file for the program
     default_present = False
-    default_input_json = load_default_json_file(
-        deepmd_iterative_path / "data" / "inputs.json"
-    )
-    if bool(default_input_json):
+    default_json = load_default_json_file(deepmd_iterative_path / "data" / "input_defaults.json")[step_name]
+    if bool(default_json):
         default_present = True
+    logging.debug(f"default_json: {default_json}")
+    logging.debug(f"default_present: {default_present}")
 
-    # Get input json (user one)
+    # Load the user input JSON file
     if (current_path / input_fn).is_file():
         input_json = load_json_file((current_path / input_fn))
+        input_present = True
     else:
         input_json = {}
+        input_present = False
+    logging.debug(f"input_json: {input_json}")
+    logging.debug(f"input_present: {input_present}")
+
+    # Make a deepcopy
     new_input_json = copy.deepcopy(input_json)
 
     # Get control path and config_json
@@ -79,20 +87,27 @@ def main(
     # Get extra needed paths
     jobs_path = deepmd_iterative_path / "data" / "jobs" / "training"
 
-    # Get user machine keyword
-    user_machine_keyword = read_key_input_json(
-        input_json,
-        new_input_json,
-        "user_machine_keyword",
-        default_input_json,
-        step_name,
-        default_present,
-    )
+    # Load the previous training_json
+    if curr_iter > 0:
+        prev_iter = curr_iter - 1
+        padded_prev_iter = str(prev_iter).zfill(3)
+        prevtraining_json = load_json_file((control_path / f"training_{padded_prev_iter}.json"))
+    else:
+        prevtraining_json = {}
+
+    # Get the machine keyword (input override previous training override default_json)
+    # And update the new input
+    user_machine_keyword = get_machine_keyword(input_json, prevtraining_json, default_json)
+    logging.debug(f"user_machine_keyword: {user_machine_keyword}")
+    new_input_json["user_machine_keyword"] = user_machine_keyword
+    logging.debug(f"new_input_json: {new_input_json}")
+    # Set it to None if bool, because: get_machine_spec_for_step needs None
     user_machine_keyword = (
         None if isinstance(user_machine_keyword, bool) else user_machine_keyword
     )
+    logging.debug(f"user_machine_keyword: {user_machine_keyword}")
 
-    # Read machine spec
+    # From the keyword (or default), get the machine spec (or for the fake one)
     (
         machine,
         machine_spec,
@@ -105,6 +120,10 @@ def main(
         fake_machine,
         user_machine_keyword,
     )
+    logging.debug(f"machine: {machine}")
+    logging.debug(f"machine_spec: {machine_spec}")
+    logging.debug(f"machine_walltime_format: {machine_walltime_format}")
+    logging.debug(f"machine_launch_command: {machine_launch_command}")
 
     if fake_machine is not None:
         logging.info(f"Pretending to be on: {fake_machine}")
@@ -112,28 +131,30 @@ def main(
         logging.info(f"We are on: {machine}")
     del fake_machine
 
-    # Checks
-    if current_iteration > 0:
+    # Checked if the iter > 0, if there load the past labeling and see if it's extracted
+    if curr_iter > 0:
         labeling_json = load_json_file(
-            (control_path / f"labeling_{current_iteration_zfill}.json")
+            (control_path / f"labeling_{padded_curr_iter}.json")
         )
         if not labeling_json["is_extracted"]:
             logging.error("Lock found. Run/Check first: labeling extract")
             logging.error("Aborting...")
             return 1
 
-    # Get/Create training parameters
-    training_json = set_training_json(
+    # Create the training JSON file (and set everything)
+    # Priority: input > previous > default
+    training_json, new_input_json = set_training_json(
         control_path,
-        current_iteration_zfill,
+        padded_curr_iter,
         input_json,
+        prevtraining_json,
+        default_json,
         new_input_json,
-        default_input_json,
-        step_name,
-        default_present,
     )
+    logging.debug(f"training_json: {training_json}")
+    logging.debug(f"new_input_json: {new_input_json}")
 
-    # Set additional machine-related parameters in the JSON file
+    # Set additional machine-related parameters in the training JSON file (not need in the input)
     training_json = {
         **training_json,
         "machine": machine,
@@ -144,6 +165,7 @@ def main(
         "launch_command": machine_launch_command,
     }
 
+    # Check if the training job file exists
     check_file_existence(
         jobs_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh",
         error_msg=f"No SLURM file present for {step_name.capitalize()} / {phase_name.capitalize()} on this machine.",
@@ -152,7 +174,9 @@ def main(
         jobs_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh"
     )
     del jobs_path
+    logging.debug(f"slurm_file_master: {slurm_file_master[0:5]}, {slurm_file_master[-5:-1]}")
 
+    # TODO: Maybe as function / parameters file for later
     # Check DeePMD version
     if training_json["deepmd_model_version"] not in [2.0, 2.1]:
         logging.critical(
@@ -182,6 +206,7 @@ def main(
         logging.critical("Aborting...")
         return 1
 
+
     # Check if the default input json file exists
     input_file_fpath = (
         training_path
@@ -194,15 +219,20 @@ def main(
     config_json["type_map"] = {}
     config_json["type_map"] = training_input_json["model"]["type_map"]
     del input_file_fpath
+    logging.debug(f"training_input_json: {training_input_json}")
+    logging.debug(f"config_json: {config_json}")
 
     # Check the initial sets json file
     datasets_initial_json = check_initial_datasets(training_path)
+    logging.debug(f"datasets_initial_json: {datasets_initial_json}")
 
     # Let us find what is in data
     data_path = training_path / "data"
     check_directory(data_path)
     subsys_name = []
 
+    # This is building the datasets (roughly 200 lines)
+    # TODO later
     datasets_extra = []
     datasets_validation = []
     for it_data_folders in data_path.iterdir():
@@ -220,10 +250,10 @@ def main(
                     try:
                         if (
                             int(it_data_folders.name.rsplit("_", 1)[-1])
-                            <= current_iteration
+                            <= curr_iter
                         ):
                             subsys_name.append(it_data_folders.name.rsplit("_", 1)[0])
-                    # #TODO: Better except clause
+                    # TODO: Better except clause
                     except:
                         pass
                 else:
@@ -274,8 +304,8 @@ def main(
     config_json["subsys_r"] = subsys_name
     del subsys_name
 
-    if current_iteration > 0:
-        for it_iteration in np.arange(1, current_iteration + 1):
+    if curr_iter > 0:
+        for it_iteration in np.arange(1, curr_iter + 1):
             it_iteration_zfill = str(it_iteration).zfill(3)
             try:
                 for system_it in config_json["subsys_nr"]:
@@ -299,7 +329,7 @@ def main(
                                 )
                             ).shape[0]
                         )
-                        if it_iteration == current_iteration:
+                        if it_iteration == curr_iter:
                             nb_added_nr_iter = (
                                 nb_added_nr_iter
                                 + np.load(
@@ -338,7 +368,7 @@ def main(
                                 )
                             ).shape[0]
                         )
-                        if it_iteration == current_iteration:
+                        if it_iteration == curr_iter:
                             nb_added_nr_iter = (
                                 nb_added_nr_iter
                                 + np.load(
@@ -375,7 +405,7 @@ def main(
                                 )
                             ).shape[0]
                         )
-                        if it_iteration == current_iteration:
+                        if it_iteration == curr_iter:
                             nb_added_nr_iter = (
                                 nb_added_nr_iter
                                 + np.load(
@@ -414,9 +444,13 @@ def main(
 
     # Total
     nb_trained = nb_initial + nb_added_nr + nb_added_r + nb_extra
+    logging.debug(f"nb_trained: {nb_trained} = {nb_initial} + {nb_added_nr} + {nb_added_r} + {nb_extra}")
+    logging.debug(f"datasets_training: {datasets_training}")
 
+    # Update the inputs with the sets
     training_input_json["training"]["training_data"]["systems"] = datasets_training
 
+    # Update the training JSON
     training_json = {
         **training_json,
         "training_data": datasets_training_json,
@@ -428,27 +462,32 @@ def main(
         "nb_added_r_iter": nb_added_r_iter,
         "nb_extra": nb_extra,
     }
+    logging.debug(f"training_json: {training_json}")
 
     del datasets_training_json
     del nb_trained, nb_initial, nb_extra
     del nb_added_nr, nb_added_r, nb_added_nr_iter, nb_added_r_iter
 
-    if default_present:
-        if (
-            default_input_json["training"]["decay_steps"]
-            == training_json["decay_steps"]
-            and not training_json["decay_steps_fixed"]
-        ):
-            decay_steps = int(
-                calculate_decay_steps(
-                    training_json["nb_trained"], training_json["decay_steps"]
-                )
-            )
-        else:
-            decay_steps = training_json["decay_steps"]
+    # Here calculate the parameters
+
+    # decay_steps it auto-recalculated as funcion of nb_trained
+    logging.debug(f"training_json - decay_steps: {training_json['decay_steps']}")
+    logging.debug(f"new_input_json - decay_steps: {new_input_json['decay_steps']}")
+    if not training_json["decay_steps_fixed"]:
+        decay_steps = calculate_decay_steps(training_json["nb_trained"], training_json["decay_steps"])
+        logging.debug(f"Recalculating decay_steps")
+        # Update the training JSON and the new input JSON:
+        training_json["decay_steps"] = decay_steps
+        new_input_json["decay_steps"] = decay_steps
     else:
         decay_steps = training_json["decay_steps"]
+    logging.debug(f"decay_steps: {decay_steps}")
+    logging.debug(f"training_json - decay_steps: {training_json['decay_steps']}")
+    logging.debug(f"new_input_json - decay_steps: {new_input_json['decay_steps']}")
 
+    # numb_steps and decay_rate
+    logging.debug(f"training_json - numb_steps / decay_rate: {training_json['numb_steps']} / {training_json['decay_rate']}")
+    logging.debug(f"new_input_json - numb_steps / decay_rate: {new_input_json['numb_steps']} / {new_input_json['decay_rate']}")
     numb_steps = training_json["numb_steps"]
     decay_rate_new = calculate_decay_rate(
         numb_steps,
@@ -457,15 +496,22 @@ def main(
         training_json["decay_steps"],
     )
     while decay_rate_new < training_json["decay_rate"]:
-        numb_steps = numb_steps + 1e5
+        numb_steps = numb_steps + 10000
         decay_rate_new = calculate_decay_rate(
             numb_steps,
             training_json["start_lr"],
             training_json["stop_lr"],
             training_json["decay_steps"],
         )
+    # Update the training JSON and the new input JSON:
     training_json["numb_steps"] = int(numb_steps)
     training_json["decay_rate"] = decay_rate_new
+    new_input_json["numb_steps"] = int(numb_steps)
+    new_input_json["decay_rate"] = decay_rate_new
+    logging.debug(f"numb_steps: {numb_steps}")
+    logging.debug(f"decay_rate: {decay_rate_new}")
+    logging.debug(f"training_json - numb_steps / decay_rate: {training_json['numb_steps']} / {training_json['decay_rate']}")
+    logging.debug(f"new_input_json - numb_steps / decay_rate: {new_input_json['numb_steps']} / {new_input_json['decay_rate']}")
 
     del decay_steps, numb_steps, decay_rate_new
 
@@ -482,9 +528,6 @@ def main(
         "is_frozen": False,
         "is_compressed": False,
     }
-
-    logging.debug(training_json)
-    logging.debug(datasets_training)
 
     # Rsync data to local data
     localdata_path = Path(".").resolve() / "data"
@@ -504,31 +547,27 @@ def main(
     training_input_json["training"]["disp_file"] = "lcurve.out"
     training_input_json["training"]["save_ckpt"] = "model.ckpt"
 
-    # Create the inputs/jobfiles for each NNP with random SEED inf the form of NNP_number + random(0,
-    # 1000) + current_iteration.zfil(3) so between 10000 and unlimited1000999 (at iteration 999 !!)
-    if current_iteration > 0:
-        previous_iteration = current_iteration - 1
-        previous_iteration_zfill = str(previous_iteration).zfill(3)
-        prevtraining_json = load_json_file(
-            (control_path / f"training_{previous_iteration_zfill}.json")
-        )
-        walltime_approx_s = int(
-            np.ceil(
-                (training_json["numb_steps"] * (prevtraining_json["s_per_step"] * 1.50))
-            )
-        )
-        del previous_iteration, previous_iteration_zfill, prevtraining_json
+    logging.debug(f"training_json: {training_json}")
+    logging.debug(f"input_json: {input_json}")
+    logging.debug(f"new_input_json: {new_input_json}")
+    logging.debug(f"default_json: {default_json}")
+    logging.debug(f"prevtraining_json: {prevtraining_json}")
+
+    # Create the inputs/jobfiles for each NNP with random SEED
+
+    # Walltime
+    if "s_per_step" in input_json and input_json['s_per_step'] > 0:
+        walltime_approx_s = int(np.ceil((training_json['numb_steps'] * input_json['s_per_step'])))
+        logging.debug(f"s_per_step: {input_json['s_per_step']}")
+    elif "s_per_step" in prevtraining_json:
+        walltime_approx_s = int(np.ceil((training_json['numb_steps'] * (prevtraining_json['s_per_step'] * 1.50))))
+        logging.debug(f"s_per_step: {prevtraining_json['s_per_step']}")
     else:
-        s_per_step = read_key_input_json(
-            input_json,
-            new_input_json,
-            "s_per_step",
-            default_input_json,
-            step_name,
-            default_present,
-        )
-        walltime_approx_s = int(np.ceil((training_json["numb_steps"] * s_per_step)))
-        del s_per_step
+        walltime_approx_s = int(np.ceil((training_json["numb_steps"] * default_json['s_per_step'])))
+        logging.debug(f"s_per_step: {default_json['s_per_step']}")
+    # Set it to the input as -1, so the user knows it can be used but use auto
+    new_input_json['s_per_step'] = -1
+    logging.debug(f"walltime_approx_s: {walltime_approx_s}")
 
     for it_nnp in range(1, config_json["nb_nnp"] + 1):
         local_path = Path(".").resolve() / str(it_nnp)
@@ -539,22 +578,22 @@ def main(
         random_0_1000 = random.randrange(0, 1000)
         if training_json["deepmd_model_type_descriptor"] == "se_ar":
             training_input_json["model"]["descriptor"]["a"]["seed"] = int(
-                str(it_nnp) + str(random_0_1000) + current_iteration_zfill
+                str(it_nnp) + str(random_0_1000) + padded_curr_iter
             )
             training_input_json["model"]["descriptor"]["r"]["seed"] = int(
-                str(it_nnp) + str(random_0_1000) + current_iteration_zfill
+                str(it_nnp) + str(random_0_1000) + padded_curr_iter
             )
         else:
             training_input_json["model"]["descriptor"]["seed"] = int(
-                str(it_nnp) + str(random_0_1000) + current_iteration_zfill
+                str(it_nnp) + str(random_0_1000) + padded_curr_iter
             )
 
         training_input_json["model"]["fitting_net"]["seed"] = int(
-            str(it_nnp) + str(random_0_1000) + current_iteration_zfill
+            str(it_nnp) + str(random_0_1000) + padded_curr_iter
         )
 
         training_input_json["training"]["seed"] = int(
-            str(it_nnp) + str(random_0_1000) + current_iteration_zfill
+            str(it_nnp) + str(random_0_1000) + padded_curr_iter
         )
 
         training_input_json_fpath = Path(str(it_nnp) + "/training.json").resolve()
@@ -562,20 +601,14 @@ def main(
         write_json_file(training_input_json, training_input_json_fpath, False)
 
         # Slurm file
-        job_email = read_key_input_json(
-            input_json,
-            new_input_json,
-            "job_email",
-            default_input_json,
-            step_name,
-            default_present,
-        )
+        #job_email = get_key_in_dict("job_email", input_json, prevtraining_json, default_json)
+
         slurm_file = replace_in_slurm_file_general(
             slurm_file_master,
             machine_spec,
             walltime_approx_s,
             machine_walltime_format,
-            job_email,
+            training_json["job_email"],
         )
 
         slurm_file = replace_substring_in_list_of_strings(
@@ -593,7 +626,7 @@ def main(
     logging.info(f"-" * 88)
     write_json_file(config_json, (control_path / "config.json"))
     write_json_file(
-        training_json, (control_path / f"training_{current_iteration_zfill}.json")
+        training_json, (control_path / f"training_{padded_curr_iter}.json")
     )
     backup_and_overwrite_json_file(new_input_json, (current_path / input_fn))
 
@@ -605,9 +638,9 @@ def main(
     # Cleaning
     del control_path
     del data_path
-    del input_json, default_input_json, default_present, new_input_json
+    del input_json, default_json, default_present, new_input_json
     del config_json
-    del current_iteration, current_iteration_zfill
+    del curr_iter, padded_curr_iter
     del training_json
     del machine, machine_spec, machine_walltime_format, machine_launch_command
     del slurm_file_master

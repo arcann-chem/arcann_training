@@ -2,7 +2,6 @@ import unittest
 
 from deepmd_iterative.common.json_parameters import set_config_json
 
-
 class TestSetConfigJson(unittest.TestCase):
     def setUp(self):
         self.default_json = {

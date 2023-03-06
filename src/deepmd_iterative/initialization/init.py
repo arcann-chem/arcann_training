@@ -44,15 +44,9 @@ def main(
     logging.debug(f"default_json: {default_json}")
     logging.debug(f"default_present: {default_present}")
 
-    # Load the user input JSON file
+    # Load the user input JSON file (must be present)
     input_json = load_json_file((current_path / input_fn))
     logging.debug(f"input_json: {input_json}")
-
-    # Check if the user input JSON file is correct
-    if step_name not in input_json["step_name"]:
-        logging.error(f"Wrong input: {input_json['step_name']}")
-        logging.error("Aborting...")
-        return 1
 
     # Check if a "data" folder is present in the training path
     check_directory(
