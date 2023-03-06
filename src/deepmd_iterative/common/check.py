@@ -33,10 +33,10 @@ def check_atomsk(atomsk_path: str = None) -> str:
     This function first checks if `atomsk_path` is provided and is a valid path.
     If it is, it returns the path to `atomsk`. If `atomsk_path` is not valid, it logs a warning and continues to the next step.
 
-    The next step checks if the `ATMSK_PATH` environment variable is defined and is a valid path.
+    The next step checks if the `ATOMSK_PATH` environment variable is defined and is a valid path.
     If it is, it returns the path to `atomsk`.
 
-    If neither `atomsk_path` nor `ATMSK_PATH` is valid, the function tries to find the `atomsk` command in the system path.
+    If neither `atomsk_path` nor `ATOMSK_PATH` is valid, the function tries to find the `atomsk` command in the system path.
     If it is found, it returns the full path to `atomsk`. If `atomsk` is not found, the function logs a critical error and exits the program.
 
     Parameters:
@@ -57,8 +57,8 @@ def check_atomsk(atomsk_path: str = None) -> str:
                 f"Atomsk path {atomsk_path} is invalid. Checking environment variable and system path..."
             )
 
-    # Check if ATMSK_PATH is defined and is valid
-    atomsk_path = os.environ.get("ATMSK_PATH")
+    # Check if ATOMSK_PATH is defined and is valid
+    atomsk_path = os.environ.get("ATOMSK_PATH")
     if atomsk_path is not None:
         if Path(atomsk_path).is_file():
             return str(Path(atomsk_path).resolve())
