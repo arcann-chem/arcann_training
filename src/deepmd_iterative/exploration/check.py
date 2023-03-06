@@ -65,11 +65,11 @@ def main(
         subsys_count = 0
         timings_sum = 0
         timings = []
-        exploration_json['subsys_nr'][it_subsys_nr] = {
-            **exploration_json['subsys_nr'][it_subsys_nr],
+        exploration_json["subsys_nr"][it_subsys_nr] = {
+            **exploration_json["subsys_nr"][it_subsys_nr],
             "nb_completed": 0,
             "nb_forced": 0,
-            "nb_skipped": 0
+            "nb_skipped": 0,
         }
 
         for it_nnp in range(1, config_json["nb_nnp"] + 1):
@@ -93,18 +93,24 @@ def main(
                         if any("Total wall time:" in f for f in lammps_output):
                             subsys_count += 1
                             completed_count += 1
-                            exploration_json['subsys_nr'][it_subsys_nr]['nb_completed'] += 1
+                            exploration_json["subsys_nr"][it_subsys_nr][
+                                "nb_completed"
+                            ] += 1
                             timings = [
                                 zzz for zzz in lammps_output if "Loop time of" in zzz
                             ]
                             timings_sum += float(timings[0].split(" ")[3])
                         elif (local_path / "skip").is_file():
                             skipped_count += 1
-                            exploration_json['subsys_nr'][it_subsys_nr]['nb_skipped'] += 1
+                            exploration_json["subsys_nr"][it_subsys_nr][
+                                "nb_skipped"
+                            ] += 1
                             logging.warning(f"{lammps_output_file} skipped")
                         elif (local_path / "force").is_file():
                             forced_count += 1
-                            exploration_json['subsys_nr'][it_subsys_nr]['nb_forced'] += 1
+                            exploration_json["subsys_nr"][it_subsys_nr][
+                                "nb_forced"
+                            ] += 1
                             logging.warning(f"{lammps_output_file} forced")
                         else:
                             logging.critical(
@@ -113,7 +119,7 @@ def main(
                         del lammps_output
                     elif (local_path / "skip").is_file():
                         skipped_count += 1
-                        exploration_json['subsys_nr'][it_subsys_nr]['nb_skipped'] += 1
+                        exploration_json["subsys_nr"][it_subsys_nr]["nb_skipped"] += 1
                         logging.warning(f"{lammps_output_file} skipped")
                     else:
                         logging.critical(f"{lammps_output_file} failed. Check manually")
@@ -130,7 +136,9 @@ def main(
                         if any("SIMULATION: Exiting cleanly" in f for f in ipi_output):
                             subsys_count += 1
                             completed_count += 1
-                            exploration_json['subsys_nr'][it_subsys_nr]['nb_completed'] += 1
+                            exploration_json["subsys_nr"][it_subsys_nr][
+                                "nb_completed"
+                            ] += 1
                             ipi_time = [
                                 zzz
                                 for zzz in ipi_output
@@ -145,11 +153,15 @@ def main(
                             del ipi_time, ipi_time2, timings
                         elif (local_path / "skip").is_file():
                             skipped_count += 1
-                            exploration_json['subsys_nr'][it_subsys_nr]['nb_skipped'] += 1
+                            exploration_json["subsys_nr"][it_subsys_nr][
+                                "nb_skipped"
+                            ] += 1
                             logging.warning(f"{ipi_output_file} skipped")
                         elif (local_path / "force").is_file():
                             forced_count += 1
-                            exploration_json['subsys_nr'][it_subsys_nr]['nb_forced'] += 1
+                            exploration_json["subsys_nr"][it_subsys_nr][
+                                "nb_forced"
+                            ] += 1
                             logging.warning(f"{ipi_output_file} forced")
                         else:
                             logging.critical(
@@ -158,7 +170,7 @@ def main(
                         del ipi_output
                     elif (local_path / "skip").is_file():
                         skipped_count += 1
-                        exploration_json['subsys_nr'][it_subsys_nr]['nb_skipped'] += 1
+                        exploration_json["subsys_nr"][it_subsys_nr]["nb_skipped"] += 1
                         logging.warning(f"{ipi_output_file} skipped")
                     else:
                         logging.critical(f"{ipi_output_file} failed. Check manually")

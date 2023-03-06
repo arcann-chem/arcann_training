@@ -167,12 +167,12 @@ def main(
         "nb_nnp": config_json["nb_nnp"],
         "exploration_type": config_json["exploration_type"],
         "nb_traj": read_key_input_json(
-        input_json,
-        new_input_json,
-        "nb_traj",
-        default_input_json,
-        step_name,
-        default_present,
+            input_json,
+            new_input_json,
+            "nb_traj",
+            default_input_json,
+            step_name,
+            default_present,
         ),
     }
 
@@ -188,8 +188,14 @@ def main(
     }
 
     # Get the path for the SLURM file for the current exploration step
-    slurm_file_path = jobs_path / f"job_deepmd_{exploration_json['exploration_type']}_{exploration_json['arch_type']}_{machine}.sh"
-    check_file_existence(slurm_file_path, error_msg="No SLURM file present for the exploration step on this machine.")
+    slurm_file_path = (
+        jobs_path
+        / f"job_deepmd_{exploration_json['exploration_type']}_{exploration_json['arch_type']}_{machine}.sh"
+    )
+    check_file_existence(
+        slurm_file_path,
+        error_msg="No SLURM file present for the exploration step on this machine.",
+    )
     slurm_file_master = file_to_list_of_strings(slurm_file_path)
     del jobs_path
 
@@ -238,7 +244,7 @@ def main(
 
         # If plumed is being used for the current subsystem, get the plumed input files
         if plumed[0] == 1:
-             # Find all plumed files associated with the current subsystem
+            # Find all plumed files associated with the current subsystem
             plumed_files_list = [
                 plumed_file
                 for plumed_file in (training_path / "files").glob(
@@ -271,8 +277,8 @@ def main(
             subsys_exp_time_ps,
             subsys_max_exp_time_ps,
             subsys_job_walltime_h,
+            subsys_disturbed_start,
             subsys_print_mult,
-            subsys_disturbed_start
         ) = set_subsys_params_exploration(
             input_json,
             new_input_json,
@@ -281,9 +287,9 @@ def main(
             step_name,
             default_present,
             it0_subsys_nr,
-            exploration_type
+            exploration_type,
         )
-
+        logging.debug(f"{subsys_timestep_ps,subsys_temperature_K,subsys_exp_time_ps,subsys_max_exp_time_ps,subsys_job_walltime_h,subsys_disturbed_start,subsys_print_mult}")
         # Set the subsys params for exploration
         if current_iteration == 1:
             # Initial Exploration Time
@@ -385,7 +391,9 @@ def main(
                     # Abritary factor
                     subsys_walltime_approx_s = int(
                         (
-                            prevexploration_json["subsys_nr"][it_subsys_nr]["s_per_step"]
+                            prevexploration_json["subsys_nr"][it_subsys_nr][
+                                "s_per_step"
+                            ]
                             * subsys_nb_steps
                         )
                         * 1.20
@@ -474,7 +482,9 @@ def main(
                     # Abritary factor
                     subsys_walltime_approx_s = int(
                         (
-                            prevexploration_json["subsys_nr"][it_subsys_nr]["s_per_step"]
+                            prevexploration_json["subsys_nr"][it_subsys_nr][
+                                "s_per_step"
+                            ]
                             * subsys_nb_steps
                         )
                         * 1.20
@@ -824,7 +834,9 @@ def main(
 
         del it_nnp
 
-        exploration_json["subsys_nr"][it_subsys_nr]["temperature_K"] = subsys_temperature_K
+        exploration_json["subsys_nr"][it_subsys_nr][
+            "temperature_K"
+        ] = subsys_temperature_K
         exploration_json["subsys_nr"][it_subsys_nr]["timestep_ps"] = subsys_timestep_ps
 
         config_json["subsys_nr"][it_subsys_nr]["cell"] = subsys_cell

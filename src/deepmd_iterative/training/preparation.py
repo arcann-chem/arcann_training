@@ -130,9 +130,10 @@ def main(
         new_input_json,
         default_input_json,
         step_name,
-        default_present
+        default_present,
     )
 
+    # Set additional machine-related parameters in the JSON file
     training_json = {
         **training_json,
         "machine": machine,
@@ -140,9 +141,9 @@ def main(
         "allocation_name": machine_spec["allocation_name"],
         "arch_name": machine_spec["arch_name"],
         "arch_type": machine_spec["arch_type"],
-        "launch_command": machine_launch_command
+        "launch_command": machine_launch_command,
     }
-     
+
     check_file_existence(
         jobs_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh",
         error_msg=f"No SLURM file present for {step_name.capitalize()} / {phase_name.capitalize()} on this machine.",
@@ -425,7 +426,7 @@ def main(
         "nb_added_r": nb_added_r,
         "nb_added_nr_iter": nb_added_nr_iter,
         "nb_added_r_iter": nb_added_r_iter,
-        "nb_extra": nb_extra
+        "nb_extra": nb_extra,
     }
 
     del datasets_training_json
@@ -479,7 +480,7 @@ def main(
         "is_launched": False,
         "is_checked": False,
         "is_frozen": False,
-        "is_compressed": False
+        "is_compressed": False,
     }
 
     logging.debug(training_json)

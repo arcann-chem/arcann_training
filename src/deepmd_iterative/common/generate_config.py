@@ -96,6 +96,7 @@ def set_training_json(
         "start_lr",
         "stop_lr",
         "decay_rate",
+        "decay_steps",
         "decay_steps_fixed",
         "numb_steps",
         "numb_test",
