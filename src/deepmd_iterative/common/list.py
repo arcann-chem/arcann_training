@@ -1,6 +1,29 @@
 from typing import List
 
 
+#Unittested
+def remove_strings_containing_substring_in_list_of_strings(
+    input_list: List[str], substring: str
+) -> List[str]:
+    """
+    Returns a new list of strings with all strings containing a given substring removed.
+
+    Args:
+        input_list (List[str]): The input list of strings.
+        substring (str): The substring to look for in the input strings.
+
+    Returns:
+        List[str]: The output list of strings with all the strings containing the given substring removed.
+    """
+
+    # Use a list comprehension to create a new list with the updated strings
+    output_list = [string.strip() for string in input_list if substring not in string]
+
+    # Return the updated list
+    return output_list
+
+
+#Unittested
 def replace_substring_in_list_of_strings(
     input_list: List[str], substring_in: str, substring_out: str
 ) -> List[str]:
@@ -25,22 +48,3 @@ def replace_substring_in_list_of_strings(
     return output_list
 
 
-def remove_strings_containing_substring_in_list_of_strings(
-    input_list: List[str], substring: str
-) -> List[str]:
-    """
-    Returns a new list of strings with all strings containing a given substring removed.
-
-    Args:
-        input_list (List[str]): The input list of strings.
-        substring (str): The substring to look for in the input strings.
-
-    Returns:
-        List[str]: The output list of strings with all the strings containing the given substring removed.
-    """
-
-    # Use a list comprehension to create a new list with the updated strings
-    output_list = [string.strip() for string in input_list if substring not in string]
-
-    # Return the updated list
-    return output_list

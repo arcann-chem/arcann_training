@@ -4,9 +4,25 @@ import tempfile
 
 # deepmd_iterative imports
 from deepmd_iterative.common.list import (
-    replace_substring_in_list_of_strings,
     remove_strings_containing_substring_in_list_of_strings,
+    replace_substring_in_list_of_strings,
+
 )
+
+
+class TestRemoveStringsContainingSubstringInList(unittest.TestCase):
+    def setUp(self):
+        self.input_list = ["hello", "world", "hello world", "goodbye"]
+        self.substring = "hello"
+
+    def tearDown(self):
+        pass
+
+    def test_remove_strings_containing_substring(self):
+        output_list = remove_strings_containing_substring_in_list_of_strings(
+            self.input_list, self.substring
+        )
+        self.assertListEqual(output_list, ["world", "goodbye"])
 
 
 class TestReplaceSubstringInList(unittest.TestCase):
@@ -56,21 +72,6 @@ class TestReplaceSubstringInList(unittest.TestCase):
         self.assertEqual(output_list[0], "hellO wOrld")
         self.assertEqual(output_list[1], "fOO bar")
         self.assertEqual(output_list[2], "baz qux")
-
-
-class TestRemoveStringsContainingSubstringInList(unittest.TestCase):
-    def setUp(self):
-        self.input_list = ["hello", "world", "hello world", "goodbye"]
-        self.substring = "hello"
-
-    def tearDown(self):
-        pass
-
-    def test_remove_strings_containing_substring(self):
-        output_list = remove_strings_containing_substring_in_list_of_strings(
-            self.input_list, self.substring
-        )
-        self.assertListEqual(output_list, ["world", "goodbye"])
 
 
 if __name__ == '__main__':
