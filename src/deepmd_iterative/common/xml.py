@@ -6,6 +6,43 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 
 
+# Unittested
+def convert_list_of_strings_to_xml(list_string: List[str]) -> ET.ElementTree:
+    """Convert a list of strings to an XML tree.
+
+    Args:
+        list_string (List[str]): A list of strings, where each string represents a single line of the XML tree.
+
+    Returns:
+        ET.ElementTree: An XML tree.
+
+    """
+    # Join the lines of the list into a single string.
+    xml_string = "".join(list_string)
+    # Parse the string into an XML tree and return it.
+    return ET.ElementTree(ET.fromstring(xml_string))
+
+
+# Unittested
+def convert_xml_to_list_of_strings(xml_tree: ET.ElementTree) -> List[str]:
+    """Convert an XML tree to a list of strings.
+
+    Args:
+        xml_tree (xml.etree.ElementTree.ElementTree): The XML tree to convert.
+
+    Returns:
+        List[str]: A list of strings, where each string represents a single line of the XML tree.
+
+    """
+    # Convert the XML tree to a string.
+    xml_string = ET.tostring(xml_tree.getroot(), encoding="unicode", method="xml")
+    # Split the string into a list of lines.
+    lines = [line.strip() for line in xml_string.splitlines()]
+    # Return the list of lines.
+    return lines
+
+
+# Unittested
 def parse_xml_file(xml_file_path: Path) -> ET.ElementTree:
     """Reads an XML file and returns an ElementTree object.
 
@@ -39,40 +76,7 @@ def parse_xml_file(xml_file_path: Path) -> ET.ElementTree:
             # raise ET.ParseError(error_msg)
 
 
-def convert_xml_to_list_of_strings(xml_tree: ET.ElementTree) -> List[str]:
-    """Convert an XML tree to a list of strings.
-
-    Args:
-        xml_tree (xml.etree.ElementTree.ElementTree): The XML tree to convert.
-
-    Returns:
-        List[str]: A list of strings, where each string represents a single line of the XML tree.
-
-    """
-    # Convert the XML tree to a string.
-    xml_string = ET.tostring(xml_tree.getroot(), encoding="unicode", method="xml")
-    # Split the string into a list of lines.
-    lines = [line.strip() for line in xml_string.splitlines()]
-    # Return the list of lines.
-    return lines
-
-
-def convert_list_of_strings_to_xml(list_string: List[str]) -> ET.ElementTree:
-    """Convert a list of strings to an XML tree.
-
-    Args:
-        list_string (List[str]): A list of strings, where each string represents a single line of the XML tree.
-
-    Returns:
-        ET.ElementTree: An XML tree.
-
-    """
-    # Join the lines of the list into a single string.
-    xml_string = "".join(list_string)
-    # Parse the string into an XML tree and return it.
-    return ET.ElementTree(ET.fromstring(xml_string))
-
-
+# Unittested
 def write_xml(xml_tree: ET.ElementTree, file_path: Path):
     """Write an XML tree to a file.
 
