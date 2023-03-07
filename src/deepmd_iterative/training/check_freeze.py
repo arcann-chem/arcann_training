@@ -3,23 +3,25 @@ import logging
 import sys
 
 # deepmd_iterative imports
+from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
 )
-from deepmd_iterative.common.check import validate_step_folder
 
 
 def main(
-    step_name,
-    phase_name,
-    deepmd_iterative_path,
-    fake_machine=None,
-    input_fn="input.json",
+    step_name: str,
+    phase_name: str,
+    deepmd_iterative_path: Path,
+    fake_machine = None,
+    input_fn: str = "input.json",
 ):
+    # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
     training_path = current_path.parent
 
+    # Log the step and phase of the program
     logging.info(f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()}")
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
@@ -30,14 +32,14 @@ def main(
     validate_step_folder(step_name)
 
     # Get iteration
-    current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
-    current_iteration = int(current_iteration_zfill)
+    padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
+    curr_iter = int(padded_curr_iter)
 
-    # Get control path and config_json
+    # Get control path, config JSON and training JSON
     control_path = training_path / "control"
     config_json = load_json_file((control_path / "config.json"))
     training_json = load_json_file(
-        (control_path / f"training_{current_iteration_zfill}.json")
+        (control_path / f"training_{padded_curr_iter}.json")
     )
 
     # Checks
@@ -51,7 +53,7 @@ def main(
         local_path = Path(".").resolve() / str(it_nnp)
         if (
             local_path
-            / ("graph_" + str(it_nnp) + "_" + current_iteration_zfill + ".pb")
+            / ("graph_" + str(it_nnp) + "_" + padded_curr_iter + ".pb")
         ).is_file():
             completed_count += 1
         else:
@@ -72,7 +74,7 @@ def main(
     del completed_count
 
     write_json_file(
-        training_json, (control_path / f"training_{current_iteration_zfill}.json")
+        training_json, (control_path / f"training_{padded_curr_iter}.json")
     )
 
     logging.info(
@@ -82,7 +84,7 @@ def main(
     # Cleaning
     del control_path
     del config_json
-    del current_iteration, current_iteration_zfill
+    del curr_iter, padded_curr_iter
     del training_json
     del training_path, current_path
 

@@ -5,35 +5,39 @@ import copy
 import subprocess
 
 # deepmd_iterative imports
+from deepmd_iterative.common.check import validate_step_folder
+from deepmd_iterative.common.file import (
+    change_directory,
+    check_file_existence,
+    file_to_list_of_strings,
+    write_list_of_strings_to_file,
+)
 from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
-    backup_and_overwrite_json_file,
     load_default_json_file,
-    read_key_input_json,
+    backup_and_overwrite_json_file,
 )
-from deepmd_iterative.common.machine import get_machine_spec_for_step
-from deepmd_iterative.common.file import (
-    check_file_existence,
-    file_to_list_of_strings,
-    change_directory,
-    write_list_of_strings_to_file,
+from deepmd_iterative.common.json_parameters import (
+    get_key_in_dict,
+    get_machine_keyword,
 )
-from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.slurm import replace_in_slurm_file_general
 from deepmd_iterative.common.list import replace_substring_in_list_of_strings
-
+from deepmd_iterative.common.machine import get_machine_spec_for_step
+from deepmd_iterative.common.slurm import replace_in_slurm_file_general
 
 def main(
-    step_name,
-    phase_name,
-    deepmd_iterative_path,
-    fake_machine=None,
-    input_fn="input.json",
+    step_name: str,
+    phase_name: str,
+    deepmd_iterative_path: Path,
+    fake_machine = None,
+    input_fn: str = "input.json",
 ):
+    # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
     training_path = current_path.parent
 
+    # Log the step and phase of the program
     logging.info(f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()}")
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
@@ -44,46 +48,53 @@ def main(
     validate_step_folder(step_name)
 
     # Get iteration
-    current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
-    current_iteration = int(current_iteration_zfill)
+    padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
+    curr_iter = int(padded_curr_iter)
 
-    # Get default inputs json
+    # Load the master input JSON file for the program
     default_present = False
-    default_input_json = load_default_json_file(
-        deepmd_iterative_path / "data" / "inputs.json"
-    )
-    if bool(default_input_json):
+    default_json = load_default_json_file(deepmd_iterative_path / "data" / "input_defaults.json")[step_name]
+    if bool(default_json):
         default_present = True
+    logging.debug(f"default_json: {default_json}")
+    logging.debug(f"default_present: {default_present}")
 
-    # Get input json (user one)
+    # Load the user input JSON file
     if (current_path / input_fn).is_file():
         input_json = load_json_file((current_path / input_fn))
+        input_present = True
     else:
         input_json = {}
+        input_present = False
+    logging.debug(f"input_json: {input_json}")
+    logging.debug(f"input_present: {input_present}")
+
+    # Make a deepcopy
     new_input_json = copy.deepcopy(input_json)
 
-    # Get control path and config_json
+    # Get control path, config JSON and training JSON
     control_path = training_path / "control"
     config_json = load_json_file((control_path / "config.json"))
     training_json = load_json_file(
-        (control_path / f"training_{current_iteration_zfill}.json")
+        (control_path / f"training_{padded_curr_iter}.json")
     )
+
+    # Get extra needed paths
     jobs_path = deepmd_iterative_path / "data" / "jobs" / "training"
 
-    # Get user machine keyword
-    user_machine_keyword = read_key_input_json(
-        input_json,
-        new_input_json,
-        "user_machine_keyword",
-        default_input_json,
-        step_name,
-        default_present,
-    )
+    # Get the machine keyword (input override training override default_json)
+    # And update the new input
+    user_machine_keyword = get_machine_keyword(input_json, training_json, default_json)
+    logging.debug(f"user_machine_keyword: {user_machine_keyword}")
+    new_input_json["user_machine_keyword"] = user_machine_keyword
+    logging.debug(f"new_input_json: {new_input_json}")
+    # Set it to None if bool, because: get_machine_spec_for_step needs None
     user_machine_keyword = (
         None if isinstance(user_machine_keyword, bool) else user_machine_keyword
     )
+    logging.debug(f"user_machine_keyword: {user_machine_keyword}")
 
-    # Read machine spec
+    # From the keyword (or default), get the machine spec (or for the fake one)
     (
         machine,
         machine_spec,
@@ -96,6 +107,11 @@ def main(
         fake_machine,
         user_machine_keyword,
     )
+    logging.debug(f"machine: {machine}")
+    logging.debug(f"machine_spec: {machine_spec}")
+    logging.debug(f"machine_walltime_format: {machine_walltime_format}")
+    logging.debug(f"machine_launch_command: {machine_launch_command}")
+
     if fake_machine is not None:
         logging.info(f"Pretending to be on: {fake_machine}")
     else:
@@ -115,6 +131,7 @@ def main(
     slurm_file_master = file_to_list_of_strings(
         jobs_path / f"job_deepmd_compress_{machine_spec['arch_type']}_{machine}.sh"
     )
+    job_email = get_key_in_dict("job_email", input_json, training_json, default_json)
     del jobs_path
 
     # Prep and launch DP Compress
@@ -125,14 +142,6 @@ def main(
 
         check_file_existence(local_path / "model.ckpt.index")
 
-        job_email = read_key_input_json(
-            input_json,
-            new_input_json,
-            "job_email",
-            default_input_json,
-            step_name,
-            default_present,
-        )
         slurm_file = replace_in_slurm_file_general(
             slurm_file_master,
             machine_spec,
@@ -147,7 +156,7 @@ def main(
         slurm_file = replace_substring_in_list_of_strings(
             slurm_file,
             "_R_DEEPMD_MODEL_",
-            "graph_" + str(it_nnp) + "_" + current_iteration_zfill,
+            "graph_" + str(it_nnp) + "_" + padded_curr_iter,
         )
 
         write_list_of_strings_to_file(
@@ -196,7 +205,7 @@ def main(
     logging.info(f"-" * 88)
     write_json_file(config_json, (control_path / "config.json"))
     write_json_file(
-        training_json, (control_path / f"training_{current_iteration_zfill}.json")
+        training_json, (control_path / f"training_{padded_curr_iter}.json")
     )
     backup_and_overwrite_json_file(new_input_json, (current_path / input_fn))
     logging.info(f"-" * 88)
@@ -217,7 +226,7 @@ def main(
     # Cleaning
     del control_path
     del config_json
-    del current_iteration, current_iteration_zfill
+    del curr_iter, padded_curr_iter
     del training_json
     del training_path, current_path
 

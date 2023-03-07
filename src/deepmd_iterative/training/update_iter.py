@@ -4,30 +4,32 @@ import sys
 import subprocess
 
 # deepmd_iterative imports
-from deepmd_iterative.common.json import (
-    load_json_file,
-    write_json_file,
-)
+from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.file import (
+    check_directory,
     check_file_existence,
     remove_file,
     remove_files_matching_glob,
     remove_tree,
-    check_directory,
 )
-from deepmd_iterative.common.check import validate_step_folder
+from deepmd_iterative.common.json import (
+    load_json_file,
+    write_json_file,
+)
 
 
 def main(
-    step_name,
-    phase_name,
-    deepmd_iterative_path,
-    fake_machine=None,
-    input_fn="input.json",
+    step_name: str,
+    phase_name: str,
+    deepmd_iterative_path: Path,
+    fake_machine = None,
+    input_fn: str = "input.json",
 ):
+    # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
     training_path = current_path.parent
 
+    # Log the step and phase of the program
     logging.info(f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()}")
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
@@ -38,14 +40,14 @@ def main(
     validate_step_folder(step_name)
 
     # Get iteration
-    current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
-    current_iteration = int(current_iteration_zfill)
+    padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
+    curr_iter = int(padded_curr_iter)
 
-    # Get control path and config_json
+    # Get control path, config JSON and training JSON
     control_path = training_path / "control"
     config_json = load_json_file((control_path / "config.json"))
     training_json = load_json_file(
-        (control_path / f"training_{current_iteration_zfill}.json")
+        (control_path / f"training_{padded_curr_iter}.json")
     )
 
     # Checks
@@ -59,7 +61,7 @@ def main(
         local_path = Path(".").resolve() / str(it_nnp)
         check_file_existence(
             local_path
-            / ("graph_" + str(it_nnp) + "_" + current_iteration_zfill + ".pb")
+            / ("graph_" + str(it_nnp) + "_" + padded_curr_iter + ".pb")
         )
         if training_json["is_compressed"]:
             check_file_existence(
@@ -68,7 +70,7 @@ def main(
                     "graph_"
                     + str(it_nnp)
                     + "_"
-                    + current_iteration_zfill
+                    + padded_curr_iter
                     + "_compressed.pb"
                 )
             )
@@ -83,15 +85,15 @@ def main(
             remove_tree(local_path / "model-compression")
 
     # Prepare the test folder
-    (training_path / (current_iteration_zfill + "-test")).mkdir(exist_ok=True)
-    check_directory((training_path / (current_iteration_zfill + "-test")))
+    (training_path / (padded_curr_iter + "-test")).mkdir(exist_ok=True)
+    check_directory((training_path / (padded_curr_iter + "-test")))
 
     subprocess.run(
         [
             "rsync",
             "-a",
             str(training_path / "data"),
-            str(training_path / (current_iteration_zfill + "-test")),
+            str(training_path / (padded_curr_iter + "-test")),
         ]
     )
 
@@ -114,7 +116,7 @@ def main(
                             + "/graph_"
                             + str(it_nnp)
                             + "_"
-                            + current_iteration_zfill
+                            + padded_curr_iter
                             + "_compressed.pb"
                         )
                     ),
@@ -132,7 +134,7 @@ def main(
                         + "/graph_"
                         + str(it_nnp)
                         + "_"
-                        + current_iteration_zfill
+                        + padded_curr_iter
                         + ".pb"
                     )
                 ),
@@ -142,15 +144,15 @@ def main(
     del it_nnp
 
     # Next iteration
-    current_iteration = current_iteration + 1
-    config_json["current_iteration"] = current_iteration
-    current_iteration_zfill = str(current_iteration).zfill(3)
+    curr_iter = curr_iter + 1
+    config_json["curr_iter"] = curr_iter
+    padded_curr_iter = str(curr_iter).zfill(3)
 
     for it_steps in ["exploration", "reactive", "labeling", "training"]:
-        (training_path / (current_iteration_zfill + "-" + it_steps)).mkdir(
+        (training_path / (padded_curr_iter + "-" + it_steps)).mkdir(
             exist_ok=True
         )
-        check_directory(training_path / (current_iteration_zfill + "-" + it_steps))
+        check_directory(training_path / (padded_curr_iter + "-" + it_steps))
     del it_steps
 
     # Delete the temp data folder
@@ -170,7 +172,7 @@ def main(
     # Cleaning
     del control_path
     del config_json
-    del current_iteration, current_iteration_zfill
+    del curr_iter, padded_curr_iter
     del training_json
     del training_path, current_path
 

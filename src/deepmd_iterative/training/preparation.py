@@ -9,36 +9,37 @@ import random
 import numpy as np
 
 # deepmd_iterative imports
-from deepmd_iterative.common.json import (
-    load_json_file,
-    write_json_file,
-    backup_and_overwrite_json_file,
-    load_default_json_file,
-    read_key_input_json,
-)
-from deepmd_iterative.common.machine import get_machine_spec_for_step
+from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.file import (
+    check_directory,
     check_file_existence,
     file_to_list_of_strings,
-    check_directory,
     write_list_of_strings_to_file,
 )
+from deepmd_iterative.common.json import (
+    backup_and_overwrite_json_file,
+    load_default_json_file,
+    load_json_file,
+    write_json_file,
+)
+from deepmd_iterative.common.json_parameters import (
+    get_machine_keyword,
+    set_training_json,
+)
+from deepmd_iterative.common.list import replace_substring_in_list_of_strings
+from deepmd_iterative.common.machine import get_machine_spec_for_step
+from deepmd_iterative.common.slurm import replace_in_slurm_file_general
 from deepmd_iterative.common.training import (
     calculate_decay_rate,
     calculate_decay_steps,
     check_initial_datasets,
 )
-from deepmd_iterative.common.list import replace_substring_in_list_of_strings
-from deepmd_iterative.common.slurm import replace_in_slurm_file_general
-from deepmd_iterative.common.check import validate_step_folder
-#from deepmd_iterative.common.generate_config import set_training_json
-from deepmd_iterative.common.json_parameters import get_machine_keyword, set_training_json
 
 def main(
     step_name: str,
     phase_name: str,
-    deepmd_iterative_path,
-    fake_machine=None,
+    deepmd_iterative_path: Path,
+    fake_machine = None,
     input_fn: str = "input.json",
 ):
     # Get the current path and set the training path as the parent of the current path
@@ -599,9 +600,6 @@ def main(
         training_input_json_fpath = Path(str(it_nnp) + "/training.json").resolve()
 
         write_json_file(training_input_json, training_input_json_fpath, False)
-
-        # Slurm file
-        #job_email = get_key_in_dict("job_email", input_json, prevtraining_json, default_json)
 
         slurm_file = replace_in_slurm_file_general(
             slurm_file_master,

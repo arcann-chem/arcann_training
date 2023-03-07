@@ -1,10 +1,109 @@
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union, Any
 import logging
 import sys
 from copy import deepcopy
 
 from deepmd_iterative.common.json import load_json_file
+
+
+def get_key_in_dict(
+    key: str,
+    input_json: Dict,
+    previous_json: Dict,
+    default_json: Dict
+)-> Any:
+    """
+    Get the value of the key from input_json, previous_json, or default_json, and validate its type.
+
+    Args:
+    key (str): The key to look up.
+    input_json (Dict): The input JSON object containing user-defined parameters.
+    previous_json (Dict): The previous JSON object containing user-defined parameters..
+    default_json (Dict): The input JSON object containing default parameters.
+
+    Returns:
+    Any: The value of the key, if it exists and is of the correct type.
+
+    Raises:
+    TypeError: If the value of the "user_machine_keyword" key is not of the correct type.
+    """
+
+    # The key to look up in the dictionaries.
+
+    # Check if the key is present in any of the dictionaries, and set the value accordingly.
+    if key in input_json:
+        value = input_json[key]
+    elif key in previous_json:
+        value = previous_json[key]
+    elif key in default_json:
+        value = default_json[key]
+    else:
+        # The key is not present in any of the dictionaries.
+        logging.error(f'"{key}" not found in input or default JSON')
+        sys.exit(1)
+
+    # Check if the value is of the correct type.
+    if (not isinstance(value, type(default_json[key]))):
+        # The value is not of the correct type.
+        logging.error(f'Wrong type: "{key}" is {type(value)}')
+        logging.error(f'"{key}" should be a {type(default_json[key])}')
+        logging.error(f"Aborting...")
+        sys.exit(1)
+
+    return value
+
+def get_machine_keyword(
+    input_json: Dict,
+    previous_json: Dict,
+    default_json: Dict
+)-> Union[bool,str,List[str]]:
+    """
+    Get the value of the "user_machine_keyword" key from input_json, previous_json, or default_json, and validate its type.
+
+    Args:
+    input_json (Dict): The input JSON object containing user-defined parameters.
+    previous_json (Dict): The previous JSON object containing user-defined parameters..
+    default_json (Dict): The input JSON object containing default parameters.
+
+    Returns:
+    Union[bool, str, List[str]]: The value of the "user_machine_keyword" key, if it exists and is of the correct type.
+
+    Raises:
+    TypeError: If the value of the "user_machine_keyword" key is not of the correct type.
+    """
+
+    # The key to look up in the dictionaries.
+    key = "user_machine_keyword"
+
+    # Check if the key is present in any of the dictionaries, and set the value accordingly.
+    if key in input_json:
+        value = input_json[key]
+    elif key in previous_json:
+        value = previous_json[key]
+    elif key in default_json:
+        value = default_json[key]
+    else:
+        # The key is not present in any of the dictionaries.
+        logging.error(f'"{key}" not found in input or default JSON')
+        sys.exit(1)
+
+    # Check if the value is of the correct type.
+    if (
+        not isinstance(value, bool) and
+        not (isinstance(value, str) and value != "") and
+        not (isinstance(value, List) and [isinstance(value[_], str) for _ in range(len(value))])
+        ):
+        # The value is not of the correct type.
+        logging.error(f'Wrong type: "{key}" is {type(value)}')
+        logging.error(f'"{key}" should be a boolean: false or true (Meaning it is deactivated)')
+        logging.error(f'"{key}" should be a list of strings in the form: ["project", "allocation", "arch_name"]')
+        logging.error(f'"{key}" should be a non-empty string in the form: "shortcut"')
+        logging.error(f"Aborting...")
+        sys.exit(1)
+
+    return value
+
 
 # Used in initialization - init
 def set_config_json(
@@ -63,105 +162,6 @@ def set_config_json(
         config_json["subsys_nr"][key] = {}
 
     return config_json, new_input_json, padded_curr_iter
-
-
-def get_machine_keyword(
-    input_json: Dict,
-    previous_json: Dict,
-    default_json: Dict
-)-> Union[bool,str,List[str]]:
-    """
-    Get the value of the "user_machine_keyword" key from input_json, previous_json, or default_json, and validate its type.
-
-    Args:
-    input_json (Dict): The input JSON object containing user-defined parameters.
-    previous_json (Dict): The previous JSON object containing user-defined parameters..
-    default_json (Dict): The input JSON object containing default parameters.
-
-    Returns:
-    Union[bool, str, List[str]]: The value of the "user_machine_keyword" key, if it exists and is of the correct type.
-
-    Raises:
-    TypeError: If the value of the "user_machine_keyword" key is not of the correct type.
-    """
-
-    # The key to look up in the dictionaries.
-    key = "user_machine_keyword"
-
-    # Check if the key is present in any of the dictionaries, and set the value accordingly.
-    if key in input_json:
-        value = input_json[key]
-    elif key in previous_json:
-        value = previous_json[key]
-    elif key in default_json:
-        value = default_json[key]
-    else:
-        # The key is not present in any of the dictionaries.
-        logging.error(f'"{key}" not found in input or default JSON')
-        sys.exit(1)
-
-    # Check if the value is of the correct type.
-    if (
-        not isinstance(value, bool) and
-        not (isinstance(value, str) and value != "") and
-        not (isinstance(value, List) and [isinstance(value[_], str) for _ in range(len(value))])
-        ):
-        # The value is not of the correct type.
-        logging.error(f'Wrong type: "{key}" is {type(value)}')
-        logging.error(f'"{key}" should be a boolean: false or true (Meaning it is deactivated)')
-        logging.error(f'"{key}" should be a list of strings in the form: ["project", "allocation", "arch_name"]')
-        logging.error(f'"{key}" should be a non-empty string in the form: "shortcut"')
-        logging.error(f"Aborting...")
-        sys.exit(1)
-
-    return value
-
-# def get_key_in_dict(
-#     key: str,
-#     input_json: Dict,
-#     previous_json: Dict,
-#     default_json: Dict
-# )-> Union[bool,str,List[str]]:
-#     """
-#     Get the value of the "user_machine_keyword" key from input_json, previous_json, or default_json, and validate its type.
-
-#     Args:
-#     key (str): The key to look up.
-#     input_json (Dict): The input JSON object containing user-defined parameters.
-#     previous_json (Dict): The previous JSON object containing user-defined parameters..
-#     default_json (Dict): The input JSON object containing default parameters.
-
-#     Returns:
-#     Union[bool, str, List[str]]: The value of the "user_machine_keyword" key, if it exists and is of the correct type.
-
-#     Raises:
-#     TypeError: If the value of the "user_machine_keyword" key is not of the correct type.
-#     """
-
-#     # The key to look up in the dictionaries.
-
-#     # Check if the key is present in any of the dictionaries, and set the value accordingly.
-#     if key in input_json:
-#         value = input_json[key]
-#     elif key in previous_json:
-#         value = previous_json[key]
-#     elif key in default_json:
-#         value = default_json[key]
-#     else:
-#         # The key is not present in any of the dictionaries.
-#         logging.error(f'"{key}" not found in input or default JSON')
-#         sys.exit(1)
-
-#     # Check if the value is of the correct type.
-#     if (not isinstance(value, type(default_json[key]))):
-#         # The value is not of the correct type.
-#         logging.error(f'Wrong type: "{key}" is {type(value)}')
-#         logging.error(f'"{key}" should be a {type(default_json[key])}')
-#         logging.error(f"Aborting...")
-#         sys.exit(1)
-
-#     return value
-
 
 
 def set_training_json(

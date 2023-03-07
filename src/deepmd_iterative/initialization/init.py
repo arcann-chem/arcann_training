@@ -1,19 +1,18 @@
 from pathlib import Path
 import logging
 import sys
-import copy
 
 # Non-standard library imports
 import numpy as np
 
 # deepmd_iterative imports
-from deepmd_iterative.common.json import (
-    load_json_file,
-    load_default_json_file,
-    write_json_file,
-    backup_and_overwrite_json_file
-)
 from deepmd_iterative.common.file import check_directory, check_file_existence
+from deepmd_iterative.common.json import (
+    backup_and_overwrite_json_file,
+    load_default_json_file,
+    load_json_file,
+    write_json_file,
+)
 from deepmd_iterative.common.json_parameters import set_config_json
 
 
