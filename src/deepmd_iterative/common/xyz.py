@@ -7,7 +7,7 @@ import re
 # Non-standard library imports
 import numpy as np
 
-
+# Unittested
 def read_xyz_trajectory(file_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Read an XYZ format trajectory file and return the number of atoms, atomic symbols, and atomic coordinates.
@@ -114,7 +114,7 @@ def read_xyz_trajectory(file_path: Path) -> Tuple[np.ndarray, np.ndarray, np.nda
 
     return num_atoms, atom_symbols, atom_coords
 
-
+# Unittested
 def write_xyz_frame_to_file(
     file_path: Path,
     frame_idx: int,

@@ -1,13 +1,17 @@
 from pathlib import Path
+
+# Unittest imports
 import unittest
 import tempfile
-from pathlib import Path
 
-# Non-standard imports
+# Non-standard library imports
 import numpy as np
 
 # deepmd_iterative imports
-from deepmd_iterative.common.xyz import read_xyz_trajectory, write_xyz_frame_to_file
+from deepmd_iterative.common.xyz import (
+    read_xyz_trajectory,
+    write_xyz_frame_to_file,
+)
 
 
 class TestReadXYZTrajectory(unittest.TestCase):
@@ -280,6 +284,6 @@ class TestWriteXYZFrameToFile(unittest.TestCase):
             )
         self.assertEqual(cm.exception.code, 1)
 
+
 if __name__ == '__main__':
     unittest.main()
-    
