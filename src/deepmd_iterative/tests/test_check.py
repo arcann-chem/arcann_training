@@ -1,37 +1,19 @@
 from pathlib import Path
+import logging
+import os
+import shutil
+
+# Unittest imports
 import unittest
 import tempfile
-import shutil
-import os
-import logging
 from unittest.mock import patch
 
 # deepmd_iterative imports
-from deepmd_iterative.common.check import validate_step_folder, check_atomsk, check_vmd
-
-
-class TestValidateStepFolder(unittest.TestCase):
-    def setUp(self):
-        self.temp_dir = tempfile.TemporaryDirectory()
-        self.step_name = "step1"
-        os.chdir(self.temp_dir.name)
-        os.mkdir(self.step_name)
-
-    def tearDown(self):
-        self.temp_dir.cleanup()
-
-    def test_validate_step_folder(self):
-        os.chdir(self.temp_dir.name)
-        os.chdir(self.step_name)
-        validate_step_folder(self.step_name)
-
-    def test_validate_step_folder_raises_error(self):
-        os.chdir(self.temp_dir.name)
-        os.chdir(self.step_name)
-        with self.assertRaises(SystemExit) as cm:
-            validate_step_folder("step2")
-        self.assertEqual(cm.exception.code, 1)
-
+from deepmd_iterative.common.check import (
+    check_atomsk,
+    check_vmd,
+    validate_step_folder,
+)
 
 class TestCheckAtomsk(unittest.TestCase):
     def setUp(self):
@@ -130,6 +112,50 @@ class TestCheckVMD(unittest.TestCase):
         vmd_bin = check_vmd()
         self.assertEqual(vmd_bin, str(vmd_path.resolve()))
 
+
+class TestValidateStepFolder(unittest.TestCase):
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.step_name = "step1"
+        self.step_folder = Path(self.temp_dir.name) / self.step_name
+        self.step_folder.mkdir()
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def test_validate_step_folder(self):
+        with self.step_folder:
+            validate_step_folder(self.step_name)
+
+    def test_validate_step_folder_raises_error(self):
+        with self.assertRaises(SystemExit) as cm:
+            with self.step_folder:
+                validate_step_folder("step2")
+        self.assertEqual(cm.exception.code, 1)
+
+
+class TestValidateStepFolder(unittest.TestCase):
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.step_name = "step1"
+        os.chdir(self.temp_dir.name)
+        Path(self.step_name).mkdir()
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def test_validate_step_folder(self):
+        os.chdir(self.temp_dir.name)
+        os.chdir(self.step_name)
+        validate_step_folder(self.step_name)
+
+    def test_validate_step_folder_raises_error(self):
+        os.chdir(self.temp_dir.name)
+        os.chdir(self.step_name)
+        with self.assertRaises(SystemExit) as cm:
+            validate_step_folder("step2")
+        self.assertEqual(cm.exception.code, 1)
+
+
 if __name__ == '__main__':
     unittest.main()
-    

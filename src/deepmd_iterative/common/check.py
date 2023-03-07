@@ -5,27 +5,7 @@ import os
 import subprocess
 
 
-def validate_step_folder(step_name: str) -> None:
-    """
-    Check if the current directory matches the expected directory for the step.
-
-    Args:
-        step_name (str): The name of the step being executed.
-
-    Raises:
-        ValueError: If the current directory name does not contain the step name.
-    """
-    # get the path of the current directory
-    current_directory = Path(".").resolve()
-
-    # check if the current directory name contains the step name
-    if step_name not in current_directory.name:
-        error_msg = f"The current directory ({current_directory}) does not match the expected directory for the {step_name} step."
-        logging.error(f"{error_msg}\nAborting...")
-        sys.exit(1)
-        # raise ValueError(error_msg)
-
-
+# Unittested
 def check_atomsk(atomsk_path: str = None) -> str:
     """
     Check if the Atomsk command is available on the system.
@@ -75,6 +55,7 @@ def check_atomsk(atomsk_path: str = None) -> str:
         sys.exit(1)
 
 
+# Unittested
 def check_vmd(vmd_path: str = None) -> str:
     """
     Check if the VMD command is available on the system.
@@ -122,3 +103,25 @@ def check_vmd(vmd_path: str = None) -> str:
         error_msg = "VMD not found."
         logging.error(f"{error_msg}\nAborting...")
         sys.exit(1)
+
+
+# Unittested
+def validate_step_folder(step_name: str) -> None:
+    """
+    Check if the current directory matches the expected directory for the step.
+
+    Args:
+        step_name (str): The name of the step being executed.
+
+    Raises:
+        ValueError: If the current directory name does not contain the step name.
+    """
+    # get the path of the current directory
+    current_directory = Path(".").resolve()
+
+    # check if the current directory name contains the step name
+    if step_name not in current_directory.name:
+        error_msg = f"The current directory ({current_directory}) does not match the expected directory for the {step_name} step."
+        logging.error(f"{error_msg}\nAborting...")
+        sys.exit(1)
+        # raise ValueError(error_msg)
