@@ -6,45 +6,48 @@ import subprocess
 import random
 
 # deepmd_iterative imports
+from deepmd_iterative.common.check import validate_step_folder, check_atomsk
+from deepmd_iterative.common.exploration import (
+    generate_starting_points,
+    create_models_list,
+    update_nb_steps_factor,
+    get_subsys_params_exploration,
+)
+from deepmd_iterative.common.file import (
+    check_file_existence,
+    file_to_list_of_strings,
+    write_list_of_strings_to_file,
+)
+from deepmd_iterative.common.ipi import get_temperature_from_ipi_xml
 from deepmd_iterative.common.json import (
-    load_json_file,
-    write_json_file,
     backup_and_overwrite_json_file,
     load_default_json_file,
-    read_key_input_json,
+    load_json_file,
+    write_json_file,
+)
+from deepmd_iterative.common.json_parameters import (
+    get_machine_keyword,
+    set_new_input_explor_json,
+    get_key_in_dict,
 )
 from deepmd_iterative.common.list import replace_substring_in_list_of_strings
+from deepmd_iterative.common.lammps import parse_lammps_data
+from deepmd_iterative.common.machine import get_machine_spec_for_step
+from deepmd_iterative.common.plumed import analyze_plumed_file_for_movres
+from deepmd_iterative.common.slurm import replace_in_slurm_file_general
 from deepmd_iterative.common.xml import (
     parse_xml_file,
     convert_xml_to_list_of_strings,
     convert_list_of_strings_to_xml,
     write_xml,
 )
-from deepmd_iterative.common.machine import get_machine_spec_for_step
-from deepmd_iterative.common.file import (
-    check_file_existence,
-    file_to_list_of_strings,
-    write_list_of_strings_to_file,
-)
-
-from deepmd_iterative.common.slurm import replace_in_slurm_file_general
-from deepmd_iterative.common.check import validate_step_folder, check_atomsk
-from deepmd_iterative.common.plumed import analyze_plumed_file_for_movres
-from deepmd_iterative.common.lammps import parse_lammps_data
-from deepmd_iterative.common.exploration import (
-    generate_starting_points,
-    create_models_list,
-    update_nb_steps_factor,
-)
-from deepmd_iterative.common.ipi import get_temperature_from_ipi_xml
-from deepmd_iterative.common.generate_config import set_subsys_params_exploration
 
 
 def main(
     step_name: str,
     phase_name: str,
-    deepmd_iterative_path,
-    fake_machine=None,
+    deepmd_iterative_path: Path,
+    fake_machine = None,
     input_fn: str = "input.json",
 ):
     # Get the current path and set the training path as the parent of the current path
@@ -62,69 +65,69 @@ def main(
     validate_step_folder(step_name)
 
     # Get the current iteration number
-    current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
-    current_iteration = int(current_iteration_zfill)
+    padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
+    curr_iter = int(padded_curr_iter)
 
-    # Load the default input JSON file for the program
+    # Load the master input JSON file for the program
     default_present = False
-    default_input_json = load_default_json_file(
-        deepmd_iterative_path / "data" / "inputs.json"
-    )
-    if bool(default_input_json):
+    default_json = load_default_json_file(deepmd_iterative_path / "data" / "input_defaults.json")[step_name]
+    if bool(default_json):
         default_present = True
+    logging.debug(f"default_json: {default_json}")
+    logging.debug(f"default_present: {default_present}")
 
-    # Check if the user input JSON file is present
+    # Load the user input JSON file
     if (current_path / input_fn).is_file():
         input_json = load_json_file((current_path / input_fn))
         input_present = True
     else:
         input_json = {}
         input_present = False
+    logging.debug(f"input_json: {input_json}")
+    logging.debug(f"input_present: {input_present}")
+
+    # Make a deepcopy
     new_input_json = copy.deepcopy(input_json)
 
-    # Check if the atomsk package is installed
-    atomsk_bin = check_atomsk(
-        read_key_input_json(
-            input_json,
-            new_input_json,
-            "atomsk_path",
-            default_input_json,
-            step_name,
-            default_present,
-        )
-    )
-
-    # Get the control path and load the config JSON file
+    # Get control path and config_json
     control_path = training_path / "control"
     config_json = load_json_file((control_path / "config.json"))
-    # Load the previous iteration training JSON file
-    previous_iteration_zfill = str(current_iteration - 1).zfill(3)
-    prevtraining_json = load_json_file(
-        (control_path / ("training_" + previous_iteration_zfill + ".json"))
-    )
-    # Load the previous iteration exploration JSON file
-    if int(previous_iteration_zfill) > 0:
-        prevexploration_json = load_json_file(
-            (control_path / ("exploration_" + previous_iteration_zfill + ".json"))
-        )
 
-    # Get the path for the exploration jobs
-    jobs_path = deepmd_iterative_path / "data" / "jobs" / "exploration"
+    # Get extra needed paths
+    jobs_path = deepmd_iterative_path / "data" / "jobs" / step_name
 
-    # Get the user machine keyword from the input JSON file
-    user_machine_keyword = read_key_input_json(
-        input_json,
-        new_input_json,
-        "user_machine_keyword",
-        default_input_json,
-        step_name,
-        default_present,
-    )
+    # Load the previous training JSON and previous exploration JSON
+    if curr_iter > 0:
+        prev_iter = curr_iter - 1
+        padded_prev_iter = str(prev_iter).zfill(3)
+        prevtraining_json = load_json_file((control_path / f"training_{padded_prev_iter}.json"))
+        if prev_iter > 0:
+            prevexploration_json = load_json_file((control_path / ("exploration_" + padded_prev_iter + ".json")))
+        else:
+            prevexploration_json = {}
+    else:
+        prevtraining_json = {}
+        prevexploration_json = {}
+
+    # Check if the atomsk package is installed
+    atomsk_bin = check_atomsk(get_key_in_dict("atomsk_path", input_json, prevexploration_json, default_json))
+    # Update new input
+    new_input_json["atomsk_path"] = atomsk_bin
+
+    # Get the machine keyword (input override previous training override default_json)
+    # And update the new input
+    user_machine_keyword = get_machine_keyword(input_json, prevexploration_json, default_json)
+    logging.debug(f"user_machine_keyword: {user_machine_keyword}")
+    new_input_json["user_machine_keyword"] = user_machine_keyword
+    logging.debug(f"new_input_json: {new_input_json}")
+    # Set it to None if bool, because: get_machine_spec_for_step needs None
     user_machine_keyword = (
         None if isinstance(user_machine_keyword, bool) else user_machine_keyword
     )
+    logging.debug(f"user_machine_keyword: {user_machine_keyword}")
 
-    # Get the machine specifications for the current step
+
+    # From the keyword (or default), get the machine spec (or for the fake one)
     (
         machine,
         machine_spec,
@@ -137,26 +140,20 @@ def main(
         fake_machine,
         user_machine_keyword,
     )
-    # If a fake machine is being used
-    if fake_machine is not None:
-        logging.info(f"Pretending to be on {fake_machine}")
-    else:
-        logging.info(f"machine is {machine}")
-    del fake_machine
+    logging.debug(f"machine: {machine}")
+    logging.debug(f"machine_spec: {machine_spec}")
+    logging.debug(f"machine_walltime_format: {machine_walltime_format}")
+    logging.debug(f"machine_launch_command: {machine_launch_command}")
 
-    # # Checks
-    # if current_iteration > 0:
-    #     labeling_json = load_json_file(
-    #         (control_path / f"labeling_{current_iteration_zfill}.json"), True, True
-    #     )
-    #     if not labeling_json["is_extracted"]:
-    #         logging.error("Lock found. Execute first: training update_iter")
-    #         logging.error("Aborting...")
-    #         return 1
+    if fake_machine is not None:
+        logging.info(f"Pretending to be on: {fake_machine}")
+    else:
+        logging.info(f"We are on: {machine}")
+    del fake_machine
 
     # Get or create the exploration JSON object
     exploration_json = load_json_file(
-        (control_path / f"exploration_{current_iteration_zfill}.json"),
+        (control_path / f"exploration_{padded_curr_iter}.json"),
         abort_on_error=False,
     )
 
@@ -166,15 +163,15 @@ def main(
         "deepmd_model_version": prevtraining_json["deepmd_model_version"],
         "nb_nnp": config_json["nb_nnp"],
         "exploration_type": config_json["exploration_type"],
-        "nb_traj": read_key_input_json(
-            input_json,
-            new_input_json,
-            "nb_traj",
-            default_input_json,
-            step_name,
-            default_present,
-        ),
+        "nb_traj": get_key_in_dict("nb_traj", input_json, prevexploration_json, default_json)
     }
+    # Update the new input
+    new_input_json["nb_traj"] = exploration_json["nb_traj"]
+    logging.debug(f"new_input_json: {new_input_json}")
+
+    # Fill the missing values from the input. We don't do exploration because it is subsys dependent and single value and not list
+    new_input_json = set_new_input_explor_json(input_json,prevexploration_json,default_json,new_input_json,config_json)
+    logging.debug(f"new_input_json: {new_input_json}")
 
     # Set additional machine-related parameters in the JSON file
     exploration_json = {
@@ -197,6 +194,8 @@ def main(
         error_msg="No SLURM file present for the exploration step on this machine.",
     )
     slurm_file_master = file_to_list_of_strings(slurm_file_path)
+    logging.debug(f"slurm_file_master: {slurm_file_master[0:5]}, {slurm_file_master[-5:-1]}")
+    new_input_json["job_email"] = get_key_in_dict("job_email", input_json, prevexploration_json, default_json)
     del jobs_path
 
     ### Preparation of the exploration
@@ -277,61 +276,29 @@ def main(
             subsys_exp_time_ps,
             subsys_max_exp_time_ps,
             subsys_job_walltime_h,
-            subsys_disturbed_start,
+            subsys_init_exp_time_ps,
+            subsys_init_job_walltime_h,
             subsys_print_mult,
-        ) = set_subsys_params_exploration(
-            input_json,
-            new_input_json,
-            default_input_json,
-            config_json,
-            step_name,
-            default_present,
-            it0_subsys_nr,
-            exploration_type,
-        )
-        logging.debug(f"{subsys_timestep_ps,subsys_temperature_K,subsys_exp_time_ps,subsys_max_exp_time_ps,subsys_job_walltime_h,subsys_disturbed_start,subsys_print_mult}")
+            subsys_disturbed_start,
+        ) = get_subsys_params_exploration(new_input_json, it0_subsys_nr)
+        logging.debug(f"{subsys_timestep_ps,subsys_temperature_K,subsys_exp_time_ps,subsys_max_exp_time_ps,subsys_job_walltime_h,subsys_init_exp_time_ps,subsys_init_job_walltime_h,subsys_print_mult,subsys_disturbed_start}")
+
         # Set the subsys params for exploration
-        if current_iteration == 1:
-            # Initial Exploration Time
-            subsys_init_exp_time_ps = read_key_input_json(
-                input_json,
-                new_input_json,
-                "init_exp_time_ps",
-                default_input_json,
-                step_name,
-                default_present,
-                subsys_index=it0_subsys_nr,
-                subsys_number=len(config_json["subsys_nr"]),
-                exploration_dep=exploration_type,
-            )
-
-            # Initial Wall Time
-            subsys_init_job_walltime_h = read_key_input_json(
-                input_json,
-                new_input_json,
-                "init_job_walltime_h",
-                default_input_json,
-                step_name,
-                default_present,
-                subsys_index=it0_subsys_nr,
-                subsys_number=len(config_json["subsys_nr"]),
-                exploration_dep=exploration_type,
-            )
-
+        if curr_iter == 1:
             # No distrubed start
-            exploration_json["subsys_nr"][it_subsys_nr]["disturbed_start"] = False
+            subsys_disturbed_start = False
 
         else:
             # Get starting points
             (
                 starting_points,
                 starting_points_bckp,
-                exploration_json["subsys_nr"][it_subsys_nr]["disturbed_start"],
+                subsys_disturbed_start,
             ) = generate_starting_points(
                 exploration_type,
                 it_subsys_nr,
                 training_path,
-                previous_iteration_zfill,
+                padded_curr_iter,
                 prevexploration_json,
                 input_present,
                 subsys_disturbed_start,
@@ -344,7 +311,7 @@ def main(
             input_replace_dict["_R_TEMPERATURE_"] = f"{subsys_temperature_K}"
 
             # First exploration
-            if current_iteration == 1:
+            if curr_iter == 1:
                 subsys_lammps_data_fn = it_subsys_nr + ".lmp"
                 subsys_lammps_data = file_to_list_of_strings(
                     training_path / "files" / subsys_lammps_data_fn
@@ -372,7 +339,7 @@ def main(
                 if plumed[1]:
                     subsys_nb_steps = plumed[2]
                 # User inputs
-                elif input_present:
+                elif "subsys_exp_time_ps" in input_json:
                     subsys_nb_steps = subsys_exp_time_ps / subsys_timestep_ps
                 # Auto value
                 else:
@@ -383,9 +350,11 @@ def main(
                     if subsys_nb_steps > subsys_max_exp_time_ps / subsys_timestep_ps:
                         subsys_nb_steps = subsys_max_exp_time_ps / subsys_timestep_ps
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(subsys_nb_steps)}"
+                # Update the new input
+                new_input_json['subsys_exp_time_ps'] = subsys_nb_steps * subsys_timestep_ps
 
                 # Walltime
-                if input_present:
+                if "subsys_job_walltime_h" in input_json:
                     subsys_walltime_approx_s = int(subsys_job_walltime_h * 3600)
                 else:
                     # Abritary factor
@@ -398,6 +367,8 @@ def main(
                         )
                         * 1.20
                     )
+                # Update the new input
+                new_input_json['subsys_job_walltime_h'] = subsys_walltime_approx_s / 3600
 
             # Get print freq
             subsys_print_every_x_steps = subsys_nb_steps * subsys_print_mult
@@ -415,7 +386,7 @@ def main(
             input_replace_dict["_R_NB_BEADS_"] = str(8)
 
             # First exploration
-            if current_iteration == 1:
+            if curr_iter == 1:
                 subsys_lammps_data_fn = it_subsys_nr + ".lmp"
                 subsys_lammps_data = file_to_list_of_strings(
                     training_path / "inputs" / subsys_lammps_data_fn
@@ -463,8 +434,8 @@ def main(
                 if plumed[1]:
                     subsys_nb_steps = plumed[2]
                 # User inputs
-                elif input_present:
-                    subsys_nb_steps = subsys_max_exp_time_ps / subsys_timestep_ps
+                elif "subsys_exp_time_ps" in input_json:
+                    subsys_nb_steps = subsys_exp_time_ps / subsys_timestep_ps
                 # Auto value
                 else:
                     subsys_nb_steps *= update_nb_steps_factor(
@@ -474,6 +445,8 @@ def main(
                     if subsys_nb_steps > subsys_max_exp_time_ps / subsys_timestep_ps:
                         subsys_nb_steps = subsys_max_exp_time_ps / subsys_timestep_ps
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(subsys_nb_steps)}"
+                # Update the new input
+                new_input_json['subsys_exp_time_ps'] = subsys_nb_steps * subsys_timestep_ps
 
                 # Walltime
                 if input_present:
@@ -489,6 +462,8 @@ def main(
                         )
                         * 1.20
                     )
+                # Update the new input
+                new_input_json['subsys_job_walltime_h'] = subsys_walltime_approx_s / 3600
 
             # Get print freq
             subsys_print_every_x_steps = subsys_nb_steps * subsys_print_mult
@@ -510,7 +485,7 @@ def main(
                     config_json,
                     prevtraining_json,
                     it_nnp,
-                    previous_iteration_zfill,
+                    padded_curr_iter,
                     training_path,
                     local_path,
                 )
@@ -520,22 +495,22 @@ def main(
                     it_subsys_lammps_in = copy.deepcopy(subsys_lammps_in)
                     input_replace_dict[
                         "_R_SEED_VEL_"
-                    ] = f"{it_nnp}{random.randrange(0, 1000)}{it_number}{previous_iteration_zfill}"
+                    ] = f"{it_nnp}{random.randrange(0, 1000)}{it_number}{padded_curr_iter}"
                     input_replace_dict[
                         "_R_SEED_THER_"
-                    ] = f"{it_nnp}{random.randrange(0, 1000)}{it_number}{previous_iteration_zfill}"
+                    ] = f"{it_nnp}{random.randrange(0, 1000)}{it_number}{padded_curr_iter}"
                     input_replace_dict[
                         "_R_DCD_OUT_"
-                    ] = f"{it_subsys_nr}_{it_nnp}_{current_iteration_zfill}.dcd"
+                    ] = f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.dcd"
                     input_replace_dict[
                         "_R_RESTART_OUT_"
-                    ] = f"{it_subsys_nr}_{it_nnp}_{current_iteration_zfill}.restart"
+                    ] = f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.restart"
                     input_replace_dict["_R_MODEL_FILES_LIST_"] = models_string
                     input_replace_dict[
                         "_R_DEVI_OUT_"
-                    ] = f"model_devi_{it_subsys_nr}_{it_nnp}_{current_iteration_zfill}.out"
+                    ] = f"model_devi_{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.out"
                     # Get data files (starting points) and number of steps
-                    if current_iteration > 1:
+                    if curr_iter > 1:
                         if len(starting_points) == 0:
                             starting_point_list = copy.deepcopy(starting_points_bckp)
                         subsys_lammps_data_fn = starting_point_list[
@@ -568,7 +543,7 @@ def main(
                         ] = f"plumed_{it_subsys_nr}.dat"
                         input_replace_dict[
                             "_R_PLUMED_OUT_"
-                        ] = f"plumed_{it_subsys_nr}_{it_nnp}_{current_iteration_zfill}.log"
+                        ] = f"plumed_{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.log"
                         for it_plumed_input in plumed_input:
                             plumed_input[
                                 it_plumed_input
@@ -601,25 +576,17 @@ def main(
                         )
                     write_list_of_strings_to_file(
                         local_path
-                        / (f"{it_subsys_nr}_{it_nnp}_{current_iteration_zfill}.in"),
+                        / (f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.in"),
                         it_subsys_lammps_in,
                     )
 
                     # Slurm file
-                    job_email = read_key_input_json(
-                        input_json,
-                        new_input_json,
-                        "job_email",
-                        default_input_json,
-                        step_name,
-                        default_present,
-                    )
                     slurm_file = replace_in_slurm_file_general(
                         slurm_file_master,
                         machine_spec,
                         subsys_walltime_approx_s,
                         machine_walltime_format,
-                        job_email,
+                        new_input_json["job_email"],
                     )
 
                     slurm_file = replace_substring_in_list_of_strings(
@@ -635,7 +602,7 @@ def main(
                     slurm_file = replace_substring_in_list_of_strings(
                         slurm_file,
                         "_R_INPUT_FILE_",
-                        f"{it_subsys_nr}_{it_nnp}_{current_iteration_zfill}",
+                        f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}",
                     )
                     slurm_file = replace_substring_in_list_of_strings(
                         slurm_file, "_R_DATA_FILE_", f"{subsys_lammps_data_fn}"
@@ -665,7 +632,7 @@ def main(
                         / f"job_deepmd_{exploration_json['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
                         slurm_file,
                     )
-                    del it_subsys_lammps_in, job_email
+                    del it_subsys_lammps_in
                     del slurm_file
                 # i-PI
                 elif exploration_type == 1:
@@ -673,12 +640,12 @@ def main(
                     it_subsys_ipi_xml_aslist = copy.deepcopy(subsys_ipi_xml_aslist)
                     input_replace_dict[
                         "_R_SEED_"
-                    ] = f"{it_nnp}{random.randrange(0, 1000)}{it_number}{previous_iteration_zfill}"
+                    ] = f"{it_nnp}{random.randrange(0, 1000)}{it_number}{padded_curr_iter}"
                     input_replace_dict[
                         "_R_SUBSYS_"
-                    ] = f"{it_subsys_nr}_{it_nnp}_{current_iteration_zfill}"
+                    ] = f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}"
                     # Get data files (starting points) and number of steps
-                    if current_iteration > 1:
+                    if curr_iter > 1:
                         if len(starting_points) == 0:
                             starting_point_list = copy.deepcopy(starting_points_bckp)
                         subsys_ipi_xyz_fn = starting_point_list[
@@ -754,29 +721,21 @@ def main(
                     write_xml(
                         it_subsys_ipi_xml,
                         local_path
-                        / (f"{it_subsys_nr}_{it_nnp}_{current_iteration_zfill}.xml"),
+                        / (f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.xml"),
                     )
                     write_json_file(
                         it_subsys_ipi_json,
                         local_path
-                        / (f"{it_subsys_nr}_{it_nnp}_{current_iteration_zfill}.json"),
+                        / (f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.json"),
                     )
 
                     # Slurm file
-                    job_email = read_key_input_json(
-                        input_json,
-                        new_input_json,
-                        "job_email",
-                        default_input_json,
-                        step_name,
-                        default_present,
-                    )
                     slurm_file = replace_in_slurm_file_general(
                         slurm_file_master,
                         machine_spec,
                         subsys_walltime_approx_s,
                         machine_walltime_format,
-                        job_email,
+                        new_input_json["job_email"],
                     )
 
                     slurm_file = replace_substring_in_list_of_strings(
@@ -790,7 +749,7 @@ def main(
                     slurm_file = replace_substring_in_list_of_strings(
                         slurm_file,
                         "_R_INPUT_FILE_",
-                        f"{it_subsys_nr}_{it_nnp}_{current_iteration_zfill}",
+                        f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}",
                     )
                     slurm_file = replace_substring_in_list_of_strings(
                         slurm_file, "_R_DATA_FILE_", f"{subsys_ipi_xyz_fn}"
@@ -822,7 +781,6 @@ def main(
                         it_subsys_ipi_xml_aslist,
                         it_subsys_ipi_xml,
                         it_subsys_ipi_json,
-                        job_email,
                     )
                     del slurm_file
                 else:
@@ -862,7 +820,7 @@ def main(
 
     write_json_file(config_json, (control_path / "config.json"))
     write_json_file(
-        exploration_json, (control_path / f"exploration_{current_iteration_zfill}.json")
+        exploration_json, (control_path / f"exploration_{padded_curr_iter}.json")
     )
     backup_and_overwrite_json_file(new_input_json, (current_path / input_fn))
     return 0

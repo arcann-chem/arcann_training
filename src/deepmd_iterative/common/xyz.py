@@ -114,6 +114,7 @@ def read_xyz_trajectory(file_path: Path) -> Tuple[np.ndarray, np.ndarray, np.nda
 
     return num_atoms, atom_symbols, atom_coords
 
+
 # Unittested
 def write_xyz_frame_to_file(
     file_path: Path,

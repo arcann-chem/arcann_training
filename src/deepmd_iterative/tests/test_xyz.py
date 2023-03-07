@@ -285,5 +285,5 @@ class TestWriteXYZFrameToFile(unittest.TestCase):
         self.assertEqual(cm.exception.code, 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

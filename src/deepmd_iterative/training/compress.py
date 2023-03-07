@@ -113,14 +113,14 @@ def main(
     logging.debug(f"machine_launch_command: {machine_launch_command}")
 
     if fake_machine is not None:
-        logging.info(f"Pretending to be on: {fake_machine}")
+        logging.info(f"Pretending to be on: {fake_machine}.")
     else:
-        logging.info(f"We are on: {machine}")
+        logging.info(f"We are on: {machine}.")
     del fake_machine
 
     # Checks
     if not training_json["is_frozen"]:
-        logging.error(f"Lock found. Execute first: training check_freeze")
+        logging.error(f"Lock found. Execute first: training check_freeze.")
         logging.error(f"Aborting...")
         return 1
 
@@ -131,7 +131,7 @@ def main(
     slurm_file_master = file_to_list_of_strings(
         jobs_path / f"job_deepmd_compress_{machine_spec['arch_type']}_{machine}.sh"
     )
-    job_email = get_key_in_dict("job_email", input_json, training_json, default_json)
+    new_input_json["job_email"] = get_key_in_dict("job_email", input_json, training_json, default_json)
     del jobs_path
 
     # Prep and launch DP Compress
@@ -147,7 +147,7 @@ def main(
             machine_spec,
             walltime_approx_s,
             machine_walltime_format,
-            job_email,
+            new_input_json["job_email"],
         )
 
         slurm_file = replace_substring_in_list_of_strings(
@@ -188,15 +188,15 @@ def main(
                         f"./job_deepmd_compress_{machine_spec['arch_type']}_{machine}.sh",
                     ]
                 )
-                logging.info(f"DP Compress - {it_nnp} launched")
+                logging.info(f"DP Compress - {it_nnp} launched.")
                 completed_count += 1
             except FileNotFoundError:
                 logging.critical(
-                    f"DP Compress - {it_nnp} NOT launched - {training_json['launch_command']} not found"
+                    f"DP Compress - {it_nnp} NOT launched - {training_json['launch_command']} not found."
                 )
             change_directory(local_path.parent)
         else:
-            logging.critical(f"DP Compress - {it_nnp} NOT launched - No job file")
+            logging.critical(f"DP Compress - {it_nnp} NOT launched - No job file.")
         del local_path
 
     del it_nnp, slurm_file_master
@@ -213,14 +213,14 @@ def main(
         pass
     else:
         logging.critical(
-            f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is semi-succes !"
+            f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is semi-success!"
         )
-        logging.critical(f"Some SLURM jobs did not launch correctly")
-        logging.critical(f"Please launch manually before continuing to the next step")
+        logging.critical(f"Some SLURM jobs did not launch correctly.")
+        logging.critical(f"Please launch manually before continuing to the next step.")
     del completed_count
 
     logging.info(
-        f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
+        f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a success!"
     )
 
     # Cleaning

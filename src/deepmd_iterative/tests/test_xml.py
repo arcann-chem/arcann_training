@@ -61,6 +61,7 @@ class TestConvertXmlToListOfStrings(unittest.TestCase):
         lines = convert_xml_to_list_of_strings(self.xml_tree)
         self.assertListEqual(lines, self.expected_lines_no_spaces)
 
+
 class TestParseXmlFile(unittest.TestCase):
     def setUp(self):
         # Create a temporary directory for testing
@@ -152,5 +153,5 @@ class TestWriteXml(unittest.TestCase):
         self.assertEqual(file_contents, self.expected_xml_string)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

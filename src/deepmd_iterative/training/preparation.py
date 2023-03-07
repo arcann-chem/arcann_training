@@ -86,7 +86,7 @@ def main(
     config_json = load_json_file((control_path / "config.json"))
 
     # Get extra needed paths
-    jobs_path = deepmd_iterative_path / "data" / "jobs" / "training"
+    jobs_path = deepmd_iterative_path / "data" / "jobs" / step_name
 
     # Load the previous training_json
     if curr_iter > 0:
@@ -127,9 +127,9 @@ def main(
     logging.debug(f"machine_launch_command: {machine_launch_command}")
 
     if fake_machine is not None:
-        logging.info(f"Pretending to be on: {fake_machine}")
+        logging.info(f"Pretending to be on: {fake_machine}.")
     else:
-        logging.info(f"We are on: {machine}")
+        logging.info(f"We are on: {machine}.")
     del fake_machine
 
     # Checked if the iter > 0, if there load the past labeling and see if it's extracted
@@ -138,7 +138,7 @@ def main(
             (control_path / f"labeling_{padded_curr_iter}.json")
         )
         if not labeling_json["is_extracted"]:
-            logging.error("Lock found. Run/Check first: labeling extract")
+            logging.error("Lock found. Run/Check first: labeling extract.")
             logging.error("Aborting...")
             return 1
 
@@ -181,7 +181,7 @@ def main(
     # Check DeePMD version
     if training_json["deepmd_model_version"] not in [2.0, 2.1]:
         logging.critical(
-            f"Invalid deepmd model version (2.0 or 2.1): {training_json['deepmd_model_version']}"
+            f"Invalid deepmd model version (2.0 or 2.1): {training_json['deepmd_model_version']}."
         )
         logging.critical("Aborting...")
         return 1
@@ -189,7 +189,7 @@ def main(
     # Check DeePMD descriptor type
     if training_json["deepmd_model_type_descriptor"] not in ["se_e2_a"]:
         logging.critical(
-            f"Invalid deepmd type descriptor (se_e2_a): {training_json['deepmd_model_type_descriptor']}"
+            f"Invalid deepmd type descriptor (se_e2_a): {training_json['deepmd_model_type_descriptor']}."
         )
         logging.critical("Aborting...")
         return 1
@@ -203,7 +203,7 @@ def main(
         training_json["deepmd_model_version"] < 2.1
         and training_json["arch_name"] == "a100"
     ):
-        logging.critical("Only version >= 2.1 on Jean Zay A100 !")
+        logging.critical("Only version >= 2.1 on Jean Zay A100!")
         logging.critical("Aborting...")
         return 1
 
@@ -629,9 +629,7 @@ def main(
     backup_and_overwrite_json_file(new_input_json, (current_path / input_fn))
 
     logging.info(f"-" * 88)
-    logging.info(
-        f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
-    )
+    logging.info(f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a success!")
 
     # Cleaning
     del control_path

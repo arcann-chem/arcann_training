@@ -113,7 +113,7 @@ def main(
     del training_path, current_path
 
     logging.info(f"-" * 88)
-    logging.info(f"Step: {step_name.capitalize()} is a success !")
+    logging.info(f"Step: {step_name.capitalize()} is a success!")
 
     return 0
 

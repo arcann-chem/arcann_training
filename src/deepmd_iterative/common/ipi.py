@@ -3,7 +3,7 @@ import sys
 import xml.etree.ElementTree as ET
 
 
-#Unittested
+# Unittested
 def get_temperature_from_ipi_xml(input_file: ET.ElementTree):
     """
     Extract the temperature value from an XML file and return it as a float.
@@ -17,8 +17,8 @@ def get_temperature_from_ipi_xml(input_file: ET.ElementTree):
     """
     try:
         tree = ET.parse(input_file)
-    except (IOError,ET.ParseError) as e:
-        error_msg=f"Error reading input file {input_file}: {e}"
+    except (IOError, ET.ParseError) as e:
+        error_msg = f"Error reading input file {input_file}: {e}"
         logging.error(f"{error_msg}\nAborting...")
         sys.exit(1)
     root = tree.getroot()
@@ -29,12 +29,12 @@ def get_temperature_from_ipi_xml(input_file: ET.ElementTree):
             try:
                 temperature = float(child.text)
             except ValueError as e:
-                error_msg=f"Error parsing temperature value in {input_file}: {e}"
+                error_msg = f"Error parsing temperature value in {input_file}: {e}"
                 logging.error(f"{error_msg}\nAborting...")
                 sys.exit(1)
 
     if temperature is None:
-        error_msg=f"Temperature value not found in {input_file}"
+        error_msg = f"Temperature value not found in {input_file}"
         logging.error(f"{error_msg}\nAborting...")
         sys.exit(1)
 

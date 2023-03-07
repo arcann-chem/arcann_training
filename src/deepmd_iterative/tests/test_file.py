@@ -105,14 +105,18 @@ class TestCheckFileExistence(unittest.TestCase):
 
     def test_check_file_existence_nonexistent_file_no_abort(self):
         # Call check_file_existence on a nonexistent file without aborting
-        check_file_existence(Path(self.temp_dir.name) / "nonexistent_file.txt", abort_on_error=False)
+        check_file_existence(
+            Path(self.temp_dir.name) / "nonexistent_file.txt", abort_on_error=False
+        )
 
         # Ensure that the function does not abort the program
         self.assertTrue(True)
 
     def test_check_file_existence_existing_file_no_abort(self):
         # Call check_file_existence on an existing file without aborting
-        check_file_existence(self.temp_file, expected_existence=False, abort_on_error=False)
+        check_file_existence(
+            self.temp_file, expected_existence=False, abort_on_error=False
+        )
 
         # Ensure that the function does not abort the program
         self.assertTrue(True)
@@ -295,5 +299,5 @@ class TestWriteListOfStringsToFile(unittest.TestCase):
         self.assertEqual(lines, [f"{s}\n" for s in expected_output])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -1,7 +1,7 @@
 from typing import List
 
 
-#Unittested
+# Unittested
 def remove_strings_containing_substring_in_list_of_strings(
     input_list: List[str], substring: str
 ) -> List[str]:
@@ -23,7 +23,7 @@ def remove_strings_containing_substring_in_list_of_strings(
     return output_list
 
 
-#Unittested
+# Unittested
 def replace_substring_in_list_of_strings(
     input_list: List[str], substring_in: str, substring_out: str
 ) -> List[str]:
@@ -46,5 +46,3 @@ def replace_substring_in_list_of_strings(
 
     # Return the updated list
     return output_list
-
-

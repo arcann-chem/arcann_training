@@ -6,7 +6,6 @@ import tempfile
 from deepmd_iterative.common.list import (
     remove_strings_containing_substring_in_list_of_strings,
     replace_substring_in_list_of_strings,
-
 )
 
 
@@ -74,5 +73,5 @@ class TestReplaceSubstringInList(unittest.TestCase):
         self.assertEqual(output_list[2], "baz qux")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

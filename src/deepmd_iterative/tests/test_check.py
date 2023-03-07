@@ -15,6 +15,7 @@ from deepmd_iterative.common.check import (
     validate_step_folder,
 )
 
+
 class TestCheckAtomsk(unittest.TestCase):
     def setUp(self):
         # Create a temporary directory
@@ -157,5 +158,5 @@ class TestValidateStepFolder(unittest.TestCase):
         self.assertEqual(cm.exception.code, 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

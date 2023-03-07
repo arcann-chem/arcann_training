@@ -49,7 +49,7 @@ def main(
     )
 
     if not training_json["is_launched"]:
-        logging.error(f"Lock found. Execute first: training preparation")
+        logging.error(f"Lock found. Execute first: training launch.")
         logging.error(f"Aborting...")
         return 1
 
@@ -92,10 +92,10 @@ def main(
                 )
                 completed_count += 1
             else:
-                logging.critical(f"DP Train - {it_nnp} not finished/failed")
+                logging.critical(f"DP Train - {it_nnp} not finished/failed.")
             del training_out, training_out_time, training_out_time_split
         else:
-            logging.critical(f"DP Train - {it_nnp} still running/no outfile")
+            logging.critical(f"DP Train - {it_nnp} still running/no outfile.")
         del local_path
     del it_nnp
 
@@ -104,10 +104,10 @@ def main(
         training_json["is_checked"] = True
     else:
         logging.critical(
-            f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a failure !"
+            f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a failure!"
         )
-        logging.critical(f"Some DP Train did not finished correctly")
-        logging.critical(f"Please check manually before relaunching this step")
+        logging.critical(f"Some DP Train did not finished correctly.")
+        logging.critical(f"Please check manually before relaunching this step.")
         logging.critical(f"Aborting...")
         return 1
     del completed_count
@@ -121,7 +121,7 @@ def main(
     )
 
     logging.info(
-        f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
+        f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a success!"
     )
     # Cleaning
     del control_path

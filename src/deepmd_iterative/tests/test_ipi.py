@@ -12,7 +12,6 @@ from deepmd_iterative.common.ipi import (
 
 
 class TestGetTemperatureFromIpiXml(unittest.TestCase):
-
     def setUp(self):
         # Create a temporary directory for testing
         self.temp_dir = tempfile.TemporaryDirectory()
@@ -68,5 +67,5 @@ class TestGetTemperatureFromIpiXml(unittest.TestCase):
             get_temperature_from_ipi_xml(invalid_xml_input_file)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

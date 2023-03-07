@@ -21,5 +21,5 @@ class TestConvertSecondsToHhMmSs(unittest.TestCase):
                 self.assertEqual(convert_seconds_to_hh_mm_ss(seconds), expected_output)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

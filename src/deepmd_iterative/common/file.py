@@ -5,7 +5,7 @@ from typing import List
 import os
 
 
-#Unittested
+# Unittested
 def change_directory(directory_path: Path) -> None:
     """
     Change the current working directory to the given path.
@@ -35,7 +35,7 @@ def change_directory(directory_path: Path) -> None:
         sys.exit(1)
 
 
-#Unittested
+# Unittested
 def check_directory(
     directory_path: Path, abort_on_error: bool = True, error_msg: str = "default"
 ) -> None:
@@ -68,7 +68,7 @@ def check_directory(
             logging.warning(error_msg)
 
 
-#Unittested
+# Unittested
 def check_file_existence(
     file_path: Path,
     expected_existence: bool = True,
@@ -112,7 +112,7 @@ def check_file_existence(
                 logging_func(error_msg)
 
 
-#Unittested
+# Unittested
 def file_to_list_of_strings(file_path: Path) -> List[str]:
     """
     Reads a file and returns its contents as a list of strings.
@@ -138,7 +138,7 @@ def file_to_list_of_strings(file_path: Path) -> List[str]:
             return [line.strip() for line in f.readlines()]
 
 
-#Unittested
+# Unittested
 def remove_file(file_path: Path) -> None:
     """
     Deletes a file at the specified path if it exists.
@@ -155,7 +155,7 @@ def remove_file(file_path: Path) -> None:
         file_path.unlink()
 
 
-#Unittested
+# Unittested
 def remove_files_matching_glob(directory_path: Path, file_glob: str) -> None:
     """
     Remove all files in a directory that match a specified file glob pattern.
@@ -187,7 +187,7 @@ def remove_files_matching_glob(directory_path: Path, file_glob: str) -> None:
             sys.exit(1)
 
 
-#Unittested
+# Unittested
 def remove_tree(directory_path: Path) -> None:
     """
     Recursively remove a directory tree and its contents.
@@ -212,7 +212,7 @@ def remove_tree(directory_path: Path) -> None:
     directory_path.rmdir()
 
 
-#Unittested
+# Unittested
 def write_list_of_strings_to_file(file_path: Path, list_of_strings: List[str]) -> None:
     """
     Write a list of strings to a file.

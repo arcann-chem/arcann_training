@@ -1,9 +1,39 @@
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 import subprocess
 
 # Non-standard library imports
 import numpy as np
+
+
+def get_subsys_params_exploration(
+    new_input_json: Dict, it0_subsys_nr: int
+) -> Tuple[
+    Union[float, int],
+    Union[float, int],
+    Union[float, int],
+    Union[float, int],
+    Union[float, int],
+    Union[float, int],
+    Union[float, int],
+    Union[float, int],
+    bool,
+]:
+
+    subsys_values = []
+    for key in [
+        "timestep_ps",
+        "temperature_K",
+        "exp_time_ps",
+        "max_exp_time_ps",
+        "job_walltime_h",
+        "init_exp_time_ps",
+        "init_job_walltime_h",
+        "print_mult",
+        "disturbed_start",
+    ]:
+        subsys_values.append(new_input_json[key][it0_subsys_nr])
+    return tuple(subsys_values)
 
 
 def generate_starting_points(

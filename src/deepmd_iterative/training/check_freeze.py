@@ -44,7 +44,7 @@ def main(
 
     # Checks
     if not training_json["is_checked"]:
-        logging.error(f"Lock found. Execute first: training check")
+        logging.error(f"Lock found. Execute first: training check.")
         logging.error(f"Aborting...")
         return 1
 
@@ -57,7 +57,7 @@ def main(
         ).is_file():
             completed_count += 1
         else:
-            logging.critical("DP Freeze - " + str(it_nnp) + " not finished/failed")
+            logging.critical("DP Freeze - " + str(it_nnp) + " not finished/failed.")
         del local_path
     del it_nnp
 
@@ -65,10 +65,10 @@ def main(
         training_json["is_frozen"] = True
     else:
         logging.error(
-            f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a failure !"
+            f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a failure!"
         )
-        logging.error(f"Some DP Freeze did not finished correctly")
-        logging.error(f"Please check manually before relaunching this step")
+        logging.error(f"Some DP Freeze did not finished correctly.")
+        logging.error(f"Please check manually before relaunching this step.")
         logging.error(f"Aborting...")
         return 1
     del completed_count
@@ -78,7 +78,7 @@ def main(
     )
 
     logging.info(
-        f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
+        f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a success!"
     )
 
     # Cleaning
