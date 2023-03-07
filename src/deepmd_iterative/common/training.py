@@ -7,7 +7,7 @@ import json
 # Non-standard library imports
 import numpy as np
 
-
+# Unittested
 def calculate_decay_steps(num_structures: int, min_decay_steps: int = 5000) -> int:
     """
     Calculate the number of decay steps (tau) for a given number of structures to train (N).
@@ -52,6 +52,7 @@ def calculate_decay_steps(num_structures: int, min_decay_steps: int = 5000) -> i
     return decay_steps
 
 
+# Unittested
 def calculate_decay_rate(
     stop_batch: int, start_lr: float, stop_lr: float, decay_steps: int
 ) -> float:
@@ -90,6 +91,7 @@ def calculate_decay_rate(
     return decay_rate
 
 
+# Unittested
 def calculate_learning_rate(
     current_step: int, start_lr: float, decay_rate: float, decay_steps: int
 ) -> float:
@@ -124,6 +126,7 @@ def calculate_learning_rate(
     return learning_rate
 
 
+# Unittested
 def check_initial_datasets(training_dir: Path) -> Dict[str, int]:
     """
     Check if the initial datasets exist and are properly formatted.

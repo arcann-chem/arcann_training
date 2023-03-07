@@ -105,6 +105,7 @@ def generate_starting_points(
         return starting_points, starting_points_bckp, False
 
 
+# Unittested
 def create_models_list(
     config_json: Dict,
     prevtraining_json: Dict,
@@ -164,33 +165,7 @@ def create_models_list(
 
     return models_list, models_string
 
-
-def update_nb_steps_factor(prevexploration_json: Dict, it_subsys_nr: int) -> int:
-    """
-    Calculates a ratio based on information from a dictionary and returns a multiplying factor for subsys_nb_steps.
-
-    Args:
-        prevexploration_json (Dict): A dictionary containing information about a previous exploration.
-        it_subsys_nr (int): An integer representing the subsystem index.
-
-    Returns:
-        An integer representing the multiplying factor for subsys_nb_steps.
-    """
-    # Calculate the ratio of ill-described candidates to the total number of candidates
-    ratio_ill_described = (
-        prevexploration_json["subsys_nr"][it_subsys_nr]["nb_candidates"]
-        + prevexploration_json["subsys_nr"][it_subsys_nr]["nb_rejected"]
-    ) / prevexploration_json["subsys_nr"][it_subsys_nr]["nb_total"]
-
-    # Return a multiplying factor for subsys_nb_steps based on the ratio of ill-described candidates
-    if ratio_ill_described < 0.10:
-        return 4
-    elif ratio_ill_described < 0.20:
-        return 2
-    else:
-        return 1
-
-
+# Unittested
 def get_last_frame_number(
     model_deviation: np.ndarray, sigma_high_limit: float, is_start_disturbed: bool
 ) -> int:
@@ -219,3 +194,32 @@ def get_last_frame_number(
         last_frame = -1
 
     return last_frame
+
+# Unittested
+def update_nb_steps_factor(prevexploration_json: Dict, it_subsys_nr: int) -> int:
+    """
+    Calculates a ratio based on information from a dictionary and returns a multiplying factor for subsys_nb_steps.
+
+    Args:
+        prevexploration_json (Dict): A dictionary containing information about a previous exploration.
+        it_subsys_nr (int): An integer representing the subsystem index.
+
+    Returns:
+        An integer representing the multiplying factor for subsys_nb_steps.
+    """
+    # Calculate the ratio of ill-described candidates to the total number of candidates
+    ratio_ill_described = (
+        prevexploration_json["subsys_nr"][it_subsys_nr]["nb_candidates"]
+        + prevexploration_json["subsys_nr"][it_subsys_nr]["nb_rejected"]
+    ) / prevexploration_json["subsys_nr"][it_subsys_nr]["nb_total"]
+
+    # Return a multiplying factor for subsys_nb_steps based on the ratio of ill-described candidates
+    if ratio_ill_described < 0.10:
+        return 4
+    elif ratio_ill_described < 0.20:
+        return 2
+    else:
+        return 1
+
+
+
