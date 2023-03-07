@@ -5,6 +5,70 @@ from typing import List
 import os
 
 
+#Unittested
+def change_directory(directory_path: Path) -> None:
+    """
+    Change the current working directory to the given path.
+
+    Args:
+        directory_path (Path): The path to the directory to change to.
+
+    Returns:
+        None
+
+    Raises:
+        SysExit(1): If the directory does not exist or there is an error in changing the directory.
+    """
+
+    # Check if the directory exists
+    if not directory_path.is_dir():
+        error_msg = f"Directory not found: {directory_path}"
+        logging.error(f"{error_msg}\nAborting...")
+        sys.exit(1)
+
+    # Try to change the directory
+    try:
+        os.chdir(directory_path)
+    except Exception as e:
+        error_msg = f"Error in changing directory to {directory_path}: {e}"
+        logging.error(f"{error_msg}\nAborting...")
+        sys.exit(1)
+
+
+#Unittested
+def check_directory(
+    directory_path: Path, abort_on_error: bool = True, error_msg: str = "default"
+) -> None:
+    """
+    Check if the given directory exists and logs an error or aborts execution if it does not.
+
+    Args:
+        directory_path (Path): The path to the directory to check.
+        abort (bool): If True, aborts execution with a critical error message. If False, logs a warning message.
+        error_msg (str, optional): An optional error message to use in place of the default message.
+
+    Returns:
+        None
+
+    Raises:
+        SystemExit(1): If the directory does not exist and `abort_on_error` is True.
+    """
+
+    # Check if the directory exists
+    if not directory_path.is_dir():
+        # Create error message
+        if error_msg == "default":
+            error_msg = f"Directory not found: {directory_path}"
+
+        # Log or raise error and abort if needed
+        if abort_on_error:
+            logging.error(f"{error_msg}\nAborting...")
+            sys.exit(1)
+        else:
+            logging.warning(error_msg)
+
+
+#Unittested
 def check_file_existence(
     file_path: Path,
     expected_existence: bool = True,
@@ -48,38 +112,7 @@ def check_file_existence(
                 logging_func(error_msg)
 
 
-def check_directory(
-    directory_path: Path, abort_on_error: bool = True, error_msg: str = "default"
-) -> None:
-    """
-    Check if the given directory exists and logs an error or aborts execution if it does not.
-
-    Args:
-        directory_path (Path): The path to the directory to check.
-        abort (bool): If True, aborts execution with a critical error message. If False, logs a warning message.
-        error_msg (str, optional): An optional error message to use in place of the default message.
-
-    Returns:
-        None
-
-    Raises:
-        SystemExit(1): If the directory does not exist and `abort_on_error` is True.
-    """
-
-    # Check if the directory exists
-    if not directory_path.is_dir():
-        # Create error message
-        if error_msg == "default":
-            error_msg = f"Directory not found: {directory_path}"
-
-        # Log or raise error and abort if needed
-        if abort_on_error:
-            logging.error(f"{error_msg}\nAborting...")
-            sys.exit(1)
-        else:
-            logging.warning(error_msg)
-
-
+#Unittested
 def file_to_list_of_strings(file_path: Path) -> List[str]:
     """
     Reads a file and returns its contents as a list of strings.
@@ -105,31 +138,7 @@ def file_to_list_of_strings(file_path: Path) -> List[str]:
             return [line.strip() for line in f.readlines()]
 
 
-def write_list_of_strings_to_file(file_path: Path, list_of_strings: List[str]) -> None:
-    """
-    Write a list of strings to a file.
-
-    Args:
-        file_path (Path): The path to the file to be written.
-        list_of_strings (List): The list of strings to write to the file.
-
-    Returns:
-        None
-
-    Raises:
-        SystemExit(1): If the specified file does not exist.
-    """
-    try:
-        # Write the strings to the file
-        with file_path.open(mode="w") as file:
-            file.write("\n".join(list_of_strings) + "\n")
-    except (OSError, IOError) as e:
-        # Handle any errors that occur during file writing
-        error_msg = f"Error writing to file {file_path}: {e}"
-        logging.error(f"{error_msg}\nAborting...")
-        sys.exit(1)
-
-
+#Unittested
 def remove_file(file_path: Path) -> None:
     """
     Deletes a file at the specified path if it exists.
@@ -146,6 +155,7 @@ def remove_file(file_path: Path) -> None:
         file_path.unlink()
 
 
+#Unittested
 def remove_files_matching_glob(directory_path: Path, file_glob: str) -> None:
     """
     Remove all files in a directory that match a specified file glob pattern.
@@ -162,6 +172,11 @@ def remove_files_matching_glob(directory_path: Path, file_glob: str) -> None:
     """
 
     # Remove the matching files
+    if not directory_path.is_dir():
+        error_msg = f"Not a directory {directory_path}."
+        logging.error(f"{error_msg}\nAborting...")
+        sys.exit(1)
+
     for file_path in directory_path.glob(file_glob):
         try:
             file_path.unlink()
@@ -172,6 +187,7 @@ def remove_files_matching_glob(directory_path: Path, file_glob: str) -> None:
             sys.exit(1)
 
 
+#Unittested
 def remove_tree(directory_path: Path) -> None:
     """
     Recursively remove a directory tree and its contents.
@@ -196,30 +212,27 @@ def remove_tree(directory_path: Path) -> None:
     directory_path.rmdir()
 
 
-def change_directory(directory_path: Path) -> None:
+#Unittested
+def write_list_of_strings_to_file(file_path: Path, list_of_strings: List[str]) -> None:
     """
-    Change the current working directory to the given path.
+    Write a list of strings to a file.
 
     Args:
-        directory_path (Path): The path to the directory to change to.
+        file_path (Path): The path to the file to be written.
+        list_of_strings (List): The list of strings to write to the file.
 
     Returns:
         None
 
     Raises:
-        SysExit(1): If the directory does not exist or there is an error in changing the directory.
+        SystemExit(1): If the specified file does not exist.
     """
-
-    # Check if the directory exists
-    if not directory_path.is_dir():
-        error_msg = f"Directory not found: {directory_path}"
-        logging.error(f"{error_msg}\nAborting...")
-        sys.exit(1)
-
-    # Try to change the directory
     try:
-        os.chdir(directory_path)
-    except Exception as e:
-        error_msg = f"Error in changing directory to {directory_path}: {e}"
+        # Write the strings to the file
+        with file_path.open(mode="w") as file:
+            file.write("\n".join(list_of_strings) + "\n")
+    except (OSError, IOError) as e:
+        # Handle any errors that occur during file writing
+        error_msg = f"Error writing to file {file_path}: {e}"
         logging.error(f"{error_msg}\nAborting...")
         sys.exit(1)
