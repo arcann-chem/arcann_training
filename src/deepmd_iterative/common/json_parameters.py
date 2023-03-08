@@ -1,10 +1,9 @@
 from pathlib import Path
-from typing import Dict, List, Tuple, Union, Any
 import logging
 import sys
+from typing import Any, Dict, List, Tuple, Union
+# Others
 from copy import deepcopy
-
-from deepmd_iterative.common.json import load_json_file
 
 
 def get_key_in_dict(

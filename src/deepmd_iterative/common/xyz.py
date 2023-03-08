@@ -2,10 +2,11 @@ from pathlib import Path
 import logging
 import sys
 from typing import Tuple
+# Others
 import re
-
 # Non-standard library imports
 import numpy as np
+
 
 # Unittested
 def read_xyz_trajectory(file_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:

@@ -1,6 +1,5 @@
 from typing import List
 
-
 # Unittested
 def remove_strings_containing_substring_in_list_of_strings(
     input_list: List[str], substring: str

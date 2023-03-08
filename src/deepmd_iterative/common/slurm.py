@@ -1,23 +1,24 @@
 import logging
-import copy
-
-
+from typing import Dict, List
+# Others
+from copy import deepcopy
 # deepmd_iterative imports
 from deepmd_iterative.common.list import (
-    replace_substring_in_list_of_strings,
     remove_strings_containing_substring_in_list_of_strings,
+    replace_substring_in_list_of_strings,
 )
 from deepmd_iterative.common.utils import convert_seconds_to_hh_mm_ss
 
 
 def replace_in_slurm_file_general(
-    slurm_file_master,
-    machine_spec,
-    walltime_approx_s,
-    machine_walltime_format,
-    slurm_email,
-):
-    slurm_file = copy.deepcopy(slurm_file_master)
+    slurm_file_master: List[str],
+    machine_spec: Dict,
+    walltime_approx_s: int,
+    machine_walltime_format: str,
+    slurm_email: str,
+) -> List[str]:
+
+    slurm_file = deepcopy(slurm_file_master)
 
     slurm_file = replace_substring_in_list_of_strings(
         slurm_file, "_R_PROJECT_", machine_spec["project_name"]

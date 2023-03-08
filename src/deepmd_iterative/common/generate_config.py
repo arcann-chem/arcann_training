@@ -1,10 +1,6 @@
-from pathlib import Path
-from typing import Dict, List, Tuple
-import logging
-import sys
-from copy import deepcopy
-
-from deepmd_iterative.common.json import read_key_input_json, load_json_file
+from typing import Dict, Tuple
+# deepmd_iterative imports
+from deepmd_iterative.common.json import read_key_input_json
 
 
 def set_subsys_params_deviation(

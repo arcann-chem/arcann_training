@@ -1,8 +1,9 @@
+from typing import Dict, List, Tuple
 # Non-standard library imports
 import numpy as np
 
 
-def parse_lammps_data(lines):
+def parse_lammps_data(lines: List[str]) -> Tuple(int, int, np.ndarray, Dict[int], np.ndarray):
     # Initialize variables
     num_atoms = None
     num_atom_types = None

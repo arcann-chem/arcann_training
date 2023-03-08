@@ -1,7 +1,8 @@
 import logging
 import sys
-import re
 from typing import List, Tuple, Union
+# Others
+import re
 
 
 def analyze_plumed_file_for_movres(

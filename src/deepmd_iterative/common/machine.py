@@ -2,9 +2,8 @@ from pathlib import Path
 import logging
 import sys
 from typing import Any, Dict, List, Tuple, Union
+# Others
 import socket
-
-
 # deepmd_iterative imports
 from deepmd_iterative.common.json import load_json_file
 
@@ -19,7 +18,6 @@ def get_host_name() -> str:
     Returns:
         str: The fully-qualified hostname of the current machine.
     """
-    socket.setdefaulttimeout(2)
     hostname = socket.gethostname()
     if "." in hostname:
         # Hostname is already fully-qualified
@@ -27,7 +25,7 @@ def get_host_name() -> str:
     else:
         # Look up fully-qualified hostname using socket.gethostbyaddr()
         try:
-            hostname = socket.gethostbyaddr(hostname)[0]
+            hostname = socket.gethostbyaddr(hostname, timeout=2)[0]
             return hostname
         except socket.timeout:
             return hostname
