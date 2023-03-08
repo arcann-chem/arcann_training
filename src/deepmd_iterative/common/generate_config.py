@@ -1,4 +1,5 @@
 from typing import Dict, Tuple
+
 # deepmd_iterative imports
 from deepmd_iterative.common.json import read_key_input_json
 

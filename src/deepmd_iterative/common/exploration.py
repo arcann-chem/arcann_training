@@ -1,7 +1,9 @@
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
+
 # Others
 import subprocess
+
 # Non-standard library imports
 import numpy as np
 
@@ -165,6 +167,7 @@ def create_models_list(
 
     return models_list, models_string
 
+
 # Unittested
 def get_last_frame_number(
     model_deviation: np.ndarray, sigma_high_limit: float, is_start_disturbed: bool
@@ -195,6 +198,7 @@ def get_last_frame_number(
 
     return last_frame
 
+
 # Unittested
 def update_nb_steps_factor(prevexploration_json: Dict, it_subsys_nr: int) -> int:
     """
@@ -220,6 +224,3 @@ def update_nb_steps_factor(prevexploration_json: Dict, it_subsys_nr: int) -> int
         return 2
     else:
         return 1
-
-
-

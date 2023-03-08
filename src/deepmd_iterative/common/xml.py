@@ -2,6 +2,7 @@ from pathlib import Path
 import logging
 import sys
 from typing import List
+
 # Others
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
