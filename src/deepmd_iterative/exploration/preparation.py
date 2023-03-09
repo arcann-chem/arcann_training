@@ -2,8 +2,8 @@ from pathlib import Path
 import logging
 import sys
 import copy
-import subprocess
 import random
+import subprocess
 
 # deepmd_iterative imports
 from deepmd_iterative.common.check import validate_step_folder, check_atomsk

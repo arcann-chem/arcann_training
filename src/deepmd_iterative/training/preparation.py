@@ -2,8 +2,8 @@ from pathlib import Path
 import logging
 import sys
 import copy
-import subprocess
 import random
+import subprocess
 
 # Non-standard library imports
 import numpy as np
