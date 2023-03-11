@@ -24,64 +24,77 @@ from deepmd_iterative.common.machine import (
 
 
 def main(
-    step_name: str,
-    phase_name: str,
+    current_step: str,
+    current_phase: str,
     deepmd_iterative_path: Path,
     fake_machine = None,
-    input_fn: str = "input.json",
+    user_config_filename: str = "input.json",
 ):
     # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()}")
+    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}")
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
     # Check if correct folder
-    validate_step_folder(step_name)
+    validate_step_folder(current_step)
 
     # Get iteration
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
 
-    # Load the master input JSON file for the program
-    default_present = False
-    default_json = load_default_json_file(deepmd_iterative_path / "data" / "input_defaults.json")[step_name]
-    if bool(default_json):
-        default_present = True
-    logging.debug(f"default_json: {default_json}")
-    logging.debug(f"default_present: {default_present}")
+    # Load the default config (JSON)
+    default_config = load_default_json_file(deepmd_iterative_path / "data" / "default_config.json")[current_step]
+    default_config_present = bool(default_config)
+    logging.debug(f"default_config: {default_config}")
+    logging.debug(f"default_config_present: {default_config_present}")
 
-    # Load the user input JSON file
-    if (current_path / input_fn).is_file():
-        input_json = load_json_file((current_path / input_fn))
-        input_present = True
+    # Load the user config (JSON)
+    if (current_path / user_config_filename).is_file():
+        user_config = load_json_file((current_path / user_config_filename))
     else:
-        input_json = {}
-        input_present = False
-    logging.debug(f"input_json: {input_json}")
-    logging.debug(f"input_present: {input_present}")
+        user_config = {}
+    user_config_present = bool(user_config)
+    logging.debug(f"user_config: {user_config}")
+    logging.debug(f"user_config_present: {user_config_present}")
 
     # Make a deepcopy
-    new_input_json = copy.deepcopy(input_json)
+    current_config = copy.deepcopy(user_config)
 
-    # Get control path, config JSON and training JSON
+    # Get control path and load the main config (JSON) and the training config (JSON)
     control_path = training_path / "control"
-    config_json = load_json_file((control_path / "config.json"))
-    training_json = load_json_file(
+    main_config = load_json_file((control_path / "config.json"))
+    training_config = load_json_file(
         (control_path / f"training_{padded_curr_iter}.json")
     )
 
+    # Checks
+    if training_config["is_launched"]:
+        logging.critical(f"Already launched.")
+        continuing = input(
+            f"Should it be run again? (Y for Yes, anything else to abort)"
+        )
+        if continuing == "Y":
+            del continuing
+        else:
+            logging.error(f"Aborting...")
+            return 1
+    if not training_config["is_locked"]:
+        logging.error(f"Lock found. Execute first: training preparation.")
+        logging.error(f"Aborting...")
+        return 1
+
     # Get the machine keyword (input override training override default_json)
     # And update the new input
-    user_machine_keyword = get_machine_keyword(input_json, training_json, default_json)
+    user_machine_keyword = get_machine_keyword(user_config, training_config, default_config)
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
-    new_input_json["user_machine_keyword"] = user_machine_keyword
-    logging.debug(f"new_input_json: {new_input_json}")
+    current_config["user_machine_keyword"] = user_machine_keyword
+    logging.debug(f"current_config: {current_config}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
     user_machine_keyword = (
         None if isinstance(user_machine_keyword, bool) else user_machine_keyword
@@ -113,44 +126,28 @@ def main(
     del fake_machine
 
     # Check prep/launch
-    assert_same_machine(machine, training_json)
-
-    # Checks
-    if training_json["is_launched"]:
-        logging.critical(f"Already launched.")
-        continuing = input(
-            f"Should it be run again? (Y for Yes, anything else to abort)"
-        )
-        if continuing == "Y":
-            del continuing
-        else:
-            logging.error(f"Aborting...")
-            return 1
-    if not training_json["is_locked"]:
-        logging.error(f"Lock found. Execute first: training preparation.")
-        logging.error(f"Aborting...")
-        return 1
+    assert_same_machine(machine, training_config)
 
     # Launch the jobs
     completed_count = 0
-    for it_nnp in range(1, config_json["nb_nnp"] + 1):
+    for it_nnp in range(1, main_config["nb_nnp"] + 1):
         local_path = Path(".").resolve() / str(it_nnp)
         if (
-            local_path / f"job_deepmd_train_{training_json['arch_type']}_{machine}.sh"
+            local_path / f"job_deepmd_train_{training_config['arch_type']}_{machine}.sh"
         ).is_file():
             change_directory(local_path)
             try:
                 subprocess.run(
                     [
-                        training_json["launch_command"],
-                        f"./job_deepmd_train_{training_json['arch_type']}_{machine}.sh",
+                        training_config["launch_command"],
+                        f"./job_deepmd_train_{training_config['arch_type']}_{machine}.sh",
                     ]
                 )
                 logging.info(f"DP Train - {it_nnp} launched.")
                 completed_count += 1
             except FileNotFoundError:
                 logging.critical(
-                    f"DP Train - {it_nnp} NOT launched - {training_json['launch_command']} not found."
+                    f"DP Train - {it_nnp} NOT launched - {training_config['launch_command']} not found."
                 )
             change_directory(local_path.parent)
         else:
@@ -158,22 +155,22 @@ def main(
         del local_path
     del it_nnp
 
-    if completed_count == config_json["nb_nnp"]:
-        training_json["is_launched"] = True
+    if completed_count == main_config["nb_nnp"]:
+        training_config["is_launched"] = True
 
     write_json_file(
-        training_json, (control_path / f"training_{padded_curr_iter}.json")
+        training_config, (control_path / f"training_{padded_curr_iter}.json")
     )
-    backup_and_overwrite_json_file(new_input_json, (current_path / input_fn))
+    backup_and_overwrite_json_file(current_config, (current_path / user_config_filename))
 
     logging.info(f"-" * 88)
-    if completed_count == config_json["nb_nnp"]:
+    if completed_count == main_config["nb_nnp"]:
         logging.info(
-            f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a success!"
+            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
         )
     else:
         logging.critical(
-            f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is semi-success!"
+            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!"
         )
         logging.critical(f"Some SLURM jobs did not launch correctly.")
         logging.critical(f"Please launch manually before continuing to the next step.")
@@ -183,13 +180,11 @@ def main(
     del completed_count
 
     # Cleaning
-    del control_path
-    del input_json, default_json, default_present, new_input_json
-    del config_json
+    del current_path, control_path, training_path
+    del default_config, default_config_present, user_config, user_config_present, user_config_filename
+    del main_config, current_config, training_config
     del curr_iter, padded_curr_iter
-    del training_json
-    del machine
-    del training_path, current_path
+    del machine, machine_spec, machine_walltime_format, machine_launch_command
 
     return 0
 
@@ -201,7 +196,7 @@ if __name__ == "__main__":
             "launch",
             Path(sys.argv[1]),
             fake_machine=sys.argv[2],
-            input_fn=sys.argv[3],
+            user_config_filename=sys.argv[3],
         )
     else:
         pass

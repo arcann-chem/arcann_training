@@ -13,39 +13,39 @@ from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
 )
-from deepmd_iterative.common.json_parameters import set_config_json
+from deepmd_iterative.common.json_parameters import set_main_config
 
 
 # Main function
 def main(
-    step_name: str,
-    phase_name: str,
+    current_step: str,
+    current_phase: str,
     deepmd_iterative_path,
     fake_machine=None,
-    input_fn: str = "input.json",
+    user_config_filename: str = "config.json",
 ):
     # Get the current path and set the training path as the current path
     current_path = Path(".").resolve()
     training_path = current_path
 
     # Log the step and phase of the program
-    logging.info(f"Step: {step_name.capitalize()}")
+    logging.info(f"Step: {current_step.capitalize()}")
     logging.debug(f"Current path: {current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
-    # Load the master input JSON file for the program
-    default_present = False
-    default_json = load_default_json_file(deepmd_iterative_path / "data" / "input_defaults.json")[step_name]
-    if bool(default_json):
-        default_present = True
-    logging.debug(f"default_json: {default_json}")
-    logging.debug(f"default_present: {default_present}")
+    # Load the default config (JSON)
+    default_config = load_default_json_file(deepmd_iterative_path / "data" / "default_config.json")[current_step]
+    default_config_present = bool(default_config)
+    logging.debug(f"default_config: {default_config}")
+    logging.debug(f"default_config_present: {default_config_present}")
 
-    # Load the user input JSON file (must be present)
-    input_json = load_json_file((current_path / input_fn))
-    logging.debug(f"input_json: {input_json}")
+    # Load the user config (JSON)
+    user_config = load_json_file((current_path / user_config_filename))
+    user_config_present = bool(user_config)
+    logging.debug(f"user_config: {user_config}")
+    logging.debug(f"user_config_present: {user_config_present}")
 
     # Check if a "data" folder is present in the training path
     check_directory(
@@ -54,9 +54,10 @@ def main(
     )
 
     # Create the config JSON file (and set everything)
-    config_json, new_input_json, padded_curr_iter = set_config_json(input_json, default_json)
-    logging.debug(f"config_json: {config_json}")
-    logging.debug(f"padded_curr_iter: {padded_curr_iter}")
+    main_config, current_config, padded_curr_iter = set_main_config(user_config, default_config)
+    logging.debug(f"main_config: {main_config}")
+    logging.debug(f"current_config : {current_config }")
+    logging.debug(f"padded_curr_iter : {padded_curr_iter}")
 
     # Create the control directory (where JSON files are)
     control_path = training_path / "control"
@@ -87,33 +88,31 @@ def main(
             str(it_initial_datasets_set_path / "box.npy")
         ).shape[0]
     logging.debug(f"initial_datasets_json: {initial_datasets_json}")
-
     del it_initial_datasets_path, it_initial_datasets_set_path
     del initial_datasets_path
 
     # Populate
-    config_json["initial_datasets"] = [zzz for zzz in initial_datasets_json.keys()]
+    main_config["initial_datasets"] = [zzz for zzz in initial_datasets_json.keys()]
 
     # DEBUG: Print the dicts
-    logging.debug(f"Final dicts:")
-    logging.debug(f"config_json: {config_json}")
+    logging.debug(f"main_config: {main_config}")
     logging.debug(f"initial_datasets_json: {initial_datasets_json}")
-    logging.debug(f"input_json: {input_json}")
-    logging.debug(f"new_input_json: {new_input_json}")
+    logging.debug(f"user_config: {user_config}")
+    logging.debug(f"current_config: {current_config}")
 
     # Dump the dicts
     logging.info(f"-" * 88)
-    write_json_file(config_json, (control_path / "config.json"))
+    write_json_file(main_config, (control_path / "config.json"))
     write_json_file(initial_datasets_json, (control_path / "initial_datasets.json"))
-    backup_and_overwrite_json_file(new_input_json, (current_path / input_fn))
+    backup_and_overwrite_json_file(current_config, (current_path / user_config_filename))
 
-    del control_path
-    del input_json, default_json, default_present, new_input_json
-    del config_json, initial_datasets_json
-    del training_path, current_path
+    # Delete
+    del current_path, control_path, training_path
+    del default_config, default_config_present, user_config, user_config_present, user_config_filename
+    del main_config, initial_datasets_json, current_config
 
     logging.info(f"-" * 88)
-    logging.info(f"Step: {step_name.capitalize()} is a success!")
+    logging.info(f"Step: {current_step.capitalize()} is a success!")
 
     return 0
 
@@ -125,8 +124,8 @@ if __name__ == "__main__":
             "initialization",
             "init",
             Path(sys.argv[1]),
-            fake_machine=sys.argv[2],
-            input_fn=sys.argv[3],
+            fake_machine = sys.argv[2],
+            user_config_filename = sys.argv[3],
         )
     else:
         pass

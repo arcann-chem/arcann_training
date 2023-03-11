@@ -9,39 +9,39 @@ from deepmd_iterative.common.json import load_json_file
 
 
 def main(
-    step_name: str,
-    phase_name: str,
+    current_step: str,
+    current_phase: str,
     deepmd_iterative_path: Path,
     fake_machine = None,
-    input_fn: str = "input.json",
+    user_config_filename: str = "input.json",
 ):
     # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()}")
+    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}")
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
     # Check if correct folder
-    validate_step_folder(step_name)
+    validate_step_folder(current_step)
 
     # Get iteration
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
 
-    # Get control path, config JSON and training JSON
+    # Get control path and load the main config (JSON) and the training config (JSON)
     control_path = training_path / "control"
-    config_json = load_json_file((control_path / "config.json"))
-    training_json = load_json_file(
+    main_config = load_json_file((control_path / "config.json"))
+    training_config = load_json_file(
         (control_path / f"training_{padded_curr_iter}.json")
     )
 
     # Checks
-    if not training_json["is_frozen"]:
+    if not training_config["is_frozen"]:
         logging.error(f"Lock found. Execute first: training check_freeze")
         logging.error(f"Aborting...")
         return 1
@@ -66,14 +66,14 @@ def main(
     remove_files_matching_glob(current_path, "**/*.sh")
 
     logging.info(
-        f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a success !"
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success !"
     )
 
     # Cleaning
-    del control_path
-    del padded_curr_iter, curr_iter
-    del training_json, config_json
-    del training_path, current_path
+    del current_path, control_path, training_path
+    del user_config_filename
+    del main_config, training_config
+    del curr_iter, padded_curr_iter
 
     return 0
 
@@ -85,7 +85,7 @@ if __name__ == "__main__":
             "clean",
             Path(sys.argv[1]),
             fake_machine=sys.argv[2],
-            input_fn=sys.argv[3],
+            user_config_filename=sys.argv[3],
         )
     else:
         pass
