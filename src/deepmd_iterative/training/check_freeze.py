@@ -49,19 +49,16 @@ def main(
         return 1
 
     completed_count = 0
-    for it_nnp in range(1, main_config["nb_nnp"] + 1):
-        local_path = Path(".").resolve() / str(it_nnp)
-        if (
-            local_path
-            / ("graph_" + str(it_nnp) + "_" + padded_curr_iter + ".pb")
-        ).is_file():
+    for nnp in range(1, main_config["nnp_count"] + 1):
+        local_path = Path(".").resolve() / f"{nnp}"
+        if (local_path / f"graph_{nnp}_{padded_curr_iter}.pb").is_file():
             completed_count += 1
         else:
-            logging.critical("DP Freeze - " + str(it_nnp) + " not finished/failed.")
+            logging.critical(f"DP Freeze - {nnp} not finished/failed.")
         del local_path
-    del it_nnp
+    del nnp
 
-    if completed_count == main_config["nb_nnp"]:
+    if completed_count == main_config["nnp_count"]:
         training_config["is_frozen"] = True
     else:
         logging.error(
@@ -96,8 +93,8 @@ if __name__ == "__main__":
             "training",
             "check_freeze",
             Path(sys.argv[1]),
-            fake_machine=sys.argv[2],
-            user_config_filename=sys.argv[3],
+            fake_machine = sys.argv[2],
+            user_config_filename = sys.argv[3],
         )
     else:
         pass

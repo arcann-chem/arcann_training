@@ -130,8 +130,8 @@ def main(
 
     # Launch the jobs
     completed_count = 0
-    for it_nnp in range(1, main_config["nb_nnp"] + 1):
-        local_path = Path(".").resolve() / str(it_nnp)
+    for nnp in range(1, main_config["nnp_count"] + 1):
+        local_path = Path(".").resolve() / f"{nnp}"
         if (
             local_path / f"job_deepmd_train_{training_config['arch_type']}_{machine}.sh"
         ).is_file():
@@ -143,19 +143,19 @@ def main(
                         f"./job_deepmd_train_{training_config['arch_type']}_{machine}.sh",
                     ]
                 )
-                logging.info(f"DP Train - {it_nnp} launched.")
+                logging.info(f"DP Train - {nnp} launched.")
                 completed_count += 1
             except FileNotFoundError:
                 logging.critical(
-                    f"DP Train - {it_nnp} NOT launched - {training_config['launch_command']} not found."
+                    f"DP Train - {nnp} NOT launched - {training_config['launch_command']} not found."
                 )
             change_directory(local_path.parent)
         else:
-            logging.critical(f"DP Train - {it_nnp} NOT launched - No job file.")
+            logging.critical(f"DP Train - {nnp} NOT launched - No job file.")
         del local_path
-    del it_nnp
+    del nnp
 
-    if completed_count == main_config["nb_nnp"]:
+    if completed_count == main_config["nnp_count"]:
         training_config["is_launched"] = True
 
     write_json_file(
@@ -164,7 +164,7 @@ def main(
     backup_and_overwrite_json_file(current_config, (current_path / user_config_filename))
 
     logging.info(f"-" * 88)
-    if completed_count == main_config["nb_nnp"]:
+    if completed_count == main_config["nnp_count"]:
         logging.info(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
         )
@@ -195,8 +195,8 @@ if __name__ == "__main__":
             "training",
             "launch",
             Path(sys.argv[1]),
-            fake_machine=sys.argv[2],
-            user_config_filename=sys.argv[3],
+            fake_machine = sys.argv[2],
+            user_config_filename = sys.argv[3],
         )
     else:
         pass

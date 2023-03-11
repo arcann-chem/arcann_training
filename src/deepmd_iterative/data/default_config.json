@@ -3,7 +3,7 @@
     {
         "system": "",
         "subsys_nr": [""],
-        "nb_nnp": 3,
+        "nnp_count": 3,
         "exploration_type": "lammps"
     },
     "training":

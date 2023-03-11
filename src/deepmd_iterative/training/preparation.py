@@ -168,11 +168,11 @@ def main(
         jobs_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh",
         error_msg=f"No SLURM file present for {current_step.capitalize()} / {current_phase.capitalize()} on this machine.",
     )
-    slurm_file_master = file_to_list_of_strings(
+    master_job_file = file_to_list_of_strings(
         jobs_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh"
     )
     del jobs_path
-    logging.debug(f"slurm_file_master: {slurm_file_master[0:5]}, {slurm_file_master[-5:-1]}")
+    logging.debug(f"master_job_file : {master_job_file [0:5]}, {master_job_file [-5:-1]}")
 
     # TODO: Maybe as function / parameters file for later
     # Check DeePMD version
@@ -206,274 +206,257 @@ def main(
 
 
     # Check if the default input json file exists
-    input_file_fpath = (
+    dp_train_input_path = (
         training_path
         / "files"
         / (
             f"dptrain_{training_config['deepmd_model_version']}_{training_config['deepmd_model_type_descriptor']}.json"
         )
     ).resolve()
-    dp_train_input = load_json_file(input_file_fpath)
+    dp_train_input = load_json_file(dp_train_input_path)
     main_config["type_map"] = {}
     main_config["type_map"] = dp_train_input["model"]["type_map"]
-    del input_file_fpath
+    del dp_train_input_path
     logging.debug(f"dp_train_input: {dp_train_input}")
     logging.debug(f"main_config: {main_config}")
 
     # Check the initial sets json file
-    datasets_initial_json = check_initial_datasets(training_path)
-    logging.debug(f"datasets_initial_json: {datasets_initial_json}")
+    initial_datasets_info = check_initial_datasets(training_path)
+    logging.debug(f"initial_datasets_info: {initial_datasets_info}")
 
     # Let us find what is in data
     data_path = training_path / "data"
     check_directory(data_path)
-    subsys_name = []
+    subsystems = []
 
     # This is building the datasets (roughly 200 lines)
     # TODO later
-    datasets_extra = []
-    datasets_validation = []
-    for it_data_folders in data_path.iterdir():
-        if it_data_folders.is_dir():
+    extra_datasets = []
+    validation_datasets = []
+    for data_dir in data_path.iterdir():
+        if data_dir.is_dir():
             # Escape initial/extra sets, because initial get added first and extra as last, and also escape init_
             # not in initial_json (in case of removal)
             if (
-                it_data_folders.name not in datasets_initial_json.keys()
-                and "extra_" != it_data_folders.name[:6]
-                and "init_" != it_data_folders.name[:5]
+                data_dir.name not in initial_datasets_info.keys()
+                and "extra_" != data_dir.name[:6]
+                and "init_" != data_dir.name[:5]
             ):
                 # Escape test sets
-                if "test_" != it_data_folders.name[:5]:
+                if "test_" != data_dir.name[:5]:
                     # Escape if set iter is superior as iter, it is only for reprocessing old stuff.
                     try:
                         if (
-                            int(it_data_folders.name.rsplit("_", 1)[-1])
+                            int(data_dir.name.rsplit("_", 1)[-1])
                             <= curr_iter
                         ):
-                            subsys_name.append(it_data_folders.name.rsplit("_", 1)[0])
+                            subsystems.append(data_dir.name.rsplit("_", 1)[0])
                     # TODO: Better except clause
                     except:
                         pass
                 else:
-                    datasets_validation.append(it_data_folders.name)
+                    validation_datasets.append(data_dir.name)
             # Get the extra sets !
-            elif "extra_" == it_data_folders.name[:6]:
-                datasets_extra.append(it_data_folders.name)
-    del it_data_folders
-
-    del datasets_validation
+            elif "extra_" == data_dir.name[:6]:
+                extra_datasets.append(data_dir.name)
+    del data_dir
 
     # Training sets list construction
-    datasets_training = []
-    datasets_training_json = []
+    dp_train_input_datasets = []
+    training_datasets = []
     # Initial
-    nb_initial = 0
+    initial_count = 0
     if training_config["use_initial_datasets"]:
-        for it_datasets_initial_json in datasets_initial_json.keys():
+        for it_datasets_initial_json in initial_datasets_info.keys():
             if (data_path / it_datasets_initial_json).is_dir():
-                datasets_training.append(
+                dp_train_input_datasets.append(
                     f"{(Path(data_path.parts[-1]) / it_datasets_initial_json / '_')}"[
                         :-1
                     ]
                 )
-                datasets_training_json.append(it_datasets_initial_json)
-                nb_initial = (
-                    nb_initial + datasets_initial_json[it_datasets_initial_json]
+                training_datasets.append(it_datasets_initial_json)
+                initial_count = (
+                    initial_count + initial_datasets_info[it_datasets_initial_json]
                 )
         del it_datasets_initial_json
-    del datasets_initial_json
+    del initial_datasets_info
 
     # Non-Reactive (aka subsys_nr in the initialization first) && all the others are REACTIVE !
     # Total and what is added just for this iteration
-    nb_added_nr = 0
-    nb_added_r = 0
-    nb_added_nr_iter = 0
-    nb_added_r_iter = 0
+    added_nr_count = 0
+    added_r_count = 0
+    added_nr_iter_count = 0
+    added_r_iter_count = 0
 
     # This trick remove duplicates from list via set
-    subsys_name = list(set(subsys_name))
-    subsys_name = [i for i in subsys_name if i not in main_config["subsys_nr"]]
-    subsys_name = [
+    subsys = list(set(subsys))
+    subsys = [i for i in subsys if i not in main_config["subsys_nr"]]
+    subsys = [
         i
-        for i in subsys_name
+        for i in subsys
         if i not in [zzz + "-disturbed" for zzz in main_config["subsys_nr"]]
     ]
-    subsys_name = sorted(subsys_name)
-    main_config["subsys_r"] = subsys_name
-    del subsys_name
+    subsys = sorted(subsys)
+    main_config["subsys_r"] = subsys
+    del subsys
 
     # TODO Function
     if curr_iter > 0:
-        for it_iteration in np.arange(1, curr_iter + 1):
-            it_iteration_zfill = str(it_iteration).zfill(3)
+        for iteration in np.arange(1, curr_iter + 1):
+            padded_iteration = str(iteration).zfill(3)
             try:
-                for system_it in main_config["subsys_nr"]:
-                    if (data_path / f"{system_it}_{it_iteration_zfill}").is_dir():
-                        datasets_training.append(
-                            f"{(Path(data_path.parts[-1]) / (system_it+'_'+it_iteration_zfill) / '_')}"[
+                for subsys_nr in main_config["subsys_nr"]:
+                    if (data_path / f"{subsys_nr}_{padded_iteration}").is_dir():
+                        dp_train_input_datasets.append(
+                            f"{(Path(data_path.parts[-1]) / (subsys_nr+'_'+padded_iteration) / '_')}"[
                                 :-1
                             ]
                         )
-                        datasets_training_json.append(
-                            f"{system_it}_{it_iteration_zfill}"
+                        training_datasets.append(
+                            f"{subsys_nr}_{padded_iteration}"
                         )
-                        nb_added_nr = (
-                            nb_added_nr
+                        added_nr_count = (
+                            added_nr_count
                             + np.load(
-                                str(
                                     data_path
-                                    / f"{system_it}_{it_iteration_zfill}"
+                                    / f"{subsys_nr}_{padded_iteration}"
                                     / "set.000"
                                     / "box.npy"
-                                )
                             ).shape[0]
                         )
-                        if it_iteration == curr_iter:
-                            nb_added_nr_iter = (
-                                nb_added_nr_iter
+                        if iteration == curr_iter:
+                            added_nr_iter_count = (
+                                added_nr_iter_count
                                 + np.load(
-                                    str(
                                         data_path
-                                        / f"{system_it}_{it_iteration_zfill}"
+                                        / f"{subsys_nr}_{padded_iteration}"
                                         / "set.000"
                                         / "box.npy"
-                                    )
                                 ).shape[0]
                             )
-                del system_it
+                del subsys_nr
             except (KeyError, NameError):
                 pass
             try:
-                for system_it in [
+                for subsys_disturbed in [
                     zzz + "-disturbed" for zzz in main_config["subsys_nr"]
                 ]:
-                    if (data_path / f"{system_it}_{it_iteration_zfill}").is_dir():
-                        datasets_training.append(
-                            f"{(Path(data_path.parts[-1]) / (system_it+'_'+it_iteration_zfill) / '_')}"[
+                    if (data_path / f"{subsys_disturbed}_{padded_iteration}").is_dir():
+                        dp_train_input_datasets.append(
+                            f"{(Path(data_path.parts[-1]) / (subsys_disturbed+'_'+padded_iteration) / '_')}"[
                                 :-1
                             ]
                         )
-                        datasets_training_json.append(
-                            f"{system_it}_{it_iteration_zfill}"
+                        training_datasets.append(
+                            f"{subsys_disturbed}_{padded_iteration}"
                         )
-                        nb_added_nr = (
-                            nb_added_nr
+                        added_nr_count = (
+                            added_nr_count
                             + np.load(
-                                str(
                                     data_path
-                                    / f"{system_it}_{it_iteration_zfill}"
+                                    / f"{subsys_disturbed}_{padded_iteration}"
                                     / "set.000"
                                     / "box.npy"
-                                )
                             ).shape[0]
                         )
-                        if it_iteration == curr_iter:
-                            nb_added_nr_iter = (
-                                nb_added_nr_iter
+                        if iteration == curr_iter:
+                            added_nr_iter_count = (
+                                added_nr_iter_count
                                 + np.load(
-                                    str(
                                         data_path
-                                        / f"{system_it}_{it_iteration_zfill}"
+                                        / f"{subsys_disturbed}_{padded_iteration}"
                                         / "set.000"
                                         / "box.npy"
-                                    )
                                 ).shape[0]
                             )
-                del system_it
+                del subsys_disturbed
             except (KeyError, NameError):
                 pass
             try:
-                for system_it in main_config["subsys_r"]:
-                    if (data_path / f"{system_it}_{it_iteration_zfill}").is_dir():
-                        datasets_training.append(
-                            f"{(Path(data_path.parts[-1]) / (system_it+'_'+it_iteration_zfill) / '_')}"[
+                for subsys_r in main_config["subsys_r"]:
+                    if (data_path / f"{subsys_r}_{padded_iteration}").is_dir():
+                        dp_train_input_datasets.append(
+                            f"{(Path(data_path.parts[-1]) / (subsys_r+'_'+padded_iteration) / '_')}"[
                                 :-1
                             ]
                         )
-                        datasets_training_json.append(
-                            f"{system_it}_{it_iteration_zfill}"
+                        training_datasets.append(
+                            f"{subsys_r}_{padded_iteration}"
                         )
-                        nb_added_nr = (
-                            nb_added_nr
+                        added_nr_count = (
+                            added_nr_count
                             + np.load(
-                                str(
                                     data_path
-                                    / f"{system_it}_{it_iteration_zfill}"
+                                    / f"{subsys_r}_{padded_iteration}"
                                     / "set.000"
                                     / "box.npy"
-                                )
                             ).shape[0]
                         )
-                        if it_iteration == curr_iter:
-                            nb_added_nr_iter = (
-                                nb_added_nr_iter
+                        if iteration == curr_iter:
+                            added_nr_iter_count = (
+                                added_nr_iter_count
                                 + np.load(
-                                    str(
                                         data_path
-                                        / f"{system_it}_{it_iteration_zfill}"
+                                        / f"{subsys_r}_{padded_iteration}"
                                         / "set.000"
                                         / "box.npy"
-                                    )
                                 ).shape[0]
                             )
-                del system_it
+                del subsys_r
             except (KeyError, NameError):
                 pass
-        del it_iteration, it_iteration_zfill
+        del iteration, padded_iteration
 
     # Finally the extra sets !
-    nb_extra = 0
+    extra_count = 0
     if training_config["use_extra_datasets"]:
-        main_config["datasets_extra"] = datasets_extra
-        del datasets_extra
-        for it_datasets_extra in main_config["datasets_extra"]:
-            datasets_training.append(
-                f"{(Path(data_path.parts[-1]) / it_datasets_extra / '_')}"[:-1]
+        main_config["extra_datasets"] = extra_datasets
+        del extra_datasets
+        for extra_dataset in main_config["extra_datasets"]:
+            dp_train_input_datasets.append(
+                f"{(Path(data_path.parts[-1]) / extra_dataset / '_')}"[:-1]
             )
-            datasets_training_json.append(it_datasets_extra)
-            nb_extra = (
-                nb_extra
-                + np.load(
-                    str(data_path / it_datasets_extra / "set.000" / "box.npy")
-                ).shape[0]
-            )
-        del it_datasets_extra
+            training_datasets.append(extra_dataset)
+            extra_count = (
+                extra_count
+                + np.load(data_path / extra_dataset / "set.000" / "box.npy").shape[0])
+        del extra_dataset
     else:
-        del datasets_extra
+        del extra_datasets
 
     # Total
-    nb_trained = nb_initial + nb_added_nr + nb_added_r + nb_extra
-    logging.debug(f"nb_trained: {nb_trained} = {nb_initial} + {nb_added_nr} + {nb_added_r} + {nb_extra}")
-    logging.debug(f"datasets_training: {datasets_training}")
+    trained_count = initial_count + added_nr_count + added_r_count + extra_count
+    logging.debug(f"trained_count: {trained_count} = {initial_count} + {added_nr_count} + {added_r_count} + {extra_count}")
+    logging.debug(f"dp_train_input_datasets: {dp_train_input_datasets}")
 
     # Update the inputs with the sets
-    dp_train_input["training"]["training_data"]["systems"] = datasets_training
+    dp_train_input["training"]["training_data"]["systems"] = dp_train_input_datasets
 
     # Update the training JSON
     training_config = {
         **training_config,
-        "training_data": datasets_training_json,
-        "nb_trained": nb_trained,
-        "nb_initial": nb_initial,
-        "nb_added_nr": nb_added_nr,
-        "nb_added_r": nb_added_r,
-        "nb_added_nr_iter": nb_added_nr_iter,
-        "nb_added_r_iter": nb_added_r_iter,
-        "nb_extra": nb_extra,
+        "training_datasets": training_datasets,
+        "trained_count": trained_count,
+        "initial_count": initial_count,
+        "added_nr_count": added_nr_count,
+        "added_r_count": added_r_count,
+        "added_nr_iter_count": added_nr_iter_count,
+        "added_r_iter_count": added_r_iter_count,
+        "extra_count": extra_count,
     }
     logging.debug(f"training_config: {training_config}")
 
-    del datasets_training_json
-    del nb_trained, nb_initial, nb_extra
-    del nb_added_nr, nb_added_r, nb_added_nr_iter, nb_added_r_iter
+    del training_datasets
+    del trained_count, initial_count, extra_count
+    del added_nr_count, added_r_count, added_nr_iter_count, added_r_iter_count
 
     # Here calculate the parameters
 
-    # decay_steps it auto-recalculated as funcion of nb_trained
+    # decay_steps it auto-recalculated as funcion of trained_count
     logging.debug(f"training_config - decay_steps: {training_config['decay_steps']}")
     logging.debug(f"current_config - decay_steps: {current_config['decay_steps']}")
     if not training_config["decay_steps_fixed"]:
-        decay_steps = calculate_decay_steps(training_config["nb_trained"], training_config["decay_steps"])
+        decay_steps = calculate_decay_steps(training_config["trained_count"], training_config["decay_steps"])
         logging.debug(f"Recalculating decay_steps")
         # Update the training JSON and the new input JSON:
         training_config["decay_steps"] = decay_steps
@@ -531,16 +514,16 @@ def main(
     # Rsync data to local data
     localdata_path = Path(".").resolve() / "data"
     localdata_path.mkdir(exist_ok=True)
-    for it_datasets_training in datasets_training:
+    for dp_train_input_dataset in dp_train_input_datasets:
         subprocess.run(
             [
                 "rsync",
                 "-a",
-                f"{training_path}/{it_datasets_training.rsplit('/', 1)[0]}",
-                str(localdata_path),
+                f"{training_path / (dp_train_input_dataset.rsplit('/', 1)[0])}",
+                f"{localdata_path}",
             ]
         )
-    del it_datasets_training, localdata_path, datasets_training
+    del dp_train_input_dataset, localdata_path, dp_train_input_datasets
 
     # Change some inside output
     dp_train_input["training"]["disp_file"] = "lcurve.out"
@@ -568,55 +551,42 @@ def main(
     current_config['s_per_step'] = -1
     logging.debug(f"walltime_approx_s: {walltime_approx_s}")
 
-    for it_nnp in range(1, main_config["nb_nnp"] + 1):
-        local_path = Path(".").resolve() / str(it_nnp)
+    for nnp in range(1, main_config["nnp_count"] + 1):
+        local_path = Path(".").resolve() / f"{nnp}"
         local_path.mkdir(exist_ok=True)
         check_directory(local_path)
 
         random.seed()
         random_0_1000 = random.randrange(0, 1000)
+
         if training_config["deepmd_model_type_descriptor"] == "se_ar":
-            dp_train_input["model"]["descriptor"]["a"]["seed"] = int(
-                str(it_nnp) + str(random_0_1000) + padded_curr_iter
-            )
-            dp_train_input["model"]["descriptor"]["r"]["seed"] = int(
-                str(it_nnp) + str(random_0_1000) + padded_curr_iter
-            )
+            dp_train_input["model"]["descriptor"]["a"]["seed"] = int(f"{nnp}{random_0_1000}{padded_curr_iter}")
+            dp_train_input["model"]["descriptor"]["r"]["seed"] = int(f"{nnp}{random_0_1000}{padded_curr_iter}")
         else:
-            dp_train_input["model"]["descriptor"]["seed"] = int(
-                str(it_nnp) + str(random_0_1000) + padded_curr_iter
-            )
+            dp_train_input["model"]["descriptor"]["seed"] = int(f"{nnp}{random_0_1000}{padded_curr_iter}")
+        dp_train_input["model"]["fitting_net"]["seed"] = int(f"{nnp}{random_0_1000}{padded_curr_iter}")
+        dp_train_input["training"]["seed"] = int(f"{nnp}{random_0_1000}{padded_curr_iter}")
 
-        dp_train_input["model"]["fitting_net"]["seed"] = int(
-            str(it_nnp) + str(random_0_1000) + padded_curr_iter
-        )
-
-        dp_train_input["training"]["seed"] = int(
-            str(it_nnp) + str(random_0_1000) + padded_curr_iter
-        )
-
-        dp_train_input_file = Path(str(it_nnp) + "/training.json").resolve()
+        dp_train_input_file = (Path(f"{nnp}") / "training.json").resolve()
 
         write_json_file(dp_train_input, dp_train_input_file, False)
 
-        slurm_file = replace_in_slurm_file_general(
-            slurm_file_master,
+        job_file = replace_in_slurm_file_general(
+            master_job_file ,
             machine_spec,
             walltime_approx_s,
             machine_walltime_format,
             training_config["job_email"],
         )
 
-        slurm_file = replace_substring_in_list_of_strings(
-            slurm_file, "_R_DEEPMD_VERSION_", str(training_config["deepmd_model_version"])
-        )
+        job_file = replace_substring_in_list_of_strings(job_file, "_R_DEEPMD_VERSION_", f"{training_config['deepmd_model_version']}")
         write_list_of_strings_to_file(
             local_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh",
-            slurm_file,
+            job_file,
         )
-        del slurm_file, local_path, dp_train_input_file, random_0_1000
+        del job_file, local_path, dp_train_input_file, random_0_1000
 
-    del it_nnp, walltime_approx_s, dp_train_input
+    del nnp, walltime_approx_s, dp_train_input
 
     # Dump the dicts
     logging.info(f"-" * 88)
@@ -635,7 +605,7 @@ def main(
     del main_config, current_config, training_config, previous_training_config, labeling_config
     del curr_iter, padded_curr_iter
     del machine, machine_spec, machine_walltime_format, machine_launch_command
-    del slurm_file_master
+    del master_job_file
 
     return 0
 
@@ -646,8 +616,8 @@ if __name__ == "__main__":
             "training",
             "preparation",
             Path(sys.argv[1]),
-            fake_machine=sys.argv[2],
-            user_config_filename=sys.argv[3],
+            fake_machine = sys.argv[2],
+            user_config_filename = sys.argv[3],
         )
     else:
         pass

@@ -84,8 +84,8 @@ if __name__ == "__main__":
             "training",
             "clean",
             Path(sys.argv[1]),
-            fake_machine=sys.argv[2],
-            user_config_filename=sys.argv[3],
+            fake_machine = sys.argv[2],
+            user_config_filename = sys.argv[3],
         )
     else:
         pass

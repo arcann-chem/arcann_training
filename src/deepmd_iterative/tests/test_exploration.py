@@ -12,7 +12,7 @@ import numpy as np
 from deepmd_iterative.common.exploration import (
     create_models_list,
     get_last_frame_number,
-    update_nb_steps_factor,
+    update_subsys_nb_steps_factor,
 )
 
 class TestCreateModelsList(unittest.TestCase):
@@ -126,11 +126,11 @@ class TestUpdateNbStepsFactor(unittest.TestCase):
             prevexploration_json = json.load(f)
 
         # Test the function for various ratios of ill-described candidates
-        self.assertEqual(update_nb_steps_factor(prevexploration_json, 0), 4)
+        self.assertEqual(update_subsys_nb_steps_factor(prevexploration_json, 0), 4)
         prevexploration_json["subsys_nr"][0]["nb_rejected"] = 5
-        self.assertEqual(update_nb_steps_factor(prevexploration_json, 0), 2)
+        self.assertEqual(update_subsys_nb_steps_factor(prevexploration_json, 0), 2)
         prevexploration_json["subsys_nr"][0]["nb_candidates"] = 20
-        self.assertEqual(update_nb_steps_factor(prevexploration_json, 0), 1)
+        self.assertEqual(update_subsys_nb_steps_factor(prevexploration_json, 0), 1)
 
 
 if __name__ == "__main__":

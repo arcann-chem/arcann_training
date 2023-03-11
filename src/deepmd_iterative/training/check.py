@@ -56,8 +56,8 @@ def main(
     # Check the normal termination of the training phase
     s_per_step_per_step_size = []
     completed_count = 0
-    for it_nnp in range(1, main_config["nb_nnp"] + 1):
-        local_path = Path(".").resolve() / str(it_nnp)
+    for nnp in range(1, main_config["nnp_count"] + 1):
+        local_path = Path(".").resolve() / f"{nnp}"
         if (local_path / "training.out").is_file():
             training_out = file_to_list_of_strings((local_path / "training.out"))
             if any("finished training" in s for s in training_out):
@@ -92,15 +92,15 @@ def main(
                 )
                 completed_count += 1
             else:
-                logging.critical(f"DP Train - {it_nnp} not finished/failed.")
+                logging.critical(f"DP Train - {nnp} not finished/failed.")
             del training_out, training_out_time, training_out_time_split
         else:
-            logging.critical(f"DP Train - {it_nnp} still running/no outfile.")
+            logging.critical(f"DP Train - {nnp} still running/no outfile.")
         del local_path
-    del it_nnp
+    del nnp
 
     logging.info(f"-" * 88)
-    if completed_count == main_config["nb_nnp"]:
+    if completed_count == main_config["nnp_count"]:
         training_config["is_checked"] = True
     else:
         logging.critical(

@@ -57,23 +57,12 @@ def main(
         return 1
 
     # Check if pb files are present and delete temp files
-    for it_nnp in range(1, main_config["nb_nnp"] + 1):
-        local_path = Path(".").resolve() / str(it_nnp)
-        check_file_existence(
-            local_path
-            / ("graph_" + str(it_nnp) + "_" + padded_curr_iter + ".pb")
-        )
+    for nnp in range(1, main_config["nnp_count"] + 1):
+        local_path = Path(".").resolve() / f"{nnp}"
+        check_file_existence(local_path / f"graph_{nnp}_{padded_curr_iter}.pb")
         if training_config["is_compressed"]:
-            check_file_existence(
-                local_path
-                / (
-                    "graph_"
-                    + str(it_nnp)
-                    + "_"
-                    + padded_curr_iter
-                    + "_compressed.pb"
-                )
-            )
+            check_file_existence(local_path / f"graph_{nnp}_{padded_curr_iter}_compressed.pb")
+
         remove_file(local_path / "checkpoint")
         remove_file(local_path / "input_v2_compat")
         logging.info("Deleting SLURM out/error files...")
@@ -85,15 +74,15 @@ def main(
             remove_tree(local_path / "model-compression")
 
     # Prepare the test folder
-    (training_path / (padded_curr_iter + "-test")).mkdir(exist_ok=True)
-    check_directory((training_path / (padded_curr_iter + "-test")))
+    (training_path / f"{padded_curr_iter}-test").mkdir(exist_ok=True)
+    check_directory((training_path / f"{padded_curr_iter}-test"))
 
     subprocess.run(
         [
             "rsync",
             "-a",
-            str(training_path / "data"),
-            str(training_path / (padded_curr_iter + "-test")),
+            f"{training_path / 'data'}",
+            str(training_path / f"{padded_curr_iter}-test"),
         ]
     )
 
@@ -103,23 +92,13 @@ def main(
 
     local_path = Path(".").resolve()
 
-    for it_nnp in range(1, main_config["nb_nnp"] + 1):
+    for nnp in range(1, main_config["nnp_count"] + 1):
         if training_config["is_compressed"]:
             subprocess.run(
                 [
                     "rsync",
                     "-a",
-                    str(
-                        local_path
-                        / (
-                            str(it_nnp)
-                            + "/graph_"
-                            + str(it_nnp)
-                            + "_"
-                            + padded_curr_iter
-                            + "_compressed.pb"
-                        )
-                    ),
+                    str(local_path / f"graph_{nnp}_{padded_curr_iter}_compressed.pb"),
                     str((training_path / "NNP")),
                 ]
             )
@@ -127,33 +106,23 @@ def main(
             [
                 "rsync",
                 "-a",
-                str(
-                    local_path
-                    / (
-                        str(it_nnp)
-                        + "/graph_"
-                        + str(it_nnp)
-                        + "_"
-                        + padded_curr_iter
-                        + ".pb"
-                    )
-                ),
+                str(local_path / f"graph_{nnp}_{padded_curr_iter}.pb"),
                 str((training_path / "NNP")),
             ]
         )
-    del it_nnp
+    del nnp
 
     # Next iteration
     curr_iter = curr_iter + 1
     main_config["curr_iter"] = curr_iter
     padded_curr_iter = str(curr_iter).zfill(3)
 
-    for it_steps in ["exploration", "reactive", "labeling", "training"]:
-        (training_path / (padded_curr_iter + "-" + it_steps)).mkdir(
+    for step in ["exploration", "reactive", "labeling", "training"]:
+        (training_path / f"{padded_curr_iter}-{step}").mkdir(
             exist_ok=True
         )
-        check_directory(training_path / (padded_curr_iter + "-" + it_steps))
-    del it_steps
+        check_directory(training_path / f"{padded_curr_iter}-{step}")
+    del step
 
     # Delete the temp data folder
     if (local_path / "data").is_dir():
@@ -184,8 +153,8 @@ if __name__ == "__main__":
             "training",
             "update_iter",
             Path(sys.argv[1]),
-            fake_machine=sys.argv[2],
-            user_config_filename=sys.argv[3],
+            fake_machine = sys.argv[2],
+            user_config_filename = sys.argv[3],
         )
     else:
         pass

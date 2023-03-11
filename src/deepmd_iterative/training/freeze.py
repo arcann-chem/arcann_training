@@ -126,7 +126,7 @@ def main(
         jobs_path / f"job_deepmd_freeze_{machine_spec['arch_type']}_{machine}.sh",
         error_msg=f"No SLURM file present for {current_step.capitalize()} / {current_phase.capitalize()} on this machine.",
     )
-    slurm_file_master = file_to_list_of_strings(
+    master_job_file = file_to_list_of_strings(
         jobs_path / f"job_deepmd_freeze_{machine_spec['arch_type']}_{machine}.sh"
     )
     current_config["job_email"] = get_key_in_dict("job_email", user_config, training_config, default_config)
@@ -135,42 +135,33 @@ def main(
     # Prep and launch DP Freeze
     completed_count = 0
     walltime_approx_s = 7200
-    for it_nnp in range(1, main_config["nb_nnp"] + 1):
-        local_path = Path(".").resolve() / str(it_nnp)
+    for nnp in range(1, main_config["nnp_count"] + 1):
+        local_path = Path(".").resolve() / f"{nnp}"
 
         check_file_existence(local_path / "model.ckpt.index")
 
-        slurm_file = replace_in_slurm_file_general(
-            slurm_file_master,
+        job_file = replace_in_slurm_file_general(
+            master_job_file,
             machine_spec,
             walltime_approx_s,
             machine_walltime_format,
             current_config["job_email"],
         )
 
-        slurm_file = replace_substring_in_list_of_strings(
-            slurm_file, "_R_DEEPMD_VERSION_", str(training_config["deepmd_model_version"])
-        )
-        slurm_file = replace_substring_in_list_of_strings(
-            slurm_file,
-            "_R_DEEPMD_MODEL_",
-            "graph_" + str(it_nnp) + "_" + padded_curr_iter,
-        )
+        job_file = replace_substring_in_list_of_strings(job_file, "_R_DEEPMD_VERSION_", f"{training_config['deepmd_model_version']}")
+        job_file = replace_substring_in_list_of_strings(job_file, "_R_DEEPMD_MODEL_", f"graph_{nnp}_{padded_curr_iter}",)
 
         write_list_of_strings_to_file(
             local_path / f"job_deepmd_freeze_{machine_spec['arch_type']}_{machine}.sh",
-            slurm_file,
+            job_file,
         )
-        del slurm_file
+        del job_file
 
         with (local_path / "checkpoint").open("w") as f:
             f.write('model_checkpoint_path: "model.ckpt"\n')
             f.write('all_model_checkpoint_paths: "model.ckpt"\n')
         del f
-        if (
-            local_path
-            / ("job_deepmd_freeze_" + machine_spec["arch_type"] + "_" + machine + ".sh")
-        ).is_file():
+        if (local_path / f"job_deepmd_freeze_{machine_spec['arch_type']}_{machine}.sh").is_file():
             change_directory(local_path)
             try:
                 subprocess.run(
@@ -179,18 +170,18 @@ def main(
                         f"./job_deepmd_freeze_{machine_spec['arch_type']}_{machine}.sh",
                     ]
                 )
-                logging.info(f"DP Freeze - {it_nnp} launched.")
+                logging.info(f"DP Freeze - {nnp} launched.")
                 completed_count += 1
             except FileNotFoundError:
                 logging.critical(
-                    f"DP Freeze - {it_nnp} NOT launched - {training_config['launch_command']} not found."
+                    f"DP Freeze - {nnp} NOT launched - {training_config['launch_command']} not found."
                 )
             change_directory(local_path.parent)
         else:
-            logging.critical(f"DP Freeze - {it_nnp} NOT launched - No job file.")
+            logging.critical(f"DP Freeze - {nnp} NOT launched - No job file.")
         del local_path
 
-    del it_nnp, slurm_file_master
+    del nnp, master_job_file
 
     # Dump the dicts
     logging.info(f"-" * 88)
@@ -200,7 +191,7 @@ def main(
     )
     backup_and_overwrite_json_file(current_config, (current_path / user_config_filename))
     logging.info(f"-" * 88)
-    if completed_count == main_config["nb_nnp"]:
+    if completed_count == main_config["nnp_count"]:
         pass
     else:
         logging.critical(
@@ -230,8 +221,8 @@ if __name__ == "__main__":
             "training",
             "freeze",
             Path(sys.argv[1]),
-            fake_machine=sys.argv[2],
-            user_config_filename=sys.argv[3],
+            fake_machine = sys.argv[2],
+            user_config_filename = sys.argv[3],
         )
     else:
         pass

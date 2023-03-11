@@ -22,7 +22,7 @@ def main(
     current_phase: str,
     deepmd_iterative_path,
     fake_machine=None,
-    user_config_filename: str = "config.json",
+    user_config_filename: str = "input.json",
 ):
     # Get the current path and set the training path as the current path
     current_path = Path(".").resolve()
@@ -69,47 +69,44 @@ def main(
     check_directory((training_path / f"{padded_curr_iter}-training"))
 
     # Check if data exists, get init_* datasets and extract number of atoms and cell dimensions
-    initial_datasets_path = [_ for _ in (training_path / "data").glob("init_*")]
-    if len(initial_datasets_path) == 0:
-        logging.error("No initial data sets found.")
+    initial_datasets_paths = [_ for _ in (training_path / "data").glob("init_*")]
+    if len(initial_datasets_paths) == 0:
+        logging.error("No initial datasets found.")
         logging.error("Aborting...")
         return 1
-    logging.debug(f"initial_datasets_path: {initial_datasets_path}")
+    logging.debug(f"initial_datasets_paths: {initial_datasets_paths}")
 
     # Create the initial datasets JSON
-    initial_datasets_json = {}
-    for it_initial_datasets_path in initial_datasets_path:
-        check_file_existence(it_initial_datasets_path / "type.raw")
-        it_initial_datasets_set_path = it_initial_datasets_path / "set.000"
-        for it_npy in ["box", "coord", "energy", "force"]:
-            check_file_existence(it_initial_datasets_set_path / (it_npy + ".npy"))
-        del it_npy
-        initial_datasets_json[it_initial_datasets_path.name] = np.load(
-            str(it_initial_datasets_set_path / "box.npy")
-        ).shape[0]
-    logging.debug(f"initial_datasets_json: {initial_datasets_json}")
-    del it_initial_datasets_path, it_initial_datasets_set_path
-    del initial_datasets_path
+    initial_datasets_info = {}
+    for initial_dataset_path in initial_datasets_paths:
+        check_file_existence(initial_dataset_path / "type.raw")
+        initial_dataset_set_path = initial_dataset_path / "set.000"
+        for data_type in ["box", "coord", "energy", "force"]:
+            check_file_existence(initial_dataset_set_path / (data_type + ".npy"))
+        del data_type
+        initial_datasets_info[initial_dataset_path.name] = np.load(initial_dataset_set_path / "box.npy").shape[0]
+    logging.debug(f"initial_datasets_info: {initial_datasets_info}")
+    del initial_dataset_path, initial_datasets_paths, initial_dataset_set_path
 
     # Populate
-    main_config["initial_datasets"] = [zzz for zzz in initial_datasets_json.keys()]
+    main_config["initial_datasets"] = [zzz for zzz in initial_datasets_info.keys()]
 
     # DEBUG: Print the dicts
     logging.debug(f"main_config: {main_config}")
-    logging.debug(f"initial_datasets_json: {initial_datasets_json}")
+    logging.debug(f"initial_datasets_info: {initial_datasets_info}")
     logging.debug(f"user_config: {user_config}")
     logging.debug(f"current_config: {current_config}")
 
     # Dump the dicts
     logging.info(f"-" * 88)
     write_json_file(main_config, (control_path / "config.json"))
-    write_json_file(initial_datasets_json, (control_path / "initial_datasets.json"))
+    write_json_file(initial_datasets_info, (control_path / "initial_datasets.json"))
     backup_and_overwrite_json_file(current_config, (current_path / user_config_filename))
 
     # Delete
     del current_path, control_path, training_path
     del default_config, default_config_present, user_config, user_config_present, user_config_filename
-    del main_config, initial_datasets_json, current_config
+    del main_config, initial_datasets_info, current_config
 
     logging.info(f"-" * 88)
     logging.info(f"Step: {current_step.capitalize()} is a success!")
