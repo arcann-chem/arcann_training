@@ -1,7 +1,7 @@
 from pathlib import Path
 import logging
 import sys
-from typing import Dict
+from typing import Dict, List
 
 # Others
 import json
@@ -146,21 +146,21 @@ def check_initial_datasets(training_dir: Path) -> Dict[str, int]:
 
     """
 
-    initial_datasets_json_file = training_dir / "control" / "initial_datasets.json"
+    initial_datasets_info_file = training_dir / "control" / "initial_datasets.json"
 
     # Check if the 'initial_datasets.json' file exists
-    if not initial_datasets_json_file.is_file():
-        error_msg = f"The 'initial_datasets.json' file is missing from '{initial_datasets_json_file.parent}'."
+    if not initial_datasets_info_file.is_file():
+        error_msg = f"The 'initial_datasets.json' file is missing from '{initial_datasets_info_file.parent}'."
         logging.error(f"{error_msg}\nAborting...")
         sys.exit(2)
         # raise FileNotFoundError(error_msg)
 
     # Load the 'initial_datasets.json' file
-    with initial_datasets_json_file.open() as file:
-        initial_datasets = json.load(file)
+    with initial_datasets_info_file.open() as file:
+        initial_datasets_info = json.load(file)
 
     # Check each initial dataset
-    for dataset_name, expected_num_samples in initial_datasets.items():
+    for dataset_name, expected_num_samples in initial_datasets_info.items():
         dataset_path = training_dir / "data" / dataset_name
 
         # Check if the dataset exists in the 'data' subfolder
@@ -185,4 +185,47 @@ def check_initial_datasets(training_dir: Path) -> Dict[str, int]:
             sys.exit(1)
             # raise ValueError(error_msg)
 
-    return initial_datasets
+    return initial_datasets_info
+
+
+def validate_deepmd_config(training_config):
+    """
+    Validates the provided training configuration for a DeePMD model.
+    
+    Args:
+        training_config (dict): A dictionary containing the training configuration.
+        
+    Returns:
+        int: 0 if the configuration is valid, 1 if an error is found.
+    """
+    # Check DeePMD version
+    if training_config["deepmd_model_version"] not in [2.0, 2.1]:
+        logging.critical(
+            f"Invalid deepmd model version (2.0 or 2.1): {training_config['deepmd_model_version']}."
+        )
+        logging.critical("Aborting...")
+        return 1
+
+    # Check DeePMD descriptor type
+    if training_config["deepmd_model_type_descriptor"] not in ["se_e2_a"]:
+        logging.critical(
+            f"Invalid deepmd type descriptor (se_e2_a): {training_config['deepmd_model_type_descriptor']}."
+        )
+        logging.critical("Aborting...")
+        return 1
+
+    # Check mismatch between machine/arch_name/arch and DeePMD
+    if training_config["deepmd_model_version"] < 2.0:
+        logging.critical("Only version >= 2.0 on Jean Zay!")
+        logging.critical("Aborting...")
+        return 1
+    if (
+        training_config["deepmd_model_version"] < 2.1
+        and training_config["arch_name"] == "a100"
+    ):
+        logging.critical("Only version >= 2.1 on Jean Zay A100!")
+        logging.critical("Aborting...")
+        return 1
+
+    # If all checks pass, return 0 indicating a valid configuration
+    return 0

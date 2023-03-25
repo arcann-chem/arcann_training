@@ -131,9 +131,12 @@ def backup_and_overwrite_json_file(
         file_path (Path): A path object representing the file to write the JSON data to.
         enable_logging (bool, optional): Whether to log information about the writing process. Defaults to False.
     """
+    backup_path = file_path.with_suffix(".json.bak")
     # Create a backup of the original file, if it exists
-    if file_path.is_file() and not file_path.is_symlink():
-        backup_path = file_path.with_suffix(".json.bak")
+    if file_path.is_file() and not file_path.is_symlink() and not backup_path.is_file():
+        file_path.rename(backup_path)
+    elif file_path.is_file() and not file_path.is_symlink() and backup_path.is_file():
+        backup_path.unlink()
         file_path.rename(backup_path)
     # If the file is a symbolic link, remove it
     elif file_path.is_symlink():

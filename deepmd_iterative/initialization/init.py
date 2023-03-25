@@ -1,11 +1,12 @@
-from pathlib import Path
+# Standard library modules
 import logging
 import sys
+from pathlib import Path
 
-# Non-standard library imports
+# Third-party modules
 import numpy as np
 
-# deepmd_iterative imports
+# Local imports
 from deepmd_iterative.common.file import check_directory, check_file_existence
 from deepmd_iterative.common.json import (
     backup_and_overwrite_json_file,
@@ -36,7 +37,7 @@ def main(
     logging.info(f"-" * 88)
 
     # Load the default config (JSON)
-    default_config = load_default_json_file(deepmd_iterative_path / "data" / "default_config.json")[current_step]
+    default_config = load_default_json_file(deepmd_iterative_path / "assets" / "default_config.json")[current_step]
     default_config_present = bool(default_config)
     logging.debug(f"default_config: {default_config}")
     logging.debug(f"default_config_present: {default_config_present}")

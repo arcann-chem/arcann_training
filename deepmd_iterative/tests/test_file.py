@@ -1,10 +1,10 @@
+# Standard library modules
+import logging
+import tempfile
+import unittest
 from pathlib import Path
 
-# Unittest imports
-import unittest
-import tempfile
-
-# deepmd_iterative imports
+# Local imports
 from deepmd_iterative.common.file import (
     change_directory,
     check_directory,
@@ -18,6 +18,8 @@ from deepmd_iterative.common.file import (
 
 
 class TestChangeDirectory(unittest.TestCase):
+    """Test case for `change_directory` function."""
+
     def setUp(self):
         self.temp_dir_1 = tempfile.TemporaryDirectory()
         self.temp_dir_2 = tempfile.TemporaryDirectory()
@@ -27,27 +29,27 @@ class TestChangeDirectory(unittest.TestCase):
         self.temp_dir_2.cleanup()
 
     def test_change_directory(self):
-        # Call change_directory with one of the temporary directories
+        """Test changing to an existing directory."""
         change_directory(Path(self.temp_dir_1.name))
-
-        # Ensure that the current working directory has been changed
         self.assertEqual(Path.cwd(), Path(self.temp_dir_1.name))
 
     def test_change_directory_nonexistent_directory(self):
-        # Call change_directory with a nonexistent directory
-        with self.assertRaises(SystemExit):
+        """Test raising an error for a nonexistent directory."""
+        with self.assertRaises(FileNotFoundError):
             change_directory(Path("nonexistent_directory"))
 
     def test_change_directory_file_not_directory(self):
-        # Call change_directory with a file instead of a directory
+        """Test raising an error for a file instead of a directory."""
         temp_file = Path(self.temp_dir_1.name) / "temp_file.txt"
         with open(temp_file, "w") as f:
             f.write("This is a temporary file for testing purposes.")
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(FileNotFoundError):
             change_directory(temp_file)
 
 
 class TestCheckDirectory(unittest.TestCase):
+    """Test case for `check_directory` function."""
+
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
 
@@ -55,33 +57,30 @@ class TestCheckDirectory(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_check_directory_existing_directory(self):
-        # Call check_directory on an existing directory
+        """Test checking an existing directory."""
         check_directory(Path(self.temp_dir.name))
-
-        # Ensure that the function does not abort the program
         self.assertTrue(True)
 
     def test_check_directory_nonexistent_directory(self):
-        # Call check_directory on a nonexistent directory
-        with self.assertRaises(SystemExit):
+        """Test raising an error for a nonexistent directory with abort."""
+        with self.assertRaises(FileNotFoundError):
             check_directory(Path("nonexistent_directory"))
 
     def test_check_directory_nonexistent_directory_no_abort(self):
-        # Call check_directory on a nonexistent directory without aborting
-        check_directory(Path("nonexistent_directory"), abort_on_error=False)
-
-        # Ensure that the function does not abort the program
+        """Test logging a warning for a nonexistent directory without abort."""
+        with self.assertLogs(logging.WARNING):
+            check_directory(Path("nonexistent_directory"), abort_on_error=False)
         self.assertTrue(True)
 
     def test_check_directory_existing_directory_no_abort(self):
-        # Call check_directory on an existing directory without aborting
+        """Test checking an existing directory without abort."""
         check_directory(Path(self.temp_dir.name), abort_on_error=False)
-
-        # Ensure that the function does not abort the program
         self.assertTrue(True)
 
 
 class TestCheckFileExistence(unittest.TestCase):
+    """Test case for `check_file_existence` function."""
+
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.temp_file = Path(self.temp_dir.name) / "temp_file.txt"
@@ -92,64 +91,66 @@ class TestCheckFileExistence(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_check_file_existence_existing_file(self):
-        # Call check_file_existence on an existing file
+        """Test checking an existing file."""
         check_file_existence(self.temp_file)
-
-        # Ensure that the function does not abort the program
         self.assertTrue(True)
 
     def test_check_file_existence_nonexistent_file(self):
-        # Call check_file_existence on a nonexistent file
-        with self.assertRaises(SystemExit):
+        """Test raising an error for a nonexistent file with abort."""
+        with self.assertRaises(FileNotFoundError):
             check_file_existence(Path(self.temp_dir.name) / "nonexistent_file.txt")
 
     def test_check_file_existence_nonexistent_file_no_abort(self):
-        # Call check_file_existence on a nonexistent file without aborting
-        check_file_existence(
-            Path(self.temp_dir.name) / "nonexistent_file.txt", abort_on_error=False
-        )
-
-        # Ensure that the function does not abort the program
+        """Test logging a warning for a nonexistent file without abort."""
+        with self.assertLogs(logging.WARNING):
+            check_file_existence(
+                Path(self.temp_dir.name) / "nonexistent_file.txt", abort_on_error=False
+            )
         self.assertTrue(True)
 
     def test_check_file_existence_existing_file_no_abort(self):
+        """Test raising an error for an existing file with abort."""
         # Call check_file_existence on an existing file without aborting
-        check_file_existence(
-            self.temp_file, expected_existence=False, abort_on_error=False
-        )
+        with self.assertRaises(FileExistsError):
+            check_file_existence(
+                self.temp_file, expected_existence=False, abort_on_error=True
+            )
 
         # Ensure that the function does not abort the program
         self.assertTrue(True)
 
 
 class TestFileToStrings(unittest.TestCase):
+    """Test case for `file_to_list_of_strings` function."""
+
     def setUp(self):
-        # Create a temporary file and write some lines to it
         self.temp_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
         self.temp_file.write("Line 1\nLine 2\nLine 3\n")
         self.temp_file.close()
         self.file_path = Path(self.temp_file.name)
 
     def tearDown(self):
-        # Remove the temporary file
         self.file_path.unlink()
 
     def test_file_to_strings(self):
-        # Test that the function returns a list of strings
+        """Test converting a file to a list of strings."""
         strings = file_to_list_of_strings(self.file_path)
         self.assertIsInstance(strings, list)
         self.assertIsInstance(strings[0], str)
-
-        # Test that the strings match the lines in the file
         self.assertEqual(strings, ["Line 1", "Line 2", "Line 3"])
 
     def test_file_to_strings_file_not_found(self):
-        # Test that the function raises a ValueError if the file is not found
-        with self.assertRaises(SystemExit):
+        """Test raising an error for a nonexistent file."""
+        with self.assertRaises(FileNotFoundError):
             file_to_list_of_strings(Path("/path/to/nonexistent/file.txt"))
+
+        # Ensure that the function does not continue after raising an error
+        self.assertTrue(True)
 
 
 class TestRemoveFile(unittest.TestCase):
+    """Test case for `remove_file` function."""
+
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.temp_file = Path(self.temp_dir.name) / "temp_file.txt"
@@ -160,19 +161,17 @@ class TestRemoveFile(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_remove_existing_file(self):
-        # Ensure that the file exists before calling remove_file
+        """Test removing an existing file."""
         self.assertTrue(self.temp_file.is_file())
-
-        # Call remove_file and ensure that the file no longer exists
         remove_file(self.temp_file)
         self.assertFalse(self.temp_file.is_file())
 
     def test_remove_nonexistent_file(self):
-        # Ensure that the file does not exist before calling remove_file
+        """Test removing a nonexistent file."""
         self.assertFalse((Path(self.temp_dir.name) / "nonexistent_file.txt").is_file())
-
-        # Call remove_file and ensure that it does not raise an exception
         remove_file(Path(self.temp_dir.name) / "nonexistent_file.txt")
+        self.assertTrue(True)
+
 
 
 class TestRemoveFilesMatchingGlob(unittest.TestCase):

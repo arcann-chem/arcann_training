@@ -8,19 +8,23 @@ import subprocess
 from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.file import (
     change_directory,
+    check_file_existence,
+    file_to_list_of_strings,
+    write_list_of_strings_to_file,
 )
 from deepmd_iterative.common.json import (
-    backup_and_overwrite_json_file,
-    load_default_json_file,
     load_json_file,
     write_json_file,
+    load_default_json_file,
+    backup_and_overwrite_json_file,
 )
-from deepmd_iterative.common.json_parameters import get_machine_keyword
-
-from deepmd_iterative.common.machine import (
-    assert_same_machine,
-    get_machine_spec_for_step,
+from deepmd_iterative.common.json_parameters import (
+    get_key_in_dict,
+    get_machine_keyword,
 )
+from deepmd_iterative.common.list import replace_substring_in_list_of_strings
+from deepmd_iterative.common.machine import get_machine_spec_for_step
+from deepmd_iterative.common.slurm import replace_in_slurm_file_general
 
 
 def main(
@@ -41,10 +45,10 @@ def main(
     logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
-    # Check if correct folder
+    # Check if the current folder is correct for the current step
     validate_step_folder(current_step)
 
-    # Get iteration
+    # Get the current iteration number
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
 
@@ -73,23 +77,16 @@ def main(
         (control_path / f"training_{padded_curr_iter}.json")
     )
 
-    # Checks
-    if training_config["is_launched"]:
-        logging.critical(f"Already launched.")
-        continuing = input(
-            f"Should it be run again? (Y for Yes, anything else to abort)"
-        )
-        if continuing == "Y":
-            del continuing
-        else:
-            logging.error(f"Aborting...")
-            return 1
-    if not training_config["is_locked"]:
-        logging.error(f"Lock found. Execute first: training preparation.")
+    # Check if we can continue
+    if not training_config["is_checked"]:
+        logging.error(f"Lock found. Execute first: training check.")
         logging.error(f"Aborting...")
         return 1
 
-    # Get the machine keyword (input override training override default_json)
+    # Get extra needed paths
+    jobs_path = deepmd_iterative_path / "data" / "jobs" / "training"
+
+    # Get the machine keyword (input override previous training override default_config)
     # And update the new input
     user_machine_keyword = get_machine_keyword(user_config, training_config, default_config)
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
@@ -110,7 +107,7 @@ def main(
     ) = get_machine_spec_for_step(
         deepmd_iterative_path,
         training_path,
-        "training",
+        "freezing",
         fake_machine,
         user_machine_keyword,
     )
@@ -125,59 +122,88 @@ def main(
         logging.info(f"We are on: {machine}.")
     del fake_machine
 
-    # Check prep/launch
-    assert_same_machine(machine, training_config)
+    check_file_existence(
+        jobs_path / f"job_deepmd_freeze_{machine_spec['arch_type']}_{machine}.sh",
+        error_msg=f"No SLURM file present for {current_step.capitalize()} / {current_phase.capitalize()} on this machine.",
+    )
+    master_job_file = file_to_list_of_strings(
+        jobs_path / f"job_deepmd_freeze_{machine_spec['arch_type']}_{machine}.sh"
+    )
+    current_config["job_email"] = get_key_in_dict("job_email", user_config, training_config, default_config)
+    del jobs_path
 
-    # Launch the jobs
+    # Prep and launch DP Freeze
     completed_count = 0
+    walltime_approx_s = 7200
     for nnp in range(1, main_config["nnp_count"] + 1):
         local_path = Path(".").resolve() / f"{nnp}"
-        if (
-            local_path / f"job_deepmd_train_{training_config['arch_type']}_{machine}.sh"
-        ).is_file():
+
+        check_file_existence(local_path / "model.ckpt.index")
+
+        job_file = replace_in_slurm_file_general(
+            master_job_file,
+            machine_spec,
+            walltime_approx_s,
+            machine_walltime_format,
+            current_config["job_email"],
+        )
+
+        job_file = replace_substring_in_list_of_strings(job_file, "_R_DEEPMD_VERSION_", f"{training_config['deepmd_model_version']}")
+        job_file = replace_substring_in_list_of_strings(job_file, "_R_DEEPMD_MODEL_", f"graph_{nnp}_{padded_curr_iter}",)
+
+        write_list_of_strings_to_file(
+            local_path / f"job_deepmd_freeze_{machine_spec['arch_type']}_{machine}.sh",
+            job_file,
+        )
+        del job_file
+
+        with (local_path / "checkpoint").open("w") as f:
+            f.write('model_checkpoint_path: "model.ckpt"\n')
+            f.write('all_model_checkpoint_paths: "model.ckpt"\n')
+        del f
+        if (local_path / f"job_deepmd_freeze_{machine_spec['arch_type']}_{machine}.sh").is_file():
             change_directory(local_path)
             try:
                 subprocess.run(
                     [
-                        training_config["launch_command"],
-                        f"./job_deepmd_train_{training_config['arch_type']}_{machine}.sh",
+                        machine_launch_command,
+                        f"./job_deepmd_freeze_{machine_spec['arch_type']}_{machine}.sh",
                     ]
                 )
-                logging.info(f"DP Train - {nnp} launched.")
+                logging.info(f"DP Freeze - {nnp} launched.")
                 completed_count += 1
             except FileNotFoundError:
                 logging.critical(
-                    f"DP Train - {nnp} NOT launched - {training_config['launch_command']} not found."
+                    f"DP Freeze - {nnp} NOT launched - {training_config['launch_command']} not found."
                 )
             change_directory(local_path.parent)
         else:
-            logging.critical(f"DP Train - {nnp} NOT launched - No job file.")
+            logging.critical(f"DP Freeze - {nnp} NOT launched - No job file.")
         del local_path
-    del nnp
 
-    if completed_count == main_config["nnp_count"]:
-        training_config["is_launched"] = True
+    del nnp, master_job_file
 
+    # Dump the dicts
+    logging.info(f"-" * 88)
+    write_json_file(main_config, (control_path / "config.json"))
     write_json_file(
         training_config, (control_path / f"training_{padded_curr_iter}.json")
     )
     backup_and_overwrite_json_file(current_config, (current_path / user_config_filename))
-
     logging.info(f"-" * 88)
     if completed_count == main_config["nnp_count"]:
-        logging.info(
-            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
-        )
+        pass
     else:
         logging.critical(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!"
         )
         logging.critical(f"Some SLURM jobs did not launch correctly.")
         logging.critical(f"Please launch manually before continuing to the next step.")
-        logging.critical(
-            f'Replace the key "is_launched" to True in the training_{padded_curr_iter}.json.'
-        )
     del completed_count
+
+    logging.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
+    )
 
     # Cleaning
     del current_path, control_path, training_path
@@ -193,7 +219,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 4:
         main(
             "training",
-            "launch",
+            "freeze",
             Path(sys.argv[1]),
             fake_machine = sys.argv[2],
             user_config_filename = sys.argv[3],

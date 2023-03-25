@@ -1,7 +1,7 @@
 from pathlib import Path
 import logging
-import copy
 import sys
+import copy
 
 # Non-standard library imports
 import numpy as np
@@ -16,13 +16,13 @@ from deepmd_iterative.common.json import (
 from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.generate_config import set_subsys_params_deviation
 from deepmd_iterative.common.exploration import get_last_frame_number
-
+from deepmd_iterative.common.json_parameters import set_new_input_explordevi_json
 
 def main(
     step_name: str,
     phase_name: str,
-    deepmd_iterative_path,
-    fake_machine=None,
+    deepmd_iterative_path: Path,
+    fake_machine = None,
     input_fn: str = "input.json",
 ):
     # Get the current path and set the training path as the parent of the current path
@@ -40,50 +40,70 @@ def main(
     validate_step_folder(step_name)
 
     # Get the current iteration number
-    current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
-    current_iteration = int(current_iteration_zfill)
+    padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
+    curr_iter = int(padded_curr_iter)
 
-    # Load the default input JSON file for the program
+    # Load the master input JSON file for the program
     default_present = False
-    default_input_json = load_default_json_file(
-        deepmd_iterative_path / "data" / "inputs.json"
-    )
-    if bool(default_input_json):
+    default_json = load_default_json_file(deepmd_iterative_path / "data" / "input_defaults.json")[step_name]
+    if bool(default_json):
         default_present = True
+    logging.debug(f"default_json: {default_json}")
+    logging.debug(f"default_present: {default_present}")
 
-    # Check if the user input JSON file is present
+    # Load the user input JSON file
     if (current_path / input_fn).is_file():
         input_json = load_json_file((current_path / input_fn))
         input_present = True
     else:
         input_json = {}
         input_present = False
+    logging.debug(f"input_json: {input_json}")
+    logging.debug(f"input_present: {input_present}")
+
+    # Make a deepcopy
     new_input_json = copy.deepcopy(input_json)
 
-    # Get the control path and load the config JSON file
+    # Get control path, config JSON and exploration JSON
     control_path = training_path / "control"
     config_json = load_json_file((control_path / "config.json"))
-
-    # Load the exploration JSON file
     exploration_json = load_json_file(
-        (control_path / f"exploration_{current_iteration_zfill}.json")
+        (control_path / f"exploration_{padded_curr_iter}.json")
     )
+
+    # Load the previous training JSON and previous exploration JSON
+    if curr_iter > 0:
+        prev_iter = curr_iter - 1
+        padded_prev_iter = str(prev_iter).zfill(3)
+        prevtraining_json = load_json_file((control_path / f"training_{padded_prev_iter}.json"))
+        if prev_iter > 0:
+            prevexploration_json = load_json_file((control_path / ("exploration_" + padded_prev_iter + ".json")))
+        else:
+            prevexploration_json = {}
+    else:
+        prevtraining_json = {}
+        prevexploration_json = {}
 
     # Checks
     if not exploration_json["is_checked"]:
-        logging.error(f"Lock found. Execute first: exploration check")
+        logging.error(f"Lock found. Execute first: exploration check.")
         logging.error(f"Aborting...")
         return 1
     if (
         exploration_json["exploration_type"] == "i-PI"
         and not exploration_json["is_rechecked"]
     ):
-        logging.critical("Lock found. Execute first: first: exploration recheck")
+        logging.critical("Lock found. Execute first: first: exploration recheck.")
         logging.critical("Aborting...")
         return 1
 
+    # Fill the missing values from the input. We don't do exploration because it is subsys dependent and single value and not list
+    new_input_json = set_new_input_explordevi_json(input_json,prevexploration_json,default_json,new_input_json,config_json)
+    logging.debug(f"new_input_json: {new_input_json}")
+    
     for it0_subsys_nr, it_subsys_nr in enumerate(config_json["subsys_nr"]):
 
+        set_new_input_explordevi_json
         # Set the subsys params for deviation selection
         (
             max_candidates,
@@ -116,18 +136,6 @@ def main(
             "nb_rejected": 0,
         }
 
-        # exploration_json["subsys_nr"][it_subsys_nr]["max_candidates"] = max_candidates
-        # exploration_json["subsys_nr"][it_subsys_nr]["sigma_low"] = sigma_low
-        # exploration_json["subsys_nr"][it_subsys_nr]["sigma_high"] = sigma_high
-        # exploration_json["subsys_nr"][it_subsys_nr]["sigma_high_limit"] = sigma_high_limit
-        # exploration_json["subsys_nr"][it_subsys_nr]["ignore_first_x_ps"] = ignore_first_x_ps
-
-        # exploration_json["subsys_nr"][it_subsys_nr]["mean_max_deviation_f"] = 0
-        # exploration_json["subsys_nr"][it_subsys_nr]["std_max_deviation_f"] = 0
-        # exploration_json["subsys_nr"][it_subsys_nr]["nb_total"] = 0
-        # exploration_json["subsys_nr"][it_subsys_nr]["nb_candidates"] = 0
-        # exploration_json["subsys_nr"][it_subsys_nr]["nb_rejected"] = 0
-
         skipped_traj = 0
         start_row_number = 0
 
@@ -153,7 +161,7 @@ def main(
                     / str(it_number).zfill(5)
                 )
                 model_deviation_filename = (
-                    f"model_devi_{it_subsys_nr}_{it_nnp}_{current_iteration_zfill}.out"
+                    f"model_devi_{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.out"
                 )
 
                 # Create the JSON data for Query-by-Committee
@@ -463,7 +471,7 @@ def main(
                     / str(it_number).zfill(5)
                 )
                 model_deviation_filename = (
-                    f"model_devi_{it_subsys_nr}_{it_nnp}_{current_iteration_zfill}.out"
+                    f"model_devi_{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.out"
                 )
 
                 # Create the JSON data for Query-by-Committee
@@ -597,7 +605,7 @@ def main(
 
     exploration_json["is_deviated"] = True
     write_json_file(
-        exploration_json, (control_path / f"exploration_{current_iteration_zfill}.json")
+        exploration_json, (control_path / f"exploration_{padded_curr_iter}.json")
     )
     backup_and_overwrite_json_file(new_input_json, (current_path / input_fn))
     logging.info(
@@ -607,7 +615,7 @@ def main(
     # Cleaning
     del control_path
     del config_json
-    del current_iteration, current_iteration_zfill
+    del curr_iter, padded_curr_iter
     del exploration_json
     del training_path, current_path
 
@@ -618,7 +626,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 4:
         main(
             "exploration",
-            "check",
+            "deviation",
             Path(sys.argv[1]),
             fake_machine=sys.argv[2],
             input_fn=sys.argv[3],

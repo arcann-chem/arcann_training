@@ -34,10 +34,10 @@ def main(
     logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
-    # Check if correct folder
+    # Check if the current folder is correct for the current step
     validate_step_folder(current_step)
 
-    # Get iteration
+    # Get the current iteration number
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
 
@@ -48,6 +48,7 @@ def main(
         (control_path / f"training_{padded_curr_iter}.json")
     )
 
+    # Check if we can continue
     if not training_config["is_launched"]:
         logging.error(f"Lock found. Execute first: training launch.")
         logging.error(f"Aborting...")
@@ -98,6 +99,7 @@ def main(
             logging.critical(f"DP Train - {nnp} still running/no outfile.")
         del local_path
     del nnp
+    logging.debug(f"completed_count: {completed_count}")
 
     logging.info(f"-" * 88)
     if completed_count == main_config["nnp_count"]:

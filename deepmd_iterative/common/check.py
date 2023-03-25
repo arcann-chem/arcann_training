@@ -1,13 +1,14 @@
-from pathlib import Path
+# Standard library modules
 import logging
-import sys
-
-# Others
 import os
 import subprocess
+from pathlib import Path
 
+# Local imports
+from deepmd_iterative.common.errors import catch_errors_decorator
 
 # Unittested
+@catch_errors_decorator
 def check_atomsk(atomsk_path: str = None) -> str:
     """
     Check if the Atomsk command is available on the system.
@@ -21,7 +22,7 @@ def check_atomsk(atomsk_path: str = None) -> str:
     If neither `atomsk_path` nor `ATOMSK_PATH` is valid, the function tries to find the `atomsk` command in the system path.
     If it is found, it returns the full path to `atomsk`. If `atomsk` is not found, the function logs a critical error and exits the program.
 
-    Parameters:
+    Args:
         atomsk_path (str): The path to the `atomsk` command, if it is not in the system path.
 
     Returns:
@@ -53,11 +54,11 @@ def check_atomsk(atomsk_path: str = None) -> str:
         return str(Path(atomsk.strip().decode()).resolve())
     except subprocess.CalledProcessError:
         error_msg = "Atomsk not found."
-        logging.error(f"{error_msg}\nAborting...")
-        sys.exit(1)
+        raise subprocess.CalledProcessError(error_msg)
 
 
 # Unittested
+@catch_errors_decorator
 def check_vmd(vmd_path: str = None) -> str:
     """
     Check if the VMD command is available on the system.
@@ -71,7 +72,7 @@ def check_vmd(vmd_path: str = None) -> str:
     If neither `vmd_path` nor `VMD_PATH` is valid, the function tries to find the `vmd` command in the system path.
     If it is found, it returns the full path to `vmd`. If `vmd` is not found, the function logs a critical error and exits the program.
 
-    Parameters:
+    Args:
         vmd_path (str): The path to the `vmd` command, if it is not in the system path.
 
     Returns:
@@ -103,20 +104,28 @@ def check_vmd(vmd_path: str = None) -> str:
         return str(Path(vmd.strip().decode()).resolve())
     except subprocess.CalledProcessError:
         error_msg = "VMD not found."
-        logging.error(f"{error_msg}\nAborting...")
-        sys.exit(1)
+        raise subprocess.CalledProcessError(error_msg)
 
 
 # Unittested
+@catch_errors_decorator
 def validate_step_folder(step_name: str) -> None:
     """
     Check if the current directory matches the expected directory for the step.
 
-    Args:
-        step_name (str): The name of the step being executed.
+    Parameters
+    ----------
+    step_name :str
+        The name of the step being executed.
 
-    Raises:
-        ValueError: If the current directory name does not contain the step name.
+    Returns
+    -------
+    None
+
+    Raises
+    -------
+    ValueError
+        If the current directory name does not contain the step name.
     """
     # Get the path of the current directory
     current_directory = Path(".").resolve()
@@ -124,6 +133,4 @@ def validate_step_folder(step_name: str) -> None:
     # Check if the current directory name contains the step name
     if step_name not in current_directory.name:
         error_msg = f"The current directory ({current_directory}) does not match the expected directory for the {step_name} step."
-        logging.error(f"{error_msg}\nAborting...")
-        sys.exit(1)
-        # raise ValueError(error_msg)
+        raise ValueError(error_msg)

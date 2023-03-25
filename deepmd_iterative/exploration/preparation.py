@@ -10,7 +10,7 @@ from deepmd_iterative.common.check import validate_step_folder, check_atomsk
 from deepmd_iterative.common.exploration import (
     generate_starting_points,
     create_models_list,
-    update_nb_steps_factor,
+    update_subsys_nb_steps_factor,
     get_subsys_params_exploration,
 )
 from deepmd_iterative.common.file import (
@@ -44,88 +44,85 @@ from deepmd_iterative.common.xml import (
 
 
 def main(
-    step_name: str,
-    phase_name: str,
+    current_step: str,
+    current_phase: str,
     deepmd_iterative_path: Path,
     fake_machine = None,
-    input_fn: str = "input.json",
+    user_config_filename: str = "input.json",
 ):
     # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()}")
+    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}")
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
     # Check if the current folder is correct for the current step
-    validate_step_folder(step_name)
+    validate_step_folder(current_step)
 
     # Get the current iteration number
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
+    logging.debug(f"curr_iter, padded_curr_iter: {curr_iter}, {padded_curr_iter}")
 
-    # Load the master input JSON file for the program
-    default_present = False
-    default_json = load_default_json_file(deepmd_iterative_path / "data" / "input_defaults.json")[step_name]
-    if bool(default_json):
-        default_present = True
-    logging.debug(f"default_json: {default_json}")
-    logging.debug(f"default_present: {default_present}")
+    # Load the default config (JSON)
+    default_config = load_default_json_file(deepmd_iterative_path / "data" / "default_config.json")[current_step]
+    default_config_present = bool(default_config)
+    logging.debug(f"default_config: {default_config}")
+    logging.debug(f"default_config_present: {default_config_present}")
 
-    # Load the user input JSON file
-    if (current_path / input_fn).is_file():
-        input_json = load_json_file((current_path / input_fn))
-        input_present = True
+    # Load the user config (JSON)
+    if (current_path / user_config_filename).is_file():
+        user_config = load_json_file((current_path / user_config_filename))
     else:
-        input_json = {}
-        input_present = False
-    logging.debug(f"input_json: {input_json}")
-    logging.debug(f"input_present: {input_present}")
+        user_config = {}
+    user_config_present = bool(user_config)
+    logging.debug(f"user_config: {user_config}")
+    logging.debug(f"user_config_present: {user_config_present}")
 
     # Make a deepcopy
-    new_input_json = copy.deepcopy(input_json)
+    current_config = copy.deepcopy(user_config)
 
-    # Get control path and config_json
+    # Get control path and load the main config (JSON)
     control_path = training_path / "control"
-    config_json = load_json_file((control_path / "config.json"))
+    main_config = load_json_file((control_path / "config.json"))
 
     # Get extra needed paths
-    jobs_path = deepmd_iterative_path / "data" / "jobs" / step_name
+    jobs_path = deepmd_iterative_path / "data" / "jobs" / current_step
 
-    # Load the previous training JSON and previous exploration JSON
+    # Load the previous training config (JSON) and the previous exploration config (JSON)
     if curr_iter > 0:
         prev_iter = curr_iter - 1
         padded_prev_iter = str(prev_iter).zfill(3)
-        prevtraining_json = load_json_file((control_path / f"training_{padded_prev_iter}.json"))
+        previous_training_config = load_json_file((control_path / f"training_{padded_prev_iter}.json"))
         if prev_iter > 0:
-            prevexploration_json = load_json_file((control_path / ("exploration_" + padded_prev_iter + ".json")))
+            previous_exploration_config = load_json_file((control_path / f"exploration_{padded_prev_iter}.json"))
         else:
-            prevexploration_json = {}
+            previous_exploration_config = {}
     else:
-        prevtraining_json = {}
-        prevexploration_json = {}
+        previous_training_config = {}
+        previous_exploration_config = {}
 
     # Check if the atomsk package is installed
-    atomsk_bin = check_atomsk(get_key_in_dict("atomsk_path", input_json, prevexploration_json, default_json))
+    atomsk_bin = check_atomsk(get_key_in_dict("atomsk_path", user_config, previous_exploration_config, default_config))
     # Update new input
-    new_input_json["atomsk_path"] = atomsk_bin
+    current_config["atomsk_path"] = atomsk_bin
 
-    # Get the machine keyword (input override previous training override default_json)
+    # Get the machine keyword (input override previous training override default_config)
     # And update the new input
-    user_machine_keyword = get_machine_keyword(input_json, prevexploration_json, default_json)
+    user_machine_keyword = get_machine_keyword(user_config, previous_training_config, default_config)
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
-    new_input_json["user_machine_keyword"] = user_machine_keyword
-    logging.debug(f"new_input_json: {new_input_json}")
+    current_config["user_machine_keyword"] = user_machine_keyword
+    logging.debug(f"current_config: {current_config}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
     user_machine_keyword = (
         None if isinstance(user_machine_keyword, bool) else user_machine_keyword
     )
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
-
 
     # From the keyword (or default), get the machine spec (or for the fake one)
     (
@@ -136,7 +133,7 @@ def main(
     ) = get_machine_spec_for_step(
         deepmd_iterative_path,
         training_path,
-        "training",
+        "exploration",
         fake_machine,
         user_machine_keyword,
     )
@@ -146,36 +143,34 @@ def main(
     logging.debug(f"machine_launch_command: {machine_launch_command}")
 
     if fake_machine is not None:
-        logging.info(f"Pretending to be on: {fake_machine}")
+        logging.info(f"Pretending to be on: {fake_machine}.")
     else:
-        logging.info(f"We are on: {machine}")
+        logging.info(f"We are on: {machine}.")
     del fake_machine
 
-    # Get or create the exploration JSON object
-    exploration_json = load_json_file(
-        (control_path / f"exploration_{padded_curr_iter}.json"),
-        abort_on_error=False,
-    )
+    # TODO to rewrite
+    # Create the exploration JSON object
+    exploration_config = {}
 
     # Set the exploration parameters in the JSON file
-    exploration_json = {
-        **exploration_json,
-        "deepmd_model_version": prevtraining_json["deepmd_model_version"],
-        "nb_nnp": config_json["nb_nnp"],
-        "exploration_type": config_json["exploration_type"],
-        "nb_traj": get_key_in_dict("nb_traj", input_json, prevexploration_json, default_json)
+    exploration_config = {
+        **exploration_config,
+        "deepmd_model_version": previous_training_config["deepmd_model_version"],
+        "nnp_count": main_config["nnp_count"],
+        "exploration_type": main_config["exploration_type"],
+        "traj_count": get_key_in_dict("traj_count", user_config, previous_exploration_config, default_config)
     }
     # Update the new input
-    new_input_json["nb_traj"] = exploration_json["nb_traj"]
-    logging.debug(f"new_input_json: {new_input_json}")
+    current_config["traj_count"] = exploration_config["traj_count"]
+    logging.debug(f"current_config: {current_config}")
 
     # Fill the missing values from the input. We don't do exploration because it is subsys dependent and single value and not list
-    new_input_json = set_new_input_explor_json(input_json,prevexploration_json,default_json,new_input_json,config_json)
-    logging.debug(f"new_input_json: {new_input_json}")
+    current_config = set_new_input_explor_json(user_config,previous_exploration_config,default_config,current_config,main_config)
+    logging.debug(f"current_config: {current_config}")
 
     # Set additional machine-related parameters in the JSON file
-    exploration_json = {
-        **exploration_json,
+    exploration_config = {
+        **exploration_config,
         "machine": machine,
         "project_name": machine_spec["project_name"],
         "allocation_name": machine_spec["allocation_name"],
@@ -184,28 +179,26 @@ def main(
         "launch_command": machine_launch_command,
     }
 
-    # Get the path for the SLURM file for the current exploration step
-    slurm_file_path = (
-        jobs_path
-        / f"job_deepmd_{exploration_json['exploration_type']}_{exploration_json['arch_type']}_{machine}.sh"
-    )
+    # Check if the training job file exists
     check_file_existence(
-        slurm_file_path,
-        error_msg="No SLURM file present for the exploration step on this machine.",
+        jobs_path / f"job_deepmd_{exploration_config['exploration_type']}_{exploration_config['arch_type']}_{machine}.sh",
+        error_msg=f"No SLURM file present for {current_step.capitalize()} / {current_phase.capitalize()} on this machine.",
     )
-    slurm_file_master = file_to_list_of_strings(slurm_file_path)
-    logging.debug(f"slurm_file_master: {slurm_file_master[0:5]}, {slurm_file_master[-5:-1]}")
-    new_input_json["job_email"] = get_key_in_dict("job_email", input_json, prevexploration_json, default_json)
+    master_job_file = file_to_list_of_strings(
+        jobs_path / f"job_deepmd_{exploration_config['exploration_type']}_{exploration_config['arch_type']}_{machine}.sh",
+    )
+    logging.debug(f"master_job_file: {master_job_file[0:5]}, {master_job_file[-5:-1]}")
+    current_config["job_email"] = get_key_in_dict("job_email", user_config, previous_exploration_config, default_config)
     del jobs_path
 
     ### Preparation of the exploration
-    exploration_json["subsys_nr"] = {}
+    exploration_config["subsys_nr"] = {}
 
     # Loop through each subsystem and set its exploration
-    for it0_subsys_nr, it_subsys_nr in enumerate(config_json["subsys_nr"]):
+    for it0_subsys_nr, it_subsys_nr in enumerate(main_config["subsys_nr"]):
 
         random.seed()
-        exploration_json["subsys_nr"][it_subsys_nr] = {}
+        exploration_config["subsys_nr"][it_subsys_nr] = {}
 
         plumed = [False, False, False]
         exploration_type = -1
@@ -213,7 +206,7 @@ def main(
         input_replace_dict = {}
 
         # Get the input file (.in or .xml) for the current subsystem and check if plumed is being used
-        if exploration_json["exploration_type"] == "lammps":
+        if exploration_config["exploration_type"] == "lammps":
             exploration_type = 0
             subsys_lammps_in = file_to_list_of_strings(
                 training_path / "files" / (it_subsys_nr + ".in")
@@ -221,7 +214,7 @@ def main(
             # Check if the LAMMPS input file contains any "plumed" lines
             if any("plumed" in zzz for zzz in subsys_lammps_in):
                 plumed[0] = True
-        elif exploration_json["exploration_type"] == "i-PI":
+        elif exploration_config["exploration_type"] == "i-PI":
             exploration_type = 1
             subsys_ipi_xml = parse_xml_file(
                 training_path / "files" / (it_subsys_nr + ".xml")
@@ -280,7 +273,7 @@ def main(
             subsys_init_job_walltime_h,
             subsys_print_mult,
             subsys_disturbed_start,
-        ) = get_subsys_params_exploration(new_input_json, it0_subsys_nr)
+        ) = get_subsys_params_exploration(current_config, it0_subsys_nr)
         logging.debug(f"{subsys_timestep_ps,subsys_temperature_K,subsys_exp_time_ps,subsys_max_exp_time_ps,subsys_job_walltime_h,subsys_init_exp_time_ps,subsys_init_job_walltime_h,subsys_print_mult,subsys_disturbed_start}")
 
         # Set the subsys params for exploration
@@ -299,8 +292,8 @@ def main(
                 it_subsys_nr,
                 training_path,
                 padded_curr_iter,
-                prevexploration_json,
-                input_present,
+                previous_exploration_config,
+                user_config_present,
                 subsys_disturbed_start,
             )
 
@@ -339,28 +332,28 @@ def main(
                 if plumed[1]:
                     subsys_nb_steps = plumed[2]
                 # User inputs
-                elif "subsys_exp_time_ps" in input_json:
+                elif "subsys_exp_time_ps" in user_config:
                     subsys_nb_steps = subsys_exp_time_ps / subsys_timestep_ps
                 # Auto value
                 else:
-                    subsys_nb_steps *= update_nb_steps_factor(
-                        prevexploration_json, it_subsys_nr
+                    subsys_nb_steps *= update_subsys_nb_steps_factor(
+                        previous_exploration_config, it_subsys_nr
                     )
                     ### Update if over Max value
                     if subsys_nb_steps > subsys_max_exp_time_ps / subsys_timestep_ps:
                         subsys_nb_steps = subsys_max_exp_time_ps / subsys_timestep_ps
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(subsys_nb_steps)}"
                 # Update the new input
-                new_input_json['subsys_exp_time_ps'] = subsys_nb_steps * subsys_timestep_ps
+                current_config['subsys_exp_time_ps'] = subsys_nb_steps * subsys_timestep_ps
 
                 # Walltime
-                if "subsys_job_walltime_h" in input_json:
+                if "subsys_job_walltime_h" in user_config:
                     subsys_walltime_approx_s = int(subsys_job_walltime_h * 3600)
                 else:
                     # Abritary factor
                     subsys_walltime_approx_s = int(
                         (
-                            prevexploration_json["subsys_nr"][it_subsys_nr][
+                            previous_exploration_config["subsys_nr"][it_subsys_nr][
                                 "s_per_step"
                             ]
                             * subsys_nb_steps
@@ -368,7 +361,7 @@ def main(
                         * 1.20
                     )
                 # Update the new input
-                new_input_json['subsys_job_walltime_h'] = subsys_walltime_approx_s / 3600
+                current_config['subsys_job_walltime_h'] = subsys_walltime_approx_s / 3600
 
             # Get print freq
             subsys_print_every_x_steps = subsys_nb_steps * subsys_print_mult
@@ -425,7 +418,7 @@ def main(
                 subsys_cell = [box[1] - box[0], box[3] - box[2], box[5] - box[4]]
                 input_replace_dict["_R_CELL_"] = f"{subsys_cell}"
                 # Get the type_map from config (key added after first training)
-                for it_zzz, zzz in enumerate(config_json["type_map"]):
+                for it_zzz, zzz in enumerate(main_config["type_map"]):
                     subsys_ipi_json["atom_type"][str(zzz)] = it_zzz
 
             # Subsequent ones
@@ -434,28 +427,28 @@ def main(
                 if plumed[1]:
                     subsys_nb_steps = plumed[2]
                 # User inputs
-                elif "subsys_exp_time_ps" in input_json:
+                elif "subsys_exp_time_ps" in user_config:
                     subsys_nb_steps = subsys_exp_time_ps / subsys_timestep_ps
                 # Auto value
                 else:
-                    subsys_nb_steps *= update_nb_steps_factor(
-                        prevexploration_json, it_subsys_nr
+                    subsys_nb_steps *= update_subsys_nb_steps_factor(
+                        previous_exploration_config, it_subsys_nr
                     )
                     ### Update if over Max value
                     if subsys_nb_steps > subsys_max_exp_time_ps / subsys_timestep_ps:
                         subsys_nb_steps = subsys_max_exp_time_ps / subsys_timestep_ps
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(subsys_nb_steps)}"
                 # Update the new input
-                new_input_json['subsys_exp_time_ps'] = subsys_nb_steps * subsys_timestep_ps
+                current_config['subsys_exp_time_ps'] = subsys_nb_steps * subsys_timestep_ps
 
                 # Walltime
-                if input_present:
+                if user_config_present:
                     subsys_walltime_approx_s = int(subsys_job_walltime_h * 3600)
                 else:
                     # Abritary factor
                     subsys_walltime_approx_s = int(
                         (
-                            prevexploration_json["subsys_nr"][it_subsys_nr][
+                            previous_exploration_config["subsys_nr"][it_subsys_nr][
                                 "s_per_step"
                             ]
                             * subsys_nb_steps
@@ -463,15 +456,15 @@ def main(
                         * 1.20
                     )
                 # Update the new input
-                new_input_json['subsys_job_walltime_h'] = subsys_walltime_approx_s / 3600
+                current_config['subsys_job_walltime_h'] = subsys_walltime_approx_s / 3600
 
             # Get print freq
             subsys_print_every_x_steps = subsys_nb_steps * subsys_print_mult
             input_replace_dict["_R_PRINT_FREQ_"] = f"{int(subsys_print_every_x_steps)}"
 
-        # Now it is by NNP and by nb_traj
-        for it_nnp in range(1, config_json["nb_nnp"] + 1):
-            for it_number in range(1, exploration_json["nb_traj"] + 1):
+        # Now it is by NNP and by traj_count
+        for it_nnp in range(1, main_config["nnp_count"] + 1):
+            for it_number in range(1, exploration_config["traj_count"] + 1):
 
                 local_path = (
                     Path(".").resolve()
@@ -482,8 +475,8 @@ def main(
                 local_path.mkdir(exist_ok=True, parents=True)
 
                 models_list, models_string = create_models_list(
-                    config_json,
-                    prevtraining_json,
+                    main_config,
+                    previous_training_config,
                     it_nnp,
                     padded_curr_iter,
                     training_path,
@@ -562,10 +555,10 @@ def main(
                         local_path / subsys_lammps_data_fn, subsys_lammps_data
                     )
 
-                    exploration_json["subsys_nr"][it_subsys_nr]["nb_steps"] = int(
+                    exploration_config["subsys_nr"][it_subsys_nr]["nb_steps"] = int(
                         subsys_nb_steps
                     )
-                    exploration_json["subsys_nr"][it_subsys_nr][
+                    exploration_config["subsys_nr"][it_subsys_nr][
                         "print_every_x_steps"
                     ] = int(subsys_print_every_x_steps)
 
@@ -581,59 +574,59 @@ def main(
                     )
 
                     # Slurm file
-                    slurm_file = replace_in_slurm_file_general(
-                        slurm_file_master,
+                    job_file = replace_in_slurm_file_general(
+                        master_job_file,
                         machine_spec,
                         subsys_walltime_approx_s,
                         machine_walltime_format,
-                        new_input_json["job_email"],
+                        current_config["job_email"],
                     )
 
-                    slurm_file = replace_substring_in_list_of_strings(
-                        slurm_file,
+                    job_file = replace_substring_in_list_of_strings(
+                        job_file,
                         "_R_DEEPMD_VERSION_",
-                        f"{exploration_json['deepmd_model_version']}",
+                        f"{exploration_config['deepmd_model_version']}",
                     )
-                    slurm_file = replace_substring_in_list_of_strings(
-                        slurm_file,
+                    job_file = replace_substring_in_list_of_strings(
+                        job_file,
                         "_R_MODEL_FILES_LIST_",
                         str(models_string.replace(" ", '" "')),
                     )
-                    slurm_file = replace_substring_in_list_of_strings(
-                        slurm_file,
+                    job_file = replace_substring_in_list_of_strings(
+                        job_file,
                         "_R_INPUT_FILE_",
                         f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}",
                     )
-                    slurm_file = replace_substring_in_list_of_strings(
-                        slurm_file, "_R_DATA_FILE_", f"{subsys_lammps_data_fn}"
+                    job_file = replace_substring_in_list_of_strings(
+                        job_file, "_R_DATA_FILE_", f"{subsys_lammps_data_fn}"
                     )
-                    slurm_file = replace_substring_in_list_of_strings(
-                        slurm_file, ' "_R_RERUN_FILE_"', ""
+                    job_file = replace_substring_in_list_of_strings(
+                        job_file, ' "_R_RERUN_FILE_"', ""
                     )
                     if plumed[0] == 1:
                         for n, it_plumed_input in enumerate(plumed_input):
                             if n == 0:
-                                slurm_file = replace_substring_in_list_of_strings(
-                                    slurm_file, "_R_PLUMED_FILES_LIST_", it_plumed_input
+                                job_file = replace_substring_in_list_of_strings(
+                                    job_file, "_R_PLUMED_FILES_LIST_", it_plumed_input
                                 )
                             else:
-                                slurm_file = replace_substring_in_list_of_strings(
-                                    slurm_file,
+                                job_file = replace_substring_in_list_of_strings(
+                                    job_file,
                                     prev_plumed,
                                     prev_plumed + '" "' + it_plumed_input,
                                 )
                             prev_plumed = it_plumed_input
                     else:
-                        slurm_file = replace_substring_in_list_of_strings(
-                            slurm_file, ' "_R_PLUMED_FILES_LIST_"', ""
+                        job_file = replace_substring_in_list_of_strings(
+                            job_file, ' "_R_PLUMED_FILES_LIST_"', ""
                         )
                     write_list_of_strings_to_file(
                         local_path
-                        / f"job_deepmd_{exploration_json['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
-                        slurm_file,
+                        / f"job_deepmd_{exploration_config['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
+                        job_file,
                     )
                     del it_subsys_lammps_in
-                    del slurm_file
+                    del job_file
                 # i-PI
                 elif exploration_type == 1:
                     it_subsys_ipi_json = copy.deepcopy(subsys_ipi_json)
@@ -656,7 +649,7 @@ def main(
                         )
                         input_replace_dict["_R_XYZ_"] = subsys_ipi_xyz_fn
                         it_subsys_ipi_json["coord_file"] = subsys_ipi_xyz_fn
-                        for it_zzz, zzz in enumerate(config_json["type_map"]):
+                        for it_zzz, zzz in enumerate(main_config["type_map"]):
                             it_subsys_ipi_json["atom_type"][str(zzz)] = it_zzz
                         subsys_lammps_data = file_to_list_of_strings(
                             training_path
@@ -730,59 +723,59 @@ def main(
                     )
 
                     # Slurm file
-                    slurm_file = replace_in_slurm_file_general(
-                        slurm_file_master,
+                    job_file = replace_in_slurm_file_general(
+                        master_job_file,
                         machine_spec,
                         subsys_walltime_approx_s,
                         machine_walltime_format,
-                        new_input_json["job_email"],
+                        current_config["job_email"],
                     )
 
-                    slurm_file = replace_substring_in_list_of_strings(
-                        slurm_file,
+                    job_file = replace_substring_in_list_of_strings(
+                        job_file,
                         "_R_DEEPMD_VERSION_",
-                        f"{exploration_json['deepmd_model_version']}",
+                        f"{exploration_config['deepmd_model_version']}",
                     )
-                    slurm_file = replace_substring_in_list_of_strings(
-                        slurm_file, "_R_MODEL_FILES_LIST_", f"{models_list[0]}"
+                    job_file = replace_substring_in_list_of_strings(
+                        job_file, "_R_MODEL_FILES_LIST_", f"{models_list[0]}"
                     )
-                    slurm_file = replace_substring_in_list_of_strings(
-                        slurm_file,
+                    job_file = replace_substring_in_list_of_strings(
+                        job_file,
                         "_R_INPUT_FILE_",
                         f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}",
                     )
-                    slurm_file = replace_substring_in_list_of_strings(
-                        slurm_file, "_R_DATA_FILE_", f"{subsys_ipi_xyz_fn}"
+                    job_file = replace_substring_in_list_of_strings(
+                        job_file, "_R_DATA_FILE_", f"{subsys_ipi_xyz_fn}"
                     )
                     if plumed[0] == 1:
                         for n, it_plumed_input in enumerate(plumed_input):
                             if n == 0:
-                                slurm_file = replace_substring_in_list_of_strings(
-                                    slurm_file, "_R_PLUMED_FILES_LIST_", it_plumed_input
+                                job_file = replace_substring_in_list_of_strings(
+                                    job_file, "_R_PLUMED_FILES_LIST_", it_plumed_input
                                 )
                             else:
-                                slurm_file = replace_substring_in_list_of_strings(
-                                    slurm_file,
+                                job_file = replace_substring_in_list_of_strings(
+                                    job_file,
                                     prev_plumed,
                                     prev_plumed + '" "' + it_plumed_input,
                                 )
                             prev_plumed = it_plumed_input
                         del n, it_plumed_input, prev_plumed
                     else:
-                        slurm_file = replace_substring_in_list_of_strings(
-                            slurm_file, ' "_R_PLUMED_FILES_LIST_"', ""
+                        job_file = replace_substring_in_list_of_strings(
+                            job_file, ' "_R_PLUMED_FILES_LIST_"', ""
                         )
                     write_list_of_strings_to_file(
                         local_path
-                        / f"job_deepmd_{exploration_json['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
-                        slurm_file,
+                        / f"job_deepmd_{exploration_config['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
+                        job_file,
                     )
                     del (
                         it_subsys_ipi_xml_aslist,
                         it_subsys_ipi_xml,
                         it_subsys_ipi_json,
                     )
-                    del slurm_file
+                    del job_file
                 else:
                     error_msg = f"Exploration is unknown/not set."
                     logging.error(f"{error_msg}\nAborting...")
@@ -792,37 +785,37 @@ def main(
 
         del it_nnp
 
-        exploration_json["subsys_nr"][it_subsys_nr][
+        exploration_config["subsys_nr"][it_subsys_nr][
             "temperature_K"
         ] = subsys_temperature_K
-        exploration_json["subsys_nr"][it_subsys_nr]["timestep_ps"] = subsys_timestep_ps
+        exploration_config["subsys_nr"][it_subsys_nr]["timestep_ps"] = subsys_timestep_ps
 
-        config_json["subsys_nr"][it_subsys_nr]["cell"] = subsys_cell
-        config_json["subsys_nr"][it_subsys_nr]["nb_atm"] = subsys_nb_atm
+        main_config["subsys_nr"][it_subsys_nr]["cell"] = subsys_cell
+        main_config["subsys_nr"][it_subsys_nr]["nb_atm"] = subsys_nb_atm
 
         if plumed[0] == 1:
             del plumed_input, plumed
         del subsys_temperature_K, subsys_cell, subsys_nb_atm, subsys_nb_steps
         del subsys_lammps_data, subsys_timestep_ps, subsys_walltime_approx_s
 
-    del it0_subsys_nr, it_subsys_nr, slurm_file_master
+    del it0_subsys_nr, it_subsys_nr, master_job_file
 
-    exploration_json["is_locked"] = True
-    exploration_json["is_launched"] = False
-    exploration_json["is_checked"] = False
+    exploration_config["is_locked"] = True
+    exploration_config["is_launched"] = False
+    exploration_config["is_checked"] = False
     if exploration_type == 1:
-        exploration_json["is_unbeaded"] = False
-        exploration_json["is_reruned"] = False
-        exploration_json["is_rechecked"] = False
-    exploration_json["is_deviated"] = False
-    exploration_json["is_extracted"] = False
+        exploration_config["is_unbeaded"] = False
+        exploration_config["is_reruned"] = False
+        exploration_config["is_rechecked"] = False
+    exploration_config["is_deviated"] = False
+    exploration_config["is_extracted"] = False
     del exploration_type
 
-    write_json_file(config_json, (control_path / "config.json"))
+    write_json_file(main_config, (control_path / "config.json"))
     write_json_file(
-        exploration_json, (control_path / f"exploration_{padded_curr_iter}.json")
+        exploration_config, (control_path / f"exploration_{padded_curr_iter}.json")
     )
-    backup_and_overwrite_json_file(new_input_json, (current_path / input_fn))
+    backup_and_overwrite_json_file(current_config, (current_path / user_config_filename))
     return 0
 
 
@@ -832,8 +825,8 @@ if __name__ == "__main__":
             "exploration",
             "preparation",
             Path(sys.argv[1]),
-            fake_machine=sys.argv[2],
-            input_fn=sys.argv[3],
+            fake_machine = sys.argv[2],
+            user_config_filename = sys.argv[3],
         )
     else:
         pass

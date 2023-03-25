@@ -28,10 +28,10 @@ def main(
     logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
-    # Check if correct folder
+    # Check if the current folder is correct for the current step
     validate_step_folder(current_step)
 
-    # Get iteration
+    # Get the current iteration number
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
 
@@ -42,31 +42,31 @@ def main(
         (control_path / f"training_{padded_curr_iter}.json")
     )
 
-    # Checks
-    if not training_config["is_frozen"]:
-        logging.error(f"Lock found. Execute first: training check_freeze.")
+    # Check if we can continue
+    if not training_config["is_checked"]:
+        logging.error(f"Lock found. Execute first: training check.")
         logging.error(f"Aborting...")
         return 1
 
     completed_count = 0
     for nnp in range(1, main_config["nnp_count"] + 1):
         local_path = Path(".").resolve() / f"{nnp}"
-        if (local_path / f"graph_{nnp}_{padded_curr_iter}_compressed.pb").is_file():
+        if (local_path / f"graph_{nnp}_{padded_curr_iter}.pb").is_file():
             completed_count += 1
         else:
-            logging.critical(f"DP Compress - {nnp} not finished/failed.")
-
+            logging.critical(f"DP Freeze - {nnp} not finished/failed.")
         del local_path
     del nnp
+    logging.debug(f"completed_count: {completed_count}")
 
     if completed_count == main_config["nnp_count"]:
-        training_config["is_compressed"] = True
+        training_config["is_frozen"] = True
     else:
         logging.error(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!"
         )
-        logging.error("Some DP Compress did not finished correctly.")
-        logging.error("Please check manually before relaunching this step.")
+        logging.error(f"Some DP Freeze did not finished correctly.")
+        logging.error(f"Please check manually before relaunching this step.")
         logging.error(f"Aborting...")
         return 1
     del completed_count
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 4:
         main(
             "training",
-            "check_compress",
+            "check_freeze",
             Path(sys.argv[1]),
             fake_machine = sys.argv[2],
             user_config_filename = sys.argv[3],

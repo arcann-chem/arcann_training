@@ -36,10 +36,10 @@ def main(
     logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
-    # Check if correct folder
+    # Check if the current folder is correct for the current step
     validate_step_folder(current_step)
 
-    # Get iteration
+    # Get the current iteration number
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
 
@@ -50,7 +50,7 @@ def main(
         (control_path / f"training_{padded_curr_iter}.json")
     )
 
-    # Checks
+    # Check if we can continue
     if not training_config["is_frozen"]:
         logging.error(f"Lock found. Execute first: training check_freeze")
         logging.error(f"Aborting...")
@@ -98,7 +98,7 @@ def main(
                 [
                     "rsync",
                     "-a",
-                    str(local_path / f"graph_{nnp}_{padded_curr_iter}_compressed.pb"),
+                    str(local_path / f"{nnp}" / f"graph_{nnp}_{padded_curr_iter}_compressed.pb"),
                     str((training_path / "NNP")),
                 ]
             )
@@ -106,7 +106,7 @@ def main(
             [
                 "rsync",
                 "-a",
-                str(local_path / f"graph_{nnp}_{padded_curr_iter}.pb"),
+                str(local_path / f"{nnp}" / f"graph_{nnp}_{padded_curr_iter}.pb"),
                 str((training_path / "NNP")),
             ]
         )

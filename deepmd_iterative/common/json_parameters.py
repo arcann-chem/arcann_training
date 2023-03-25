@@ -107,117 +107,106 @@ def get_machine_keyword(
 
     return value
 
-
 # Used in initialization - init
-def set_config_json(input_json: Dict, default_json: Dict) -> Tuple[Dict, Dict, str]:
+def set_main_config(user_config: Dict, default_config: Dict) -> Tuple[Dict, Dict, str]:
     """
-    This function sets a configuration JSON by validating the input JSON with a default JSON .
+    This function sets a main config (JSON) by validating the input JSON with a default JSON .
     If the input JSON is invalid, it throws an error and terminates the script.
 
     Args:
-    input_json (Dict): The input JSON containing user-defined parameters.
-    default_json (Dict): The default JSON containing default parameters.
+    user_config (Dict): The user config (JSON) containing user-defined parameters.
+    default_config (Dict): The default config (JSON) containing default parameters.
 
     Returns:
     Tuple(Dict, Dict, str):
-        - the configuration JSON
-        - an input JSON completed with defaults
-        - an string representing the current iteration padded.
+        - the main config (JSON)
+        - the current config (JSON)
+        - the current iteration padded.
     """
-    config_json = {}
-    for key in default_json.keys():
-        if key in input_json:
-            if not isinstance(default_json[key], type(input_json[key])):
-                logging.error(f"Wrong type: '{key}' is {type(input_json[key])}")
-                logging.error(f"It should be {type(default_json[key])}")
+    main_config = {}
+    for key in default_config.keys():
+        if key in user_config:
+            if not isinstance(default_config[key], type(user_config[key])):
+                logging.error(f"Wrong type: '{key}' is {type(user_config[key])}")
+                logging.error(f"It should be {type(default_config[key])}")
                 logging.error(f"Aborting...")
                 sys.exit(1)
-            if isinstance(input_json[key], List):
-                for element in input_json[key]:
-                    if not isinstance(element, type(default_json[key][0])):
+            if isinstance(user_config[key], List):
+                for element in user_config[key]:
+                    if not isinstance(element, type(default_config[key][0])):
                         logging.error(
                             f"Wrong type: '{key}' is a list of {type(element)}"
                         )
                         logging.error(
-                            f"It should be a list of {type(default_json[key][0])}"
+                            f"It should be a list of {type(default_config[key][0])}"
                         )
                         logging.error(f"Aborting...")
                         sys.exit(1)
     logging.debug(f"Type check complete")
 
-    new_input_json = deepcopy(input_json)
-    for key in ["system", "subsys_nr", "nb_nnp", "exploration_type"]:
-        if key == "system" and key not in input_json:
+    current_config = deepcopy(user_config)
+    for key in ["system", "subsys_nr", "nnp_count", "exploration_type"]:
+        if key == "system" and key not in user_config:
             logging.error(f"{key} is not provided, it is mandatory.")
-            logging.error(f"It should of type {type(default_json[key])}")
+            logging.error(f"It should of type {type(default_config[key])}")
             logging.error(f"Aborting...")
             sys.exit(1)
-        if key == "subsys_nr" and key not in input_json:
+        if key == "subsys_nr" and key not in user_config:
             logging.error(f"subsys_nr is not provided, it is mandatory.")
             logging.error(
-                f"It should be a list of {type(default_json['subsys_nr'][0])}"
+                f"It should be a list of {type(default_config['subsys_nr'][0])}"
             )
             logging.error(f"Aborting...")
             sys.exit(1)
         elif (
-            key in input_json
+            key in user_config
             and key == "exploration_type"
-            and not (input_json[key] == "lammps" or input_json[key] == "i-PI")
+            and not (user_config[key] == "lammps" or user_config[key] == "i-PI")
         ):
             logging.error(f"{key} should be a string: lammps or i-PI.")
             logging.error(f"Aborting...")
             sys.exit(1)
         else:
-            config_json[key] = (
-                input_json[key] if key in input_json else default_json[key]
+            main_config[key] = (
+                user_config[key] if key in user_config else default_config[key]
             )
-            new_input_json[key] = (
-                new_input_json[key] if key in new_input_json else default_json[key]
+            current_config[key] = (
+                current_config[key] if key in current_config else default_config[key]
             )
 
-    config_json["current_iteration"] = 0
-    padded_curr_iter = str(config_json["current_iteration"]).zfill(3)
+    main_config["current_iteration"] = 0
+    padded_curr_iter = str(main_config["current_iteration"]).zfill(3)
 
-    config_json["subsys_nr"] = {}
-    for key in input_json["subsys_nr"]:
-        config_json["subsys_nr"][key] = {}
+    main_config["subsys_nr"] = {}
+    for key in user_config["subsys_nr"]:
+        main_config["subsys_nr"][key] = {}
 
-    return config_json, new_input_json, padded_curr_iter
+    return main_config, current_config, padded_curr_iter
 
 
 # Used in training
-def set_training_json(
-    control_path: Path,
-    padded_curr_iter: str,
-    input_json: Dict,
-    previous_json: Dict,
-    default_json: Dict,
-    new_input_json: Dict,
+def set_training_config(
+    user_config: Dict,
+    previous_config: Dict,
+    default_config: Dict,
+    current_config: Dict,
 ) -> Tuple[Dict, Dict]:
     """
-    Updates the training JSON with input JSON, previous JSON and default JSON.
+    Creates the training config (JSON) and updates the current config (JSON) using user, previous and default configs (JSON)
 
     Args:
-    control_path (Path): A Path object specifying the directory where the training JSON file is located.
-    padded_curr_iter (str): A string representing the current iteration of the training, padded with zeros to a certain length.
-    input_json (Dict): The input JSON containing user-defined parameters.
-    previous_json (Dict): The previous JSON containing previously defined parameters.
-    default_json (Dict): The default JSON containing default parameters.
-    new_input_json (Dict): The inputJSON udpated/completed with previous/defaults.
+    user_config (Dict): The user config (JSON) containing user-defined parameters.
+    previous_config (Dict): The previous config (JSON) containing previously defined parameters.
+    default_config (Dict): The default config (JSON) containing default parameters.
+    current_config (Dict): The current config (JSON) containing the current parameters.
 
     Returns:
     Tuple(Dict, Dict):
-        - the training JSON
-        - an input JSON udpated/completed with previous/defaults
+        - the training config (JSON)
+        - the current config (JSON)
     """
 
-    # Load or create the training JSON file
-    training_json = load_json_file(
-        (control_path / f"training_{padded_curr_iter}.json"),
-        abort_on_error=False,
-    )
-    if not training_json:
-        training_json = {}
+    training_json = {}
 
     # Update the training JSON configuration with values from the input JSON files
     for key in [
@@ -236,32 +225,34 @@ def set_training_json(
         "numb_test",
     ]:
         # Check if the key is present in any of the dictionaries, and set the value accordingly.
-        if key in input_json:
-            if input_json[key] == "default" and key in default_json:
-                training_json[key] = default_json[key]
-                new_input_json[key] = default_json[key]
+        if key in user_config:
+            if user_config[key] == "default" and key in default_config:
+                training_json[key] = default_config[key]
+                current_config[key] = default_config[key]
             else:
-                training_json[key] = input_json[key]
-        elif key in previous_json:
-            training_json[key] = previous_json[key]
-            new_input_json[key] = previous_json[key]
-        elif key in default_json:
-            training_json[key] = default_json[key]
-            new_input_json[key] = default_json[key]
+                training_json[key] = user_config[key]
+        elif key in previous_config:
+            training_json[key] = previous_config[key]
+            current_config[key] = previous_config[key]
+        elif key in default_config:
+            training_json[key] = default_config[key]
+            current_config[key] = default_config[key]
         else:
             # The key is not present in any of the dictionaries.
             logging.error(f'"{key}" not found in any JSON')
             logging.error(f"Aborting...")
             sys.exit(1)
-        if not isinstance(training_json[key], type(default_json[key])):
+        if not isinstance(training_json[key], type(default_config[key])):
             logging.error(f"Wrong type: '{key}' is a {type(training_json[key])}")
-            logging.error(f"It should be a {type(default_json[key])}")
+            logging.error(f"It should be a {type(default_config[key])}")
             logging.error(f"Aborting...")
             sys.exit(1)
 
-    return training_json, new_input_json
+    return training_json, current_config
 
 
+
+###########################################
 def set_new_input_explor_json(
     input_json: Dict,
     previous_json: Dict,
@@ -362,6 +353,101 @@ def set_new_input_explor_json(
             else:
                 logging.error(
                     f"Wrong type: the type is {type(value)} it should be int/float or bool (for disturbed_start)"
+                )
+                logging.error(f"Aborting...")
+                sys.exit(1)
+
+    return new_input_json
+
+def set_new_input_explordevi_json(
+    input_json: Dict,
+    previous_json: Dict,
+    default_json: Dict,
+    new_input_json: Dict,
+    config_json: Dict,
+) -> Dict:
+    """
+    Updates the training JSON with input JSON, previous JSON and default JSON.
+
+    Args:
+    input_json (Dict): The input JSON containing user-defined parameters.
+    previous_json (Dict): The previous JSON containing previously defined parameters.
+    default_json (Dict): The default JSON containing default parameters.
+    new_input_json (Dict): The inputJSON udpated/completed with previous/defaults.
+
+    Returns:
+    Dict: an input JSON udpated/completed with previous/defaults
+    """
+
+    if config_json["exploration_type"] == "lammps":
+        exploration_dep = 0
+    elif config_json["exploration_type"] == "i-PI":
+        exploration_dep = 1
+    else:
+        logging.error(f"{config_json['exploration_type']} is not known")
+        logging.error(f"Aborting...")
+        sys.exit(1)
+
+    subsys_count = len(config_json["subsys_nr"])
+
+    for key in [
+        "max_candidates",
+        "sigma_low",
+        "sigma_high",
+        "sigma_high_limit",
+        "ignore_first_x_ps",
+    ]:
+
+        # Get the value
+        default_used = False
+        if key in input_json:
+            if input_json[key] == "default" and key in default_json:
+                value = default_json[key]
+                default_used = True
+            else:
+                value = input_json[key]
+        elif key in previous_json:
+            value = previous_json[key]
+        elif key in default_json:
+            value = default_json[key]
+            default_used = True
+        else:
+            logging.error(f'"{key}" not found in any JSON')
+            logging.error(f"Aborting...")
+            sys.exit(1)
+
+        # Everything is subsys dependent so a list
+        new_input_json[key] = []
+
+        # Default is used for the key
+        if default_used:
+            new_input_json[key] = [value[0][exploration_dep]] * subsys_count
+        else:
+            # Check if previous or user provided a list
+            if isinstance(value, List):
+                if len(value) == subsys_count:
+                    for it_value in value:
+                        if isinstance(it_value, (int, float)):
+                            new_input_json[key].append(it_value)
+                        else:
+                            logging.error(
+                                f"Wrong type: the type is {type(it_value)} it should be int/float."
+                            )
+                            logging.error(f"Aborting...")
+                            sys.exit(1)
+                else:
+                    logging.error(
+                        f"Wrong size: The length of the list should be {subsys_count} [Subsys]."
+                    )
+                    logging.error(f"Aborting...")
+                    sys.exit(1)
+
+            # If it is not a List
+            elif isinstance(value, (int, float)):
+                new_input_json[key] = [value] * subsys_count
+            else:
+                logging.error(
+                    f"Wrong type: the type is {type(value)} it should be int/float."
                 )
                 logging.error(f"Aborting...")
                 sys.exit(1)

@@ -9,6 +9,7 @@ import subprocess
 import numpy as np
 
 # deepmd_iterative imports
+from deepmd_iterative.common.errors import catch_errors_decorator
 from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.file import (
     check_directory,
@@ -33,6 +34,7 @@ from deepmd_iterative.common.training import (
     calculate_decay_rate,
     calculate_decay_steps,
     check_initial_datasets,
+    validate_deepmd_config,
 )
 
 def main(
@@ -53,15 +55,16 @@ def main(
     logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
-    # Check if correct folder
+    # Check if the current folder is correct for the current step
     validate_step_folder(current_step)
-
-    # Get iteration
+    
+    # Get the current iteration number
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
+    logging.debug(f"curr_iter, padded_curr_iter: {curr_iter}, {padded_curr_iter}")
 
     # Load the default config (JSON)
-    default_config = load_default_json_file(deepmd_iterative_path / "data" / "default_config.json")[current_step]
+    default_config = load_default_json_file(deepmd_iterative_path / "assets" / "default_config.json")[current_step]
     default_config_present = bool(default_config)
     logging.debug(f"default_config: {default_config}")
     logging.debug(f"default_config_present: {default_config_present}")
@@ -83,7 +86,7 @@ def main(
     main_config = load_json_file((control_path / "config.json"))
 
     # Get extra needed paths
-    jobs_path = deepmd_iterative_path / "data" / "jobs" / current_step
+    jobs_path = deepmd_iterative_path / "assets" / "jobs" / current_step
 
     # Load the previous training config (JSON)
     if curr_iter > 0:
@@ -129,7 +132,7 @@ def main(
         logging.info(f"We are on: {machine}.")
     del fake_machine
 
-    # Checked if the iter > 0, if there load the past labeling and see if it's extracted
+    # Check if we can continue
     if curr_iter > 0:
         labeling_config = load_json_file(
             (control_path / f"labeling_{padded_curr_iter}.json")
@@ -174,36 +177,8 @@ def main(
     del jobs_path
     logging.debug(f"master_job_file : {master_job_file [0:5]}, {master_job_file [-5:-1]}")
 
-    # TODO: Maybe as function / parameters file for later
     # Check DeePMD version
-    if training_config["deepmd_model_version"] not in [2.0, 2.1]:
-        logging.critical(
-            f"Invalid deepmd model version (2.0 or 2.1): {training_config['deepmd_model_version']}."
-        )
-        logging.critical("Aborting...")
-        return 1
-
-    # Check DeePMD descriptor type
-    if training_config["deepmd_model_type_descriptor"] not in ["se_e2_a"]:
-        logging.critical(
-            f"Invalid deepmd type descriptor (se_e2_a): {training_config['deepmd_model_type_descriptor']}."
-        )
-        logging.critical("Aborting...")
-        return 1
-
-    # Check mismatch between machine/arch_name/arch and DeePMD
-    if training_config["deepmd_model_version"] < 2.0:
-        logging.critical("Only version >= 2.0 on Jean Zay!")
-        logging.critical("Aborting...")
-        return 1
-    if (
-        training_config["deepmd_model_version"] < 2.1
-        and training_config["arch_name"] == "a100"
-    ):
-        logging.critical("Only version >= 2.1 on Jean Zay A100!")
-        logging.critical("Aborting...")
-        return 1
-
+    validate_deepmd_config(training_config)
 
     # Check if the default input json file exists
     dp_train_input_path = (
@@ -227,10 +202,10 @@ def main(
     # Let us find what is in data
     data_path = training_path / "data"
     check_directory(data_path)
-    subsystems = []
 
     # This is building the datasets (roughly 200 lines)
     # TODO later
+    subsystems = []
     extra_datasets = []
     validation_datasets = []
     for data_dir in data_path.iterdir():
@@ -264,6 +239,7 @@ def main(
     # Training sets list construction
     dp_train_input_datasets = []
     training_datasets = []
+
     # Initial
     initial_count = 0
     if training_config["use_initial_datasets"]:
@@ -275,12 +251,24 @@ def main(
                     ]
                 )
                 training_datasets.append(it_datasets_initial_json)
-                initial_count = (
-                    initial_count + initial_datasets_info[it_datasets_initial_json]
-                )
+                initial_count += initial_datasets_info[it_datasets_initial_json]
+
         del it_datasets_initial_json
     del initial_datasets_info
 
+    # This trick remove duplicates from list via set
+    subsystems = list(set(subsystems))
+    subsystems = [i for i in subsystems if i not in main_config["subsys_nr"]]
+    subsystems = [
+        i
+        for i in subsystems
+        if i not in [zzz + "-disturbed" for zzz in main_config["subsys_nr"]]
+    ]
+    subsystems = sorted(subsystems)
+    main_config["subsys_r"] = subsystems
+    del subsystems
+
+    # TODO As function
     # Non-Reactive (aka subsys_nr in the initialization first) && all the others are REACTIVE !
     # Total and what is added just for this iteration
     added_nr_count = 0
@@ -288,19 +276,6 @@ def main(
     added_nr_iter_count = 0
     added_r_iter_count = 0
 
-    # This trick remove duplicates from list via set
-    subsys = list(set(subsys))
-    subsys = [i for i in subsys if i not in main_config["subsys_nr"]]
-    subsys = [
-        i
-        for i in subsys
-        if i not in [zzz + "-disturbed" for zzz in main_config["subsys_nr"]]
-    ]
-    subsys = sorted(subsys)
-    main_config["subsys_r"] = subsys
-    del subsys
-
-    # TODO Function
     if curr_iter > 0:
         for iteration in np.arange(1, curr_iter + 1):
             padded_iteration = str(iteration).zfill(3)
@@ -308,32 +283,24 @@ def main(
                 for subsys_nr in main_config["subsys_nr"]:
                     if (data_path / f"{subsys_nr}_{padded_iteration}").is_dir():
                         dp_train_input_datasets.append(
-                            f"{(Path(data_path.parts[-1]) / (subsys_nr+'_'+padded_iteration) / '_')}"[
-                                :-1
-                            ]
+                            f"{(Path(data_path.parts[-1]) / (subsys_nr+'_'+padded_iteration) / '_')}"[:-1]
                         )
                         training_datasets.append(
                             f"{subsys_nr}_{padded_iteration}"
                         )
-                        added_nr_count = (
-                            added_nr_count
-                            + np.load(
+                        added_nr_count += np.load(
                                     data_path
                                     / f"{subsys_nr}_{padded_iteration}"
                                     / "set.000"
                                     / "box.npy"
                             ).shape[0]
-                        )
                         if iteration == curr_iter:
-                            added_nr_iter_count = (
-                                added_nr_iter_count
-                                + np.load(
+                            added_nr_iter_count += np.load(
                                         data_path
                                         / f"{subsys_nr}_{padded_iteration}"
                                         / "set.000"
                                         / "box.npy"
                                 ).shape[0]
-                            )
                 del subsys_nr
             except (KeyError, NameError):
                 pass
@@ -350,25 +317,19 @@ def main(
                         training_datasets.append(
                             f"{subsys_disturbed}_{padded_iteration}"
                         )
-                        added_nr_count = (
-                            added_nr_count
-                            + np.load(
+                        added_nr_count += np.load(
                                     data_path
                                     / f"{subsys_disturbed}_{padded_iteration}"
                                     / "set.000"
                                     / "box.npy"
                             ).shape[0]
-                        )
                         if iteration == curr_iter:
-                            added_nr_iter_count = (
-                                added_nr_iter_count
-                                + np.load(
+                            added_nr_iter_count += np.load(
                                         data_path
                                         / f"{subsys_disturbed}_{padded_iteration}"
                                         / "set.000"
                                         / "box.npy"
                                 ).shape[0]
-                            )
                 del subsys_disturbed
             except (KeyError, NameError):
                 pass
@@ -393,19 +354,17 @@ def main(
                             ).shape[0]
                         )
                         if iteration == curr_iter:
-                            added_nr_iter_count = (
-                                added_nr_iter_count
-                                + np.load(
+                            added_nr_iter_count += np.load(
                                         data_path
                                         / f"{subsys_r}_{padded_iteration}"
                                         / "set.000"
                                         / "box.npy"
                                 ).shape[0]
-                            )
                 del subsys_r
             except (KeyError, NameError):
                 pass
         del iteration, padded_iteration
+    # TODO End of As function
 
     # Finally the extra sets !
     extra_count = 0
@@ -413,13 +372,9 @@ def main(
         main_config["extra_datasets"] = extra_datasets
         del extra_datasets
         for extra_dataset in main_config["extra_datasets"]:
-            dp_train_input_datasets.append(
-                f"{(Path(data_path.parts[-1]) / extra_dataset / '_')}"[:-1]
-            )
+            dp_train_input_datasets.append(f"{(Path(data_path.parts[-1]) / extra_dataset / '_')}"[:-1])
             training_datasets.append(extra_dataset)
-            extra_count = (
-                extra_count
-                + np.load(data_path / extra_dataset / "set.000" / "box.npy").shape[0])
+            extra_count += np.load(data_path / extra_dataset / "set.000" / "box.npy").shape[0]
         del extra_dataset
     else:
         del extra_datasets
@@ -451,7 +406,6 @@ def main(
     del added_nr_count, added_r_count, added_nr_iter_count, added_r_iter_count
 
     # Here calculate the parameters
-
     # decay_steps it auto-recalculated as funcion of trained_count
     logging.debug(f"training_config - decay_steps: {training_config['decay_steps']}")
     logging.debug(f"current_config - decay_steps: {current_config['decay_steps']}")

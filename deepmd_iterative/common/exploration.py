@@ -8,7 +8,37 @@ import subprocess
 import numpy as np
 
 
-def get_subsys_params_exploration(
+def get_subsys_exploration(
+    new_input_json: Dict, it0_subsys_nr: int
+) -> Tuple[
+    Union[float, int],
+    Union[float, int],
+    Union[float, int],
+    Union[float, int],
+    Union[float, int],
+    Union[float, int],
+    Union[float, int],
+    Union[float, int],
+    bool,
+]:
+
+    subsys_values = []
+    for key in [
+        "timestep_ps",
+        "temperature_K",
+        "exp_time_ps",
+        "max_exp_time_ps",
+        "job_walltime_h",
+        "init_exp_time_ps",
+        "init_job_walltime_h",
+        "print_mult",
+        "disturbed_start",
+    ]:
+        subsys_values.append(new_input_json[key][it0_subsys_nr])
+    return tuple(subsys_values)
+
+
+def get_subsys_deviation(
     new_input_json: Dict, it0_subsys_nr: int
 ) -> Tuple[
     Union[float, int],
@@ -200,27 +230,27 @@ def get_last_frame_number(
 
 
 # Unittested
-def update_nb_steps_factor(prevexploration_json: Dict, it_subsys_nr: int) -> int:
+def update_subsys_nb_steps_factor(previous_exploration_config: Dict, it0_subsys_nr: int) -> int:
     """
     Calculates a ratio based on information from a dictionary and returns a multiplying factor for subsys_nb_steps.
 
     Args:
-        prevexploration_json (Dict): A dictionary containing information about a previous exploration.
-        it_subsys_nr (int): An integer representing the subsystem index.
+        previous_exploration_config (Dict): A dictionary containing information about a previous exploration.
+        it0_subsys_nr (int): An integer representing the subsystem index.
 
     Returns:
         An integer representing the multiplying factor for subsys_nb_steps.
     """
     # Calculate the ratio of ill-described candidates to the total number of candidates
-    ratio_ill_described = (
-        prevexploration_json["subsys_nr"][it_subsys_nr]["nb_candidates"]
-        + prevexploration_json["subsys_nr"][it_subsys_nr]["nb_rejected"]
-    ) / prevexploration_json["subsys_nr"][it_subsys_nr]["nb_total"]
+    ill_described_ratio = (
+        previous_exploration_config["subsys_nr"][it0_subsys_nr]["nb_candidates"]
+        + previous_exploration_config["subsys_nr"][it0_subsys_nr]["nb_rejected"]
+    ) / previous_exploration_config["subsys_nr"][it0_subsys_nr]["nb_total"]
 
     # Return a multiplying factor for subsys_nb_steps based on the ratio of ill-described candidates
-    if ratio_ill_described < 0.10:
+    if ill_described_ratio < 0.10:
         return 4
-    elif ratio_ill_described < 0.20:
+    elif ill_described_ratio < 0.20:
         return 2
     else:
         return 1
