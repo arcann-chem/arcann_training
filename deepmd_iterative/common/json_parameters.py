@@ -1,12 +1,14 @@
-from pathlib import Path
+# Standard library modules
 import logging
 import sys
+from copy import deepcopy
 from typing import Any, Dict, List, Tuple, Union
 
-# Others
-from copy import deepcopy
+# Local imports
+from deepmd_iterative.common.errors import catch_errors_decorator
 
 
+@catch_errors_decorator
 def get_key_in_dict(
     key: str, input_json: Dict, previous_json: Dict, default_json: Dict
 ) -> Any:
@@ -50,6 +52,7 @@ def get_key_in_dict(
     return value
 
 
+@catch_errors_decorator
 def get_machine_keyword(
     input_json: Dict, previous_json: Dict, default_json: Dict
 ) -> Union[bool, str, List[str]]:
@@ -106,6 +109,7 @@ def get_machine_keyword(
         sys.exit(1)
 
     return value
+
 
 # Used in initialization - init
 def set_main_config(user_config: Dict, default_config: Dict) -> Tuple[Dict, Dict, str]:
@@ -251,7 +255,6 @@ def set_training_config(
     return training_json, current_config
 
 
-
 ###########################################
 def set_new_input_explor_json(
     input_json: Dict,
@@ -359,6 +362,8 @@ def set_new_input_explor_json(
 
     return new_input_json
 
+
+@catch_errors_decorator
 def set_new_input_explordevi_json(
     input_json: Dict,
     previous_json: Dict,

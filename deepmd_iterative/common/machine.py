@@ -1,15 +1,16 @@
-from pathlib import Path
+# Standard library modules
 import logging
+import socket
 import sys
+from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union
 
-# Others
-import socket
-
-# deepmd_iterative imports
+# Local imports
+from deepmd_iterative.common.errors import catch_errors_decorator
 from deepmd_iterative.common.json import load_json_file
 
 
+@catch_errors_decorator
 def get_host_name() -> str:
     """Returns the fully-qualified hostname of the current machine.
 
@@ -33,6 +34,7 @@ def get_host_name() -> str:
             return hostname
 
 
+@catch_errors_decorator
 def assert_same_machine(expected_machine: str, machine_config: Dict) -> None:
     """
     Check if the machine name in the provided dictionary matches the expected machine name. If the names do not match,
@@ -56,6 +58,7 @@ def assert_same_machine(expected_machine: str, machine_config: Dict) -> None:
         sys.exit(1)
 
 
+@catch_errors_decorator
 def get_machine_config_files(
     deepmd_iterative_path: Path, training_path: Path
 ) -> List[Dict]:
@@ -95,6 +98,7 @@ def get_machine_config_files(
     return machine_configs
 
 
+@catch_errors_decorator
 def get_machine_from_configs(
     machine_configs: List[Dict], input_machine_shortname: str = ""
 ) -> str:
@@ -129,6 +133,7 @@ def get_machine_from_configs(
     # raise ValueError(error_msg)
 
 
+@catch_errors_decorator
 def get_machine_spec_for_step(
     deepmd_iterative_path: Path,
     training_path: Path,

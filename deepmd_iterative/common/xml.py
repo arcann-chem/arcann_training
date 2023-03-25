@@ -1,14 +1,16 @@
-from pathlib import Path
+# Standard library modules
 import logging
 import sys
-from typing import List
-
-# Others
 import xml.etree.ElementTree as ET
+from pathlib import Path
+from typing import List
 from xml.dom import minidom
 
+# Local imports
+from deepmd_iterative.common.errors import catch_errors_decorator
 
 # Unittested
+@catch_errors_decorator
 def convert_list_of_strings_to_xml(list_string: List[str]) -> ET.ElementTree:
     """Convert a list of strings to an XML tree.
 
@@ -26,6 +28,7 @@ def convert_list_of_strings_to_xml(list_string: List[str]) -> ET.ElementTree:
 
 
 # Unittested
+@catch_errors_decorator
 def convert_xml_to_list_of_strings(xml_tree: ET.ElementTree) -> List[str]:
     """Convert an XML tree to a list of strings.
 
@@ -45,6 +48,7 @@ def convert_xml_to_list_of_strings(xml_tree: ET.ElementTree) -> List[str]:
 
 
 # Unittested
+@catch_errors_decorator
 def parse_xml_file(xml_file_path: Path) -> ET.ElementTree:
     """Reads an XML file and returns an ElementTree object.
 
@@ -79,6 +83,7 @@ def parse_xml_file(xml_file_path: Path) -> ET.ElementTree:
 
 
 # Unittested
+@catch_errors_decorator
 def write_xml(xml_tree: ET.ElementTree, file_path: Path):
     """Write an XML tree to a file.
 

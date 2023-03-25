@@ -1,9 +1,12 @@
+# Standard library modules
 from typing import Dict, Tuple
 
-# deepmd_iterative imports
+# Local imports
+from deepmd_iterative.common.errors import catch_errors_decorator
 from deepmd_iterative.common.json import read_key_input_json
 
 
+@catch_errors_decorator
 def set_subsys_params_deviation(
     input_json: Dict,
     new_input_json: Dict,

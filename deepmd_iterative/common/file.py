@@ -46,9 +46,7 @@ def change_directory(directory_path: Path) -> None:
 # Unittested
 @catch_errors_decorator
 def check_directory(
-    directory_path: Path,
-    abort_on_error: bool = True,
-    error_msg: str = "default"
+    directory_path: Path, abort_on_error: bool = True, error_msg: str = "default"
 ) -> None:
     """
     Check if the given directory exists and logs a warning or raises an error if it does not.
@@ -124,7 +122,9 @@ def check_file_existence(
         if expected_existence:
             message = f"File not found: {file_path.name} not in {file_path.parent}"
             if abort_on_error:
-                raise FileNotFoundError(message if error_msg == "default" else error_msg)
+                raise FileNotFoundError(
+                    message if error_msg == "default" else error_msg
+                )
             else:
                 logging.warning(message if error_msg == "default" else error_msg)
         else:
@@ -227,7 +227,6 @@ def remove_files_matching_glob(directory_path: Path, file_glob: str) -> None:
             raise Exception(error_msg)
 
 
-
 # Unittested
 @catch_errors_decorator
 def remove_tree(directory_path: Path) -> None:
@@ -287,4 +286,3 @@ def write_list_of_strings_to_file(file_path: Path, list_of_strings: List[str]) -
         # Handle any errors that occur during file writing
         error_msg = f"Error writing to file {file_path}: {e}"
         raise Exception(error_msg)
-

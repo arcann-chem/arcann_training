@@ -1,10 +1,10 @@
+# Standard library modules
 import logging
+from copy import deepcopy
 from typing import Dict, List
 
-# Others
-from copy import deepcopy
-
-# deepmd_iterative imports
+# Local imports
+from deepmd_iterative.common.errors import catch_errors_decorator
 from deepmd_iterative.common.list import (
     remove_strings_containing_substring_in_list_of_strings,
     replace_substring_in_list_of_strings,
@@ -12,6 +12,7 @@ from deepmd_iterative.common.list import (
 from deepmd_iterative.common.utils import convert_seconds_to_hh_mm_ss
 
 
+@catch_errors_decorator
 def replace_in_slurm_file_general(
     slurm_file_master: List[str],
     machine_spec: Dict,

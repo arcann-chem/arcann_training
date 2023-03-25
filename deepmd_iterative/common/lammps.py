@@ -1,9 +1,14 @@
+# Standard library modules
 from typing import Dict, List, Tuple
 
-# Non-standard library imports
+# Third-party modules
 import numpy as np
 
+# Local imports
+from deepmd_iterative.common.errors import catch_errors_decorator
 
+
+@catch_errors_decorator
 def parse_lammps_data(
     lines: List[str],
 ) -> Tuple(int, int, np.ndarray, Dict[int], np.ndarray):

@@ -1,16 +1,19 @@
-from pathlib import Path
+# Standard library modules
+import json
 import logging
 import sys
-from typing import Dict, List
+from pathlib import Path
+from typing import Dict
 
-# Others
-import json
-
-# Non-standard library imports
+# Third-party modules
 import numpy as np
+
+# Local imports
+from deepmd_iterative.common.errors import catch_errors_decorator
 
 
 # Unittested
+@catch_errors_decorator
 def calculate_decay_steps(num_structures: int, min_decay_steps: int = 5000) -> int:
     """
     Calculate the number of decay steps (tau) for a given number of structures to train (N).
@@ -56,6 +59,7 @@ def calculate_decay_steps(num_structures: int, min_decay_steps: int = 5000) -> i
 
 
 # Unittested
+@catch_errors_decorator
 def calculate_decay_rate(
     stop_batch: int, start_lr: float, stop_lr: float, decay_steps: int
 ) -> float:
@@ -95,6 +99,7 @@ def calculate_decay_rate(
 
 
 # Unittested
+@catch_errors_decorator
 def calculate_learning_rate(
     current_step: int, start_lr: float, decay_rate: float, decay_steps: int
 ) -> float:
@@ -130,6 +135,7 @@ def calculate_learning_rate(
 
 
 # Unittested
+@catch_errors_decorator
 def check_initial_datasets(training_dir: Path) -> Dict[str, int]:
     """
     Check if the initial datasets exist and are properly formatted.
@@ -188,13 +194,14 @@ def check_initial_datasets(training_dir: Path) -> Dict[str, int]:
     return initial_datasets_info
 
 
+@catch_errors_decorator
 def validate_deepmd_config(training_config):
     """
     Validates the provided training configuration for a DeePMD model.
-    
+
     Args:
         training_config (dict): A dictionary containing the training configuration.
-        
+
     Returns:
         int: 0 if the configuration is valid, 1 if an error is found.
     """

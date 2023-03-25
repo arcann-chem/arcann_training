@@ -1,13 +1,16 @@
+# Standard library modules
+import subprocess
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
-# Others
-import subprocess
-
-# Non-standard library imports
+# Third-party modules
 import numpy as np
 
+# Local imports
+from deepmd_iterative.common.errors import catch_errors_decorator
 
+
+@catch_errors_decorator
 def get_subsys_exploration(
     new_input_json: Dict, it0_subsys_nr: int
 ) -> Tuple[
@@ -38,6 +41,7 @@ def get_subsys_exploration(
     return tuple(subsys_values)
 
 
+@catch_errors_decorator
 def get_subsys_deviation(
     new_input_json: Dict, it0_subsys_nr: int
 ) -> Tuple[
@@ -68,6 +72,7 @@ def get_subsys_deviation(
     return tuple(subsys_values)
 
 
+@catch_errors_decorator
 def generate_starting_points(
     exploration_type: int,
     it_subsys_nr: int,
@@ -138,6 +143,7 @@ def generate_starting_points(
 
 
 # Unittested
+@catch_errors_decorator
 def create_models_list(
     config_json: Dict,
     prevtraining_json: Dict,
@@ -199,6 +205,7 @@ def create_models_list(
 
 
 # Unittested
+@catch_errors_decorator
 def get_last_frame_number(
     model_deviation: np.ndarray, sigma_high_limit: float, is_start_disturbed: bool
 ) -> int:
@@ -230,7 +237,10 @@ def get_last_frame_number(
 
 
 # Unittested
-def update_subsys_nb_steps_factor(previous_exploration_config: Dict, it0_subsys_nr: int) -> int:
+@catch_errors_decorator
+def update_subsys_nb_steps_factor(
+    previous_exploration_config: Dict, it0_subsys_nr: int
+) -> int:
     """
     Calculates a ratio based on information from a dictionary and returns a multiplying factor for subsys_nb_steps.
 

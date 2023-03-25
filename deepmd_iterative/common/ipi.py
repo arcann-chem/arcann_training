@@ -1,11 +1,13 @@
+# Standard library modules
 import logging
 import sys
-
-# Others
 import xml.etree.ElementTree as ET
 
+# Local imports
+from deepmd_iterative.common.errors import catch_errors_decorator
 
 # Unittested
+@catch_errors_decorator
 def get_temperature_from_ipi_xml(input_file: ET.ElementTree):
     """
     Extract the temperature value from an XML file and return it as a float.

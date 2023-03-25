@@ -1,11 +1,14 @@
+# Standard library modules
 import logging
+import re
 import sys
 from typing import List, Tuple, Union
 
-# Others
-import re
+# Local imports
+from deepmd_iterative.common.errors import catch_errors_decorator
 
 
+@catch_errors_decorator
 def analyze_plumed_file_for_movres(
     plumed_lines: List[str],
 ) -> Tuple[bool, Union[int, bool]]:

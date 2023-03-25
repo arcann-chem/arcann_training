@@ -1,13 +1,15 @@
-from pathlib import Path
+# Standard library modules
+import json
 import logging
 import sys
+from pathlib import Path
 from typing import Any, Dict, Union
 
-# Others
-import json
-
+# Local imports
+from deepmd_iterative.common.errors import catch_errors_decorator
 
 # Unittested
+@catch_errors_decorator
 def load_json_file(
     file_path: Path, abort_on_error: bool = True, enable_logging: bool = True
 ) -> Dict:
@@ -56,6 +58,7 @@ def load_json_file(
 
 
 # Unittested
+@catch_errors_decorator
 def load_default_json_file(file_path: Path) -> Dict:
     """
     Load a JSON file from the given file path and return its contents as a dictionary.
@@ -86,6 +89,7 @@ def load_default_json_file(file_path: Path) -> Dict:
 
 
 # Unittested
+@catch_errors_decorator
 def write_json_file(
     json_dict: Dict, file_path: Path, enable_logging: bool = True, **kwargs
 ) -> None:
@@ -117,6 +121,7 @@ def write_json_file(
 
 
 # Unittested
+@catch_errors_decorator
 def backup_and_overwrite_json_file(
     json_dict: Dict, file_path: Path, enable_logging: bool = True
 ) -> None:
@@ -146,6 +151,7 @@ def backup_and_overwrite_json_file(
 
 
 # Unittested
+@catch_errors_decorator
 def add_key_value_to_dict(dictionary: Dict, key: str, value: Any) -> None:
     """
     Add a new key-value pair to a dictionary.

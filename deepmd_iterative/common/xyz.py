@@ -1,16 +1,18 @@
-from pathlib import Path
+# Standard library modules
 import logging
+import re
 import sys
+from pathlib import Path
 from typing import Tuple
 
-# Others
-import re
-
-# Non-standard library imports
+# Third-party modules
 import numpy as np
 
+# Local imports
+from deepmd_iterative.common.errors import catch_errors_decorator
 
 # Unittested
+@catch_errors_decorator
 def read_xyz_trajectory(file_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Read an XYZ format trajectory file and return the number of atoms, atomic symbols, and atomic coordinates.
@@ -119,6 +121,7 @@ def read_xyz_trajectory(file_path: Path) -> Tuple[np.ndarray, np.ndarray, np.nda
 
 
 # Unittested
+@catch_errors_decorator
 def write_xyz_frame_to_file(
     file_path: Path,
     frame_idx: int,

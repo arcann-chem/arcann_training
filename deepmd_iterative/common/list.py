@@ -1,6 +1,11 @@
+# Standard library modules
 from typing import List
 
+# Local imports
+from deepmd_iterative.common.errors import catch_errors_decorator
+
 # Unittested
+@catch_errors_decorator
 def remove_strings_containing_substring_in_list_of_strings(
     input_list: List[str], substring: str
 ) -> List[str]:
@@ -23,6 +28,7 @@ def remove_strings_containing_substring_in_list_of_strings(
 
 
 # Unittested
+@catch_errors_decorator
 def replace_substring_in_list_of_strings(
     input_list: List[str], substring_in: str, substring_out: str
 ) -> List[str]:
