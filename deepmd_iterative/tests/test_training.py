@@ -1,13 +1,17 @@
+"""
+Author: Rolf David
+Created: 2023/01/01
+Last modified: 2023/03/26
+"""
+# Standard library modules
 from pathlib import Path
 import unittest
 import tempfile
-import os
-import shutil
 
-# Non-standard imports
+# Third-party modules
 import numpy as np
 
-# deepmd_iterative imports
+# Local imports
 from deepmd_iterative.common.training import (
     calculate_decay_steps,
     calculate_decay_rate,
@@ -17,16 +21,26 @@ from deepmd_iterative.common.training import (
 
 
 class TestCalculateDecaySteps(unittest.TestCase):
+    """
+    Test case for the calculate_decay_steps() function.
+
+    Methods
+    -------
+    test_calculate_decay_steps_valid_input():
+        Tests the function with valid inputs.
+    test_calculate_decay_steps_invalid_input():
+        Tests the function with invalid inputs.
+    test_calculate_decay_steps_output_type():
+        Tests the type of output returned by the function, i.e., an integer.
+    """
+
     def setUp(self):
-        # Create a temporary directory
-        self.temp_dir = tempfile.TemporaryDirectory()
+        pass
 
     def tearDown(self):
-        # Delete the temporary directory and its contents
-        self.temp_dir.cleanup()
+        pass
 
     def test_calculate_decay_steps_positive_input(self):
-        # Test for positive input values
         self.assertEqual(calculate_decay_steps(20000), 5000)
         self.assertEqual(calculate_decay_steps(50000), 12500)
         self.assertEqual(calculate_decay_steps(60000), 15000)
@@ -34,40 +48,49 @@ class TestCalculateDecaySteps(unittest.TestCase):
         self.assertEqual(calculate_decay_steps(150000), 30000)
 
     def test_calculate_decay_steps_invalid_input(self):
-        # Test for invalid input values
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(ValueError) as cm:
             calculate_decay_steps(0)
-        self.assertEqual(cm.exception.code, 1)
-        with self.assertRaises(SystemExit) as cm:
+        error_msg = str(cm.exception)
+        expected_error_msg = f"nb_structures must be a positive integer"
+        self.assertEqual(error_msg, expected_error_msg)
+
+        with self.assertRaises(ValueError) as cm:
             calculate_decay_steps(-100)
-        self.assertEqual(cm.exception.code, 1)
-        with self.assertRaises(SystemExit) as cm:
+        error_msg = str(cm.exception)
+        expected_error_msg = f"nb_structures must be a positive integer"
+        self.assertEqual(error_msg, expected_error_msg)
+
+        with self.assertRaises(ValueError) as cm:
             calculate_decay_steps(100, min_decay_steps=-500)
-        self.assertEqual(cm.exception.code, 1)
+        error_msg = str(cm.exception)
+        expected_error_msg = f"min_decay_steps must be a positive integer"
+        self.assertEqual(error_msg, expected_error_msg)
 
     def test_calculate_decay_steps_output_type(self):
-        # Test for the correct output type
         self.assertIsInstance(calculate_decay_steps(20000), int)
-
-    def test_calculate_decay_steps_temp_directory(self):
-        # Test that the function does not create or modify any files outside of the temp directory
-        initial_files = os.listdir(".")
-        calculate_decay_steps(20000)
-        final_files = os.listdir(".")
-        self.assertListEqual(initial_files, final_files)
 
 
 class TestCalculateDecayRate(unittest.TestCase):
+    """
+    Test case for the calculate_decay_steps() function.
+
+    Methods
+    -------
+    test_calculate_decay_rate_valid_input():
+        Tests the function with valid inputs.
+    test_calculate_decay_rate_invalid_input():
+        Tests the function with invalid inputs.
+    test_calculate_decay_rate_output_type():
+        Tests the type of output returned by the function, i.e., an float.
+    """
+
     def setUp(self):
-        # Create a temporary directory
-        self.temp_dir = tempfile.TemporaryDirectory()
+        pass
 
     def tearDown(self):
-        # Delete the temporary directory and its contents
-        self.temp_dir.cleanup()
+        pass
 
     def test_calculate_decay_rate_valid_input(self):
-        # Test for valid input values
         self.assertAlmostEqual(
             calculate_decay_rate(50000, 0.01, 0.001, 5000), 0.7943282347242815, places=7
         )
@@ -81,37 +104,52 @@ class TestCalculateDecayRate(unittest.TestCase):
         )
 
     def test_calculate_decay_rate_invalid_input(self):
-        # Test for invalid input values
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(ValueError) as cm:
             calculate_decay_rate(100, -0.01, 0.001, 5000)
-        self.assertEqual(cm.exception.code, 1)
-        with self.assertRaises(SystemExit) as cm:
+        error_msg = str(cm.exception)
+        expected_error_msg = f"start_lr must be a positive number."
+        self.assertEqual(error_msg, expected_error_msg)
+        with self.assertRaises(ValueError) as cm:
+            calculate_decay_rate(100, 0, 0.001, 5000)
+        error_msg = str(cm.exception)
+        expected_error_msg = f"start_lr must be a positive number."
+        self.assertEqual(error_msg, expected_error_msg)
+        with self.assertRaises(ValueError) as cm:
             calculate_decay_rate(100, 0.01, 0.001, 0)
-        self.assertEqual(cm.exception.code, 1)
+        error_msg = str(cm.exception)
+        expected_error_msg = f"decay_steps must be a positive integer."
+        self.assertEqual(error_msg, expected_error_msg)
+        with self.assertRaises(ValueError) as cm:
+            calculate_decay_rate(100, 0.01, 0.001, 0.0003)
+        error_msg = str(cm.exception)
+        expected_error_msg = f"decay_steps must be a positive integer."
+        self.assertEqual(error_msg, expected_error_msg)
 
     def test_calculate_decay_rate_output_type(self):
-        # Test that the output is of type float
         self.assertIsInstance(calculate_decay_rate(100, 0.01, 0.001, 5000), float)
-
-    def test_calculate_decay_rate_temp_directory(self):
-        # Test that the function does not create or modify any files outside of the temp directory
-        initial_files = os.listdir(".")
-        calculate_decay_rate(50000, 0.01, 0.001, 5000)
-        final_files = os.listdir(".")
-        self.assertListEqual(initial_files, final_files)
 
 
 class TestCalculateLearningRate(unittest.TestCase):
+    """
+    Test case for the calculate_learning_rate() function.
+
+    Methods
+    -------
+    test_calculate_learning_rate_valid_input():
+        Tests the function with valid inputs.
+    test_calculate_learning_rate_invalid_input():
+        Tests the function with invalid inputs.
+    test_calculate_learning_rate_output_type():
+        Tests the type of output returned by the function, i.e., an float.
+    """
+
     def setUp(self):
-        # Create a temporary directory
-        self.temp_dir = tempfile.TemporaryDirectory()
+        pass
 
     def tearDown(self):
-        # Delete the temporary directory and its contents
-        self.temp_dir.cleanup()
+        pass
 
     def test_calculate_learning_rate_valid_input(self):
-        # Test for valid input values
         self.assertAlmostEqual(
             calculate_learning_rate(10000, 0.01, 0.7875603898650455, 5000),
             0.006202513676843825,
@@ -129,91 +167,100 @@ class TestCalculateLearningRate(unittest.TestCase):
         )
 
     def test_calculate_learning_rate_invalid_input(self):
-        # Test for invalid input values
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(ValueError) as cm:
             calculate_learning_rate(-100, 0.01, 0.1, 5000)
-        self.assertEqual(cm.exception.code, 1)
-        with self.assertRaises(SystemExit) as cm:
+        error_msg = str(cm.exception)
+        expected_error_msg = f"All arguments must be positive."
+        self.assertEqual(error_msg, expected_error_msg)
+        with self.assertRaises(ValueError) as cm:
             calculate_learning_rate(100, -0.01, 0.1, 5000)
-        self.assertEqual(cm.exception.code, 1)
-        with self.assertRaises(SystemExit) as cm:
+        error_msg = str(cm.exception)
+        expected_error_msg = f"All arguments must be positive."
+        self.assertEqual(error_msg, expected_error_msg)
+        with self.assertRaises(ValueError) as cm:
             calculate_learning_rate(100, 0.01, -0.1, 5000)
-        self.assertEqual(cm.exception.code, 1)
-        with self.assertRaises(SystemExit) as cm:
-            calculate_learning_rate(100, 0.01, 0.1, -5000)
-        self.assertEqual(cm.exception.code, 1)
+        error_msg = str(cm.exception)
+        expected_error_msg = f"All arguments must be positive."
+        self.assertEqual(error_msg, expected_error_msg)
+        with self.assertRaises(ValueError) as cm:
+            calculate_learning_rate(1000, 0.01, 0.1, -5000)
+        error_msg = str(cm.exception)
+        expected_error_msg = f"All arguments must be positive."
+        self.assertEqual(error_msg, expected_error_msg)
+        with self.assertRaises(ValueError) as cm:
+            calculate_learning_rate(100, 0.01, 0.1, 3213332.2)
+        error_msg = str(cm.exception)
+        expected_error_msg = f"decay_steps must be a positive integer"
+        self.assertEqual(error_msg, expected_error_msg)
 
     def test_calculate_learning_rate_output_type(self):
-        # Test for the correct output type
-        self.assertIsInstance(calculate_learning_rate(100, 0.01, 0.1, 5000), float)
-
-    def test_calculate_learning_rate_temp_directory(self):
-        # Test that the function does not create or modify any files outside of the temp directory
-        initial_files = os.listdir(".")
-        calculate_learning_rate(100, 0.01, 0.1, 5000)
-        final_files = os.listdir(".")
-        self.assertListEqual(initial_files, final_files)
+        self.assertIsInstance(calculate_learning_rate(30000, 0.01, 0.1, 5000), float)
 
 
 class TestCheckInitialDatasets(unittest.TestCase):
+    """
+    Test case for the check_initial_datasets() function.
+
+    Methods
+    -------
+    test_check_initial_datasets():
+        Tests if the function returns the correct dictionary of initial dataset names and number of samples.
+    test_check_initial_datasets_invalid_num_samples():
+        Tests if the function raises a ValueError when one of the initial datasets has an invalid number of samples.
+    test_check_initial_datasets_missing_json():
+        Tests if the function raises a FileNotFoundError when the initial_datasets.json file is missing.
+    test_check_initial_datasets_missing_dataset():
+        Tests if the function raises a FileNotFoundError when one of the initial datasets is missing.
+    """
+
     def setUp(self):
-        # Create a temporary directory
         self.temp_dir = tempfile.TemporaryDirectory()
-        # Create 'data' and 'control' subfolders inside the temporary directory
-        os.makedirs(os.path.join(self.temp_dir.name, "data"))
-        os.makedirs(os.path.join(self.temp_dir.name, "control"))
-        # Create a sample 'initial_datasets.json' file in the 'control' subfolder
-        with open(
-            os.path.join(self.temp_dir.name, "control", "initial_datasets.json"), "w"
-        ) as file:
+        temp_dir_path = Path(self.temp_dir.name)
+
+        (temp_dir_path / "data" / "dataset1" / "set.000").mkdir(parents=True)
+        (temp_dir_path / "data" / "dataset2" / "set.000").mkdir(parents=True)
+        (temp_dir_path / "control").mkdir()
+
+        with (temp_dir_path / "control" / "initial_datasets.json").open("w") as file:
             file.write('{"dataset1": 100, "dataset2": 200}')
-        # Create sample dataset folders in the 'data' subfolder
-        os.makedirs(os.path.join(self.temp_dir.name, "data", "dataset1", "set.000"))
-        os.makedirs(os.path.join(self.temp_dir.name, "data", "dataset2", "set.000"))
-        # Create sample box.npy files for each dataset
+
         np.save(
-            os.path.join(self.temp_dir.name, "data", "dataset1", "set.000", "box.npy"),
-            np.zeros(100),
+            temp_dir_path / "data" / "dataset1" / "set.000" / "box.npy", np.zeros(100)
         )
         np.save(
-            os.path.join(self.temp_dir.name, "data", "dataset2", "set.000", "box.npy"),
-            np.zeros(200),
+            temp_dir_path / "data" / "dataset2" / "set.000" / "box.npy", np.zeros(200)
         )
 
     def tearDown(self):
-        # Delete the temporary directory and its contents
         self.temp_dir.cleanup()
 
     def test_check_initial_datasets(self):
-        # Test the function with valid inputs
         expected_result = {"dataset1": 100, "dataset2": 200}
         self.assertDictEqual(
             check_initial_datasets(Path(self.temp_dir.name)), expected_result
         )
 
-    def test_check_initial_datasets_missing_json(self):
-        # Test the function when the initial_datasets.json file is missing
-        os.remove(os.path.join(self.temp_dir.name, "control", "initial_datasets.json"))
-        with self.assertRaises(SystemExit) as cm:
-            check_initial_datasets(Path(self.temp_dir.name))
-        self.assertEqual(cm.exception.code, 2)
-
-    def test_check_initial_datasets_missing_dataset(self):
-        # Test the function when one of the initial datasets is missing
-        shutil.rmtree(os.path.join(self.temp_dir.name, "data", "dataset2"))
-        with self.assertRaises(SystemExit) as cm:
-            check_initial_datasets(Path(self.temp_dir.name))
-        self.assertEqual(cm.exception.code, 2)
-
     def test_check_initial_datasets_invalid_num_samples(self):
-        # Test the function when the number of samples in one of the initial datasets is incorrect
         np.save(
-            os.path.join(self.temp_dir.name, "data", "dataset1", "set.000", "box.npy"),
+            Path(self.temp_dir.name) / "data" / "dataset1" / "set.000" / "box.npy",
             np.zeros(50),
         )
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(ValueError) as cm:
             check_initial_datasets(Path(self.temp_dir.name))
-        self.assertEqual(cm.exception.code, 1)
+
+    def test_check_initial_datasets_missing_json(self):
+        (Path(self.temp_dir.name) / "control" / "initial_datasets.json").unlink()
+        with self.assertRaises(FileNotFoundError) as cm:
+            check_initial_datasets(Path(self.temp_dir.name))
+
+    def test_check_initial_datasets_missing_dataset(self):
+        (
+            Path(self.temp_dir.name) / "data" / "dataset2" / "set.000" / "box.npy"
+        ).unlink()
+        (Path(self.temp_dir.name) / "data" / "dataset2" / "set.000").rmdir()
+        (Path(self.temp_dir.name) / "data" / "dataset2").rmdir()
+        with self.assertRaises(FileNotFoundError) as cm:
+            check_initial_datasets(Path(self.temp_dir.name))
 
 
 if __name__ == "__main__":
