@@ -1,12 +1,16 @@
-from pathlib import Path
-import xml.etree.ElementTree as ET
-from xml.dom import minidom
-
-# Unittest
+"""
+Author: Rolf David
+Created: 2023/01/01
+Last modified: 2023/03/26
+"""
+# Standard library modules
 import unittest
 import tempfile
+import xml.etree.ElementTree as ET
+from pathlib import Path
+from xml.dom import minidom
 
-# deepmd_iterative imports
+# Local imports
 from deepmd_iterative.common.xml import (
     convert_list_of_strings_to_xml,
     convert_xml_to_list_of_strings,
@@ -16,6 +20,15 @@ from deepmd_iterative.common.xml import (
 
 
 class TestConvertListOfStringsToXml(unittest.TestCase):
+    """
+    Test case for the convert_list_of_strings_to_xml() function.
+
+    Methods
+    -------
+    test_convert_list_of_strings_to_xml():
+        Test that the function correctly converts a list of strings to XML.
+    """
+
     def setUp(self):
         self.xml_string = (
             "<root>\n  <child1>value1</child1>\n  <child2>value2</child2>\n</root>"
@@ -42,6 +55,16 @@ class TestConvertListOfStringsToXml(unittest.TestCase):
 
 
 class TestConvertXmlToListOfStrings(unittest.TestCase):
+    """
+    Test case for the convert_xml_to_list_of_strings() function.
+
+    Methods
+    -------
+    test_convert_xml_to_list_of_strings():
+        Test that the convert_xml_to_list_of_strings() function returns a list of XML elements
+        in string format with no spaces.
+    """
+
     def setUp(self):
         self.xml_string = (
             "<root>\n  <child1>value1</child1>\n  <child2>value2</child2>\n</root>"
@@ -63,21 +86,35 @@ class TestConvertXmlToListOfStrings(unittest.TestCase):
 
 
 class TestParseXmlFile(unittest.TestCase):
+    """
+    Test case for the parse_xml_file() function.
+
+    Methods
+    -------
+    test_file_not_found():
+        Test that a FileNotFoundError is raised when trying to parse a non-existent file.
+    test_parse_error():
+        Test that an ET.ParseError is raised when trying to parse a file with a syntax error.
+    test_valid_file():
+        Test that a valid XML file is parsed correctly and has the expected structure.
+    """
+
     def setUp(self):
-        # Create a temporary directory for testing
         self.temp_dir = tempfile.TemporaryDirectory()
 
     def tearDown(self):
-        # Remove the temporary directory and its contents
         self.temp_dir.cleanup()
 
     def test_file_not_found(self):
-        # Try to parse a file that doesn't exist
         xml_file_path = Path(self.temp_dir.name) / "nonexistent.xml"
-        with self.assertRaises(SystemExit) as context:
+
+        with self.assertRaises(FileNotFoundError) as cm:
             parse_xml_file(xml_file_path)
-        # Check that a FileNotFoundError was raised
-        self.assertEqual(context.exception.code, 2)
+        error_msg = str(cm.exception)
+        expected_error_msg = (
+            f"File not found {xml_file_path.name} not in {xml_file_path.parent}"
+        )
+        self.assertEqual(error_msg, expected_error_msg)
 
     def test_parse_error(self):
         # Create a test XML string with a syntax error
@@ -93,12 +130,11 @@ class TestParseXmlFile(unittest.TestCase):
         xml_file_path = Path(self.temp_dir.name) / "malformed.xml"
         with xml_file_path.open("w", encoding="UTF-8") as f:
             f.write(malformed_xml)
-
-        # Try to parse the malformed XML file
-        with self.assertRaises(SystemExit) as context:
+        with self.assertRaises(ET.ParseError) as cm:
             parse_xml_file(xml_file_path)
-        # Check that an ET.ParseError was raised
-        self.assertEqual(context.exception.code, 1)
+        error_msg = str(cm.exception)
+        expected_error_msg = f"Failed to parse XML file: {xml_file_path.name}"
+        self.assertEqual(error_msg, expected_error_msg)
 
     def test_valid_file(self):
         # Create a test XML string with a valid structure
@@ -130,8 +166,16 @@ class TestParseXmlFile(unittest.TestCase):
 
 
 class TestWriteXml(unittest.TestCase):
+    """
+    Test case for the write_xml() function.
+
+    Methods
+    -------
+    test_write_xml():
+        Tests whether write_xml() writes the correct XML tree to a file.
+    """
+
     def setUp(self):
-        # Create a temporary file and a sample XML tree to write to it.
         self.tmp_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
         self.xml_tree = ET.ElementTree(
             ET.fromstring("<root><child1>value1</child1><child2>value2</child2></root>")
@@ -142,11 +186,9 @@ class TestWriteXml(unittest.TestCase):
         self.tmp_file_path = Path(self.tmp_file.name)
 
     def tearDown(self):
-        # Remove the temporary file.
         Path.unlink(self.tmp_file_path)
 
     def test_write_xml(self):
-        # Call the write_xml() function and assert that the file was written correctly.
         write_xml(self.xml_tree, self.tmp_file_path)
         with self.tmp_file_path.open("r") as f:
             file_contents = f.read()

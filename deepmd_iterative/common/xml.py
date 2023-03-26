@@ -1,6 +1,9 @@
+"""
+Author: Rolf David
+Created: 2023/01/01
+Last modified: 2023/03/26
+"""
 # Standard library modules
-import logging
-import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import List
@@ -12,14 +15,18 @@ from deepmd_iterative.common.errors import catch_errors_decorator
 # Unittested
 @catch_errors_decorator
 def convert_list_of_strings_to_xml(list_string: List[str]) -> ET.ElementTree:
-    """Convert a list of strings to an XML tree.
+    """
+    Convert a list of strings to an XML tree.
 
-    Args:
-        list_string (List[str]): A list of strings, where each string represents a single line of the XML tree.
+    Parameters
+    ----------
+    list_string : List[str]
+        A list of strings, where each string represents a single line of the XML tree.
 
-    Returns:
-        ET.ElementTree: An XML tree.
-
+    Returns
+    -------
+    ET.ElementTree
+        An XML tree.
     """
     # Join the lines of the list into a single string.
     xml_string = "".join(list_string)
@@ -30,14 +37,18 @@ def convert_list_of_strings_to_xml(list_string: List[str]) -> ET.ElementTree:
 # Unittested
 @catch_errors_decorator
 def convert_xml_to_list_of_strings(xml_tree: ET.ElementTree) -> List[str]:
-    """Convert an XML tree to a list of strings.
+    """
+    Convert an XML tree to a list of strings.
 
-    Args:
-        xml_tree (xml.etree.ElementTree.ElementTree): The XML tree to convert.
+    Parameters
+    ----------
+    xml_tree : xml.etree.ElementTree.ElementTree
+        The XML tree to convert.
 
-    Returns:
-        List[str]: A list of strings, where each string represents a single line of the XML tree.
-
+    Returns
+    -------
+    List[str]
+        A list of strings, where each string represents a single line of the XML tree.
     """
     # Convert the XML tree to a string.
     xml_string = ET.tostring(xml_tree.getroot(), encoding="unicode", method="xml")
@@ -50,25 +61,30 @@ def convert_xml_to_list_of_strings(xml_tree: ET.ElementTree) -> List[str]:
 # Unittested
 @catch_errors_decorator
 def parse_xml_file(xml_file_path: Path) -> ET.ElementTree:
-    """Reads an XML file and returns an ElementTree object.
+    """
+    Parses an XML file and returns its corresponding ElementTree object.
 
-    Args:
-        xml_file_path (Path): The path to the XML file.
+    Parameters
+    ----------
+    xml_file_path : Path
+        The path to the XML file.
 
-    Returns:
-        ElementTree: The parsed ElementTree object representing the XML file.
+    Returns
+    -------
+    ElementTree
+        The parsed ElementTree object representing the XML file.
 
-    Raises:
-        2: FileNotFoundError: If the specified file cannot be found.
-        1: ET.ParseError: If the XML file is not well-formed and cannot be parsed.
+    Raises
+    ------
+    FileNotFoundError
+        If the specified file cannot be found.
+    ET.ParseError
+        If the XML file is not well-formed and cannot be parsed.
     """
     # Check if the file exists
     if not xml_file_path.is_file():
         error_msg = f"File not found {xml_file_path.name} not in {xml_file_path.parent}"
-        # Log an error message and abort the program
-        logging.error(f"{error_msg}\nAborting...")
-        sys.exit(2)
-        # raise FileNotFoundError(error_msg)
+        raise FileNotFoundError(error_msg)
     else:
         try:
             with open(xml_file_path, "r") as xml_file:
@@ -76,21 +92,21 @@ def parse_xml_file(xml_file_path: Path) -> ET.ElementTree:
                 return xml_tree
         except ET.ParseError:
             error_msg = f"Failed to parse XML file: {xml_file_path.name}"
-            # Log an error message and abort the program
-            logging.error(f"{error_msg}\nAborting...")
-            sys.exit(1)
-            # raise ET.ParseError(error_msg)
+            raise ET.ParseError(error_msg)
 
 
 # Unittested
 @catch_errors_decorator
 def write_xml(xml_tree: ET.ElementTree, file_path: Path):
-    """Write an XML tree to a file.
+    """
+    Writes an XML tree to a file at the specified path.
 
-    Args:
-        xml_tree (ET.ElementTree): An XML tree to write to a file.
-        file_path (Path): The path to the file to write.
-
+    Parameters
+    ----------
+    xml_tree : ElementTree
+        The ElementTree object to write to a file.
+    file_path : Path
+        The path to the file to write.
     """
     # Convert the ElementTree object to an XML string.
     xml_string = ET.tostring(xml_tree.getroot(), encoding="unicode", method="xml")
