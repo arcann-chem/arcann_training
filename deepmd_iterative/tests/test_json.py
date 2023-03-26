@@ -1,10 +1,17 @@
-from pathlib import Path
-import unittest
-import tempfile
-import os
+"""
+Author: Rolf David
+Created: 2023/01/01
+Last modified: 2023/03/26
+"""
+# Standard library modules
 import json
+import os
+import tempfile
+import unittest
+from pathlib import Path
 
-# deepmd_iterative imports
+
+# Local imports
 from deepmd_iterative.common.json import (
     add_key_value_to_dict,
     backup_and_overwrite_json_file,
@@ -15,6 +22,29 @@ from deepmd_iterative.common.json import (
 
 
 class TestAddKeyValueToDict(unittest.TestCase):
+    """
+    Test case for the add_key_value_to_dict() function.
+
+    Methods
+    -------
+    test_add_to_empty_dict():
+        Test that a key-value pair is added to an empty dictionary.
+    test_add_new_key_to_dict():
+        Test that a key-value pair is added to a non-empty dictionary.
+    test_update_existing_key_in_dict():
+        Test that an existing key's value is updated in the dictionary.
+    test_add_integer_value_to_dict():
+        Test that an integer value is added to the dictionary.
+    test_add_dict_value_to_dict():
+        Test that a dictionary value is added to the dictionary.
+    test_add_list_value_to_dict():
+        Test that a list value is added to the dictionary.
+    test_add_nested_dict_to_dict():
+        Test that a nested dictionary is added to the dictionary.
+    test_input_types():
+        Test that function raises TypeError/ValueError when given invalid input types.
+    """
+
     def test_add_to_empty_dict(self):
         d = {}
         add_key_value_to_dict(d, "key1", "value1")
@@ -55,8 +85,32 @@ class TestAddKeyValueToDict(unittest.TestCase):
             d, {"key1": {"value": "value1"}, "key2": {"value": nested_dict}}
         )
 
+    def test_input_types(self):
+        d = {}
+        with self.assertRaises(TypeError):
+            add_key_value_to_dict(None, "key1", "value1")
+        with self.assertRaises(TypeError):
+            add_key_value_to_dict(d, 123, "value1")
+        with self.assertRaises(ValueError):
+            add_key_value_to_dict(d, "", "value1")
+        with self.assertRaises(TypeError):
+            add_key_value_to_dict(d, "key1", None)
+
 
 class TestBackupAndOverwriteJsonFile(unittest.TestCase):
+    """
+    Test case for the backup_and_overwrite_json_file() function.
+
+    Methods
+    -------
+    test_backup_and_overwrite_json_file():
+        Tests the function with a path to an existing file, checks that a backup file is created and that the file is overwritten with new data.
+    test_backup_and_overwrite_json_file_symlink():
+        Tests the function with a path to an existing symlink, checks that the symlink is not a symlink anymore and that the file is overwritten with new data.
+    test_backup_and_overwrite_json_file_invalid_input():
+        Tests the function with with invalid input (not a Path object) and check that a TypeError is raised.
+    """
+
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.file_path = Path(self.temp_dir.name) / "test.json"
@@ -64,87 +118,114 @@ class TestBackupAndOverwriteJsonFile(unittest.TestCase):
     def tearDown(self):
         self.temp_dir.cleanup()
 
-    def test_file_backup_and_write(self):
-        # Create an initial file
+    def test_backup_and_overwrite_json_file(self):
         initial_data = {"a": 1, "b": 2}
         with self.file_path.open("w") as f:
             json.dump(initial_data, f)
-
-        # Write new data to the file, creating a backup of the old data
         new_data = {"c": 3, "d": 4}
         backup_and_overwrite_json_file(new_data, self.file_path)
-
-        # Verify that the original file was backed up and the new data was written
         self.assertTrue(self.file_path.with_suffix(".json").is_file())
         with self.file_path.with_suffix(".json").open("r") as f:
             written_data = json.load(f)
-        self.assertEqual(written_data, new_data)
-
-        # Verify that the original file was backed up and the new data was written
+        self.assertDictEqual(written_data, new_data)
         self.assertTrue(self.file_path.with_suffix(".json.bak").is_file())
         with self.file_path.with_suffix(".json.bak").open("r") as f:
             backup_data = json.load(f)
-        self.assertEqual(backup_data, initial_data)
+        self.assertDictEqual(backup_data, initial_data)
 
-    def test_symbolic_link_removal_and_write(self):
-
-        # Create a symbolic link to a file
+    def test_backup_and_overwrite_json_file_symlink(self):
         initial_data = {"a": 1, "b": 2}
         symlink_path = Path(self.temp_dir.name) / "test_symlink.json"
         with self.file_path.open("w") as f:
             json.dump(initial_data, f)
         os.symlink(self.file_path, symlink_path)
-
-        # Write new data to the linked file, removing the symbolic link
         new_data = {"c": 3, "d": 4}
         backup_and_overwrite_json_file(new_data, symlink_path)
-
-        # Verify that the symbolic link was removed and the new data was written
         self.assertFalse(symlink_path.is_symlink())
         with symlink_path.open("r") as f:
             written_data = json.load(f)
-        self.assertEqual(written_data, new_data)
+        self.assertDictEqual(written_data, new_data)
+
+    def test_backup_and_overwrite_json_file_invalid_input(self):
+        initial_data = {"a": 1, "b": 2}
+        with self.assertRaises(TypeError) as cm:
+            backup_and_overwrite_json_file(initial_data, "invalid_path.json")
+        error_msg = str(cm.exception)
+        expected_error_msg = f"file_path must be a Path object."
+        self.assertEqual(error_msg, expected_error_msg)
 
 
 class TestLoadDefaultJsonFile(unittest.TestCase):
-    def test_load_existing_json_file(self):
-        # Create a temporary directory and file
-        with tempfile.TemporaryDirectory() as temp_dir:
-            file_path = Path(temp_dir) / "test.json"
-            json_data = {"foo": "bar"}
-            with file_path.open("w", encoding="UTF-8") as json_file:
-                json.dump(json_data, json_file)
+    """
+    Test case for the load_default_json_file() function.
 
-            # Test loading the file
-            loaded_data = load_default_json_file(file_path)
+    Methods
+    -------
+    test_load_default_json_file():
+        Test the function when the default JSON file exists and contains valid data.
+    test_load_default_json_file_empty_file():
+        Test the function when the default JSON file is empty.
+    test_load_default_json_file_file_not_found():
+        Test the function when the default JSON file is not found.
+    test_load_default_json_file_invalid_input():
+        Test the function when the input argument is not a Path object.
+    """
 
-            self.assertEqual(loaded_data, json_data)
+    def setUp(self):
+        self.file_content = {"key1": "value1", "key2": 10}
+        self.file_content_empty = ""
+        self.tmp_dir = tempfile.TemporaryDirectory()
+        self.temp_dir_path = Path(self.tmp_dir.name)
+        self.temp_file = self.temp_dir_path / "test.json"
+        with self.temp_file.open(mode="w") as f:
+            json.dump(self.file_content, f)
+        self.temp_empty_file = self.temp_dir_path / "test_empty.json"
+        with self.temp_empty_file.open(mode="w") as f:
+            f.write(self.file_content_empty)
+        self.temp_fake_file = self.temp_dir_path / "test_fake.json"
 
-    def test_load_empty_json_file(self):
-        # Create a temporary directory and file
-        with tempfile.TemporaryDirectory() as temp_dir:
-            file_path = Path(temp_dir) / "test.json"
-            with file_path.open("w", encoding="UTF-8") as json_file:
-                json_file.write("")
+    def tearDown(self):
+        self.tmp_dir.cleanup()
 
-            # Test loading the file
-            loaded_data = load_default_json_file(file_path)
+    def test_load_default_json_file(self):
+        output = load_default_json_file(self.temp_file)
+        self.assertDictEqual(output, self.file_content)
 
-            self.assertEqual(loaded_data, {})
+    def test_load_default_json_file_empty_file(self):
+        output = load_default_json_file(self.temp_empty_file)
+        self.assertDictEqual(output, {})
 
-    def test_load_nonexistent_json_file(self):
-        # Create a temporary directory
-        with tempfile.TemporaryDirectory() as temp_dir:
-            file_path = Path(temp_dir) / "test.json"
+    def test_load_default_json_file_file_not_found(self):
+        output = load_default_json_file(self.temp_fake_file)
+        self.assertDictEqual(output, {})
+        self.assertLogs(level="WARNING")
 
-            # Test loading the file
-            loaded_data = load_default_json_file(file_path)
-
-            self.assertEqual(loaded_data, {})
-            self.assertLogs(level="WARNING")
+    def test_load_default_json_file_invalid_input(self):
+        with self.assertRaises(TypeError) as cm:
+            load_default_json_file("invalid_path.json")
+        error_msg = str(cm.exception)
+        expected_error_msg = f"file_path must be a Path object."
+        self.assertEqual(error_msg, expected_error_msg)
 
 
 class TestLoadJsonFile(unittest.TestCase):
+    """
+    Test case for the load_json_file() function.
+
+    Methods
+    -------
+    test_load_existing_json_file():
+        Test loading an existing JSON file and check that the loaded data is correct.
+    test_load_nonexistent_json_file_with_abort_on_error():
+        Test loading a non-existent JSON file with abort_on_error=True and check that a FileNotFoundError is raised.
+    test_load_nonexistent_json_file_without_abort_on_error():
+        Test loading a non-existent JSON file with abort_on_error=False and check that an empty dictionary is returned.
+    test_load_empty_json_file():
+        Test loading an empty JSON file and check that an empty dictionary is returned.
+    test_load_json_file_invalid_input():
+        Test loading a JSON file with invalid input (not a Path object) and check that a TypeError is raised.
+    """
+
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.json_data = {"key1": "value1", "key2": "value2"}
@@ -153,43 +234,56 @@ class TestLoadJsonFile(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_load_existing_json_file(self):
-        # Create a test JSON file
         file_path = Path(self.temp_dir.name) / "test.json"
         write_json_file(self.json_data, file_path)
 
-        # Test loading the file
         loaded_data = load_json_file(file_path)
-        self.assertEqual(loaded_data, self.json_data)
+        self.assertDictEqual(loaded_data, self.json_data)
 
     def test_load_nonexistent_json_file_with_abort_on_error(self):
-        # Create a test JSON file path
         file_path = Path(self.temp_dir.name) / "nonexistent.json"
-
-        # Test loading the file with abort_on_error=True
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(FileNotFoundError) as cm:
             load_json_file(file_path)
-        self.assertEqual(cm.exception.code, 2)
+        error_msg = str(cm.exception)
+        expected_error_msg = f"File {file_path.name} not found in {file_path.parent}."
+        self.assertEqual(error_msg, expected_error_msg)
 
     def test_load_nonexistent_json_file_without_abort_on_error(self):
-        # Create a test JSON file path
         file_path = Path(self.temp_dir.name) / "nonexistent.json"
-
-        # Test loading the file with abort_on_error=False
         loaded_data = load_json_file(file_path, abort_on_error=False)
-        self.assertEqual(loaded_data, {})
+        self.assertDictEqual(loaded_data, {})
 
     def test_load_empty_json_file(self):
-        # Create a test JSON file
         file_path = Path(self.temp_dir.name) / "test.json"
         with file_path.open("w", encoding="UTF-8") as json_file:
             json_file.write("")
-
-        # Test loading the file
         loaded_data = load_json_file(file_path, False)
-        self.assertEqual(loaded_data, {})
+        self.assertDictEqual(loaded_data, {})
+
+    def test_load_json_file_invalid_input(self):
+        with self.assertRaises(TypeError) as cm:
+            load_json_file("invalid_path.json")
+        error_msg = str(cm.exception)
+        expected_error_msg = f"file_path must be a Path object."
+        self.assertEqual(error_msg, expected_error_msg)
 
 
 class TestWriteJsonFile(unittest.TestCase):
+    """
+    Test case for the write_json_file() function.
+
+    Methods
+    -------
+    test_write_json_file():
+        Tests the function with valid arguments and checks that it writes the JSON file correctly.
+    test_write_json_file_with_enable_logging():
+        Tests the function with valid arguments and checks that it writes the JSON file correctly and enables logging.
+    test_write_json_file_invalid_input:
+        Tests the function with with invalid input (not a Path object) and check that a TypeError is raised.
+    test_write_json_file_with_ioerror():
+        Tests the function with invalid file permissions and checks that it raises an IOError exception and does not write the JSON file.
+    """
+
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.file_path = Path(self.temp_dir.name) / "test.json"
@@ -199,39 +293,30 @@ class TestWriteJsonFile(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_write_json_file(self):
-
-        # Write the test data to a JSON file
         write_json_file(self.json_data, self.file_path)
-
-        # Verify that the file was written and its contents match the test data
         self.assertTrue(self.file_path.is_file())
         with self.file_path.open("r", encoding="UTF-8") as f:
             written_data = json.load(f)
-        self.assertEqual(written_data, self.json_data)
+        self.assertDictEqual(written_data, self.json_data)
 
     def test_write_json_file_with_enable_logging(self):
-        # Define test data to be written to the JSON file
-
-        # Write the test data to a JSON file with logging enabled
         write_json_file(self.json_data, self.file_path, enable_logging=True)
-
-        # Verify that the file was written and its contents match the test data
         self.assertTrue(self.file_path.is_file())
         with self.file_path.open("r", encoding="UTF-8") as f:
             written_data = json.load(f)
-        self.assertEqual(written_data, self.json_data)
+        self.assertDictEqual(written_data, self.json_data)
+
+    def test_write_json_file_invalid_input(self):
+        with self.assertRaises(TypeError) as cm:
+            write_json_file(self.json_data, "invalid_path.json")
+        error_msg = str(cm.exception)
+        expected_error_msg = f"file_path must be a Path object."
+        self.assertEqual(error_msg, expected_error_msg)
 
     def test_write_json_file_with_ioerror(self):
-        # Define test data to be written to the JSON file
-        # Remove write permission from the temporary directory
         os.chmod(self.temp_dir.name, 0o500)
-
-        # Verify that an IOError is raised when attempting to write to the file
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(Exception):
             write_json_file(self.json_data, self.file_path)
-        self.assertEqual(cm.exception.code, 2)
-
-        # Verify that the file was not written
         self.assertFalse(self.file_path.is_file())
 
 

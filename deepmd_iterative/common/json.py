@@ -1,3 +1,8 @@
+"""
+Author: Rolf David
+Created: 2023/01/01
+Last modified: 2023/03/26
+"""
 # Standard library modules
 import json
 import logging
@@ -10,66 +15,112 @@ from deepmd_iterative.common.errors import catch_errors_decorator
 
 # Unittested
 @catch_errors_decorator
-def load_json_file(
-    file_path: Path, abort_on_error: bool = True, enable_logging: bool = True
-) -> Dict:
+def add_key_value_to_dict(dictionary: Dict, key: str, value: Any) -> None:
     """
-    Load a JSON file from the given file path and return its contents as a dictionary.
+    Add a new key-value pair to a dictionary.
 
-    Args:
-        file_path (Path): The path to the JSON file to be loaded.
-        abort_on_error (bool, optional): Whether to abort the program if the file cannot be found. If True, an error
-            message is logged and the program exits with an error code. If False, an empty dictionary is returned.
-            Defaults to True.
-        enable_logging (bool, optional): Whether to log information about the loading process. Defaults to True.
+    If the dictionary is empty, a new sub-dictionary will be created with the specified key and value.
+    If the key does not already exist in the dictionary, a new sub-dictionary will be created with the specified key and value.
+    If the key already exists in the dictionary, the existing sub-dictionary's value will be updated.
 
-    Returns:
-        Dict: A dictionary containing the contents of the JSON file.
+    Parameters
+    ----------
+    dictionary : Dict
+        The dictionary to which the key-value pair should be added.
+    key : str
+        The key to use for the new or updated sub-dictionary.
+    value : Any
+        The value to be associated with the new or updated sub-dictionary.
 
-    Raises:
-        SystemExit(2): If the file cannot be found and abort_on_error is True.
+    Raises
+    ------
+    TypeError
+        If dictionary is not a dictionary, or key is not a string, or value is None.
+    ValueError
+        If key is an empty string.
     """
-    # Check if the file exists and is a file
-    if file_path.is_file():
-        # If logging is enabled, log information about the loading process
-        if enable_logging:
-            logging.info(f"Loading {file_path.name} from {file_path.parent}")
-        # Open the file and load the contents as a dictionary
-        with file_path.open(encoding="UTF-8") as json_file:
-            # Check if the file is empty
-            file_content = json_file.read().strip()
-            if len(file_content) == 0:
-                return {}
-            return json.loads(file_content)
-    else:
-        # If the file cannot be found and abort_on_error is True, log an error message and exit with an error code
-        if abort_on_error:
-            error_msg = f"File {file_path.name} not found in {file_path.parent}."
-            logging.error(f"{error_msg}\nAborting...")
-            sys.exit(2)
-        # If abort_on_error is False, return an empty dictionary
-        else:
-            # If logging is enabled, log information about the creation of the empty dictionary
-            if enable_logging:
-                logging.info(
-                    f"Creating an empty dictionary: {file_path.name} in {file_path.parent}"
-                )
-            return {}
+    if not isinstance(dictionary, dict):
+        error_msg = f"The dictionary argument must be a dictionary."
+        raise TypeError(error_msg)
+    if not isinstance(key, str):
+        error_msg = f"The key argument must be a string."
+        raise TypeError(error_msg)
+    if key == "":
+        error_msg = f"The key argument must not be an empty string."
+        raise ValueError(error_msg)
+    if value is None:
+        error_msg = f"The value argument cannot be None."
+        raise TypeError(error_msg)
+
+    dictionary.setdefault(key, {})["value"] = value
+
+
+# Unittested
+@catch_errors_decorator
+def backup_and_overwrite_json_file(
+    json_dict: Dict, file_path: Path, enable_logging: bool = True
+) -> None:
+    """
+    Write a dictionary to a JSON file after creating a backup of the existing file.
+
+    If the file already exists, it will be renamed to have a ".json.bak" extension before the new data is written. If the
+    file is a symbolic link, it will be removed before the new data is written.
+
+    Parameters
+    ----------
+    json_dict : Dict
+        A dictionary containing data to be written to the JSON file.
+    file_path : Path
+        A path object representing the file to write the JSON data to.
+    enable_logging : bool, optional
+        Whether to log information about the writing process. Defaults to False.
+
+    Raises
+    ------
+    TypeError
+        If file_path is not a Path object.
+    """
+    if not isinstance(file_path, Path):
+        raise TypeError("file_path must be a Path object.")
+
+    backup_path = file_path.with_suffix(".json.bak")
+    # Create a backup of the original file, if it exists
+    if file_path.is_file() and not file_path.is_symlink() and not backup_path.is_file():
+        file_path.rename(backup_path)
+    elif file_path.is_file() and not file_path.is_symlink() and backup_path.is_file():
+        backup_path.unlink()
+        file_path.rename(backup_path)
+    # If the file is a symbolic link, remove it
+    elif file_path.is_symlink():
+        file_path.unlink()
+    # Write the new data to the original file
+    write_json_file(json_dict, file_path, enable_logging)
 
 
 # Unittested
 @catch_errors_decorator
 def load_default_json_file(file_path: Path) -> Dict:
     """
-    Load a JSON file from the given file path and return its contents as a dictionary.
+    Load a default JSON file from the given file path and return its contents as a dictionary.
 
-    Args:
-        file_path (Path): The path to the JSON file to be loaded.
+    Parameters
+    ----------
+    file_path : Path
+        The path to the default JSON file to be loaded.
 
-    Returns:
-        Dict: A dictionary containing the contents of the JSON file.
+    Returns
+    -------
+    Dict
+        A dictionary containing the contents of the default JSON file.
 
+    Raises
+    ------
+    TypeError
+        If file_path is not a Path object.
     """
+    if not isinstance(file_path, Path):
+        raise TypeError("file_path must be a Path object.")
+
     # Check if the file exists and is a file
     if file_path.is_file():
         # Open the file and load the contents as a dictionary
@@ -90,19 +141,93 @@ def load_default_json_file(file_path: Path) -> Dict:
 
 # Unittested
 @catch_errors_decorator
+def load_json_file(
+    file_path: Path, abort_on_error: bool = True, enable_logging: bool = True
+) -> Dict:
+    """
+    Load a JSON file from the given file path and return its contents as a dictionary.
+
+    Parameters
+    ----------
+    file_path: Path
+        The path to the JSON file to be loaded.
+    abort_on_error: bool
+        Whether to abort the program if the file cannot be found. If True, an error message is logged and the program exits with an error code. If False, an empty dictionary is returned. Defaults is True.
+    enable_logging: bool
+        Whether to log information about the loading process. Defaults is True.
+
+    Returns
+    -------
+    Dict
+        A dictionary containing the contents of the JSON file.
+
+    Raises
+    ------
+    TypeError
+        If file_path is not a Path object.
+    FileNotFoundError
+        If the file cannot be found and abort_on_error is True.
+    """
+    if not isinstance(file_path, Path):
+        error_msg = f"file_path must be a Path object."
+        raise TypeError(error_msg)
+
+    # Check if the file exists and is a file
+    if file_path.is_file():
+        # If logging is enabled, log information about the loading process
+        if enable_logging:
+            logging.info(f"Loading {file_path.name} from {file_path.parent}")
+        # Open the file and load the contents as a dictionary
+        with file_path.open(encoding="UTF-8") as json_file:
+            # Check if the file is empty
+            file_content = json_file.read().strip()
+            if len(file_content) == 0:
+                return {}
+            return json.loads(file_content)
+    else:
+        # If the file cannot be found and abort_on_error is True, log an error message and exit with an error code
+        if abort_on_error:
+            error_msg = f"File {file_path.name} not found in {file_path.parent}."
+            raise FileNotFoundError(error_msg)
+        # If abort_on_error is False, return an empty dictionary
+        else:
+            # If logging is enabled, log information about the creation of the empty dictionary
+            if enable_logging:
+                logging.info(
+                    f"Creating an empty dictionary: {file_path.name} in {file_path.parent}"
+                )
+            return {}
+
+
+# Unittested
+@catch_errors_decorator
 def write_json_file(
     json_dict: Dict, file_path: Path, enable_logging: bool = True, **kwargs
 ) -> None:
     """
     Write a dictionary to a JSON file.
 
-    Args:
-        json_dict (Dict): A dictionary containing data to be written to the JSON file.
-        file_path (Path): A path object representing the file to write the JSON data to.
-        log_write (bool, optional): If True, log a message indicating the file and path that the JSON data is being written to.
-    Raises:
-        2: IOError: If the file path is not valid or the file cannot be written.
+    Parameters
+    ----------
+    json_dict : Dict
+        A dictionary containing data to be written to the JSON file.
+    file_path : Path
+        A path object representing the file to write the JSON data to.
+        Must be a Path object, otherwise a TypeError will be raised.
+    enable_logging : bool, optional
+        If True, log a message indicating the file and path that the JSON data is being written to. Defaults to True.
+    **kwargs : optional
+        Optional arguments to be passed to the json.dump() function.
+
+    Raises
+    ------
+    TypeError
+        If file_path is not a Path object.
+    Exception
+        If the file cannot be written.
     """
+    if not isinstance(file_path, Path):
+        raise TypeError("file_path must be a Path object.")
 
     try:
         # Open the file specified by the file_path argument in write mode
@@ -114,65 +239,8 @@ def write_json_file(
                 logging.info(f"JSON data written to {file_path.absolute()}")
     except (OSError, IOError) as e:
         # Raise an exception if the file path is not valid or the file cannot be written
-        error_msg = f"Error writing JSON data to file {file_path}: {str(e)}"
-        logging.error(f"{error_msg}\nAborting...")
-        sys.exit(2)
-        # raise OSError(error_msg) from e
-
-
-# Unittested
-@catch_errors_decorator
-def backup_and_overwrite_json_file(
-    json_dict: Dict, file_path: Path, enable_logging: bool = True
-) -> None:
-    """
-    Write a dictionary to a JSON file after creating a backup of the existing file.
-
-    If the file already exists, it will be renamed to have a ".json.bak" extension before the new data is written. If the
-    file is a symbolic link, it will be removed before the new data is written.
-
-    Args:
-        json_dict (Dict): A dictionary containing data to be written to the JSON file.
-        file_path (Path): A path object representing the file to write the JSON data to.
-        enable_logging (bool, optional): Whether to log information about the writing process. Defaults to False.
-    """
-    backup_path = file_path.with_suffix(".json.bak")
-    # Create a backup of the original file, if it exists
-    if file_path.is_file() and not file_path.is_symlink() and not backup_path.is_file():
-        file_path.rename(backup_path)
-    elif file_path.is_file() and not file_path.is_symlink() and backup_path.is_file():
-        backup_path.unlink()
-        file_path.rename(backup_path)
-    # If the file is a symbolic link, remove it
-    elif file_path.is_symlink():
-        file_path.unlink()
-    # Write the new data to the original file
-    write_json_file(json_dict, file_path, enable_logging)
-
-
-# Unittested
-@catch_errors_decorator
-def add_key_value_to_dict(dictionary: Dict, key: str, value: Any) -> None:
-    """
-    Add a new key-value pair to a dictionary.
-
-    If the dictionary is empty, a new sub-dictionary will be created with the specified key and value.
-    If the key does not already exist in the dictionary, a new sub-dictionary will be created with the specified key and value.
-    If the key already exists in the dictionary, the existing sub-dictionary's value will be updated.
-
-    Args:
-        dictionary (Dict): The dictionary to which the key-value pair should be added.
-        key (str): The key to use for the new or updated sub-dictionary.
-        value (Any): The value to be associated with the new or updated sub-dictionary.
-    """
-    if not isinstance(dictionary, Dict):
-        raise TypeError('The "dictionary" argument must be a dictionary.')
-    if not isinstance(key, str):
-        raise TypeError('The "key" argument must be a string.')
-    if key == "":
-        raise ValueError('The "key" argument must not be an empty string.')
-
-    dictionary.setdefault(key, {})["value"] = value
+        error_msg = f"Error writing JSON data to file {file_path}: {e}"
+        raise Exception(error_msg)
 
 
 # Need to phase out
