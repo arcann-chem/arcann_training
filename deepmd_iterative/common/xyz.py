@@ -1,7 +1,10 @@
+"""
+Author: Rolf David
+Created: 2023/01/01
+Last modified: 2023/03/26
+"""
 # Standard library modules
-import logging
 import re
-import sys
 from pathlib import Path
 from typing import Tuple
 
@@ -17,26 +20,34 @@ def read_xyz_trajectory(file_path: Path) -> Tuple[np.ndarray, np.ndarray, np.nda
     """
     Read an XYZ format trajectory file and return the number of atoms, atomic symbols, and atomic coordinates.
 
-    Args:
-        file_path (Path): The path to the trajectory file.
+    Parameters
+    ----------
+    file_path : Path
+        The path to the trajectory file.
 
-    Returns:
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray, np.ndarray]
         A tuple containing the following numpy arrays:
-        - num_atoms (np.ndarray): Array of the number of atoms with dim(nb_step)
+        - num_atoms (np.ndarray): Array of the number of atoms for each step with dim(nb_step)
         - atom_symbols (np.ndarray): Array of atomic symbols with dim(nb_step, num_atoms)
         - atom_coords (np.ndarray): Array of atomic coordinates with dim(nb_step, num_atoms, 3)
 
-    Raises:
-        2: FileNotFoundError: If the specified file does not exist.
-        1: ValueError: If the number of atoms is not constant throughout the trajectory file.
+    Raises
+    ------
+    FileNotFoundError
+        If the specified file does not exist.
+    TypeError
+        If the number of atoms is not an integer.
+    ValueError
+        If the number of atoms is not constant throughout the trajectory file.
+        If the file format is incorrect.
     """
-
     # Check if the file exists
     if not file_path.is_file():
         # If the file does not exist, log an error message and abort
         error_msg = f"File not found {file_path.name} not in {file_path.parent}"
-        logging.error(f"{error_msg}\nAborting...")
-        sys.exit(2)
+        raise FileNotFoundError(error_msg)
 
     # Initialize the output lists
     num_atoms_list = []
@@ -54,8 +65,7 @@ def read_xyz_trajectory(file_path: Path) -> Tuple[np.ndarray, np.ndarray, np.nda
             num_atoms_str = lines[i].strip()
             if not re.match(r"^\d+$", num_atoms_str):
                 error_msg = "Incorrect file format: number of atoms must be an integer."
-                logging.error(f"{error_msg}\nAborting...")
-                sys.exit(1)
+                raise TypeError(error_msg)
             num_atoms = int(num_atoms_str)
             num_atoms_list.append(num_atoms)
 
@@ -75,25 +85,21 @@ def read_xyz_trajectory(file_path: Path) -> Tuple[np.ndarray, np.ndarray, np.nda
                     error_msg = (
                         "Incorrect file format: end of file reached prematurely."
                     )
-                    logging.error(f"{error_msg}\nAborting...")
-                    sys.exit(1)
+                    raise IndexError(error_msg)
 
                 if len(fields) != 4:
                     error_msg = "Incorrect file format: each line after the first two must contain an atomic symbol and three floating point numbers."
-                    logging.error(f"{error_msg}\nAborting...")
-                    sys.exit(1)
+                    raise ValueError(error_msg)
 
                 symbol = fields[0]
                 if not re.match(r"^[A-Za-z]{1,2}$", symbol):
                     error_msg = f"Incorrect file format: invalid atomic symbol '{symbol}' on line {i+j+2}."
-                    logging.error(f"{error_msg}\nAborting...")
-                    sys.exit(1)
+                    raise ValueError(error_msg)
                 try:
                     x, y, z = map(float, fields[1:4])
                 except ValueError:
                     error_msg = f"Incorrect file format: could not parse coordinates on line {i+j+2}."
-                    logging.error(f"{error_msg}\nAborting...")
-                    sys.exit(1)
+                    raise ValueError(error_msg)
 
                 # Add the symbol and coordinates to the arrays
                 step_atom_symbols[j] = symbol
@@ -109,8 +115,7 @@ def read_xyz_trajectory(file_path: Path) -> Tuple[np.ndarray, np.ndarray, np.nda
     # Check if the number of atoms is constant throughout the trajectory file.
     if len(set(num_atoms_list)) > 1:
         error_msg = "Number of atoms is not constant throughout the trajectory file."
-        logging.error(f"{error_msg}\nAborting...")
-        sys.exit(1)
+        raise ValueError(error_msg)
 
     # Convert the lists to numpy arrays.
     num_atoms = np.array(num_atoms_list, dtype=int)
@@ -130,27 +135,34 @@ def write_xyz_frame_to_file(
     atom_symbols: np.ndarray,
 ) -> None:
     """
-    Writes the XYZ coordinates of a specific frame of a trajectory to a file.
+    Write the XYZ coordinates of a specific frame of a trajectory to a file.
 
-    Args:
-        file_path (Path): The file path to write the XYZ coordinates to.
-        frame_idx (int): The index of the frame to write the XYZ coordinates for.
-        num_atoms (np.ndarray): An array containing the number of atoms in each frame of the trajectory with dim(nb_step).
-        atom_coords (np.ndarray): An array containing the coordinates of each atom in each frame of the trajectory with dim(nb_step, num_atoms, 3).
-        atom_symbols (np.ndarray): An array containing the atomic symbols for each atom in each frame of the trajectory with dim(nb_step, num_atoms).
+    Parameters
+    ----------
+    file_path : Path
+        The file path to write the XYZ coordinates to.
+    frame_idx : int
+        The index of the frame to write the XYZ coordinates for.
+    num_atoms : np.ndarray
+        An array containing the number of atoms in each frame of the trajectory with shape (nb_step).
+    atom_coords : np.ndarray
+        An array containing the coordinates of each atom in each frame of the trajectory with shape (nb_step, num_atoms, 3).
+    atom_symbols : np.ndarray
+        An array containing the atomic symbols for each atom in each frame of the trajectory with shape (nb_step, num_atoms).
 
-    Raises:
-        1: ValueError: If the specified frame index is out of range.
+    Returns
+    -------
+    None
 
-    Returns:
-        None
+    Raises
+    ------
+    IndexError
+        If the specified frame index is out of range.
     """
     # Check that the specified frame index is within the range of available frames
     if frame_idx >= num_atoms.size:
         error_msg = f"Frame index out of range: {frame_idx} (number of frames: {num_atoms.size})"
-        logging.error(f"{error_msg}\nAborting...")
-        sys.exit(1)
-        # raise ValueError(error_msg)
+        raise IndexError(error_msg)
     # Open the specified file in write mode
     with file_path.open("w") as xyz_file:
         # Write the number of atoms in the specified frame to the file

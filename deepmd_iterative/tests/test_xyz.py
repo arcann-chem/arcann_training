@@ -1,13 +1,18 @@
-from pathlib import Path
-
-# Unittest imports
+"""
+Author: Rolf David
+Created: 2023/01/01
+Last modified: 2023/03/26
+"""
+# Standard library modules
 import unittest
 import tempfile
+from pathlib import Path
 
-# Non-standard library imports
+
+# Third-party modules
 import numpy as np
 
-# deepmd_iterative imports
+# Local imports
 from deepmd_iterative.common.xyz import (
     read_xyz_trajectory,
     write_xyz_frame_to_file,
@@ -15,8 +20,24 @@ from deepmd_iterative.common.xyz import (
 
 
 class TestReadXYZTrajectory(unittest.TestCase):
+    """
+    Test case for the read_xyz_trajectory() function.
+
+    Methods
+    -------
+    test_read_xyz_trajectory_oneframe():
+        Test that the function returns the expected arrays for a single frame XYZ file.
+    test_read_xyz_trajectory():
+        Test that the function returns the expected arrays for a multi-frame XYZ file.
+    test_read_xyz_trajectory_variable():
+        Test that the function raises a TypeError when the number of atoms is not an integer.
+    test_read_xyz_trajectory_missing():
+        Test that the function raises a FileNotFoundError when the input file is missing.
+    test_read_xyz_trajectory_incorrect():
+        Test that the function raises an IndexError when the input file has an incorrect format.
+    """
+
     def setUp(self):
-        # Create a temporary directory and file with a constant number of atoms
         self.tmp_dir = tempfile.TemporaryDirectory()
         self.file_oneframe_path = Path(self.tmp_dir.name) / "test_oneframe.xyz"
         with self.file_oneframe_path.open("w") as f:
@@ -74,16 +95,13 @@ class TestReadXYZTrajectory(unittest.TestCase):
             f.write("C 1.0 2.2 1.0\n")
 
     def tearDown(self):
-        # Clean up the temporary directory and file
         self.tmp_dir.cleanup()
 
     def test_read_xyz_trajectory_oneframe(self):
-        # Test reading the file with the function
         num_atoms, atom_symbols, atom_coords = read_xyz_trajectory(
             self.file_oneframe_path
         )
 
-        # Check the output types and shapes
         self.assertIsInstance(num_atoms, np.ndarray)
         self.assertIsInstance(atom_symbols, np.ndarray)
         self.assertIsInstance(atom_coords, np.ndarray)
@@ -91,7 +109,6 @@ class TestReadXYZTrajectory(unittest.TestCase):
         self.assertEqual(atom_symbols.shape, (1, 4))
         self.assertEqual(atom_coords.shape, (1, 4, 3))
 
-        # Check the output values
         self.assertEqual(num_atoms[0], 4)
         self.assertListEqual(atom_symbols[0].tolist(), ["C", "C", "C", "C"])
         self.assertTrue(
@@ -102,10 +119,8 @@ class TestReadXYZTrajectory(unittest.TestCase):
         )
 
     def test_read_xyz_trajectory(self):
-        # Test reading the file with the function
         num_atoms, atom_symbols, atom_coords = read_xyz_trajectory(self.file_path)
 
-        # Check the output types and shapes
         self.assertIsInstance(num_atoms, np.ndarray)
         self.assertIsInstance(atom_symbols, np.ndarray)
         self.assertIsInstance(atom_coords, np.ndarray)
@@ -113,7 +128,6 @@ class TestReadXYZTrajectory(unittest.TestCase):
         self.assertEqual(atom_symbols.shape, (2, 4))
         self.assertEqual(atom_coords.shape, (2, 4, 3))
 
-        # Check the output values for frame 1
         self.assertEqual(num_atoms[0], 4)
         self.assertListEqual(atom_symbols[0].tolist(), ["C", "C", "C", "C"])
         self.assertTrue(
@@ -123,7 +137,6 @@ class TestReadXYZTrajectory(unittest.TestCase):
             )
         )
 
-        # Check the output values for frame 2
         self.assertEqual(num_atoms[1], 4)
         self.assertListEqual(atom_symbols[1].tolist(), ["C", "C", "C", "C"])
         self.assertTrue(
@@ -134,33 +147,99 @@ class TestReadXYZTrajectory(unittest.TestCase):
         )
 
     def test_read_xyz_trajectory_variable(self):
-        # Test reading the file with the function
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(TypeError) as cm:
             num_atoms, atom_symbols, atom_coords = read_xyz_trajectory(
                 self.file_var_path
             )
-        self.assertEqual(cm.exception.code, 1)
+        error_msg = str(cm.exception)
+        expected_error_msg = (
+            f"Incorrect file format: number of atoms must be an integer."
+        )
+        self.assertEqual(error_msg, expected_error_msg)
 
     def test_read_xyz_trajectory_missing(self):
-        # Test reading a missing file with the function
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(FileNotFoundError) as cm:
             num_atoms, atom_symbols, atom_coords = read_xyz_trajectory(
                 self.file_miss_path
             )
-        self.assertEqual(cm.exception.code, 2)
+        error_msg = str(cm.exception)
+        expected_error_msg = f"File not found {self.file_miss_path.name} not in {self.file_miss_path.parent}"
+        self.assertEqual(error_msg, expected_error_msg)
 
     def test_read_xyz_trajectory_incorrect(self):
-        # Test reading the file with the function
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(IndexError) as cm:
             num_atoms, atom_symbols, atom_coords = read_xyz_trajectory(
                 self.file_inc_path
             )
-        self.assertEqual(cm.exception.code, 1)
+        error_msg = str(cm.exception)
+        expected_error_msg = f"Incorrect file format: end of file reached prematurely."
+        self.assertEqual(error_msg, expected_error_msg)
+
+
+class TestWriteXYZFrameToFile(unittest.TestCase):
+    """
+    Test case for the write_xyz_frame_to_file() function.
+
+    Methods
+    -------
+    test_write_xyz_frame_to_file():
+        Test writing the XYZ coordinates of a specific frame of a trajectory to a file.
+    test_write_xyz_frame_to_file_frame_idx_out_of_range():
+        Test that an IndexError is raised when the frame index is out of range.
+    """
+
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.temp_file = Path(self.temp_dir.name) / "test.xyz"
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def test_write_xyz_frame_to_file(self):
+        frame_idx = 0
+        num_atoms = np.array([2, 2, 2])
+        atom_coords = np.array(
+            [[[0, 0, 0], [1, 1, 1]], [[0, 0, 0], [2, 2, 2]], [[0, 0, 0], [1, 1, 1]]]
+        )
+        atom_symbols = np.array([["C", "H"], ["C", "H"], ["N", "O"]])
+        expected_output = "2\nFrame index: 0\nC 0.000000 0.000000 0.000000\nH 1.000000 1.000000 1.000000\n"
+        write_xyz_frame_to_file(
+            self.temp_file, frame_idx, num_atoms, atom_coords, atom_symbols
+        )
+
+        with open(self.temp_file) as f:
+            output = f.read()
+
+        self.assertEqual(output, expected_output)
+
+    def test_write_xyz_frame_to_file_frame_idx_out_of_range(self):
+        frame_idx = 3
+        num_atoms = np.array([2, 3, 2])
+        atom_coords = np.array(
+            [[[0, 0, 0], [1, 1, 1]], [[0, 0, 0], [2, 2, 2]], [[0, 0, 0], [1, 1, 1]]]
+        )
+        atom_symbols = np.array([["C", "H"], ["C", "H"], ["N", "O"]])
+
+        with self.assertRaises(IndexError) as cm:
+            write_xyz_frame_to_file(
+                self.temp_file, frame_idx, num_atoms, atom_coords, atom_symbols
+            )
+        error_msg = str(cm.exception)
+        expected_error_msg = f"Frame index out of range: {frame_idx} (number of frames: {num_atoms.size})"
+        self.assertEqual(error_msg, expected_error_msg)
 
 
 class TestReadWriteXYZTrajectory(unittest.TestCase):
+    """
+    Test case for combined use of read_xyz_trajectory() and write_xyz_frame_to_file() functions.
+
+    Methods
+    -------
+    test_read_write_xyz_trajectory():
+        Test reading and writing a trajectory in xyz format
+    """
+
     def setUp(self):
-        # Create a temporary directory and file with a constant number of atoms
         self.tmp_dir = tempfile.TemporaryDirectory()
 
         self.file_path = Path(self.tmp_dir.name) / "test.xyz"
@@ -179,14 +258,11 @@ class TestReadWriteXYZTrajectory(unittest.TestCase):
             f.write("C 1.0 1.0 2.2\n")
 
     def tearDown(self):
-        # Clean up the temporary directory and file
         self.tmp_dir.cleanup()
 
-    def test_read_xyz_trajectory(self):
-        # Test reading the file with the function
+    def test_read_write_xyz_trajectory(self):
         num_atoms, atom_symbols, atom_coords = read_xyz_trajectory(self.file_path)
 
-        # Check the output types and shapes
         self.assertIsInstance(num_atoms, np.ndarray)
         self.assertIsInstance(atom_symbols, np.ndarray)
         self.assertIsInstance(atom_coords, np.ndarray)
@@ -194,7 +270,6 @@ class TestReadWriteXYZTrajectory(unittest.TestCase):
         self.assertEqual(atom_symbols.shape, (2, 4))
         self.assertEqual(atom_coords.shape, (2, 4, 3))
 
-        # Check the output values for frame 1
         self.assertEqual(num_atoms[0], 4)
         self.assertListEqual(atom_symbols[0].tolist(), ["C", "C", "C", "C"])
         self.assertTrue(
@@ -204,7 +279,6 @@ class TestReadWriteXYZTrajectory(unittest.TestCase):
             )
         )
 
-        # Check the output values for frame 2
         self.assertEqual(num_atoms[1], 4)
         self.assertListEqual(atom_symbols[1].tolist(), ["C", "C", "C", "C"])
         self.assertTrue(
@@ -220,7 +294,6 @@ class TestReadWriteXYZTrajectory(unittest.TestCase):
         )
         num_atoms, atom_symbols, atom_coords = read_xyz_trajectory(self.file_new_path)
 
-        # Check the output types and shapes
         self.assertIsInstance(num_atoms, np.ndarray)
         self.assertIsInstance(atom_symbols, np.ndarray)
         self.assertIsInstance(atom_coords, np.ndarray)
@@ -228,7 +301,6 @@ class TestReadWriteXYZTrajectory(unittest.TestCase):
         self.assertEqual(atom_symbols.shape, (1, 4))
         self.assertEqual(atom_coords.shape, (1, 4, 3))
 
-        # Check the output values for frame 1
         self.assertEqual(num_atoms[0], 4)
         self.assertListEqual(atom_symbols[0].tolist(), ["C", "C", "C", "C"])
         self.assertTrue(
@@ -237,52 +309,6 @@ class TestReadWriteXYZTrajectory(unittest.TestCase):
                 [[0.0, 0.0, 0.0], [1.2, 0.0, 0.0], [0.0, 1.2, 0.0], [0.0, 0.0, 1.2]],
             )
         )
-
-
-class TestWriteXYZFrameToFile(unittest.TestCase):
-    def setUp(self):
-        self.temp_dir = tempfile.TemporaryDirectory()
-        self.temp_file = Path(self.temp_dir.name) / "test.xyz"
-
-    def tearDown(self):
-        self.temp_dir.cleanup()
-
-    def test_write_xyz_frame_to_file(self):
-        # Test input data
-        frame_idx = 0
-        num_atoms = np.array([2, 2, 2])
-        atom_coords = np.array(
-            [[[0, 0, 0], [1, 1, 1]], [[0, 0, 0], [2, 2, 2]], [[0, 0, 0], [1, 1, 1]]]
-        )
-        atom_symbols = np.array([["C", "H"], ["C", "H"], ["N", "O"]])
-        expected_output = "2\nFrame index: 0\nC 0.000000 0.000000 0.000000\nH 1.000000 1.000000 1.000000\n"
-        # Call the function
-        write_xyz_frame_to_file(
-            self.temp_file, frame_idx, num_atoms, atom_coords, atom_symbols
-        )
-
-        # Read the output file
-        with open(self.temp_file) as f:
-            output = f.read()
-
-        # Check the output
-        self.assertEqual(output, expected_output)
-
-    def test_write_xyz_frame_to_file_frame_idx_out_of_range(self):
-        # Test input data with frame index out of range
-        frame_idx = 3
-        num_atoms = np.array([2, 3, 2])
-        atom_coords = np.array(
-            [[[0, 0, 0], [1, 1, 1]], [[0, 0, 0], [2, 2, 2]], [[0, 0, 0], [1, 1, 1]]]
-        )
-        atom_symbols = np.array([["C", "H"], ["C", "H"], ["N", "O"]])
-
-        # Call the function and check for the expected error message
-        with self.assertRaises(SystemExit) as cm:
-            write_xyz_frame_to_file(
-                self.temp_file, frame_idx, num_atoms, atom_coords, atom_symbols
-            )
-        self.assertEqual(cm.exception.code, 1)
 
 
 if __name__ == "__main__":
