@@ -4,8 +4,8 @@ Created: 2023/01/01
 Last modified: 2023/03/26
 """
 # Standard library modules
-import unittest
 import tempfile
+import unittest
 
 # Local imports
 from deepmd_iterative.common.list import (

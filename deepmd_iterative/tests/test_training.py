@@ -4,9 +4,9 @@ Created: 2023/01/01
 Last modified: 2023/03/26
 """
 # Standard library modules
-from pathlib import Path
-import unittest
 import tempfile
+import unittest
+from pathlib import Path
 
 # Third-party modules
 import numpy as np
