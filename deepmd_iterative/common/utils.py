@@ -1,3 +1,8 @@
+"""
+Author: Rolf David
+Created: 2023/01/01
+Last modified: 2023/03/26
+"""
 # Local imports
 from deepmd_iterative.common.errors import catch_errors_decorator
 
@@ -5,13 +10,17 @@ from deepmd_iterative.common.errors import catch_errors_decorator
 @catch_errors_decorator
 def convert_seconds_to_hh_mm_ss(seconds: float) -> str:
     """
-    Convert a time in seconds to a string in the format of HH:MM:SS.
+    Convert a time duration in seconds to the format of HH:MM:SS.
 
-    Args:
-        seconds (float): The time duration in seconds.
+    Parameters
+    ----------
+    seconds : float
+        The time duration in seconds.
 
-    Returns:
-        str: The equivalent time duration in hours, minutes, and seconds in the format of HH:MM:SS.
+    Returns
+    -------
+    str
+        The equivalent time duration in hours, minutes, and seconds in the format of HH:MM:SS.
     """
     # Convert the duration to hours, minutes, and seconds
     minutes, seconds = divmod(seconds, 60)

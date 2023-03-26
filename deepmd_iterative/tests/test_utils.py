@@ -1,11 +1,25 @@
-# Unittest
+"""
+Author: Rolf David
+Created: 2023/01/01
+Last modified: 2023/03/26
+"""
+# Standard library modules
 import unittest
 
-# deepmd_iterative imports
+# Local imports
 from deepmd_iterative.common.utils import convert_seconds_to_hh_mm_ss
 
 
 class TestConvertSecondsToHhMmSs(unittest.TestCase):
+    """
+    Test case for the convert_seconds_to_hh_mm_ss() function.
+
+    Methods
+    -------
+    test_convert_seconds_to_hh_mm_ss():
+        Test the conversion of time durations in seconds to the HH:MM:SS format.
+    """
+
     def test_convert_seconds_to_hh_mm_ss(self):
         # Test conversion of various time durations in seconds to the HH:MM:SS format
         test_cases = [
