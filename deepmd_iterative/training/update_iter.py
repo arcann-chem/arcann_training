@@ -5,7 +5,7 @@ import subprocess
 
 # deepmd_iterative imports
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.file import (
+from deepmd_iterative.common.filesystem import (
     check_directory,
     check_file_existence,
     remove_file,

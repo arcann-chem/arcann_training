@@ -13,7 +13,7 @@ from deepmd_iterative.common.exploration import (
     update_subsys_nb_steps_factor,
     get_subsys_params_exploration,
 )
-from deepmd_iterative.common.file import (
+from deepmd_iterative.common.filesystem import (
     check_file_existence,
     file_to_list_of_strings,
     write_list_of_strings_to_file,

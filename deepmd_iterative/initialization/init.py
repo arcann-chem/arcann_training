@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 
 # Local imports
-from deepmd_iterative.common.file import check_directory, check_file_existence
+from deepmd_iterative.common.filesystem import check_directory, check_file_existence
 from deepmd_iterative.common.json import (
     backup_and_overwrite_json_file,
     load_default_json_file,

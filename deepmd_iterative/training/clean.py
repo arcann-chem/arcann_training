@@ -4,7 +4,7 @@ import sys
 
 # deepmd_iterative imports
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.file import remove_files_matching_glob
+from deepmd_iterative.common.filesystem import remove_files_matching_glob
 from deepmd_iterative.common.json import load_json_file
 
 

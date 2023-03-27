@@ -6,7 +6,7 @@ import subprocess
 
 # deepmd_iterative imports
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.file import (
+from deepmd_iterative.common.filesystem import (
     change_directory,
 )
 from deepmd_iterative.common.json import (

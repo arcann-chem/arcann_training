@@ -9,9 +9,8 @@ import subprocess
 import numpy as np
 
 # deepmd_iterative imports
-from deepmd_iterative.common.errors import catch_errors_decorator
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.file import (
+from deepmd_iterative.common.filesystem import (
     check_directory,
     check_file_existence,
     file_to_list_of_strings,
@@ -30,7 +29,7 @@ from deepmd_iterative.common.json_parameters import (
 from deepmd_iterative.common.list import replace_substring_in_list_of_strings
 from deepmd_iterative.common.machine import get_machine_spec_for_step
 from deepmd_iterative.common.slurm import replace_in_slurm_file_general
-from deepmd_iterative.common.training import (
+from deepmd_iterative.training.utils import (
     calculate_decay_rate,
     calculate_decay_steps,
     check_initial_datasets,

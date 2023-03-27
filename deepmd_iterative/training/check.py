@@ -7,7 +7,7 @@ import numpy as np
 
 # deepmd_iterative imports
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.file import (
+from deepmd_iterative.common.filesystem import (
     file_to_list_of_strings,
 )
 from deepmd_iterative.common.json import (

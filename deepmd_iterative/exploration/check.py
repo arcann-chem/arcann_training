@@ -10,7 +10,7 @@ from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
 )
-from deepmd_iterative.common.file import (
+from deepmd_iterative.common.filesystem import (
     file_to_list_of_strings,
     remove_files_matching_glob,
 )
