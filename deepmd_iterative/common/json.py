@@ -1,7 +1,25 @@
 """
-Author: Rolf David
 Created: 2023/01/01
-Last modified: 2023/03/26
+Last modified: 2023/03/27
+
+The json module provides functions to manipulate JSON data (as dict).
+
+Functions
+---------
+add_key_value_to_dict(dictionary: Dict, key: str, value: Any) -> None
+    A function to add a new key-value pair to a dictionary.
+
+backup_and_overwrite_json_file(json_dict: Dict, file_path: Path, enable_logging: bool = True) -> None
+    A function to write a dictionary to a JSON file after creating a backup of the existing file.
+
+load_default_json_file(file_path: Path) -> Dict
+    A function to load a default JSON file from the given file path and return its contents as a dictionary.
+
+load_json_file(file_path: Path, abort_on_error: bool = True, enable_logging: bool = True) -> Dict
+    A function to load a JSON file from the given file path and return its contents as a dictionary.
+
+write_json_file(json_dict: Dict, file_path: Path, enable_logging: bool = True, **kwargs) -> None
+    A function to write a dictionary to a JSON file.
 """
 # Standard library modules
 import json
@@ -11,13 +29,13 @@ from pathlib import Path
 from typing import Any, Dict, Union
 
 # Local imports
-from deepmd_iterative.common.errors import catch_errors_decorator
+from deepmd_iterative.common.utils import catch_errors_decorator
 
 # Unittested
 @catch_errors_decorator
 def add_key_value_to_dict(dictionary: Dict, key: str, value: Any) -> None:
     """
-    Add a new key-value pair to a dictionary.
+    Adds a new key-value pair to a dictionary.
 
     If the dictionary is empty, a new sub-dictionary will be created with the specified key and value.
     If the key does not already exist in the dictionary, a new sub-dictionary will be created with the specified key and value.
@@ -31,6 +49,10 @@ def add_key_value_to_dict(dictionary: Dict, key: str, value: Any) -> None:
         The key to use for the new or updated sub-dictionary.
     value : Any
         The value to be associated with the new or updated sub-dictionary.
+
+    Returns
+    -------
+    None
 
     Raises
     ------
@@ -74,6 +96,10 @@ def backup_and_overwrite_json_file(
         A path object representing the file to write the JSON data to.
     enable_logging : bool, optional
         Whether to log information about the writing process. Defaults to False.
+
+    Returns
+    -------
+    None
 
     Raises
     ------
@@ -218,6 +244,10 @@ def write_json_file(
         If True, log a message indicating the file and path that the JSON data is being written to. Defaults to True.
     **kwargs : optional
         Optional arguments to be passed to the json.dump() function.
+
+    Returns
+    -------
+    None
 
     Raises
     ------

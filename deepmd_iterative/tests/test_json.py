@@ -1,7 +1,25 @@
 """
-Author: Rolf David
 Created: 2023/01/01
-Last modified: 2023/03/26
+Last modified: 2023/03/27
+
+Test cases for the json module.
+
+Class
+-----
+TestAddKeyValueToDict
+    Test case for the add_key_value_to_dict() function.
+
+TestBackupAndOverwriteJsonFile
+    Test case for the backup_and_overwrite_json_file() function.
+
+TestLoadDefaultJsonFile
+    Test case for the load_default_json_file() function.
+
+TestLoadJsonFile
+    Test case for the load_json_file() function.
+
+TestWriteJsonFile
+    Test case for the write_json_file() function.
 """
 # Standard library modules
 import json

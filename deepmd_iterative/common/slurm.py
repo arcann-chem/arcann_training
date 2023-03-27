@@ -2,7 +2,7 @@
 Created: 2023/01/01
 Last modified: 2023/03/27
 
-The slurm module provides function to manipulate slurm job.
+The slurm module provides functions to manipulate SLURM data (as list of strings).
 
 Functions
 ---------
@@ -34,7 +34,7 @@ def replace_in_slurm_file_general(
     slurm_email: str,
 ) -> List[str]:
     """
-    Returns a modified version of the provided Slurm file, with certain strings replaced based on the specified machine
+    Return a modified version of the provided Slurm file, with certain strings replaced based on the specified machine
     specifications and walltime.
 
     Parameters

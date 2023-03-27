@@ -2,15 +2,15 @@
 Created: 2023/01/01
 Last modified: 2023/03/27
 
-The xyz module provides functions for working with XYZ files.
+The xyz module provides functions to manipulate XYZ data (as np.ndarray).
 
 Functions
 ---------
 read_xyz_trajectory(file_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray]
-    Read an XYZ format trajectory file and return the number of atoms, atomic symbols, and atomic coordinates.
+    A function to read an XYZ format trajectory file and return the number of atoms, atomic symbols, and atomic coordinates.
 
 write_xyz_frame(file_path: Path, frame_idx: int, num_atoms: np.ndarray, atom_coords: np.ndarray, atom_symbols: np.ndarray) -> None
-    Write the XYZ coordinates of a specific frame of a trajectory to a file.
+    A function to write the XYZ coordinates of a specific frame of a trajectory to a file.
 """
 # Standard library modules
 import re

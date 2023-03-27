@@ -1,21 +1,43 @@
-from pathlib import Path
-import xml.etree.ElementTree as ET
+"""
+Created: 2023/01/01
+Last modified: 2023/03/27
 
-# Unittest imports
+Test cases for the xml module.
+
+Class
+-----
+TestGetTemperatureFromIpiXml
+    Test case for the get_temperature_from_ipi_xml() function.
+"""
+# Standard library modules
 import unittest
 import tempfile
+from pathlib import Path
 
-# deepmd_iterative imports
+# Local imports
 from deepmd_iterative.common.ipi import (
     get_temperature_from_ipi_xml,
 )
 
 
 class TestGetTemperatureFromIpiXml(unittest.TestCase):
+    """
+    Test case for the get_temperature_from_ipi_xml() function.
+
+    Methods
+    -------
+    test_get_temperature_from_ipi_xml():
+        Test whether the function returns the correct temperature from a valid i-PI input file.
+    test_get_temperature_from_ipi_xml_no_temperature():
+        Test whether the function raises a ValueError if the temperature is not found in the input file.
+    test_get_temperature_from_ipi_xml_invalid_file():
+        Test whether the function raises an exception when attempting to read an invalid or non-existent file.
+    test_get_temperature_from_ipi_xml_parse_error():
+        Test whether the function raises an exception when encountering a parse error in the input file.
+    """
+
     def setUp(self):
-        # Create a temporary directory for testing
         self.temp_dir = tempfile.TemporaryDirectory()
-        # Create an example IPI input file for testing
         self.example_input_file = Path(self.temp_dir.name) / "input.xml"
         with self.example_input_file.open("w") as f:
             f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
@@ -26,17 +48,13 @@ class TestGetTemperatureFromIpiXml(unittest.TestCase):
             f.write("</input>\n")
 
     def tearDown(self):
-        # Clean up the temporary directory
         self.temp_dir.cleanup()
 
     def test_get_temperature_from_ipi_xml(self):
-        # Call the function on the example input file
         temperature = get_temperature_from_ipi_xml(self.example_input_file)
-        # Check that the returned temperature is correct
         self.assertEqual(temperature, 300.0)
 
     def test_get_temperature_from_ipi_xml_no_temperature(self):
-        # Create an example input file with no temperature tag
         no_temp_input_file = Path(self.temp_dir.name) / "no_temp_input.xml"
         with no_temp_input_file.open("w") as f:
             f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
@@ -44,17 +62,14 @@ class TestGetTemperatureFromIpiXml(unittest.TestCase):
             f.write("  <simulation>\n")
             f.write("  </simulation>\n")
             f.write("</input>\n")
-        # Call the function on the example input file with no temperature tag
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(ValueError):
             get_temperature_from_ipi_xml(no_temp_input_file)
 
     def test_get_temperature_from_ipi_xml_invalid_file(self):
-        # Call the function on a nonexistent file
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(Exception):
             get_temperature_from_ipi_xml(Path("nonexistent.xml"))
 
     def test_get_temperature_from_ipi_xml_parse_error(self):
-        # Create an example input file with invalid XML
         invalid_xml_input_file = Path(self.temp_dir.name) / "invalid_xml_input.xml"
         with invalid_xml_input_file.open("w") as f:
             f.write("<input>\n")
@@ -62,8 +77,7 @@ class TestGetTemperatureFromIpiXml(unittest.TestCase):
             f.write("    <temperature>300.0</temperature>\n")
             f.write("  </simulation>\n")
             f.write("<input>\n")
-        # Call the function on the example input file with invalid XML
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(Exception):
             get_temperature_from_ipi_xml(invalid_xml_input_file)
 
 

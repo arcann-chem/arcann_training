@@ -2,21 +2,21 @@
 Created: 2023/01/01
 Last modified: 2023/03/27
 
-The xml module provides functions for working with XML.
+The xml module provides functions to manipulate XML data (as XML tree / list of strings).
 
 Functions
 ---------
 string_list_to_xml(string_list: List[str]) -> ET.ElementTree
-    Converts a list of strings to an XML tree.
+    A function to convert a list of strings to an XML tree.
 
 xml_to_string_list(xml_tree: ET.ElementTree) -> List[str]
-    Converts an XML tree to a list of strings.
+    A function to convert an XML tree to a list of strings.
 
 read_xml_file(xml_file_path: Path) -> ET.ElementTree
-    Parses an XML file and returns its corresponding ElementTree object.
+    A function to parse an XML file and returns its corresponding ElementTree object.
 
 write_xml_file(xml_tree: ET.ElementTree, xml_file_path: Path) -> None
-    Writes an XML tree to a file at the specified path.
+    A function to write an XML tree to a file at the specified path.
 """
 # Standard library modules
 import xml.etree.ElementTree as ET
@@ -31,7 +31,7 @@ from deepmd_iterative.common.utils import catch_errors_decorator
 @catch_errors_decorator
 def string_list_to_xml(string_list: List[str]) -> ET.ElementTree:
     """
-    Converts a list of strings to an XML tree.
+    Convert a list of strings to an XML tree.
 
     Parameters
     ----------
@@ -57,7 +57,7 @@ def string_list_to_xml(string_list: List[str]) -> ET.ElementTree:
 @catch_errors_decorator
 def xml_to_string_list(xml_tree: ET.ElementTree) -> List[str]:
     """
-    Converts an XML tree to a list of strings.
+    Convert an XML tree to a list of strings.
 
     Parameters
     ----------
@@ -85,7 +85,7 @@ def xml_to_string_list(xml_tree: ET.ElementTree) -> List[str]:
 @catch_errors_decorator
 def read_xml_file(xml_file_path: Path) -> ET.ElementTree:
     """
-    Parses an XML file and returns its corresponding ElementTree object.
+    Parse an XML file and returns its corresponding ElementTree object.
 
     Parameters
     ----------
@@ -122,7 +122,7 @@ def read_xml_file(xml_file_path: Path) -> ET.ElementTree:
 @catch_errors_decorator
 def write_xml_file(xml_tree: ET.ElementTree, xml_file_path: Path) -> None:
     """
-    Writes an XML tree to a file at the specified path.
+    Write an XML tree to a file at the specified path.
 
     Parameters
     ----------

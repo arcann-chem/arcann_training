@@ -7,19 +7,19 @@ The utils module provides functions for the training step.
 Functions
 ---------
 calculate_decay_steps(num_structures: int, min_decay_steps: int = 5000) -> int
-    Calculate the number of decay steps for a given number of structures to train.
+    A function to calculate the number of decay steps for a given number of structures to train.
 
 calculate_decay_rate(stop_batch: int, start_lr: float, stop_lr: float, decay_steps: int) -> float
-    Calculate the decay rate based on the given training parameters.
+    A function to calculate the decay rate based on the given training parameters.
 
 calculate_learning_rate(current_step: int, start_lr: float, decay_rate: float, decay_steps: int) -> float
-    Calculate the learning rate at a given training step, based on the given parameters.
+    A function to calculate the learning rate at a given training step, based on the given parameters.
 
 check_initial_datasets(training_dir: Path) -> Dict[str, int]
-    Check if the initial datasets exist and are properly formatted.
+    A function to check if the initial datasets exist and are properly formatted.
 
 validate_deepmd_config(training_config) -> None
-    Validates the provided training configuration for a DeePMD model.
+    A function to validate the provided training configuration for a DeePMD model.
 
 """
 # Standard library modules
@@ -236,7 +236,7 @@ def check_initial_datasets(training_dir: Path) -> Dict[str, int]:
 @catch_errors_decorator
 def validate_deepmd_config(training_config) -> None:
     """
-    Validates the provided training configuration for a DeePMD model.
+    Validate the provided training configuration for a DeePMD model.
 
     Parameters
     ----------

@@ -2,7 +2,7 @@
 Created: 2023/01/01
 Last modified: 2023/03/27
 
-The plumed module provides function to manipulate plumed file.
+The plumed module provides functions to manipulate PLUMED data (as list of strings).
 
 Functions
 ---------

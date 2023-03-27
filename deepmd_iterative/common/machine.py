@@ -2,18 +2,22 @@
 Created: 2023/01/01
 Last modified: 2023/03/27
 
-The machine module provides function for cluster manipulation.
+The machine module provides functions for machine operations.
 
 Functions
 ---------
 get_host_name() -> str
     A function to returns the fully-qualified hostname of the current machine.
-assert_same_machine(expected_machine: str, machine_config: Dict) -> None:
+
+assert_same_machine(expected_machine: str, machine_config: Dict) -> None
     A function to ceck if the machine name in the provided dictionary matches the expected machine name.
+
 get_machine_config_files(deepmd_iterative_path: Path, training_path: Path) -> List[Dict]
     A function to returns a list of dictionaries containing machine configurations for all machines found in the given paths.
-get_machine_from_configs(machine_configs: List[Dict], machine_short_name: str = "") -> str:
+
+get_machine_from_configs(machine_configs: List[Dict], machine_short_name: str = "") -> str
     A function to returns the name of the machine that matches the current hostname or the input machine name.
+
 get_machine_spec_for_step(deepmd_iterative_path: Path, training_path: Path, step: str, input_machine_shortname: str = None, user_machine_keyword: Union[str, List[str]] = None, check_only: bool = False) -> Tuple[str, Dict[str, Any], str, str]
     A function to returns the machine specification for a given step and machine.
 """
@@ -30,7 +34,7 @@ from deepmd_iterative.common.json import load_json_file
 @catch_errors_decorator
 def get_host_name() -> str:
     """
-    Returns the fully-qualified hostname of the current machine.
+    Return the fully-qualified hostname of the current machine.
 
     This function first gets the hostname of the current machine using the `socket.gethostname()` function. If the hostname
     contains a period, it is already fully-qualified and can be returned immediately. Otherwise, the function uses the
@@ -94,7 +98,7 @@ def get_machine_config_files(
     deepmd_iterative_path: Path, training_path: Path
 ) -> List[Dict]:
     """
-    Returns a list of dictionaries containing machine configurations for all machines found in the given paths.
+    Return a list of dictionaries containing machine configurations for all machines found in the given paths.
 
     Parameters
     ----------
@@ -139,7 +143,7 @@ def get_machine_from_configs(
 ) -> str:
     """
     Given a list of machine configuration dictionaries and an optional input machine name,
-    returns the name of the machine that matches the current hostname or the input machine name.
+    return the name of the machine that matches the current hostname or the input machine name.
 
     Parameters
     ----------
@@ -183,7 +187,7 @@ def get_machine_spec_for_step(
     check_only: bool = False,
 ) -> Tuple[str, Dict[str, Any], str, str]:
     """
-    Returns the machine specification for a given step and machine.
+    Return the machine specification for a given step and machine.
 
     Parameters
     ----------

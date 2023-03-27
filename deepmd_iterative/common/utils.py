@@ -7,10 +7,10 @@ The utils module provides helper functions.
 Functions
 ---------
 catch_errors_decorator(func: Callable[..., Any]) -> Callable[..., Any]
-    A decorator that wraps a function and catches exceptions raised during its execution.
+    A decorator to wrap a function and catche exceptions raised during its execution.
 
 convert_seconds_to_hh_mm_ss(seconds: float) -> str
-    Convert a time duration in seconds to the format of HH:MM:SS.
+    A function to convert a time duration in seconds to the format of HH:MM:SS.
 """
 # Standard library modules
 import logging
@@ -19,7 +19,7 @@ from typing import Any, Callable
 
 def catch_errors_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
     """
-    A decorator that wraps a function and catches exceptions raised during its execution.
+    Wrap a function and catches exceptions raised during its execution.
 
     Parameters
     ----------

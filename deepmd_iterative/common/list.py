@@ -2,7 +2,7 @@
 Created: 2023/01/01
 Last modified: 2023/03/27
 
-The utils module provides function to manipulate lists.
+The utils module provides functions to manipulate lists.
 
 Functions
 ---------
@@ -71,7 +71,7 @@ def replace_substring_in_string_list(
     input_list: List[str], substring_in: str, substring_out: str
 ) -> List[str]:
     """
-    Replaces a specified substring with a new substring in each string of a list.
+    Replace a specified substring with a new substring in each string of a list.
 
     Parameters
     ----------

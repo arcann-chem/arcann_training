@@ -1,3 +1,14 @@
+"""
+Created: 2023/01/01
+Last modified: 2023/03/27
+
+The lammps module provides functions to manipulate LAMMPS data (as list of strings).
+
+Functions
+---------
+read_lammps_data(lines: List[str],) -> Tuple(int, int, np.ndarray, Dict[int], np.ndarray)
+    Read LAMMPS data file and extract required information.
+"""
 # Standard library modules
 from typing import Dict, List, Tuple
 
@@ -5,13 +16,33 @@ from typing import Dict, List, Tuple
 import numpy as np
 
 # Local imports
-from deepmd_iterative.common.errors import catch_errors_decorator
+from deepmd_iterative.common.utils import catch_errors_decorator
 
 
 @catch_errors_decorator
-def parse_lammps_data(
+def read_lammps_data(
     lines: List[str],
 ) -> Tuple(int, int, np.ndarray, Dict[int], np.ndarray):
+    """
+    Read LAMMPS data file and extract required information.
+
+    Parameters
+    ----------
+    lines : List[str]
+        List of strings, where each string represents a line from the LAMMPS data file.
+
+    Returns
+    -------
+    Tuple[int, int, np.ndarray, Dict[int, float], np.ndarray]
+        A tuple containing the number of atoms, number of atom types, simulation box boundaries,
+        atom masses, and atom coordinates, respectively. The simulation box boundaries are stored
+        as a numpy array with the following format: [xlo, xhi, ylo, yhi, zlo, zhi, xy, xz, yz].
+        The atom masses are stored in a dictionary with atom type as key and mass as value.
+        The atom coordinates are stored as a numpy array with shape (num_atoms, 3).
+
+    Raises
+    ------
+    """
     # Initialize variables
     num_atoms = None
     num_atom_types = None
