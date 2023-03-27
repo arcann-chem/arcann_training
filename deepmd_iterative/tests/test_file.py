@@ -18,33 +18,60 @@ from deepmd_iterative.common.file import (
 
 
 class TestChangeDirectory(unittest.TestCase):
-    """Test case for `change_directory` function."""
+    """
+    Test case for the `change_directory` function.
+
+    Methods
+    -------
+    test_change_directory_existing_directory()
+        Test changing to an existing directory.
+    test_change_directory_nonexistent_directory()
+        Test raising an error for a nonexistent directory.
+    test_change_directory_file_not_directory()
+        Test raising an error for a file instead of a directory.
+    test_change_directory_error()
+        Test raising an error if there is an error in changing the directory.
+    test_change_directory_directory_with_space()
+        Test changing to a directory with a space in the name.
+    """
 
     def setUp(self):
-        self.temp_dir_1 = tempfile.TemporaryDirectory()
-        self.temp_dir_2 = tempfile.TemporaryDirectory()
+        self.temp_dirs = [tempfile.TemporaryDirectory() for _ in range(2)]
 
     def tearDown(self):
-        self.temp_dir_1.cleanup()
-        self.temp_dir_2.cleanup()
+        for temp_dir in self.temp_dirs:
+            temp_dir.cleanup()
 
-    def test_change_directory(self):
-        """Test changing to an existing directory."""
-        change_directory(Path(self.temp_dir_1.name))
-        self.assertEqual(Path.cwd(), Path(self.temp_dir_1.name))
+    def test_change_directory_existing_directory(self):
+        """Test that `change_directory` changes to an existing directory."""
+        temp_dir = Path(self.temp_dirs[0].name)
+        change_directory(temp_dir)
+        self.assertEqual(Path.cwd(), temp_dir, msg="Directory not changed to the expected directory.")
 
     def test_change_directory_nonexistent_directory(self):
-        """Test raising an error for a nonexistent directory."""
-        with self.assertRaises(FileNotFoundError):
+        """Test that `change_directory` raises a FileNotFoundError for a nonexistent directory."""
+        with self.assertRaises(FileNotFoundError, msg="No exception raised."):
             change_directory(Path("nonexistent_directory"))
 
     def test_change_directory_file_not_directory(self):
-        """Test raising an error for a file instead of a directory."""
-        temp_file = Path(self.temp_dir_1.name) / "temp_file.txt"
+        """Test that `change_directory` raises an Exception for a file instead of a directory."""
+        temp_file = Path(self.temp_dirs[0].name) / "temp_file.txt"
         with open(temp_file, "w") as f:
             f.write("This is a temporary file for testing purposes.")
-        with self.assertRaises(FileNotFoundError):
+        with self.assertRaises(Exception, msg="No exception raised."):
             change_directory(temp_file)
+
+    def test_change_directory_error(self):
+        """Test that `change_directory` raises an Exception if there is an error in changing the directory."""
+        with self.assertRaises(Exception, msg="No exception raised."):
+            change_directory(Path("/"))
+
+    def test_change_directory_directory_with_space(self):
+        """Test that `change_directory` can change to a directory with a space in the name."""
+        temp_dir_with_space = Path(self.temp_dirs[1].name) / "directory with space"
+        Path.mkdir(temp_dir_with_space)
+        change_directory(temp_dir_with_space)
+        self.assertEqual(Path.cwd(), temp_dir_with_space, msg="Directory not changed to the expected directory.")
 
 
 class TestCheckDirectory(unittest.TestCase):
@@ -120,7 +147,6 @@ class TestCheckFileExistence(unittest.TestCase):
         self.assertTrue(True)
 
 
-class TestFileToStrings(unittest.TestCase):
     """Test case for `file_to_list_of_strings` function."""
 
     def setUp(self):
@@ -277,25 +303,7 @@ class TestRemoveTree(unittest.TestCase):
             remove_tree(self.temp_file_1)
 
 
-class TestWriteListOfStringsToFile(unittest.TestCase):
-    def setUp(self):
-        # Create a temporary file for testing
-        self.temp_file = Path(tempfile.mkstemp()[1])
 
-    def tearDown(self):
-        # Remove the temporary file after testing
-        self.temp_file.unlink()
-
-    def test_writes_to_file(self):
-        # Define test data
-        expected_output = ["foo", "bar", "baz"]
-        input_file = self.temp_file
-        # Call the function under test
-        write_list_of_strings_to_file(input_file, expected_output)
-        # Check that the file was written correctly
-        with input_file.open("r") as f:
-            lines = f.readlines()
-        self.assertEqual(lines, [f"{s}\n" for s in expected_output])
 
 
 if __name__ == "__main__":

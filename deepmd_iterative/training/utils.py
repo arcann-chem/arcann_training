@@ -1,7 +1,26 @@
 """
-Author: Rolf David
 Created: 2023/01/01
-Last modified: 2023/03/26
+Last modified: 2023/03/27
+
+The utils module provides functions for the training step.
+
+Functions
+---------
+calculate_decay_steps(num_structures: int, min_decay_steps: int = 5000) -> int
+    Calculate the number of decay steps for a given number of structures to train.
+
+calculate_decay_rate(stop_batch: int, start_lr: float, stop_lr: float, decay_steps: int) -> float
+    Calculate the decay rate based on the given training parameters.
+
+calculate_learning_rate(current_step: int, start_lr: float, decay_rate: float, decay_steps: int) -> float
+    Calculate the learning rate at a given training step, based on the given parameters.
+
+check_initial_datasets(training_dir: Path) -> Dict[str, int]
+    Check if the initial datasets exist and are properly formatted.
+
+validate_deepmd_config(training_config) -> None
+    Validates the provided training configuration for a DeePMD model.
+
 """
 # Standard library modules
 import json
@@ -12,7 +31,7 @@ from typing import Dict
 import numpy as np
 
 # Local imports
-from deepmd_iterative.common.errors import catch_errors_decorator
+from deepmd_iterative.common.utils import catch_errors_decorator
 
 
 # Unittested
@@ -93,7 +112,7 @@ def calculate_decay_rate(
         If the start learning rate or the number of decay steps is not a positive number.
     """
     # Check that the start learning rate is a positive number.
-    if start_lr <= 0:
+    if start_lr <= 0 or not isinstance(start_lr, (int, float)):
         error_msg = "start_lr must be a positive number."
         raise ValueError(error_msg)
 
@@ -137,7 +156,7 @@ def calculate_learning_rate(
         If any of the arguments are not positive or if decay_steps is not an integer.
     """
     # Check that all arguments are positive
-    if not all(arg > 0 for arg in (current_step, start_lr, decay_rate, decay_steps)):
+    if not all(arg > 0 for arg in (current_step, start_lr, decay_rate, decay_steps)) or not all(isinstance(arg, (int, float)) for arg in (current_step, start_lr, decay_rate, decay_steps)):
         error_msg = "All arguments must be positive."
         raise ValueError(error_msg)
     if not isinstance(decay_steps, int):
@@ -210,7 +229,7 @@ def check_initial_datasets(training_dir: Path) -> Dict[str, int]:
 
 
 @catch_errors_decorator
-def validate_deepmd_config(training_config):
+def validate_deepmd_config(training_config) -> None:
     """
     Validates the provided training configuration for a DeePMD model.
 
@@ -249,3 +268,4 @@ def validate_deepmd_config(training_config):
     ):
         error_msg = "Only version >= 2.1 on Jean Zay A100!"
         raise ValueError(error_msg)
+

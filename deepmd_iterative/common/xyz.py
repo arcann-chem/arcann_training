@@ -1,7 +1,16 @@
 """
-Author: Rolf David
 Created: 2023/01/01
-Last modified: 2023/03/26
+Last modified: 2023/03/27
+
+The xyz module provides functions for working with XYZ files.
+
+Functions
+---------
+read_xyz_trajectory(file_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray]
+    Read an XYZ format trajectory file and return the number of atoms, atomic symbols, and atomic coordinates.
+
+write_xyz_frame(file_path: Path, frame_idx: int, num_atoms: np.ndarray, atom_coords: np.ndarray, atom_symbols: np.ndarray) -> None
+    Write the XYZ coordinates of a specific frame of a trajectory to a file.
 """
 # Standard library modules
 import re
@@ -12,7 +21,7 @@ from typing import Tuple
 import numpy as np
 
 # Local imports
-from deepmd_iterative.common.errors import catch_errors_decorator
+from deepmd_iterative.common.utils import catch_errors_decorator
 
 # Unittested
 @catch_errors_decorator
@@ -127,7 +136,7 @@ def read_xyz_trajectory(file_path: Path) -> Tuple[np.ndarray, np.ndarray, np.nda
 
 # Unittested
 @catch_errors_decorator
-def write_xyz_frame_to_file(
+def write_xyz_frame(
     file_path: Path,
     frame_idx: int,
     num_atoms: np.ndarray,

@@ -1,7 +1,22 @@
 """
-Author: Rolf David
 Created: 2023/01/01
-Last modified: 2023/03/26
+Last modified: 2023/03/27
+
+Test cases for the xml module.
+
+Class
+-----
+TestStringListToXml
+    Test case for the string_list_to_xml() function.
+
+TestXmlToStringList
+    Test case for the xml_to_string_list() function.
+
+TestReadXmlFile
+    Test case for the read_xml_file() function.
+
+TestWriteXmlFile
+    Test case for the write_xml_file() function.
 """
 # Standard library modules
 import unittest
@@ -12,21 +27,21 @@ from xml.dom import minidom
 
 # Local imports
 from deepmd_iterative.common.xml import (
-    convert_list_of_strings_to_xml,
-    convert_xml_to_list_of_strings,
-    parse_xml_file,
-    write_xml,
+    string_list_to_xml,
+    xml_to_string_list,
+    read_xml_file,
+    write_xml_file,
 )
 
 
-class TestConvertListOfStringsToXml(unittest.TestCase):
+class TestStringListToXml(unittest.TestCase):
     """
-    Test case for the convert_list_of_strings_to_xml() function.
+    Test case for the string_list_to_xml() function.
 
     Methods
     -------
-    test_convert_list_of_strings_to_xml():
-        Test that the function correctly converts a list of strings to XML.
+    test_string_list_to_xml():
+        Test that the function correctly converts a list of strings to a XML tree.
     """
 
     def setUp(self):
@@ -47,22 +62,21 @@ class TestConvertListOfStringsToXml(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_convert_list_of_strings_to_xml(self):
-        lines = convert_xml_to_list_of_strings(self.xml_tree)
-        tree = convert_list_of_strings_to_xml(lines)
+    def test_string_list_to_xml(self):
+        lines = xml_to_string_list(self.xml_tree)
+        tree = string_list_to_xml(lines)
         self.assertIsInstance(tree, ET.ElementTree)
         self.assertEqual(ET.tostring(tree.getroot()), self.expected_xml_string)
 
 
-class TestConvertXmlToListOfStrings(unittest.TestCase):
+class TestXmlToStringList(unittest.TestCase):
     """
-    Test case for the convert_xml_to_list_of_strings() function.
+    Test case for the xml_to_string_list() function.
 
     Methods
     -------
-    test_convert_xml_to_list_of_strings():
-        Test that the convert_xml_to_list_of_strings() function returns a list of XML elements
-        in string format with no spaces.
+    test_xml_to_string_list():
+        Test that the function correctly converts a XML tree to a list of strings.
     """
 
     def setUp(self):
@@ -80,14 +94,14 @@ class TestConvertXmlToListOfStrings(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_convert_xml_to_list_of_strings(self):
-        lines = convert_xml_to_list_of_strings(self.xml_tree)
+    def test_xml_to_string_list(self):
+        lines = xml_to_string_list(self.xml_tree)
         self.assertListEqual(lines, self.expected_lines_no_spaces)
 
 
-class TestParseXmlFile(unittest.TestCase):
+class TestReadXmlFile(unittest.TestCase):
     """
-    Test case for the parse_xml_file() function.
+    Test case for the read_xml_file() function.
 
     Methods
     -------
@@ -109,7 +123,7 @@ class TestParseXmlFile(unittest.TestCase):
         xml_file_path = Path(self.temp_dir.name) / "nonexistent.xml"
 
         with self.assertRaises(FileNotFoundError) as cm:
-            parse_xml_file(xml_file_path)
+            read_xml_file(xml_file_path)
         error_msg = str(cm.exception)
         expected_error_msg = (
             f"File not found {xml_file_path.name} not in {xml_file_path.parent}"
@@ -131,7 +145,7 @@ class TestParseXmlFile(unittest.TestCase):
         with xml_file_path.open("w", encoding="UTF-8") as f:
             f.write(malformed_xml)
         with self.assertRaises(ET.ParseError) as cm:
-            parse_xml_file(xml_file_path)
+            read_xml_file(xml_file_path)
         error_msg = str(cm.exception)
         expected_error_msg = f"Failed to parse XML file: {xml_file_path.name}"
         self.assertEqual(error_msg, expected_error_msg)
@@ -152,8 +166,8 @@ class TestParseXmlFile(unittest.TestCase):
         with xml_file_path.open("w", encoding="UTF-8") as f:
             f.write(valid_xml)
 
-        # Parse the valid XML file using parse_xml_file
-        xml_tree = parse_xml_file(xml_file_path)
+        # Parse the valid XML file using read_xml_file
+        xml_tree = read_xml_file(xml_file_path)
 
         # Check that the parsed XML tree has the expected structure
         root = xml_tree.getroot()
@@ -165,14 +179,14 @@ class TestParseXmlFile(unittest.TestCase):
         self.assertEqual(root[1][0].tag, "subelement")
 
 
-class TestWriteXml(unittest.TestCase):
+class TestWriteXmlFile(unittest.TestCase):
     """
-    Test case for the write_xml() function.
+    Test case for the write_xml_file() function.
 
     Methods
     -------
-    test_write_xml():
-        Tests whether write_xml() writes the correct XML tree to a file.
+    test_write_xml_file():
+        Test that a valid XML file is writtend correctly and has the expected structure.
     """
 
     def setUp(self):
@@ -188,8 +202,8 @@ class TestWriteXml(unittest.TestCase):
     def tearDown(self):
         Path.unlink(self.tmp_file_path)
 
-    def test_write_xml(self):
-        write_xml(self.xml_tree, self.tmp_file_path)
+    def test_write_xml_file(self):
+        write_xml_file(self.xml_tree, self.tmp_file_path)
         with self.tmp_file_path.open("r") as f:
             file_contents = f.read()
         self.assertEqual(file_contents, self.expected_xml_string)

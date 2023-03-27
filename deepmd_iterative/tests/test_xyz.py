@@ -1,7 +1,19 @@
 """
-Author: Rolf David
 Created: 2023/01/01
-Last modified: 2023/03/26
+Last modified: 2023/03/27
+
+Test cases for the xyz module.
+
+Class
+-----
+TestReadXYZTrajectory
+    Test case for the read_xyz_trajectory() function.
+
+TestWriteXYZFrameToFile
+    Test case for the write_xyz_frame() function.
+
+TestReadWriteXYZTrajectory
+    Test case for combined use of read_xyz_trajectory() and write_xyz_frame() functions.
 """
 # Standard library modules
 import unittest
@@ -15,7 +27,7 @@ import numpy as np
 # Local imports
 from deepmd_iterative.common.xyz import (
     read_xyz_trajectory,
-    write_xyz_frame_to_file,
+    write_xyz_frame,
 )
 
 
@@ -178,13 +190,13 @@ class TestReadXYZTrajectory(unittest.TestCase):
 
 class TestWriteXYZFrameToFile(unittest.TestCase):
     """
-    Test case for the write_xyz_frame_to_file() function.
+    Test case for the write_xyz_frame() function.
 
     Methods
     -------
-    test_write_xyz_frame_to_file():
+    test_write_xyz_frame():
         Test writing the XYZ coordinates of a specific frame of a trajectory to a file.
-    test_write_xyz_frame_to_file_frame_idx_out_of_range():
+    test_write_xyz_frame_frame_idx_out_of_range():
         Test that an IndexError is raised when the frame index is out of range.
     """
 
@@ -195,7 +207,7 @@ class TestWriteXYZFrameToFile(unittest.TestCase):
     def tearDown(self):
         self.temp_dir.cleanup()
 
-    def test_write_xyz_frame_to_file(self):
+    def test_write_xyz_frame(self):
         frame_idx = 0
         num_atoms = np.array([2, 2, 2])
         atom_coords = np.array(
@@ -203,7 +215,7 @@ class TestWriteXYZFrameToFile(unittest.TestCase):
         )
         atom_symbols = np.array([["C", "H"], ["C", "H"], ["N", "O"]])
         expected_output = "2\nFrame index: 0\nC 0.000000 0.000000 0.000000\nH 1.000000 1.000000 1.000000\n"
-        write_xyz_frame_to_file(
+        write_xyz_frame(
             self.temp_file, frame_idx, num_atoms, atom_coords, atom_symbols
         )
 
@@ -212,7 +224,7 @@ class TestWriteXYZFrameToFile(unittest.TestCase):
 
         self.assertEqual(output, expected_output)
 
-    def test_write_xyz_frame_to_file_frame_idx_out_of_range(self):
+    def test_write_xyz_frame_frame_idx_out_of_range(self):
         frame_idx = 3
         num_atoms = np.array([2, 3, 2])
         atom_coords = np.array(
@@ -221,7 +233,7 @@ class TestWriteXYZFrameToFile(unittest.TestCase):
         atom_symbols = np.array([["C", "H"], ["C", "H"], ["N", "O"]])
 
         with self.assertRaises(IndexError) as cm:
-            write_xyz_frame_to_file(
+            write_xyz_frame(
                 self.temp_file, frame_idx, num_atoms, atom_coords, atom_symbols
             )
         error_msg = str(cm.exception)
@@ -231,7 +243,7 @@ class TestWriteXYZFrameToFile(unittest.TestCase):
 
 class TestReadWriteXYZTrajectory(unittest.TestCase):
     """
-    Test case for combined use of read_xyz_trajectory() and write_xyz_frame_to_file() functions.
+    Test case for combined use of read_xyz_trajectory() and write_xyz_frame() functions.
 
     Methods
     -------
@@ -289,7 +301,7 @@ class TestReadWriteXYZTrajectory(unittest.TestCase):
         )
 
         self.file_new_path = Path(self.tmp_dir.name) / "new.xyz"
-        write_xyz_frame_to_file(
+        write_xyz_frame(
             self.file_new_path, 0, num_atoms, atom_coords, atom_symbols
         )
         num_atoms, atom_symbols, atom_coords = read_xyz_trajectory(self.file_new_path)

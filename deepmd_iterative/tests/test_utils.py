@@ -1,7 +1,13 @@
 """
-Author: Rolf David
 Created: 2023/01/01
-Last modified: 2023/03/26
+Last modified: 2023/03/27
+
+Test cases for the utils module.
+
+Class
+-----
+TestConvertSecondsToHhMmSs
+    Test case for the convert_seconds_to_hh_mm_ss() function.
 """
 # Standard library modules
 import unittest

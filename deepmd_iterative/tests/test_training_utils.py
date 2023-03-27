@@ -1,7 +1,19 @@
 """
-Author: Rolf David
 Created: 2023/01/01
-Last modified: 2023/03/26
+Last modified: 2023/03/27
+
+Test cases for the (training) utils module.
+
+Class
+-----
+TestCalculateDecaySteps
+    Test case for the calculate_decay_steps() function.
+TestCalculateDecayRate
+    Test case for the calculate_decay_steps() function.
+TestCalculateLearningRate
+    Test case for the calculate_learning_rate() function.
+TestCheckInitialDatasets
+    Test case for the check_initial_datasets() function.
 """
 # Standard library modules
 import tempfile
@@ -12,7 +24,7 @@ from pathlib import Path
 import numpy as np
 
 # Local imports
-from deepmd_iterative.common.training import (
+from deepmd_iterative.training.utils import (
     calculate_decay_steps,
     calculate_decay_rate,
     calculate_learning_rate,
