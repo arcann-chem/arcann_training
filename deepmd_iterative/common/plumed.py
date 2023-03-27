@@ -1,33 +1,46 @@
+"""
+Created: 2023/01/01
+Last modified: 2023/03/27
+
+The plumed module provides function to manipulate plumed file.
+
+Functions
+---------
+analyze_plumed_file_for_movres(plumed_lines: List[str]) -> Tuple[bool, Union[int, bool]]
+    A function to analyze a Plumed file to extract information about the MOVINGRESTRAINT keyword and the last STEP value used.
+"""
 # Standard library modules
-import logging
 import re
-import sys
 from typing import List, Tuple, Union
 
 # Local imports
-from deepmd_iterative.common.errors import catch_errors_decorator
+from deepmd_iterative.common.utils import catch_errors_decorator
 
 
 @catch_errors_decorator
 def analyze_plumed_file_for_movres(
     plumed_lines: List[str],
 ) -> Tuple[bool, Union[int, bool]]:
-
     """
-    Analyzes a Plumed file to extract information about the MOVINGRESTRAINT keyword and the last STEP value used.
+    Analyze a Plumed file to extract information about the MOVINGRESTRAINT keyword and the last STEP value used.
 
-    Args:
-        plumed_lines (List[str]): A list of strings representing the contents of a Plumed file.
+    Parameters
+    ----------
+    plumed_lines : List[str]
+        A list of strings representing the contents of a Plumed file.
 
-    Returns:
+    Returns
+    -------
+    Tuple[bool, Union[int, bool]]
         A tuple containing two items:
         - A boolean indicating whether the MOVINGRESTRAINT keyword is present in the Plumed file.
         - An integer indicating the value of the last STEP keyword in the MOVINGRESTRAINT section of the Plumed file,
           or False if the STEP keyword is not found.
 
-    Raises:
-        SystemExit: If the STEP keyword is not found for MOVINGRESTRAINT.
-
+    Raises
+    ------
+    ValueError
+        If the STEP keyword is not found for MOVINGRESTRAINT.
     """
     # Find if MOVINGRESTRAINT is present
     movres_found = False
@@ -44,7 +57,6 @@ def analyze_plumed_file_for_movres(
             return True, last_step
         else:
             error_msg = "STEP not found for MOVINGRESTRAINT."
-            logging.error(f"{error_msg}\nAborting...")
-            sys.exit(1)
+            raise ValueError(error_msg)
     else:
         return False, False
