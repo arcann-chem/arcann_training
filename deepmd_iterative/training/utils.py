@@ -156,7 +156,12 @@ def calculate_learning_rate(
         If any of the arguments are not positive or if decay_steps is not an integer.
     """
     # Check that all arguments are positive
-    if not all(arg > 0 for arg in (current_step, start_lr, decay_rate, decay_steps)) or not all(isinstance(arg, (int, float)) for arg in (current_step, start_lr, decay_rate, decay_steps)):
+    if not all(
+        arg > 0 for arg in (current_step, start_lr, decay_rate, decay_steps)
+    ) or not all(
+        isinstance(arg, (int, float))
+        for arg in (current_step, start_lr, decay_rate, decay_steps)
+    ):
         error_msg = "All arguments must be positive."
         raise ValueError(error_msg)
     if not isinstance(decay_steps, int):
@@ -268,4 +273,3 @@ def validate_deepmd_config(training_config) -> None:
     ):
         error_msg = "Only version >= 2.1 on Jean Zay A100!"
         raise ValueError(error_msg)
-

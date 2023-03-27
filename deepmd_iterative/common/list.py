@@ -28,7 +28,9 @@ from deepmd_iterative.common.utils import catch_errors_decorator
 
 # Unittested
 @catch_errors_decorator
-def exclude_substring_from_string_list(input_list: List[str], substring: str) -> List[str]:
+def exclude_substring_from_string_list(
+    input_list: List[str], substring: str
+) -> List[str]:
     """
     Remove all strings containing a given substring from a list of strings.
 
@@ -61,6 +63,7 @@ def exclude_substring_from_string_list(input_list: List[str], substring: str) ->
 
     output_list = [string.strip() for string in input_list if substring not in string]
     return output_list
+
 
 # Unittested
 @catch_errors_decorator
@@ -105,6 +108,7 @@ def replace_substring_in_string_list(
     ]
     return output_list
 
+
 # Unittested
 @catch_errors_decorator
 def string_list_to_textfile(file_path: Path, string_list: List[str]) -> None:
@@ -143,7 +147,9 @@ def string_list_to_textfile(file_path: Path, string_list: List[str]) -> None:
         error_msg = f"file_path must be a Path object"
         raise TypeError(error_msg)
 
-    if not isinstance(string_list, list) or not all(isinstance(s, str) for s in string_list):
+    if not isinstance(string_list, list) or not all(
+        isinstance(s, str) for s in string_list
+    ):
         error_msg = f"string_list must be a list of strings"
         raise TypeError(error_msg)
 
@@ -152,12 +158,13 @@ def string_list_to_textfile(file_path: Path, string_list: List[str]) -> None:
         raise ValueError(error_msg)
 
     try:
-        with file_path.open('w') as text_file:
-            text_file.write('\n'.join(string_list))
-            text_file.write('\n')
+        with file_path.open("w") as text_file:
+            text_file.write("\n".join(string_list))
+            text_file.write("\n")
     except OSError as e:
         error_msg = f"error writing to file {file_path}: {e}"
         raise OSError(error_msg)
+
 
 # Unittested
 @catch_errors_decorator
@@ -201,13 +208,13 @@ def textfile_to_string_list(file_path: Path) -> List[str]:
         raise FileNotFoundError(f"file {file_path} does not exist")
 
     try:
-        with file_path.open('r') as text_file:
+        with file_path.open("r") as text_file:
             file_content = text_file.readlines()
     except OSError as e:
         error_msg = f"error reading the file {file_path}: {e}"
         raise OSError(error_msg)
 
-    with file_path.open('r') as text_file:
+    with file_path.open("r") as text_file:
         file_content = text_file.readlines()
 
     file_content = [line.strip() for line in file_content]

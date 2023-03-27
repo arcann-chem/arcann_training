@@ -52,6 +52,7 @@ def string_list_to_xml(string_list: List[str]) -> ET.ElementTree:
     # Parse the string into an XML tree and return it.
     return ET.ElementTree(ET.fromstring(xml_string))
 
+
 # Unittested
 @catch_errors_decorator
 def xml_to_string_list(xml_tree: ET.ElementTree) -> List[str]:
@@ -78,6 +79,7 @@ def xml_to_string_list(xml_tree: ET.ElementTree) -> List[str]:
     lines = [line.strip() for line in xml_string.splitlines()]
     # Return the list of lines.
     return lines
+
 
 # Unittested
 @catch_errors_decorator
@@ -114,6 +116,7 @@ def read_xml_file(xml_file_path: Path) -> ET.ElementTree:
         except ET.ParseError:
             error_msg = f"Failed to parse XML file: {xml_file_path.name}"
             raise ET.ParseError(error_msg)
+
 
 # Unittested
 @catch_errors_decorator

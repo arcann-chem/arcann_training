@@ -65,24 +65,18 @@ class TestExcludeSubstringFromStringList(unittest.TestCase):
             "thermodynamics",
             "chemical equilibrium",
         ]
-        output = exclude_substring_from_string_list(
-            self.input_list, self.substring
-        )
+        output = exclude_substring_from_string_list(self.input_list, self.substring)
         self.assertEqual(output, expected_output)
 
     def test_exclude_substring_from_string_list_empty_list(self):
         self.input_list = []
         with self.assertRaises(ValueError):
-            exclude_substring_from_string_list(
-                self.input_list, self.substring
-            )
+            exclude_substring_from_string_list(self.input_list, self.substring)
 
     def test_exclude_substring_from_string_list_invalid_input(self):
         self.input_list = "not a list"
         with self.assertRaises(TypeError):
-            exclude_substring_from_string_list(
-                self.input_list, self.substring
-            )
+            exclude_substring_from_string_list(self.input_list, self.substring)
 
         self.input_list = [
             "quantum mechanics",
@@ -93,9 +87,7 @@ class TestExcludeSubstringFromStringList(unittest.TestCase):
         ]
         self.substring = 10
         with self.assertRaises(TypeError):
-            exclude_substring_from_string_list(
-                self.input_list, self.substring
-            )
+            exclude_substring_from_string_list(self.input_list, self.substring)
 
 
 class TestReplaceSubstringInStringList(unittest.TestCase):
@@ -212,7 +204,9 @@ class TestStringListToTextfile(unittest.TestCase):
             lines = f.readlines()
         print(expected_output)
         expected_lines = [f"{s}\n" for s in expected_output]
-        self.assertEqual(lines, expected_lines, "The file does not contain the expected contents")
+        self.assertEqual(
+            lines, expected_lines, "The file does not contain the expected contents"
+        )
 
     def test_string_list_to_textfile_with_empty_list(self):
         input_file = self.temp_file
@@ -226,7 +220,9 @@ class TestStringListToTextfile(unittest.TestCase):
         with input_file.open("r") as f:
             lines = f.readlines()
         expected_lines = [f"{s}\n" for s in expected_output]
-        self.assertEqual(lines, expected_lines, "The file does not contain the expected contents")
+        self.assertEqual(
+            lines, expected_lines, "The file does not contain the expected contents"
+        )
 
     def test_string_list_to_textfile_appends_to_file(self):
         existing_content = ["existing", "content"]
@@ -238,7 +234,9 @@ class TestStringListToTextfile(unittest.TestCase):
         with input_file.open("r") as f:
             lines = f.readlines()
         expected_lines = [f"{s}\n" for s in new_content]
-        self.assertEqual(lines, expected_lines, "The file does not contain the expected contents")
+        self.assertEqual(
+            lines, expected_lines, "The file does not contain the expected contents"
+        )
 
 
 class TestTextfileToStringList(unittest.TestCase):
@@ -255,6 +253,7 @@ class TestTextfileToStringList(unittest.TestCase):
     test_textfile_to_string_list_with_nonexistent_file():
         Test the function to raise a `FileNotFoundError` for a nonexistent file.
     """
+
     def setUp(self):
         self.temp_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
         self.temp_file.write("Line 1\nLine 2\nLine 3\n")

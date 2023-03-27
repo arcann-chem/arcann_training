@@ -215,9 +215,7 @@ class TestWriteXYZFrameToFile(unittest.TestCase):
         )
         atom_symbols = np.array([["C", "H"], ["C", "H"], ["N", "O"]])
         expected_output = "2\nFrame index: 0\nC 0.000000 0.000000 0.000000\nH 1.000000 1.000000 1.000000\n"
-        write_xyz_frame(
-            self.temp_file, frame_idx, num_atoms, atom_coords, atom_symbols
-        )
+        write_xyz_frame(self.temp_file, frame_idx, num_atoms, atom_coords, atom_symbols)
 
         with open(self.temp_file) as f:
             output = f.read()
@@ -301,9 +299,7 @@ class TestReadWriteXYZTrajectory(unittest.TestCase):
         )
 
         self.file_new_path = Path(self.tmp_dir.name) / "new.xyz"
-        write_xyz_frame(
-            self.file_new_path, 0, num_atoms, atom_coords, atom_symbols
-        )
+        write_xyz_frame(self.file_new_path, 0, num_atoms, atom_coords, atom_symbols)
         num_atoms, atom_symbols, atom_coords = read_xyz_trajectory(self.file_new_path)
 
         self.assertIsInstance(num_atoms, np.ndarray)
