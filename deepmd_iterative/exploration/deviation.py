@@ -15,7 +15,7 @@ from deepmd_iterative.common.json import (
 )
 from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.generate_config import set_subsys_params_deviation
-from deepmd_iterative.common.exploration import get_last_frame_number
+from deepmd_iterative.exploration.utils import get_last_frame_number
 from deepmd_iterative.common.json_parameters import set_new_input_explordevi_json
 
 def main(

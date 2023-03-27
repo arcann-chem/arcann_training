@@ -9,7 +9,7 @@ import tempfile
 # Non-standard library imports
 import numpy as np
 
-from deepmd_iterative.common.exploration import (
+from deepmd_iterative.exploration.utils import (
     create_models_list,
     get_last_frame_number,
     update_subsys_nb_steps_factor,

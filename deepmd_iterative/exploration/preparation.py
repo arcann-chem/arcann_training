@@ -7,7 +7,7 @@ import subprocess
 
 # deepmd_iterative imports
 from deepmd_iterative.common.check import validate_step_folder, check_atomsk
-from deepmd_iterative.common.exploration import (
+from deepmd_iterative.exploration.utils import (
     generate_starting_points,
     create_models_list,
     update_subsys_nb_steps_factor,
