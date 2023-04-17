@@ -1,6 +1,6 @@
 """
 Created: 2023/01/01
-Last modified: 2023/03/27
+Last modified: 2023/04/17
 
 The json module provides functions to manipulate JSON data (as dict).
 
@@ -145,7 +145,7 @@ def load_default_json_file(file_path: Path) -> Dict:
         If file_path is not a Path object.
     """
     if not isinstance(file_path, Path):
-        raise TypeError("file_path must be a Path object.")
+        raise TypeError("'file_path' must be a Path object.")
 
     # Check if the file exists and is a file
     if file_path.is_file():
@@ -195,7 +195,7 @@ def load_json_file(
         If the file cannot be found and abort_on_error is True.
     """
     if not isinstance(file_path, Path):
-        error_msg = f"file_path must be a Path object."
+        error_msg = f"'file_path' must be a Path object."
         raise TypeError(error_msg)
 
     # Check if the file exists and is a file

@@ -26,7 +26,6 @@ from deepmd_iterative.common.json import (
 )
 from deepmd_iterative.common.json_parameters import (
     get_machine_keyword,
-    set_training_config,
 )
 from deepmd_iterative.common.list import (
     replace_substring_in_string_list,
@@ -40,6 +39,7 @@ from deepmd_iterative.training.utils import (
     calculate_decay_steps,
     check_initial_datasets,
     validate_deepmd_config,
+    set_training_config,
 )
 
 def main(
@@ -171,16 +171,20 @@ def main(
         "launch_command": machine_launch_command,
     }
 
-    # Check if the training job file exists
-    check_file_existence(
-        jobs_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh",
-        error_msg=f"No SLURM file present for {current_step.capitalize()} / {current_phase.capitalize()} on this machine.",
-    )
-    master_job_file = textfile_to_string_list(
-        jobs_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh"
-    )
-    del jobs_path
-    logging.debug(f"master_job_file : {master_job_file [0:5]}, {master_job_file [-5:-1]}")
+    # Check if the job file exists
+    job_file_name = f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh"
+    if (current_path.parent / "data" / job_file_name ).is_file():
+            master_job_file = textfile_to_string_list(current_path.parent / "data" / job_file_name)
+    else:
+        check_file_existence(
+            jobs_path / job_file_name,
+            error_msg=f"No SLURM file present for {current_step.capitalize()} / {current_phase.capitalize()} on this machine.",
+        )
+        master_job_file = textfile_to_string_list(
+            jobs_path / job_file_name,
+        )
+    logging.debug(f"master_job_file: {master_job_file[0:5]}, {master_job_file[-5:-1]}")
+    del jobs_path, job_file_name
 
     # Check DeePMD version
     validate_deepmd_config(training_config)

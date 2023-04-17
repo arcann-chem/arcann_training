@@ -1,6 +1,6 @@
 """
 Created: 2023/01/01
-Last modified: 2023/03/27
+Last modified: 2023/04/17
 
 The utils module provides functions to manipulate lists.
 
@@ -92,7 +92,7 @@ def replace_substring_in_string_list(
     TypeError
         If input_list is not a list of strings.
     ValueError
-        If substring_in or substring_out is an empty string.
+        If substring_in is an empty string.
     """
     if not isinstance(input_list, list):
         raise TypeError("Invalid input type. input_list must be a list of strings.")
@@ -100,8 +100,8 @@ def replace_substring_in_string_list(
     if not substring_in:
         raise ValueError("Invalid input. substring_in must be a non-empty string.")
 
-    if not substring_out:
-        raise ValueError("Invalid input. substring_out must be a non-empty string.")
+    #if not substring_out:
+    #    raise ValueError("Invalid input. substring_out must be a non-empty string.")
 
     output_list = [
         string.replace(substring_in, substring_out).strip() for string in input_list

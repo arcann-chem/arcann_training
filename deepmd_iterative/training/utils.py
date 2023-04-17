@@ -1,11 +1,14 @@
 """
 Created: 2023/01/01
-Last modified: 2023/03/27
+Last modified: 2023/04/17
 
 The utils module provides functions for the training step.
 
 Functions
 ---------
+set_training_config(user_config: Dict, previous_config: Dict, default_config: Dict, current_config: Dict) -> Tuple[Dict, Dict]:
+    A function to create training configuration (JSON) by merging user, previous, and default configuration.
+
 calculate_decay_steps(num_structures: int, min_decay_steps: int = 5000) -> int
     A function to calculate the number of decay steps for a given number of structures to train.
 
@@ -25,13 +28,92 @@ validate_deepmd_config(training_config) -> None
 # Standard library modules
 import json
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Tuple
 
 # Third-party modules
 import numpy as np
 
 # Local imports
 from deepmd_iterative.common.utils import catch_errors_decorator
+
+@catch_errors_decorator
+def set_training_config(
+    user_config: Dict,
+    previous_config: Dict,
+    default_config: Dict,
+    current_config: Dict,
+) -> Tuple[Dict, Dict]:
+    """
+    Create training configuration (JSON) by merging user, previous, and default configuration.
+
+    Parameters
+    ----------
+    user_config : dict
+        User-defined parameters.
+    previous_config : dict
+        Previously defined parameters.
+    default_config : dict
+        Default parameters.
+    current_config : dict
+        Current parameters.
+
+    Returns
+    -------
+    Tuple:
+        training_json : dict
+            The training configuration (JSON).
+        current_config : dict
+            The updated current configuration (JSON).
+
+    Raises
+    ------
+    ValueError:
+        If a key is not found in any of the dictionaries.
+    TypeError:
+        If a value has a different type than the default value.
+    """
+
+    training_json = {}
+
+    # Update the training JSON configuration with values from the input JSON files
+    for key in [
+        "user_machine_keyword",
+        "job_email",
+        "use_initial_datasets",
+        "use_extra_datasets",
+        "deepmd_model_version",
+        "deepmd_model_type_descriptor",
+        "start_lr",
+        "stop_lr",
+        "decay_rate",
+        "decay_steps",
+        "decay_steps_fixed",
+        "numb_steps",
+        "numb_test",
+    ]:
+        # Check if the key is present in any of the dictionaries, and set the value accordingly.
+        if key in user_config:
+            if user_config[key] == "default" and key in default_config:
+                training_json[key] = default_config[key]
+                current_config[key] = default_config[key]
+            else:
+                training_json[key] = user_config[key]
+        elif key in previous_config:
+            training_json[key] = previous_config[key]
+            current_config[key] = previous_config[key]
+        elif key in default_config:
+            training_json[key] = default_config[key]
+            current_config[key] = default_config[key]
+        else:
+            # The key is not present in any of the dictionaries.
+            error_msg = f"'{key}' not found in any JSON."
+            raise ValueError(error_msg)
+
+        if not isinstance(training_json[key], type(default_config[key])):
+            error_msg = f"Wrong type: '{key}' is a {type(training_json[key])}. It should be a {type(default_config[key])}."
+            raise TypeError(error_msg)
+
+    return training_json, current_config
 
 
 # Unittested
@@ -59,12 +141,12 @@ def calculate_decay_steps(num_structures: int, min_decay_steps: int = 5000) -> i
     """
     # Check if num_structures is a positive integer
     if not isinstance(num_structures, int) or num_structures <= 0:
-        error_msg = "nb_structures must be a positive integer"
+        error_msg = "'nb_structures' must be a positive integer"
         raise ValueError(error_msg)
 
     # Check if min_decay_steps is a positive integer
     if not isinstance(min_decay_steps, int) or min_decay_steps <= 0:
-        error_msg = "min_decay_steps must be a positive integer"
+        error_msg = "'min_decay_steps' must be a positive integer"
         raise ValueError(error_msg)
 
     # Round down to the nearest multiple of 10000
@@ -113,11 +195,11 @@ def calculate_decay_rate(
     """
     # Check that the start learning rate is a positive number.
     if start_lr <= 0 or not isinstance(start_lr, (int, float)):
-        error_msg = "start_lr must be a positive number."
+        error_msg = "'start_lr' must be a positive number."
         raise ValueError(error_msg)
 
     if decay_steps <= 0 or not isinstance(decay_steps, int):
-        error_msg = "decay_steps must be a positive integer."
+        error_msg = "'decay_steps' must be a positive integer."
         raise ValueError(error_msg)
 
     # Calculate the decay rate using the given training parameters
@@ -165,7 +247,7 @@ def calculate_learning_rate(
         error_msg = "All arguments must be positive."
         raise ValueError(error_msg)
     if not isinstance(decay_steps, int):
-        error_msg = "decay_steps must be a positive integer"
+        error_msg = "'decay_steps' must be a positive integer"
         raise ValueError(error_msg)
 
     # Calculate the learning rate based on the current training step
@@ -222,7 +304,7 @@ def check_initial_datasets(training_dir: Path) -> Dict[str, int]:
         # Check if the number of samples in the dataset matches the expected count
         box_path = dataset_path / "set.000" / "box.npy"
         if not box_path.is_file():
-            error_msg = f"No box.npy found in the dataset '{dataset_name}'."
+            error_msg = f"No 'box.npy' found in the dataset '{dataset_name}'."
             raise FileNotFoundError(error_msg)
 
         num_samples = len(np.load(str(box_path)))

@@ -82,6 +82,7 @@ if __name__ == "__main__":
         logging.error(f"Aborting...")
         logging.error(f"{e}")
     except Exception as e:
+        logging.error(f"{e}")
         exit_code = 1
 
     del deepmd_iterative_path, fake_cluster, input_fn

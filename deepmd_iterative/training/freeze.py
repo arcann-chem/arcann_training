@@ -128,15 +128,20 @@ def main(
         logging.info(f"We are on: {machine}.")
     del fake_machine
 
-    check_file_existence(
-        jobs_path / f"job_deepmd_freeze_{machine_spec['arch_type']}_{machine}.sh",
-        error_msg=f"No SLURM file present for {current_step.capitalize()} / {current_phase.capitalize()} on this machine.",
-    )
-    master_job_file = textfile_to_string_list(
-        jobs_path / f"job_deepmd_freeze_{machine_spec['arch_type']}_{machine}.sh"
-    )
-    current_config["job_email"] = get_key_in_dict("job_email", user_config, training_config, default_config)
-    del jobs_path
+    # Check if the job file exists
+    job_file_name = f"job_deepmd_freeze_{machine_spec['arch_type']}_{machine}.sh"
+    if (current_path.parent / "data" / job_file_name ).is_file():
+            master_job_file = textfile_to_string_list(current_path.parent / "data" / job_file_name)
+    else:
+        check_file_existence(
+            jobs_path / job_file_name,
+            error_msg=f"No SLURM file present for {current_step.capitalize()} / {current_phase.capitalize()} on this machine.",
+        )
+        master_job_file = textfile_to_string_list(
+            jobs_path / job_file_name,
+        )
+    logging.debug(f"master_job_file: {master_job_file[0:5]}, {master_job_file[-5:-1]}")
+    del jobs_path, job_file_name
 
     # Prep and launch DP Freeze
     completed_count = 0

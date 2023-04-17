@@ -1,6 +1,6 @@
 """
 Created: 2023/01/01
-Last modified: 2023/03/27
+Last modified: 2023/04/17
 
 The lammps module provides functions to manipulate LAMMPS data (as list of strings).
 
@@ -22,7 +22,7 @@ from deepmd_iterative.common.utils import catch_errors_decorator
 @catch_errors_decorator
 def read_lammps_data(
     lines: List[str],
-) -> Tuple(int, int, np.ndarray, Dict[int], np.ndarray):
+) -> Tuple[int, int, np.ndarray, Dict[int,float], np.ndarray]:
     """
     Read LAMMPS data file and extract required information.
 
@@ -84,7 +84,6 @@ def read_lammps_data(
             num_atoms = int(line.split()[0])
     # Convert lists to NumPy arrays
     atoms = np.array(atoms, dtype=float)
-
     # Return results
     return (
         num_atoms,

@@ -1,3 +1,7 @@
+"""
+Created: 2023/01/01
+Last modified: 2023/04/17
+"""
 from pathlib import Path
 import logging
 import sys
@@ -11,12 +15,11 @@ from deepmd_iterative.exploration.utils import (
     generate_starting_points,
     create_models_list,
     update_subsys_nb_steps_factor,
-    get_subsys_params_exploration,
+    get_subsys_exploration,
+    set_input_explor_json,
 )
 from deepmd_iterative.common.filesystem import (
     check_file_existence,
-    file_to_list_of_strings,
-    write_list_of_strings_to_file,
 )
 from deepmd_iterative.common.ipi import get_temperature_from_ipi_xml
 from deepmd_iterative.common.json import (
@@ -27,19 +30,22 @@ from deepmd_iterative.common.json import (
 )
 from deepmd_iterative.common.json_parameters import (
     get_machine_keyword,
-    set_new_input_explor_json,
     get_key_in_dict,
 )
-from deepmd_iterative.common.list import replace_substring_in_list_of_strings
-from deepmd_iterative.common.lammps import parse_lammps_data
+from deepmd_iterative.common.list import (
+    replace_substring_in_string_list,
+    string_list_to_textfile,
+    textfile_to_string_list,
+)
+from deepmd_iterative.common.lammps import read_lammps_data
 from deepmd_iterative.common.machine import get_machine_spec_for_step
 from deepmd_iterative.common.plumed import analyze_plumed_file_for_movres
 from deepmd_iterative.common.slurm import replace_in_slurm_file_general
 from deepmd_iterative.common.xml import (
-    parse_xml_file,
-    convert_xml_to_list_of_strings,
-    convert_list_of_strings_to_xml,
-    write_xml,
+    string_list_to_xml,
+    xml_to_string_list,
+    read_xml_file,
+    write_xml_file,
 )
 
 
@@ -70,7 +76,7 @@ def main(
     logging.debug(f"curr_iter, padded_curr_iter: {curr_iter}, {padded_curr_iter}")
 
     # Load the default config (JSON)
-    default_config = load_default_json_file(deepmd_iterative_path / "data" / "default_config.json")[current_step]
+    default_config = load_default_json_file(deepmd_iterative_path / "assets" / "default_config.json")[current_step]
     default_config_present = bool(default_config)
     logging.debug(f"default_config: {default_config}")
     logging.debug(f"default_config_present: {default_config_present}")
@@ -92,7 +98,7 @@ def main(
     main_config = load_json_file((control_path / "config.json"))
 
     # Get extra needed paths
-    jobs_path = deepmd_iterative_path / "data" / "jobs" / current_step
+    jobs_path = deepmd_iterative_path / "assets" / "jobs" / current_step
 
     # Load the previous training config (JSON) and the previous exploration config (JSON)
     if curr_iter > 0:
@@ -165,7 +171,7 @@ def main(
     logging.debug(f"current_config: {current_config}")
 
     # Fill the missing values from the input. We don't do exploration because it is subsys dependent and single value and not list
-    current_config = set_new_input_explor_json(user_config,previous_exploration_config,default_config,current_config,main_config)
+    current_config = set_input_explor_json(user_config,previous_exploration_config,default_config,current_config,main_config)
     logging.debug(f"current_config: {current_config}")
 
     # Set additional machine-related parameters in the JSON file
@@ -179,17 +185,21 @@ def main(
         "launch_command": machine_launch_command,
     }
 
-    # Check if the training job file exists
-    check_file_existence(
-        jobs_path / f"job_deepmd_{exploration_config['exploration_type']}_{exploration_config['arch_type']}_{machine}.sh",
-        error_msg=f"No SLURM file present for {current_step.capitalize()} / {current_phase.capitalize()} on this machine.",
-    )
-    master_job_file = file_to_list_of_strings(
-        jobs_path / f"job_deepmd_{exploration_config['exploration_type']}_{exploration_config['arch_type']}_{machine}.sh",
-    )
+    # Check if the job file exists
+    job_file_name = f"job_deepmd_{exploration_config['exploration_type']}_{exploration_config['arch_type']}_{machine}.sh"
+    if (current_path.parent / "data" / job_file_name ).is_file():
+            master_job_file = textfile_to_string_list(current_path.parent / "data" / job_file_name)
+    else:
+        check_file_existence(
+            jobs_path / job_file_name,
+            error_msg=f"No SLURM file present for {current_step.capitalize()} / {current_phase.capitalize()} on this machine.",
+        )
+        master_job_file = textfile_to_string_list(
+            jobs_path / job_file_name,
+        )
     logging.debug(f"master_job_file: {master_job_file[0:5]}, {master_job_file[-5:-1]}")
     current_config["job_email"] = get_key_in_dict("job_email", user_config, previous_exploration_config, default_config)
-    del jobs_path
+    del jobs_path, job_file_name
 
     ### Preparation of the exploration
     exploration_config["subsys_nr"] = {}
@@ -208,7 +218,7 @@ def main(
         # Get the input file (.in or .xml) for the current subsystem and check if plumed is being used
         if exploration_config["exploration_type"] == "lammps":
             exploration_type = 0
-            subsys_lammps_in = file_to_list_of_strings(
+            subsys_lammps_in = textfile_to_string_list(
                 training_path / "files" / (it_subsys_nr + ".in")
             )
             # Check if the LAMMPS input file contains any "plumed" lines
@@ -216,10 +226,10 @@ def main(
                 plumed[0] = True
         elif exploration_config["exploration_type"] == "i-PI":
             exploration_type = 1
-            subsys_ipi_xml = parse_xml_file(
+            subsys_ipi_xml = read_xml_file(
                 training_path / "files" / (it_subsys_nr + ".xml")
             )
-            subsys_ipi_xml_aslist = convert_xml_to_list_of_strings(subsys_ipi_xml)
+            subsys_ipi_xml_aslist = xml_to_string_list(subsys_ipi_xml)
             # Create a JSON object with placeholders for the dp-i-PI input file parameters
             subsys_ipi_json = {
                 "verbose": False,
@@ -251,7 +261,7 @@ def main(
             # Read the contents of each plumed file into a dictionary
             plumed_input = {}
             for it_plumed_files_list in plumed_files_list:
-                plumed_input[it_plumed_files_list.name] = file_to_list_of_strings(
+                plumed_input[it_plumed_files_list.name] = textfile_to_string_list(
                     it_plumed_files_list
                 )
             # Analyze each plumed file to determine whether it contains MOVINGRESTRAINTS keyword (SMD)
@@ -273,7 +283,7 @@ def main(
             subsys_init_job_walltime_h,
             subsys_print_mult,
             subsys_disturbed_start,
-        ) = get_subsys_params_exploration(current_config, it0_subsys_nr)
+        ) = get_subsys_exploration(current_config, it0_subsys_nr)
         logging.debug(f"{subsys_timestep_ps,subsys_temperature_K,subsys_exp_time_ps,subsys_max_exp_time_ps,subsys_job_walltime_h,subsys_init_exp_time_ps,subsys_init_job_walltime_h,subsys_print_mult,subsys_disturbed_start}")
 
         # Set the subsys params for exploration
@@ -306,7 +316,7 @@ def main(
             # First exploration
             if curr_iter == 1:
                 subsys_lammps_data_fn = it_subsys_nr + ".lmp"
-                subsys_lammps_data = file_to_list_of_strings(
+                subsys_lammps_data = textfile_to_string_list(
                     training_path / "files" / subsys_lammps_data_fn
                 )
                 input_replace_dict["_R_DATA_FILE_"] = subsys_lammps_data_fn
@@ -321,7 +331,7 @@ def main(
                 subsys_walltime_approx_s = subsys_init_job_walltime_h * 3600
 
                 # Get the cell and nb of atoms: It can be done now because the starting point is the same by NNP and by traj
-                subsys_nb_atm, num_atom_types, box, masses, coords = parse_lammps_data(
+                subsys_nb_atm, num_atom_types, box, masses, coords = read_lammps_data(
                     subsys_lammps_data
                 )
                 subsys_cell = [box[1] - box[0], box[3] - box[2], box[5] - box[4]]
@@ -381,7 +391,7 @@ def main(
             # First exploration
             if curr_iter == 1:
                 subsys_lammps_data_fn = it_subsys_nr + ".lmp"
-                subsys_lammps_data = file_to_list_of_strings(
+                subsys_lammps_data = textfile_to_string_list(
                     training_path / "inputs" / subsys_lammps_data_fn
                 )
                 subsys_ipi_xyz_fn = it_subsys_nr + ".xyz"
@@ -399,7 +409,7 @@ def main(
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.STDOUT,
                 )
-                subsys_ipi_xyz = file_to_list_of_strings(
+                subsys_ipi_xyz = textfile_to_string_list(
                     training_path / "files" / subsys_ipi_xyz_fn
                 )
                 # Default time and nb steps
@@ -412,7 +422,7 @@ def main(
                 subsys_walltime_approx_s = subsys_init_job_walltime_h * 3600
 
                 # Get the cell and nb of atoms: It can be done now because the starting point is the same by NNP and by traj
-                subsys_nb_atm, num_atom_types, box, masses, coords = parse_lammps_data(
+                subsys_nb_atm, num_atom_types, box, masses, coords = read_lammps_data(
                     subsys_lammps_data
                 )
                 subsys_cell = [box[1] - box[0], box[3] - box[2], box[5] - box[4]]
@@ -509,7 +519,7 @@ def main(
                         subsys_lammps_data_fn = starting_point_list[
                             random.randrange(0, len(starting_point_list))
                         ]
-                        subsys_lammps_data = file_to_list_of_strings(
+                        subsys_lammps_data = textfile_to_string_list(
                             training_path
                             / "starting_structures"
                             / subsys_lammps_data_fn
@@ -522,7 +532,7 @@ def main(
                             box,
                             masses,
                             coords,
-                        ) = parse_lammps_data(subsys_lammps_data)
+                        ) = read_lammps_data(subsys_lammps_data)
                         subsys_cell = [
                             box[1] - box[0],
                             box[3] - box[2],
@@ -540,18 +550,18 @@ def main(
                         for it_plumed_input in plumed_input:
                             plumed_input[
                                 it_plumed_input
-                            ] = replace_substring_in_list_of_strings(
+                            ] = replace_substring_in_string_list(
                                 plumed_input[it_plumed_input],
                                 "_R_PRINT_FREQ_",
                                 f"{int(subsys_print_every_x_steps)}",
                             )
-                            write_list_of_strings_to_file(
+                            string_list_to_textfile(
                                 local_path / it_plumed_input,
                                 plumed_input[it_plumed_input],
                             )
 
                     # Write DATA file
-                    write_list_of_strings_to_file(
+                    string_list_to_textfile(
                         local_path / subsys_lammps_data_fn, subsys_lammps_data
                     )
 
@@ -564,15 +574,15 @@ def main(
 
                     #  Write INPUT file
                     for key, value in input_replace_dict.items():
-                        it_subsys_lammps_in = replace_substring_in_list_of_strings(
+                        it_subsys_lammps_in = replace_substring_in_string_list(
                             it_subsys_lammps_in, key, value
                         )
-                    write_list_of_strings_to_file(
+                    string_list_to_textfile(
                         local_path
                         / (f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.in"),
                         it_subsys_lammps_in,
                     )
-
+                    
                     # Slurm file
                     job_file = replace_in_slurm_file_general(
                         master_job_file,
@@ -581,46 +591,46 @@ def main(
                         machine_walltime_format,
                         current_config["job_email"],
                     )
-
-                    job_file = replace_substring_in_list_of_strings(
+                    
+                    job_file = replace_substring_in_string_list(
                         job_file,
                         "_R_DEEPMD_VERSION_",
                         f"{exploration_config['deepmd_model_version']}",
                     )
-                    job_file = replace_substring_in_list_of_strings(
+                    job_file = replace_substring_in_string_list(
                         job_file,
                         "_R_MODEL_FILES_LIST_",
                         str(models_string.replace(" ", '" "')),
                     )
-                    job_file = replace_substring_in_list_of_strings(
+                    job_file = replace_substring_in_string_list(
                         job_file,
                         "_R_INPUT_FILE_",
                         f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}",
                     )
-                    job_file = replace_substring_in_list_of_strings(
+                    job_file = replace_substring_in_string_list(
                         job_file, "_R_DATA_FILE_", f"{subsys_lammps_data_fn}"
                     )
-                    job_file = replace_substring_in_list_of_strings(
+                    job_file = replace_substring_in_string_list(
                         job_file, ' "_R_RERUN_FILE_"', ""
                     )
                     if plumed[0] == 1:
                         for n, it_plumed_input in enumerate(plumed_input):
                             if n == 0:
-                                job_file = replace_substring_in_list_of_strings(
+                                job_file = replace_substring_in_string_list(
                                     job_file, "_R_PLUMED_FILES_LIST_", it_plumed_input
                                 )
                             else:
-                                job_file = replace_substring_in_list_of_strings(
+                                job_file = replace_substring_in_string_list(
                                     job_file,
                                     prev_plumed,
                                     prev_plumed + '" "' + it_plumed_input,
                                 )
                             prev_plumed = it_plumed_input
                     else:
-                        job_file = replace_substring_in_list_of_strings(
+                        job_file = replace_substring_in_string_list(
                             job_file, ' "_R_PLUMED_FILES_LIST_"', ""
                         )
-                    write_list_of_strings_to_file(
+                    string_list_to_textfile(
                         local_path
                         / f"job_deepmd_{exploration_config['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
                         job_file,
@@ -644,14 +654,14 @@ def main(
                         subsys_ipi_xyz_fn = starting_point_list[
                             random.randrange(0, len(starting_point_list))
                         ]
-                        subsys_ipi_xyz = file_to_list_of_strings(
+                        subsys_ipi_xyz = textfile_to_string_list(
                             training_path / "starting_structures" / subsys_ipi_xyz_fn
                         )
                         input_replace_dict["_R_XYZ_"] = subsys_ipi_xyz_fn
                         it_subsys_ipi_json["coord_file"] = subsys_ipi_xyz_fn
                         for it_zzz, zzz in enumerate(main_config["type_map"]):
                             it_subsys_ipi_json["atom_type"][str(zzz)] = it_zzz
-                        subsys_lammps_data = file_to_list_of_strings(
+                        subsys_lammps_data = textfile_to_string_list(
                             training_path
                             / "starting_structures"
                             / subsys_ipi_xyz_fn.replace(".xyz", ".lmp")
@@ -663,7 +673,7 @@ def main(
                             box,
                             masses,
                             coords,
-                        ) = parse_lammps_data(subsys_lammps_data)
+                        ) = read_lammps_data(subsys_lammps_data)
                         subsys_cell = [
                             box[1] - box[0],
                             box[3] - box[2],
@@ -679,7 +689,7 @@ def main(
                         for it_plumed_input in plumed_input:
                             plumed_input[
                                 it_plumed_input
-                            ] = replace_substring_in_list_of_strings(
+                            ] = replace_substring_in_string_list(
                                 plumed_input[it_plumed_input],
                                 "_R_PRINT_FREQ_",
                                 f"{int(subsys_print_every_x_steps)}",
@@ -687,14 +697,14 @@ def main(
                             # Because of weird units of time
                             plumed_input[
                                 it_plumed_input
-                            ] = replace_substring_in_list_of_strings(
+                            ] = replace_substring_in_string_list(
                                 plumed_input[it_plumed_input],
                                 "UNITS LENGTH",
                                 "UNITS TIME="
                                 + str(2.4188843e-05 / subsys_timestep_ps)
                                 + " LENGTH",
                             )
-                            write_list_of_strings_to_file(
+                            string_list_to_textfile(
                                 local_path / it_plumed_input,
                                 plumed_input[it_plumed_input],
                             )
@@ -704,14 +714,14 @@ def main(
 
                     #  Write INPUT files
                     for key, value in input_replace_dict.items():
-                        it_subsys_ipi_xml_aslist = replace_substring_in_list_of_strings(
+                        it_subsys_ipi_xml_aslist = replace_substring_in_string_list(
                             it_subsys_ipi_xml_aslist, key, value
                         )
                     del key, value
-                    it_subsys_ipi_xml = convert_list_of_strings_to_xml(
+                    it_subsys_ipi_xml = string_list_to_xml(
                         it_subsys_ipi_xml_aslist
                     )
-                    write_xml(
+                    write_xml_file(
                         it_subsys_ipi_xml,
                         local_path
                         / (f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.xml"),
@@ -731,30 +741,30 @@ def main(
                         current_config["job_email"],
                     )
 
-                    job_file = replace_substring_in_list_of_strings(
+                    job_file = replace_substring_in_string_list(
                         job_file,
                         "_R_DEEPMD_VERSION_",
                         f"{exploration_config['deepmd_model_version']}",
                     )
-                    job_file = replace_substring_in_list_of_strings(
+                    job_file = replace_substring_in_string_list(
                         job_file, "_R_MODEL_FILES_LIST_", f"{models_list[0]}"
                     )
-                    job_file = replace_substring_in_list_of_strings(
+                    job_file = replace_substring_in_string_list(
                         job_file,
                         "_R_INPUT_FILE_",
                         f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}",
                     )
-                    job_file = replace_substring_in_list_of_strings(
+                    job_file = replace_substring_in_string_list(
                         job_file, "_R_DATA_FILE_", f"{subsys_ipi_xyz_fn}"
                     )
                     if plumed[0] == 1:
                         for n, it_plumed_input in enumerate(plumed_input):
                             if n == 0:
-                                job_file = replace_substring_in_list_of_strings(
+                                job_file = replace_substring_in_string_list(
                                     job_file, "_R_PLUMED_FILES_LIST_", it_plumed_input
                                 )
                             else:
-                                job_file = replace_substring_in_list_of_strings(
+                                job_file = replace_substring_in_string_list(
                                     job_file,
                                     prev_plumed,
                                     prev_plumed + '" "' + it_plumed_input,
@@ -762,10 +772,10 @@ def main(
                             prev_plumed = it_plumed_input
                         del n, it_plumed_input, prev_plumed
                     else:
-                        job_file = replace_substring_in_list_of_strings(
+                        job_file = replace_substring_in_string_list(
                             job_file, ' "_R_PLUMED_FILES_LIST_"', ""
                         )
-                    write_list_of_strings_to_file(
+                    string_list_to_textfile(
                         local_path
                         / f"job_deepmd_{exploration_config['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
                         job_file,
