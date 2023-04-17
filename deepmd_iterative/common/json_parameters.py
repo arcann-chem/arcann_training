@@ -1,3 +1,7 @@
+"""
+Created: 2023/01/01
+Last modified: 2023/04/17
+"""
 # Standard library modules
 import logging
 import sys
@@ -5,7 +9,7 @@ from copy import deepcopy
 from typing import Any, Dict, List, Tuple, Union
 
 # Local imports
-from deepmd_iterative.common.errors import catch_errors_decorator
+from deepmd_iterative.common.utils import catch_errors_decorator
 
 
 @catch_errors_decorator
@@ -15,14 +19,21 @@ def get_key_in_dict(
     """
     Get the value of the key from input JSON, previous JSON or default JSON, and validate its type.
 
-    Args:
-    key (str): The key to look up.
-    input_json (Dict): The input JSON  containing user-defined parameters.
-    previous_json (Dict): The previous JSON containing previously defined parameters.
-    default_json (Dict): The default JSON containing default parameters.
+    Parameters
+    ----------
+    key : str
+        The key to look up.
+    input_json : dict
+        The input JSON containing user-defined parameters.
+    previous_json : dict
+        The previous JSON containing previously defined parameters.
+    default_json : dict
+        The default JSON containing default parameters.
 
-    Returns:
-    Any: The value of the key, if it exists and is of the correct type.
+    Returns
+    -------
+    Any
+        The value of the key, if it exists and is of the correct type.
     """
 
     # Check if the key is present in any of the JSON, and set the value accordingly.
@@ -59,13 +70,19 @@ def get_machine_keyword(
     """
     Get the value of the "user_machine_keyword" key from input JSON, previous JSON or default JSON, and validate its type.
 
-    Args:
-    input_json (Dict): The input JSON containing user-defined parameters.
-    previous_json (Dict): The previous JSON containing previously defined parameters.
-    default_json (Dict): The default JSON containing default parameters.
+    Parameters
+    ----------
+    input_json : dict
+        The input JSON containing user-defined parameters.
+    previous_json : dict
+        The previous JSON containing previously defined parameters.
+    default_json : dict
+        The default JSON containing default parameters.
 
-    Returns:
-    Union[bool, str, List[str]]: The value of the "user_machine_keyword" key, if it exists and is of the correct type.
+    Returns
+    -------
+    Union[bool, str, List[str]]
+        The value of the "user_machine_keyword" key, if it exists and is of the correct type.
     """
 
     # The key to look up in the JSON.
@@ -112,64 +129,61 @@ def get_machine_keyword(
 
 
 # Used in initialization - init
+@catch_errors_decorator
 def set_main_config(user_config: Dict, default_config: Dict) -> Tuple[Dict, Dict, str]:
     """
-    This function sets a main config (JSON) by validating the input JSON with a default JSON .
-    If the input JSON is invalid, it throws an error and terminates the script.
+    Set the main configuration (JSON) by validating the input JSON with a default JSON. If the input JSON is invalid, an error is raised and the script is terminated.
 
-    Args:
-    user_config (Dict): The user config (JSON) containing user-defined parameters.
-    default_config (Dict): The default config (JSON) containing default parameters.
+    Parameters
+    ----------
+    user_config : dict
+        The user-defined configuration (JSON) containing user-defined parameters.
+    default_config : dict
+        The default configuration (JSON) containing default parameters.
 
-    Returns:
-    Tuple(Dict, Dict, str):
-        - the main config (JSON)
-        - the current config (JSON)
-        - the current iteration padded.
+    Returns
+    -------
+    Tuple[Dict, Dict, str]
+        A tuple containing:
+        - The main configuration (JSON)
+        - The current configuration (JSON)
+        - A message describing the validation result.
+
+    Raises
+    ------
+    TypeError
+        If the type of a user-defined parameter is not the same as the type of the default parameter.
+    ValueError
+        If a mandatory parameter is not provided or if the value of 'exploration_type' is not 'lammps' or 'i-PI'.
     """
     main_config = {}
     for key in default_config.keys():
         if key in user_config:
             if not isinstance(default_config[key], type(user_config[key])):
-                logging.error(f"Wrong type: '{key}' is {type(user_config[key])}")
-                logging.error(f"It should be {type(default_config[key])}")
-                logging.error(f"Aborting...")
-                sys.exit(1)
+                error_msg = f"Wrong type: '{key}' is {type(user_config[key])}. It should be {type(default_config[key])}."
+                raise TypeError(error_msg)
             if isinstance(user_config[key], List):
                 for element in user_config[key]:
                     if not isinstance(element, type(default_config[key][0])):
-                        logging.error(
-                            f"Wrong type: '{key}' is a list of {type(element)}"
-                        )
-                        logging.error(
-                            f"It should be a list of {type(default_config[key][0])}"
-                        )
-                        logging.error(f"Aborting...")
-                        sys.exit(1)
+                        error_msg = f"Wrong type: '{key}' is a list of {type(element)}. It should be a list of {type(default_config[key][0])}."
+                        raise TypeError(error_msg)
     logging.debug(f"Type check complete")
 
     current_config = deepcopy(user_config)
     for key in ["system", "subsys_nr", "nnp_count", "exploration_type"]:
         if key == "system" and key not in user_config:
-            logging.error(f"{key} is not provided, it is mandatory.")
-            logging.error(f"It should of type {type(default_config[key])}")
-            logging.error(f"Aborting...")
-            sys.exit(1)
+            error_msg = f"{key} is not provided, it is mandatory. It should of type {type(default_config[key])}."
+            raise ValueError(error_msg)
         if key == "subsys_nr" and key not in user_config:
-            logging.error(f"subsys_nr is not provided, it is mandatory.")
-            logging.error(
-                f"It should be a list of {type(default_config['subsys_nr'][0])}"
-            )
-            logging.error(f"Aborting...")
-            sys.exit(1)
+            error_msg = f"subsys_nr is not provided, it is mandatory. It should be a list of {type(default_config['subsys_nr'][0])}."
+            raise ValueError(error_msg)
         elif (
             key in user_config
             and key == "exploration_type"
             and not (user_config[key] == "lammps" or user_config[key] == "i-PI")
         ):
-            logging.error(f"{key} should be a string: lammps or i-PI.")
-            logging.error(f"Aborting...")
-            sys.exit(1)
+            error_msg = f"{key} should be a string: lammps or i-PI."
+            raise ValueError(error_msg)
         else:
             main_config[key] = (
                 user_config[key] if key in user_config else default_config[key]

@@ -1,3 +1,7 @@
+"""
+Created: 2023/01/01
+Last modified: 2023/04/17
+"""
 # Standard library modules
 import argparse
 import importlib
@@ -76,6 +80,7 @@ if __name__ == "__main__":
         exit_code = 1
         logging.error(f"Step/Phase: '{submodule_name.split('.')[-2]} / {submodule_name.split('.')[-1]}' are not a valid combination.")
         logging.error(f"Aborting...")
+        logging.error(f"{e}")
     except Exception as e:
         exit_code = 1
 

@@ -1,6 +1,6 @@
 """
 Created: 2023/01/01
-Last modified: 2023/03/27
+Last modified: 2023/04/17
 
 The filesystem module provides functions to handle file and directory management 
 
@@ -28,7 +28,6 @@ remove_tree(directory_path: Path) -> None
 import logging
 import os
 from pathlib import Path
-from typing import List
 
 # Local imports
 from deepmd_iterative.common.utils import catch_errors_decorator
