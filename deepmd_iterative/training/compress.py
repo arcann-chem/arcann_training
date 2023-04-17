@@ -1,3 +1,7 @@
+"""
+Created: 2023/01/01
+Last modified: 2023/04/17
+"""
 from pathlib import Path
 import logging
 import sys
@@ -9,8 +13,6 @@ from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.filesystem import (
     change_directory,
     check_file_existence,
-    file_to_list_of_strings,
-    write_list_of_strings_to_file,
 )
 from deepmd_iterative.common.json import (
     load_json_file,
@@ -22,7 +24,11 @@ from deepmd_iterative.common.json_parameters import (
     get_key_in_dict,
     get_machine_keyword,
 )
-from deepmd_iterative.common.list import replace_substring_in_list_of_strings
+from deepmd_iterative.common.list import (
+    replace_substring_in_string_list,
+    string_list_to_textfile,
+    textfile_to_string_list,
+)
 from deepmd_iterative.common.machine import get_machine_spec_for_step
 from deepmd_iterative.common.slurm import replace_in_slurm_file_general
 
@@ -52,7 +58,7 @@ def main(
     curr_iter = int(padded_curr_iter)
 
     # Load the default config (JSON)
-    default_config = load_default_json_file(deepmd_iterative_path / "data" / "default_config.json")[current_step]
+    default_config = load_default_json_file(deepmd_iterative_path / "assets" / "default_config.json")[current_step]
     default_config_present = bool(default_config)
     logging.debug(f"default_config: {default_config}")
     logging.debug(f"default_config_present: {default_config_present}")
@@ -83,7 +89,7 @@ def main(
         return 1
 
     # Get extra needed paths
-    jobs_path = deepmd_iterative_path / "data" / "jobs" / "training"
+    jobs_path = deepmd_iterative_path / "assets" / "jobs" / "training"
 
     # Get the machine keyword (input override training override default_config)
     # And update the new input
@@ -125,7 +131,7 @@ def main(
         jobs_path / f"job_deepmd_compress_{machine_spec['arch_type']}_{machine}.sh",
         error_msg=f"No SLURM file present for {current_step.capitalize()} / {current_phase.capitalize()} on this machine.",
     )
-    master_job_file = file_to_list_of_strings(
+    master_job_file = textfile_to_string_list(
         jobs_path / f"job_deepmd_compress_{machine_spec['arch_type']}_{machine}.sh"
     )
     current_config["job_email"] = get_key_in_dict("job_email", user_config, training_config, default_config)
@@ -147,10 +153,10 @@ def main(
             current_config["job_email"],
         )
 
-        job_file = replace_substring_in_list_of_strings(job_file, "_R_DEEPMD_VERSION_", f"{training_config['deepmd_model_version']}")
-        job_file = replace_substring_in_list_of_strings(job_file, "_R_DEEPMD_MODEL_", f"graph_{nnp}_{padded_curr_iter}",)
+        job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_VERSION_", f"{training_config['deepmd_model_version']}")
+        job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_MODEL_", f"graph_{nnp}_{padded_curr_iter}",)
 
-        write_list_of_strings_to_file(
+        string_list_to_textfile(
             local_path
             / f"job_deepmd_compress_{machine_spec['arch_type']}_{machine}.sh",
             job_file,
@@ -193,7 +199,10 @@ def main(
     logging.info(f"-" * 88)
 
     if completed_count == main_config["nnp_count"]:
-        pass
+        logging.info(
+            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
+        )
+
     else:
         logging.critical(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!"
@@ -201,10 +210,6 @@ def main(
         logging.critical(f"Some SLURM jobs did not launch correctly.")
         logging.critical(f"Please launch manually before continuing to the next step.")
     del completed_count
-
-    logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
-    )
 
     # Cleaning
     del current_path, control_path, training_path

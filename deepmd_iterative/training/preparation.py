@@ -1,3 +1,7 @@
+"""
+Created: 2023/01/01
+Last modified: 2023/04/17
+"""
 from pathlib import Path
 import logging
 import sys
@@ -13,8 +17,6 @@ from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.filesystem import (
     check_directory,
     check_file_existence,
-    file_to_list_of_strings,
-    write_list_of_strings_to_file,
 )
 from deepmd_iterative.common.json import (
     backup_and_overwrite_json_file,
@@ -26,7 +28,11 @@ from deepmd_iterative.common.json_parameters import (
     get_machine_keyword,
     set_training_config,
 )
-from deepmd_iterative.common.list import replace_substring_in_list_of_strings
+from deepmd_iterative.common.list import (
+    replace_substring_in_string_list,
+    string_list_to_textfile,
+    textfile_to_string_list,
+)
 from deepmd_iterative.common.machine import get_machine_spec_for_step
 from deepmd_iterative.common.slurm import replace_in_slurm_file_general
 from deepmd_iterative.training.utils import (
@@ -170,7 +176,7 @@ def main(
         jobs_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh",
         error_msg=f"No SLURM file present for {current_step.capitalize()} / {current_phase.capitalize()} on this machine.",
     )
-    master_job_file = file_to_list_of_strings(
+    master_job_file = textfile_to_string_list(
         jobs_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh"
     )
     del jobs_path
@@ -532,8 +538,8 @@ def main(
             training_config["job_email"],
         )
 
-        job_file = replace_substring_in_list_of_strings(job_file, "_R_DEEPMD_VERSION_", f"{training_config['deepmd_model_version']}")
-        write_list_of_strings_to_file(
+        job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_VERSION_", f"{training_config['deepmd_model_version']}")
+        string_list_to_textfile(
             local_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh",
             job_file,
         )

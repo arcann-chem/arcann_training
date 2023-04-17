@@ -1,3 +1,18 @@
+"""
+Created: 2023/01/01
+Last modified: 2023/04/17
+
+This module contains functions for checking the availability of certain commands on the system, as well as a function for validating the current working directory during the execution of a specific step.
+
+Functions
+---------
+check_atomsk(atomsk_path: str = None) -> str
+    Check if the Atomsk command is available on the system.
+check_vmd(vmd_path: str = None) -> str
+    Check if the VMD command is available on the system.
+validate_step_folder(step_name: str) -> None
+    Check if the current directory matches the expected directory for the given step.
+"""
 # Standard library modules
 import logging
 import os
@@ -5,7 +20,7 @@ import subprocess
 from pathlib import Path
 
 # Local imports
-from deepmd_iterative.common.errors import catch_errors_decorator
+from deepmd_iterative.common.utils import catch_errors_decorator
 
 # Unittested
 @catch_errors_decorator

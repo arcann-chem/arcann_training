@@ -1,3 +1,7 @@
+"""
+Created: 2023/01/01
+Last modified: 2023/04/17
+"""
 from pathlib import Path
 import logging
 import sys
@@ -7,8 +11,8 @@ import numpy as np
 
 # deepmd_iterative imports
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.filesystem import (
-    file_to_list_of_strings,
+from deepmd_iterative.common.list import (
+    textfile_to_string_list,
 )
 from deepmd_iterative.common.json import (
     load_json_file,
@@ -60,7 +64,7 @@ def main(
     for nnp in range(1, main_config["nnp_count"] + 1):
         local_path = Path(".").resolve() / f"{nnp}"
         if (local_path / "training.out").is_file():
-            training_out = file_to_list_of_strings((local_path / "training.out"))
+            training_out = textfile_to_string_list((local_path / "training.out"))
             if any("finished training" in s for s in training_out):
                 training_out_time = [s for s in training_out if "training time" in s]
                 training_out_time_split = []

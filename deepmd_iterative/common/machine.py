@@ -1,6 +1,6 @@
 """
 Created: 2023/01/01
-Last modified: 2023/03/27
+Last modified: 2023/04/17
 
 The machine module provides functions for machine operations.
 
@@ -120,12 +120,12 @@ def get_machine_config_files(
     machine_configs = []
 
     # Check for 'machine.json' file in the training directory.
-    training_config_path = training_path / "files" / "machine.json"
+    training_config_path = training_path / "data" / "machine.json"
     if training_config_path.is_file():
         machine_configs.append(load_json_file(training_config_path))
 
     # Check for 'machine.json' file in the deepmd_iterative directory.
-    default_config_path = deepmd_iterative_path / "data" / "machine.json"
+    default_config_path = deepmd_iterative_path / "assets" / "machine.json"
     if default_config_path.is_file():
         machine_configs.append(load_json_file(default_config_path))
 

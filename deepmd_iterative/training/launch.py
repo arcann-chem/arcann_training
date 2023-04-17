@@ -1,3 +1,7 @@
+"""
+Created: 2023/01/01
+Last modified: 2023/04/17
+"""
 from pathlib import Path
 import logging
 import sys
@@ -49,7 +53,7 @@ def main(
     curr_iter = int(padded_curr_iter)
 
     # Load the default config (JSON)
-    default_config = load_default_json_file(deepmd_iterative_path / "data" / "default_config.json")[current_step]
+    default_config = load_default_json_file(deepmd_iterative_path / "assets" / "default_config.json")[current_step]
     default_config_present = bool(default_config)
     logging.debug(f"default_config: {default_config}")
     logging.debug(f"default_config_present: {default_config_present}")
