@@ -104,23 +104,23 @@ def main(
     if curr_iter > 0:
         prev_iter = curr_iter - 1
         padded_prev_iter = str(prev_iter).zfill(3)
-        previous_training_config = load_json_file((control_path / f"training_{padded_prev_iter}.json"))
+        prev_training_config = load_json_file((control_path / f"training_{padded_prev_iter}.json"))
         if prev_iter > 0:
-            previous_exploration_config = load_json_file((control_path / f"exploration_{padded_prev_iter}.json"))
+            prev_exploration_config = load_json_file((control_path / f"exploration_{padded_prev_iter}.json"))
         else:
-            previous_exploration_config = {}
+            prev_exploration_config = {}
     else:
-        previous_training_config = {}
-        previous_exploration_config = {}
+        prev_training_config = {}
+        prev_exploration_config = {}
 
     # Check if the atomsk package is installed
-    atomsk_bin = check_atomsk(get_key_in_dict("atomsk_path", user_config, previous_exploration_config, default_config))
+    atomsk_bin = check_atomsk(get_key_in_dict("atomsk_path", user_config, prev_exploration_config, default_config))
     # Update new input
     current_config["atomsk_path"] = atomsk_bin
 
     # Get the machine keyword (input override previous training override default_config)
     # And update the new input
-    user_machine_keyword = get_machine_keyword(user_config, previous_training_config, default_config)
+    user_machine_keyword = get_machine_keyword(user_config, prev_training_config, default_config)
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     current_config["user_machine_keyword"] = user_machine_keyword
     logging.debug(f"current_config: {current_config}")
@@ -161,17 +161,17 @@ def main(
     # Set the exploration parameters in the JSON file
     exploration_config = {
         **exploration_config,
-        "deepmd_model_version": previous_training_config["deepmd_model_version"],
+        "deepmd_model_version": prev_training_config["deepmd_model_version"],
         "nnp_count": main_config["nnp_count"],
         "exploration_type": main_config["exploration_type"],
-        "traj_count": get_key_in_dict("traj_count", user_config, previous_exploration_config, default_config)
+        "traj_count": get_key_in_dict("traj_count", user_config, prev_exploration_config, default_config)
     }
     # Update the new input
     current_config["traj_count"] = exploration_config["traj_count"]
     logging.debug(f"current_config: {current_config}")
 
     # Fill the missing values from the input. We don't do exploration because it is subsys dependent and single value and not list
-    current_config = set_input_explor_json(user_config,previous_exploration_config,default_config,current_config,main_config)
+    current_config = set_input_explor_json(user_config,prev_exploration_config,default_config,current_config,main_config)
     logging.debug(f"current_config: {current_config}")
 
     # Set additional machine-related parameters in the JSON file
@@ -187,8 +187,8 @@ def main(
 
     # Check if the job file exists
     job_file_name = f"job_deepmd_{exploration_config['exploration_type']}_{exploration_config['arch_type']}_{machine}.sh"
-    if (current_path.parent / "data" / job_file_name ).is_file():
-            master_job_file = textfile_to_string_list(current_path.parent / "data" / job_file_name)
+    if (current_path.parent / "files" / job_file_name ).is_file():
+            master_job_file = textfile_to_string_list(current_path.parent / "files" / job_file_name)
     else:
         check_file_existence(
             jobs_path / job_file_name,
@@ -198,7 +198,7 @@ def main(
             jobs_path / job_file_name,
         )
     logging.debug(f"master_job_file: {master_job_file[0:5]}, {master_job_file[-5:-1]}")
-    current_config["job_email"] = get_key_in_dict("job_email", user_config, previous_exploration_config, default_config)
+    current_config["job_email"] = get_key_in_dict("job_email", user_config, prev_exploration_config, default_config)
     del jobs_path, job_file_name
 
     ### Preparation of the exploration
@@ -302,7 +302,7 @@ def main(
                 it_subsys_nr,
                 training_path,
                 padded_curr_iter,
-                previous_exploration_config,
+                prev_exploration_config,
                 user_config_present,
                 subsys_disturbed_start,
             )
@@ -347,7 +347,7 @@ def main(
                 # Auto value
                 else:
                     subsys_nb_steps *= update_subsys_nb_steps_factor(
-                        previous_exploration_config, it_subsys_nr
+                        prev_exploration_config, it_subsys_nr
                     )
                     ### Update if over Max value
                     if subsys_nb_steps > subsys_max_exp_time_ps / subsys_timestep_ps:
@@ -363,7 +363,7 @@ def main(
                     # Abritary factor
                     subsys_walltime_approx_s = int(
                         (
-                            previous_exploration_config["subsys_nr"][it_subsys_nr][
+                            prev_exploration_config["subsys_nr"][it_subsys_nr][
                                 "s_per_step"
                             ]
                             * subsys_nb_steps
@@ -392,7 +392,7 @@ def main(
             if curr_iter == 1:
                 subsys_lammps_data_fn = it_subsys_nr + ".lmp"
                 subsys_lammps_data = textfile_to_string_list(
-                    training_path / "inputs" / subsys_lammps_data_fn
+                    training_path / "files" / subsys_lammps_data_fn
                 )
                 subsys_ipi_xyz_fn = it_subsys_nr + ".xyz"
                 input_replace_dict["_R_DATA_FILE_"] = subsys_ipi_xyz_fn
@@ -442,7 +442,7 @@ def main(
                 # Auto value
                 else:
                     subsys_nb_steps *= update_subsys_nb_steps_factor(
-                        previous_exploration_config, it_subsys_nr
+                        prev_exploration_config, it_subsys_nr
                     )
                     ### Update if over Max value
                     if subsys_nb_steps > subsys_max_exp_time_ps / subsys_timestep_ps:
@@ -458,7 +458,7 @@ def main(
                     # Abritary factor
                     subsys_walltime_approx_s = int(
                         (
-                            previous_exploration_config["subsys_nr"][it_subsys_nr][
+                            prev_exploration_config["subsys_nr"][it_subsys_nr][
                                 "s_per_step"
                             ]
                             * subsys_nb_steps
@@ -486,7 +486,7 @@ def main(
 
                 models_list, models_string = create_models_list(
                     main_config,
-                    previous_training_config,
+                    prev_training_config,
                     it_nnp,
                     padded_curr_iter,
                     training_path,
@@ -799,6 +799,7 @@ def main(
             "temperature_K"
         ] = subsys_temperature_K
         exploration_config["subsys_nr"][it_subsys_nr]["timestep_ps"] = subsys_timestep_ps
+        exploration_config["subsys_nr"][it_subsys_nr]["disturbed_start"] = subsys_disturbed_start
 
         main_config["subsys_nr"][it_subsys_nr]["cell"] = subsys_cell
         main_config["subsys_nr"][it_subsys_nr]["nb_atm"] = subsys_nb_atm

@@ -1,6 +1,6 @@
 """
 Created: 2023/01/01
-Last modified: 2023/03/27
+Last modified: 2023/04/17
 
 The plumed module provides functions to manipulate PLUMED data (as list of strings).
 
@@ -34,8 +34,7 @@ def analyze_plumed_file_for_movres(
     Tuple[bool, Union[int, bool]]
         A tuple containing two items:
         - A boolean indicating whether the MOVINGRESTRAINT keyword is present in the Plumed file.
-        - An integer indicating the value of the last STEP keyword in the MOVINGRESTRAINT section of the Plumed file,
-          or False if the STEP keyword is not found.
+        - An integer indicating the value of the last STEP keyword in the MOVINGRESTRAINT section of the Plumed file, or False if the STEP keyword is not found.
 
     Raises
     ------

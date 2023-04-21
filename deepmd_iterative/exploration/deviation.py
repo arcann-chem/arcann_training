@@ -1,3 +1,7 @@
+"""
+Created: 2023/01/01
+Last modified: 2023/04/17
+"""
 from pathlib import Path
 import logging
 import sys
@@ -15,59 +19,55 @@ from deepmd_iterative.common.json import (
 )
 from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.generate_config import set_subsys_params_deviation
-from deepmd_iterative.exploration.utils import get_last_frame_number
-from deepmd_iterative.common.json_parameters import set_new_input_explordevi_json
+from deepmd_iterative.exploration.utils import get_last_frame_number, set_input_explordevi_json, get_subsys_deviation
 
 def main(
-    step_name: str,
-    phase_name: str,
+    current_step: str,
+    current_phase: str,
     deepmd_iterative_path: Path,
     fake_machine = None,
-    input_fn: str = "input.json",
+    user_config_filename: str = "input.json",
 ):
     # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()}")
+    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}")
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
     # Check if the current folder is correct for the current step
-    validate_step_folder(step_name)
+    validate_step_folder(current_step)
 
     # Get the current iteration number
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
 
-    # Load the master input JSON file for the program
-    default_present = False
-    default_json = load_default_json_file(deepmd_iterative_path / "data" / "input_defaults.json")[step_name]
-    if bool(default_json):
-        default_present = True
-    logging.debug(f"default_json: {default_json}")
-    logging.debug(f"default_present: {default_present}")
+    # Load the default config (JSON)
+    default_config = load_default_json_file(deepmd_iterative_path / "assets" / "default_config.json")[current_step]
+    default_config_present = bool(default_config)
+    logging.debug(f"default_config: {default_config}")
+    logging.debug(f"default_config_present: {default_config_present}")
 
-    # Load the user input JSON file
-    if (current_path / input_fn).is_file():
-        input_json = load_json_file((current_path / input_fn))
-        input_present = True
+    # Load the user config (JSON)
+    if (current_path / user_config_filename).is_file():
+        user_config = load_json_file((current_path / user_config_filename))
     else:
-        input_json = {}
-        input_present = False
-    logging.debug(f"input_json: {input_json}")
-    logging.debug(f"input_present: {input_present}")
+        user_config = {}
+    user_config_present = bool(user_config)
+    logging.debug(f"user_config: {user_config}")
+    logging.debug(f"user_config_present: {user_config_present}")
 
     # Make a deepcopy
-    new_input_json = copy.deepcopy(input_json)
+    current_config = copy.deepcopy(user_config)
 
     # Get control path, config JSON and exploration JSON
     control_path = training_path / "control"
-    config_json = load_json_file((control_path / "config.json"))
-    exploration_json = load_json_file(
+    main_config = load_json_file((control_path / "config.json"))
+    exploration_config = load_json_file(
         (control_path / f"exploration_{padded_curr_iter}.json")
     )
 
@@ -75,35 +75,33 @@ def main(
     if curr_iter > 0:
         prev_iter = curr_iter - 1
         padded_prev_iter = str(prev_iter).zfill(3)
-        prevtraining_json = load_json_file((control_path / f"training_{padded_prev_iter}.json"))
+        prev_training_config = load_json_file((control_path / f"training_{padded_prev_iter}.json"))
         if prev_iter > 0:
-            prevexploration_json = load_json_file((control_path / ("exploration_" + padded_prev_iter + ".json")))
+            prev_exploration_config = load_json_file((control_path / ("exploration_" + padded_prev_iter + ".json")))
         else:
-            prevexploration_json = {}
+            prev_exploration_config = {}
     else:
-        prevtraining_json = {}
-        prevexploration_json = {}
+        prev_training_config = {}
+        prev_exploration_config = {}
 
     # Checks
-    if not exploration_json["is_checked"]:
+    if not exploration_config["is_checked"]:
         logging.error(f"Lock found. Execute first: exploration check.")
         logging.error(f"Aborting...")
         return 1
     if (
-        exploration_json["exploration_type"] == "i-PI"
-        and not exploration_json["is_rechecked"]
+        exploration_config["exploration_type"] == "i-PI"
+        and not exploration_config["is_rechecked"]
     ):
         logging.critical("Lock found. Execute first: first: exploration recheck.")
         logging.critical("Aborting...")
         return 1
 
     # Fill the missing values from the input. We don't do exploration because it is subsys dependent and single value and not list
-    new_input_json = set_new_input_explordevi_json(input_json,prevexploration_json,default_json,new_input_json,config_json)
-    logging.debug(f"new_input_json: {new_input_json}")
-    
-    for it0_subsys_nr, it_subsys_nr in enumerate(config_json["subsys_nr"]):
+    current_config = set_input_explordevi_json(user_config,prev_exploration_config,default_config,current_config,main_config)
+    logging.debug(f"current_config: {current_config}")
+    for it0_subsys_nr, it_subsys_nr in enumerate(main_config["subsys_nr"]):
 
-        set_new_input_explordevi_json
         # Set the subsys params for deviation selection
         (
             max_candidates,
@@ -111,19 +109,11 @@ def main(
             sigma_high,
             sigma_high_limit,
             ignore_first_x_ps,
-        ) = set_subsys_params_deviation(
-            input_json,
-            new_input_json,
-            default_input_json,
-            config_json,
-            step_name,
-            default_present,
-            it0_subsys_nr,
-        )
+        ) = get_subsys_deviation(current_config,it0_subsys_nr)
 
         # Initialize
-        exploration_json["subsys_nr"][it_subsys_nr] = {
-            **exploration_json["subsys_nr"][it_subsys_nr],
+        exploration_config["subsys_nr"][it_subsys_nr] = {
+            **exploration_config["subsys_nr"][it_subsys_nr],
             "max_candidates": max_candidates,
             "sigma_low": sigma_low,
             "sigma_high": sigma_high,
@@ -131,9 +121,9 @@ def main(
             "ignore_first_x_ps": ignore_first_x_ps,
             "mean_deviation_max_f": 0,
             "std_deviation_max_f": 0,
-            "nb_total": 0,
-            "nb_candidates": 0,
-            "nb_rejected": 0,
+            "total_count": 0,
+            "candidates_count": 0,
+            "rejected_count": 0,
         }
 
         skipped_traj = 0
@@ -141,15 +131,15 @@ def main(
 
         while (
             start_row_number
-            * exploration_json["subsys_nr"][it_subsys_nr]["print_every_x_steps"]
-            * exploration_json["subsys_nr"][it_subsys_nr]["timestep_ps"]
-            < exploration_json["subsys_nr"][it_subsys_nr]["ignore_first_x_ps"]
+            * exploration_config["subsys_nr"][it_subsys_nr]["print_every_x_steps"]
+            * exploration_config["subsys_nr"][it_subsys_nr]["timestep_ps"]
+            < exploration_config["subsys_nr"][it_subsys_nr]["ignore_first_x_ps"]
         ):
             start_row_number = start_row_number + 1
         logging.debug(f"start_row_number: {start_row_number}")
 
-        for it_nnp in range(1, config_json["nb_nnp"] + 1):
-            for it_number in range(1, exploration_json["nb_traj"] + 1):
+        for it_nnp in range(1, main_config["nnp_count"] + 1):
+            for it_number in range(1, exploration_config["traj_count"] + 1):
 
                 logging.debug(f"{it_subsys_nr} / {it_nnp} / {it_number}")
 
@@ -179,8 +169,8 @@ def main(
                 # Get the number of exptected steps
                 nb_steps_expected = (
                     (
-                        exploration_json["subsys_nr"][it_subsys_nr]["nb_steps"]
-                        // exploration_json["subsys_nr"][it_subsys_nr][
+                        exploration_config["subsys_nr"][it_subsys_nr]["nb_steps"]
+                        // exploration_config["subsys_nr"][it_subsys_nr][
                             "print_every_x_steps"
                         ]
                     )
@@ -193,13 +183,13 @@ def main(
                     model_deviation = np.genfromtxt(
                         str(local_path / model_deviation_filename)
                     )
-                    if exploration_json["exploration_type"] == "lammps":
+                    if exploration_config["exploration_type"] == "lammps":
                         total_row_number = model_deviation.shape[0]
-                    elif exploration_json["exploration_type"] == "i-PI":
+                    elif exploration_config["exploration_type"] == "i-PI":
                         total_row_number = model_deviation.shape[0] + 1
 
                     if nb_steps_expected > (total_row_number - start_row_number):
-                        QbC_stats["nb_total"] = nb_steps_expected
+                        QbC_stats["total_count"] = nb_steps_expected
                         logging.critical(
                             f"Exploration {it_subsys_nr}/{it_nnp}/{it_number}"
                         )
@@ -214,7 +204,7 @@ def main(
                                 "but it has been forced, so it should be ok"
                             )
                     elif nb_steps_expected == (total_row_number - start_row_number):
-                        QbC_stats["nb_total"] = total_row_number - start_row_number
+                        QbC_stats["total_count"] = total_row_number - start_row_number
                     else:
                         logging.error("Unknown error. Please BUG REPORT")
                         logging.error("Aborting...")
@@ -223,7 +213,7 @@ def main(
                     end_row_number = get_last_frame_number(
                         model_deviation,
                         sigma_high_limit,
-                        exploration_json["subsys_nr"][it_subsys_nr]["disturbed_start"],
+                        exploration_config["subsys_nr"][it_subsys_nr]["disturbed_start"],
                     )
                     logging.debug(
                         f"end_row_number: {end_row_number}, start_row_number: {start_row_number}"
@@ -311,47 +301,47 @@ def main(
                         **QbC_stats,
                         "mean_deviation_max_f": mean_deviation_max_f,
                         "std_deviation_max_f": std_deviation_max_f,
-                        "nb_good": len(good[:, 0].astype(int).tolist())
+                        "good_count": len(good[:, 0].astype(int).tolist())
                         if good.size > 0
                         else 0,
-                        "nb_rejected": len(rejected[:, 0].astype(int).tolist())
+                        "rejected_count": len(rejected[:, 0].astype(int).tolist())
                         if rejected.size > 0
                         else 0,
-                        "nb_candidates": len(candidates[:, 0].astype(int).tolist())
+                        "candidates_count": len(candidates[:, 0].astype(int).tolist())
                         if candidates.size > 0
                         else 0,
                     }
 
                     # If the traj is smaller than expected (forced case) add the missing as rejected
                     if (
-                        QbC_stats["nb_good"]
-                        + QbC_stats["nb_rejected"]
-                        + QbC_stats["nb_candidates"]
+                        QbC_stats["good_count"]
+                        + QbC_stats["rejected_count"]
+                        + QbC_stats["candidates_count"]
                     ) < nb_steps_expected:
-                        QbC_stats["nb_rejected"] = (
-                            QbC_stats["nb_rejected"]
+                        QbC_stats["rejected_count"] = (
+                            QbC_stats["rejected_count"]
                             + QbC_stats
                             - (
-                                QbC_stats["nb_good"]
-                                + QbC_stats["nb_rejected"]
-                                + QbC_stats["nb_candidates"]
+                                QbC_stats["good_count"]
+                                + QbC_stats["rejected_count"]
+                                + QbC_stats["candidates_count"]
                             )
                         )
 
                     # Only if we have corect stats, add it
                     if (end_row_number > start_row_number) or (end_row_number == -1):
-                        exploration_json["subsys_nr"][it_subsys_nr][
+                        exploration_config["subsys_nr"][it_subsys_nr][
                             "mean_deviation_max_f"
                         ] = (
-                            exploration_json["subsys_nr"][it_subsys_nr][
+                            exploration_config["subsys_nr"][it_subsys_nr][
                                 "mean_deviation_max_f"
                             ]
                             + QbC_stats["mean_deviation_max_f"]
                         )
-                        exploration_json["subsys_nr"][it_subsys_nr][
+                        exploration_config["subsys_nr"][it_subsys_nr][
                             "std_deviation_max_f"
                         ] = (
-                            exploration_json["subsys_nr"][it_subsys_nr][
+                            exploration_config["subsys_nr"][it_subsys_nr][
                                 "std_deviation_max_f"
                             ]
                             + QbC_stats["std_deviation_max_f"]
@@ -371,25 +361,25 @@ def main(
 
                     QbC_stats = {
                         **QbC_stats,
-                        "nb_total": nb_steps_expected,
+                        "total_count": nb_steps_expected,
                         "mean_deviation_max_f": 999.0,
                         "std_deviation_max_f": 999.0,
-                        "nb_good": 0,
-                        "nb_rejected": nb_steps_expected,
-                        "nb_candidates": 0,
+                        "good_count": 0,
+                        "rejected_count": nb_steps_expected,
+                        "candidates_count": 0,
                     }
 
-                exploration_json["subsys_nr"][it_subsys_nr]["nb_total"] = (
-                    exploration_json["subsys_nr"][it_subsys_nr]["nb_total"]
-                    + QbC_stats["nb_total"]
+                exploration_config["subsys_nr"][it_subsys_nr]["total_count"] = (
+                    exploration_config["subsys_nr"][it_subsys_nr]["total_count"]
+                    + QbC_stats["total_count"]
                 )
-                exploration_json["subsys_nr"][it_subsys_nr]["nb_candidates"] = (
-                    exploration_json["subsys_nr"][it_subsys_nr]["nb_candidates"]
-                    + QbC_stats["nb_candidates"]
+                exploration_config["subsys_nr"][it_subsys_nr]["candidates_count"] = (
+                    exploration_config["subsys_nr"][it_subsys_nr]["candidates_count"]
+                    + QbC_stats["candidates_count"]
                 )
-                exploration_json["subsys_nr"][it_subsys_nr]["nb_rejected"] = (
-                    exploration_json["subsys_nr"][it_subsys_nr]["nb_rejected"]
-                    + QbC_stats["nb_rejected"]
+                exploration_config["subsys_nr"][it_subsys_nr]["rejected_count"] = (
+                    exploration_config["subsys_nr"][it_subsys_nr]["rejected_count"]
+                    + QbC_stats["rejected_count"]
                 )
 
                 write_json_file(QbC_stats, local_path / "QbC_stats.json", False)
@@ -407,18 +397,18 @@ def main(
             del it_number
 
         # Average for the subsys (with adjustment, remove the skipped ones)
-        exploration_json["subsys_nr"][it_subsys_nr][
+        exploration_config["subsys_nr"][it_subsys_nr][
             "mean_deviation_max_f"
-        ] = exploration_json["subsys_nr"][it_subsys_nr]["mean_deviation_max_f"] / (
-            exploration_json["nb_nnp"]
-            + len(range(1, exploration_json["nb_traj"] + 1))
+        ] = exploration_config["subsys_nr"][it_subsys_nr]["mean_deviation_max_f"] / (
+            exploration_config["nnp_count"]
+            + len(range(1, exploration_config["traj_count"] + 1))
             - skipped_traj
         )
-        exploration_json["subsys_nr"][it_subsys_nr][
+        exploration_config["subsys_nr"][it_subsys_nr][
             "std_deviation_max_f"
-        ] = exploration_json["subsys_nr"][it_subsys_nr]["std_deviation_max_f"] / (
-            exploration_json["nb_nnp"]
-            + len(range(1, exploration_json["nb_traj"] + 1))
+        ] = exploration_config["subsys_nr"][it_subsys_nr]["std_deviation_max_f"] / (
+            exploration_config["nnp_count"]
+            + len(range(1, exploration_config["traj_count"] + 1))
             - skipped_traj
         )
 
@@ -434,7 +424,7 @@ def main(
         )
 
     del it0_subsys_nr, it_subsys_nr
-    for it0_subsys_nr, it_subsys_nr in enumerate(exploration_json["subsys_nr"]):
+    for it0_subsys_nr, it_subsys_nr in enumerate(exploration_config["subsys_nr"]):
 
         # Set the subsys params for deviation selection
         (
@@ -443,25 +433,17 @@ def main(
             sigma_high,
             sigma_high_limit,
             ignore_first_x_ps,
-        ) = set_subsys_params_deviation(
-            input_json,
-            new_input_json,
-            default_input_json,
-            config_json,
-            step_name,
-            default_present,
-            it0_subsys_nr,
-        )
+        ) = get_subsys_deviation(current_config,it0_subsys_nr)
 
         # Initialize
-        exploration_json["subsys_nr"][it_subsys_nr] = {
-            **exploration_json["subsys_nr"][it_subsys_nr],
-            "nb_kept": 0,
-            "nb_discarded": 0,
+        exploration_config["subsys_nr"][it_subsys_nr] = {
+            **exploration_config["subsys_nr"][it_subsys_nr],
+            "kept_count": 0,
+            "discarded_count": 0,
         }
 
-        for it_nnp in range(1, config_json["nb_nnp"] + 1):
-            for it_number in range(1, exploration_json["nb_traj"] + 1):
+        for it_nnp in range(1, main_config["nnp_count"] + 1):
+            for it_number in range(1, exploration_config["traj_count"] + 1):
 
                 # Get the local path and the name of model_deviation file
                 local_path = (
@@ -483,17 +465,17 @@ def main(
                 # If it was not skipped
                 if not (local_path / "skip").is_file():
 
-                    # If nb_candidates is over max_candidates
+                    # If candidates_count is over max_candidates
                     if (
-                        exploration_json["subsys_nr"][it_subsys_nr]["nb_candidates"]
+                        exploration_config["subsys_nr"][it_subsys_nr]["candidates_count"]
                         <= max_candidates
                     ):
                         selection_factor = 1
                     else:
                         selection_factor = (
-                            QbC_stats["nb_candidates"]
-                            / exploration_json["subsys_nr"][it_subsys_nr][
-                                "nb_candidates"
+                            QbC_stats["candidates_count"]
+                            / exploration_config["subsys_nr"][it_subsys_nr][
+                                "candidates_count"
                             ]
                         )
 
@@ -536,10 +518,10 @@ def main(
                     }
                     QbC_stats = {
                         **QbC_stats,
-                        "nb_kept": len(kept_indexes.astype(int).tolist())
+                        "kept_count": len(kept_indexes.astype(int).tolist())
                         if kept_indexes.size > 0
                         else 0,
-                        "nb_discarded": len(discarded_indexes.astype(int).tolist())
+                        "discarded_count": len(discarded_indexes.astype(int).tolist())
                         if discarded_indexes.size > 0
                         else 0,
                     }
@@ -578,18 +560,18 @@ def main(
                         **QbC_stats,
                         "selection_factor": 0,
                         "max_candidates_local": 0,
-                        "nb_kept": 0,
-                        "nb_discarded": 0,
+                        "kept_count": 0,
+                        "discarded_count": 0,
                         "minimum_index": -1,
                     }
 
-                exploration_json["subsys_nr"][it_subsys_nr]["nb_kept"] = (
-                    exploration_json["subsys_nr"][it_subsys_nr]["nb_kept"]
-                    + QbC_stats["nb_kept"]
+                exploration_config["subsys_nr"][it_subsys_nr]["kept_count"] = (
+                    exploration_config["subsys_nr"][it_subsys_nr]["kept_count"]
+                    + QbC_stats["kept_count"]
                 )
-                exploration_json["subsys_nr"][it_subsys_nr]["nb_discarded"] = (
-                    exploration_json["subsys_nr"][it_subsys_nr]["nb_discarded"]
-                    + QbC_stats["nb_discarded"]
+                exploration_config["subsys_nr"][it_subsys_nr]["discarded_count"] = (
+                    exploration_config["subsys_nr"][it_subsys_nr]["discarded_count"]
+                    + QbC_stats["discarded_count"]
                 )
 
                 write_json_file(QbC_stats, local_path / "QbC_stats.json", False)
@@ -603,20 +585,20 @@ def main(
         del max_candidates, sigma_low, sigma_high, sigma_high_limit, ignore_first_x_ps
     del it0_subsys_nr, it_subsys_nr
 
-    exploration_json["is_deviated"] = True
+    exploration_config["is_deviated"] = True
     write_json_file(
-        exploration_json, (control_path / f"exploration_{padded_curr_iter}.json")
+        exploration_config, (control_path / f"exploration_{padded_curr_iter}.json")
     )
-    backup_and_overwrite_json_file(new_input_json, (current_path / input_fn))
+    backup_and_overwrite_json_file(current_config, (current_path / user_config_filename))
     logging.info(
-        f"Step: {step_name.capitalize()} - Phase: {phase_name.capitalize()} is a succes !"
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success !"
     )
 
     # Cleaning
     del control_path
-    del config_json
+    del main_config
     del curr_iter, padded_curr_iter
-    del exploration_json
+    del exploration_config
     del training_path, current_path
 
     return 0
@@ -629,7 +611,7 @@ if __name__ == "__main__":
             "deviation",
             Path(sys.argv[1]),
             fake_machine=sys.argv[2],
-            input_fn=sys.argv[3],
+            user_config_filename=sys.argv[3],
         )
     else:
         pass

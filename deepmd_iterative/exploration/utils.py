@@ -1,6 +1,29 @@
 """
 Created: 2023/01/01
 Last modified: 2023/04/17
+
+Functions
+---------
+set_input_explor_json(input_json: Dict, previous_json: Dict, default_json: Dict, new_input_json: Dict, config_json: Dict) -> Dict
+    Update and complete input JSON with user-defined parameters, previously defined parameters, and default parameters for training.
+
+get_subsys_exploration(new_input_json: Dict, it0_subsys_nr: int) -> Tuple[Union[float, int],Union[float, int],Union[float, int],Union[float, int],Union[float, int],Union[float, int],Union[float, int],Union[float, int],bool]
+    Returns a tuple of subsystem exploration parameters based on the input JSON and subsystem number.
+
+generate_starting_points(exploration_type: int, it_subsys_nr: int, training_path: str, previous_iteration_zfill: str, prevexploration_json: Dict, input_present: bool, subsys_disturbed_start: bool) -> Tuple[List[str], List[str], bool]
+    Generates a list of starting point file names.
+
+create_models_list(config_json: Dict, prevtraining_json: Dict, it_nnp: int, previous_iteration_zfill: str, training_path: Path, local_path: Path) -> Tuple[List[str], str]
+    Generate a list of model file names and create symbolic links to the corresponding model files.
+
+get_last_frame_number(model_deviation: np.ndarray, sigma_high_limit: float, is_start_disturbed: bool) -> int
+    Returns the index of the last frame to be processed based on the given parameters.
+
+update_subsys_nb_steps_factor(previous_exploration_config: Dict, it0_subsys_nr: int) -> int
+    Calculates a ratio based on information from a dictionary and returns a multiplying factor for subsys_nb_steps.
+
+set_input_explordevi_json(input_json: Dict, previous_json: Dict, default_json: Dict, new_input_json: Dict, config_json: Dict) -> Dict
+    Updates the training JSON with input JSON, previous JSON and default JSON.
 """
 # Standard library modules
 import subprocess
@@ -91,7 +114,7 @@ def set_input_explor_json(
             value = default_json[key]
             default_used = True
         else:
-            error_msg = f'"{key}" not found in any JSON.'
+            error_msg = f"'{key}' not found in any JSON."
             raise KeyError(error_msg)
 
         # Everything is subsys dependent so a list
@@ -148,21 +171,35 @@ def get_subsys_exploration(
     """
     Returns a tuple of subsystem exploration parameters based on the input JSON and subsystem number.
 
-    Args:
-        new_input_json (Dict): A dictionary object containing input parameters.
-        it0_subsys_nr (int): An integer representing the subsystem index.
+    Parameters
+    ----------
+    new_input_json : Dict[str, Any]
+        A dictionary object containing input parameters.
+    it0_subsys_nr : int
+        An integer representing the subsystem index.
 
-    Returns:
+    Returns
+    -------
+    Tuple[float, float, float, float, float, float, float, float, bool]
         A tuple containing the subsystem exploration parameters:
-        - timestep_ps (float): The simulation timestep in picoseconds.
-        - temperature_K (float): The simulation temperature in Kelvin.
-        - exp_time_ps (float): The total exploration time in picoseconds.
-        - max_exp_time_ps (float): The maximum allowed exploration time in picoseconds.
-        - job_walltime_h (float): The maximum job walltime in hours.
-        - init_exp_time_ps (float): The initial exploration time in picoseconds.
-        - init_job_walltime_h (float): The initial job walltime in hours.
-        - print_interval_mult (float): The print interval multiplier.
-        - disturbed_start (bool): Whether to start the exploration from a disturbed minimum.
+        - timestep_ps : float
+            The simulation timestep in picoseconds.
+        - temperature_K : float
+            The simulation temperature in Kelvin.
+        - exp_time_ps : float
+            The total exploration time in picoseconds.
+        - max_exp_time_ps : float
+            The maximum allowed exploration time in picoseconds.
+        - job_walltime_h : float
+            The maximum job walltime in hours.
+        - init_exp_time_ps : float
+            The initial exploration time in picoseconds.
+        - init_job_walltime_h : float
+            The initial job walltime in hours.
+        - print_interval_mult : float
+            The print interval multiplier.
+        - disturbed_start : bool
+            Whether to start the exploration from a disturbed minimum.
     """
     subsys_values = []
     for key in [
@@ -189,23 +226,15 @@ def get_subsys_deviation(
     Union[float, int],
     Union[float, int],
     Union[float, int],
-    Union[float, int],
-    Union[float, int],
-    Union[float, int],
-    bool,
 ]:
 
     subsys_values = []
     for key in [
-        "timestep_ps",
-        "temperature_K",
-        "exp_time_ps",
-        "max_exp_time_ps",
-        "job_walltime_h",
-        "init_exp_time_ps",
-        "init_job_walltime_h",
-        "print_interval_mult",
-        "disturbed_start",
+        "max_candidates",
+        "sigma_low",
+        "sigma_high",
+        "sigma_high_limit",
+        "ignore_first_x_ps",
     ]:
         subsys_values.append(new_input_json[key][it0_subsys_nr])
     return tuple(subsys_values)
@@ -433,3 +462,88 @@ def update_subsys_nb_steps_factor(
         return 2
     else:
         return 1
+
+
+@catch_errors_decorator
+def set_input_explordevi_json(
+    input_json: Dict,
+    previous_json: Dict,
+    default_json: Dict,
+    new_input_json: Dict,
+    config_json: Dict,
+) -> Dict:
+    """
+    Updates the training JSON with input JSON, previous JSON and default JSON.
+
+    Args:
+    input_json (Dict): The input JSON containing user-defined parameters.
+    previous_json (Dict): The previous JSON containing previously defined parameters.
+    default_json (Dict): The default JSON containing default parameters.
+    new_input_json (Dict): The inputJSON udpated/completed with previous/defaults.
+
+    Returns:
+    Dict: an input JSON udpated/completed with previous/defaults
+    """
+
+    if config_json["exploration_type"] == "lammps":
+        exploration_dep = 0
+    elif config_json["exploration_type"] == "i-PI":
+        exploration_dep = 1
+    else:
+        error_msg = f"{config_json['exploration_type']} is not known."
+        raise ValueError(error_msg)
+
+    subsys_count = len(config_json.get('subsys_nr', []))
+
+    for key in [
+        "max_candidates",
+        "sigma_low",
+        "sigma_high",
+        "sigma_high_limit",
+        "ignore_first_x_ps",
+    ]:
+        # Get the value
+        default_used = False
+        if key in input_json:
+            if input_json[key] == "default" and key in default_json:
+                value = default_json[key]
+                default_used = True
+            else:
+                value = input_json[key]
+        elif key in previous_json:
+            value = previous_json[key]
+        elif key in default_json:
+            value = default_json[key]
+            default_used = True
+        else:
+            error_msg = f"'{key}' not found in any JSON."
+            raise KeyError(error_msg)
+
+        # Everything is subsys dependent so a list
+        new_input_json[key] = []
+
+        # Default is used for the key
+        if default_used:
+            new_input_json[key] = [value[exploration_dep]] * subsys_count
+        else:
+            # Check if previous or user provided a list
+            if isinstance(value, List):
+                if len(value) == subsys_count:
+                    for it_value in value:
+                        if isinstance(it_value, (int, float)):
+                            new_input_json[key].append(it_value)
+                        else:
+                            error_msg = f"Wrong type: the type is {type(it_value)} it should be int/float."
+                            raise TypeError(error_msg)
+                else:
+                    error_msg = f"Wrong size: The length of the list should be {subsys_count} [Subsys]."
+                    raise ValueError(error_msg)
+
+            # If it is not a List
+            elif isinstance(value, (int, float)):
+                new_input_json[key] = [value] * subsys_count
+            else:
+                error_msg = f"Wrong type: the type is {type(it_value)} it should be int/float."
+                raise TypeError(error_msg)
+    return new_input_json
+

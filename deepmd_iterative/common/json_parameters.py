@@ -1,10 +1,20 @@
 """
 Created: 2023/01/01
 Last modified: 2023/04/17
+
+Functions
+---------
+get_key_in_dict(key: str, input_json: Dict, previous_json: Dict, default_json: Dict) -> Any
+    Get the value of the key from input JSON, previous JSON or default JSON, and validate its type.
+
+get_machine_keyword(input_json: Dict, previous_json: Dict, default_json: Dict) -> Union[bool, str, List[str]]
+    Get the value of the "user_machine_keyword" key from input JSON, previous JSON or default JSON, and validate its type.
+
+set_main_config(user_config: Dict, default_config: Dict) -> Tuple[Dict, Dict, str]
+    Set the main configuration (JSON) by validating the input JSON with a default JSON. If the input JSON is invalid, an error is raised and the script is terminated.
 """
 # Standard library modules
 import logging
-import sys
 from copy import deepcopy
 from typing import Any, Dict, List, Tuple, Union
 
@@ -120,7 +130,6 @@ def get_machine_keyword(
     return value
 
 
-# Used in initialization - init
 @catch_errors_decorator
 def set_main_config(user_config: Dict, default_config: Dict) -> Tuple[Dict, Dict, str]:
     """
@@ -193,111 +202,3 @@ def set_main_config(user_config: Dict, default_config: Dict) -> Tuple[Dict, Dict
 
     return main_config, current_config, padded_curr_iter
 
-
-
-
-
-
-
-
-
-
-###########################################
-
-
-
-@catch_errors_decorator
-def set_new_input_explordevi_json(
-    input_json: Dict,
-    previous_json: Dict,
-    default_json: Dict,
-    new_input_json: Dict,
-    config_json: Dict,
-) -> Dict:
-    """
-    Updates the training JSON with input JSON, previous JSON and default JSON.
-
-    Args:
-    input_json (Dict): The input JSON containing user-defined parameters.
-    previous_json (Dict): The previous JSON containing previously defined parameters.
-    default_json (Dict): The default JSON containing default parameters.
-    new_input_json (Dict): The inputJSON udpated/completed with previous/defaults.
-
-    Returns:
-    Dict: an input JSON udpated/completed with previous/defaults
-    """
-
-    if config_json["exploration_type"] == "lammps":
-        exploration_dep = 0
-    elif config_json["exploration_type"] == "i-PI":
-        exploration_dep = 1
-    else:
-        logging.error(f"{config_json['exploration_type']} is not known")
-        logging.error(f"Aborting...")
-        sys.exit(1)
-
-    subsys_count = len(config_json["subsys_nr"])
-
-    for key in [
-        "max_candidates",
-        "sigma_low",
-        "sigma_high",
-        "sigma_high_limit",
-        "ignore_first_x_ps",
-    ]:
-
-        # Get the value
-        default_used = False
-        if key in input_json:
-            if input_json[key] == "default" and key in default_json:
-                value = default_json[key]
-                default_used = True
-            else:
-                value = input_json[key]
-        elif key in previous_json:
-            value = previous_json[key]
-        elif key in default_json:
-            value = default_json[key]
-            default_used = True
-        else:
-            logging.error(f'"{key}" not found in any JSON')
-            logging.error(f"Aborting...")
-            sys.exit(1)
-
-        # Everything is subsys dependent so a list
-        new_input_json[key] = []
-
-        # Default is used for the key
-        if default_used:
-            new_input_json[key] = [value[0][exploration_dep]] * subsys_count
-        else:
-            # Check if previous or user provided a list
-            if isinstance(value, List):
-                if len(value) == subsys_count:
-                    for it_value in value:
-                        if isinstance(it_value, (int, float)):
-                            new_input_json[key].append(it_value)
-                        else:
-                            logging.error(
-                                f"Wrong type: the type is {type(it_value)} it should be int/float."
-                            )
-                            logging.error(f"Aborting...")
-                            sys.exit(1)
-                else:
-                    logging.error(
-                        f"Wrong size: The length of the list should be {subsys_count} [Subsys]."
-                    )
-                    logging.error(f"Aborting...")
-                    sys.exit(1)
-
-            # If it is not a List
-            elif isinstance(value, (int, float)):
-                new_input_json[key] = [value] * subsys_count
-            else:
-                logging.error(
-                    f"Wrong type: the type is {type(value)} it should be int/float."
-                )
-                logging.error(f"Aborting...")
-                sys.exit(1)
-
-    return new_input_json

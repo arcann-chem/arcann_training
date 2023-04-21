@@ -2,7 +2,7 @@
 from typing import Dict, Tuple
 
 # Local imports
-from deepmd_iterative.common.errors import catch_errors_decorator
+from deepmd_iterative.common.utils import catch_errors_decorator
 from deepmd_iterative.common.json import read_key_input_json
 
 

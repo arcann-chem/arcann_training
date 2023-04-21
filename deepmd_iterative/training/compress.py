@@ -129,8 +129,8 @@ def main(
 
     # Check if the job file exists
     job_file_name = f"job_deepmd_compress_{machine_spec['arch_type']}_{machine}.sh"
-    if (current_path.parent / "data" / job_file_name ).is_file():
-            master_job_file = textfile_to_string_list(current_path.parent / "data" / job_file_name)
+    if (current_path.parent / "files" / job_file_name ).is_file():
+            master_job_file = textfile_to_string_list(current_path.parent / "files" / job_file_name)
     else:
         check_file_existence(
             jobs_path / job_file_name,
