@@ -44,8 +44,7 @@ module switch dfldatadir/_R_PROJECT_
 cd "${SLURM_SUBMIT_DIR}"/"${SLURM_ARRAY_TASK_ID_PADDED}" || exit 1
 
 # Load the environment depending on the version
-module load flavor/buildcompiler/intel/20 flavor/buildmpi/openmpi/4.0 flavor/cp2k/xc
-module load cp2k/7.1
+module load gnu/8 mpi/openmpi/4 flavor/cp2k/plumed cp2k/9.1
 
 if [ "$(command -v cp2k.psmp)" ]; then
     CP2K_EXE=$(command -v cp2k.psmp)
