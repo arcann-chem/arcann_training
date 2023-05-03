@@ -37,7 +37,7 @@ module switch dfldatadir/_R_PROJECT_
 cd "${SLURM_SUBMIT_DIR}" || exit 1
 
 # Load the environment depending on the version
-module load gnu/8 mpi/openmpi/4 flavor/cp2k/plumed cp2k/9.1
+module load intel/20 mpi/openmpi/4 flavor/cp2k/xc cp2k/8.2
 
 if [ "$(command -v cp2k.psmp)" ]; then
     CP2K_EXE=$(command -v cp2k.psmp)
