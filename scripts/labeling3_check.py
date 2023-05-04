@@ -136,6 +136,9 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
 
     if step_1 == 0 or step_2 == 0:
         logging.critical("ALL jobs have failed/not converged/still running (second step).")
+        logging.critical("Please check manually before relaunching this step")
+        logging.critical("Or create files named \"skip\" to skip some configurations")
+        logging.critical("Aborting...")
         sys.exit(1)
 
     timings_1 = timings_sum_1/step_1
@@ -158,6 +161,7 @@ if total_steps != step_1:
     logging.warning("See 1_not_converged.txt / 1_failed.txt")
 if total_steps != step_2:
     logging.critical("Some jobs have failed/not converged/still running (second step). Check manually")
+    logging.critical("Or create files named \"skip\" to skip some configurations")
     logging.critical("See 2_not_converged.txt / 2_failed.txt")
     sys.exit(1)
 else:
