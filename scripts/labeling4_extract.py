@@ -135,6 +135,8 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
 
             energy_cp2k = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Force_Eval.fe"))
             del energy_cp2k[0]
+            if energy_cp2k[-1] == '\n':
+                del energy_cp2k[-1]
             energy_cp2k = [" ".join(f.replace("\n","").split()) for f in energy_cp2k]
             energy_cp2k = [g.split(" ")[-1] for g in energy_cp2k]
             energy_array = np.asarray(energy_cp2k,dtype=np.float64).flatten()
