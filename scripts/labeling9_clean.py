@@ -46,7 +46,7 @@ cf.remove_file_glob(current_apath,"**/*.inp")
 logging.info("Compressing into a compressed archive...")
 subprocess.call(["tar","-I","bzip2","--exclude=*.wfn","--exclude=*.tar.bz2","-cf","labeling_"+current_iteration_zfill+"_noWFN.tar.bz2",str(Path("."))])
 logging.info("Cleaning done!")
-logging.info("Excute yourself: \"find ./ -name '*.wfn' | tar -cf labeling_"+current_iteration_zfill+"_WFN.tar --files-from -\"  (without the \") if you want to keep the wavefunction in a labeling_"+current_iteration_zfill+"_WFN.tar")
+logging.info("Execute yourself: \"find ./ -name '*.wfn' | tar -cf labeling_"+current_iteration_zfill+"_WFN.tar --files-from -\"  (without the \") if you want to keep the wavefunction in a labeling_"+current_iteration_zfill+"_WFN.tar")
 logging.info("or: \"find ./ -name '2_*.wfn' | tar -cf labeling_"+current_iteration_zfill+"_WFN.tar --files-from -\"  (without the \") if you want to keep only the wavefunction from the 2nd CP2K step (usually your reference) in a labeling_"+current_iteration_zfill+"_WFN.tar")
 logging.info("You can delete any subsys subfolders and the *.py files if the labeling_"+current_iteration_zfill+"_noWFN.tar.bz2 is ok and you saved (don't want) the wavefunction")
 
