@@ -73,7 +73,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
             # configuration skipped
             skipped += 1
             skipped_subsys_candidates += 1
-            skipped_list.append(str(local_apath))
+            skipped_list.append(str(local_apath)+"\n")
         else:
             cp2k_output_file_1 = local_apath/("1_labeling_"+it_step_zfill+".out")
             if cp2k_output_file_1.is_file():
@@ -115,7 +115,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
             # configuration skipped
             skipped += 1
             skipped_subsys_disturbed += 1
-            skipped_list.append(str(local_apath))
+            skipped_list.append(str(local_apath)+"\n")
         else:
             cp2k_output_file_1 = local_apath/("1_labeling_"+it_step_zfill+".out")
             if cp2k_output_file_1.is_file():
