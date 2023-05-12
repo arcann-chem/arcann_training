@@ -166,11 +166,15 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
     cf.remove_file(local_apath.parent/(str(it_subsys_nr)+"_2_not_converged.txt"))
     cf.remove_file(local_apath.parent/(str(it_subsys_nr)+"_1_failed.txt"))
     cf.remove_file(local_apath.parent/(str(it_subsys_nr)+"_2_failed.txt"))
+    cf.remove_file(local_apath.parent/(str(it_subsys_nr)+"_skipped.txt"))
     cf.write_file(local_apath.parent/(str(it_subsys_nr)+"_1_not_converged.txt"),not_converged_list_1) if len(not_converged_list_1) != 0 else True
     cf.write_file(local_apath.parent/(str(it_subsys_nr)+"_2_not_converged.txt"),not_converged_list_2) if len(not_converged_list_2) != 0 else True
+    logging.warning("Not converged calculations in sub-system "+str(it_subsys_nr)) if len(not_converged_list_1)+len(not_converged_list_2) != 0 else True
     cf.write_file(local_apath.parent/(str(it_subsys_nr)+"_1_failed.txt"),failed_list_1) if len(failed_list_1) != 0 else True
     cf.write_file(local_apath.parent/(str(it_subsys_nr)+"_2_failed.txt"),failed_list_2) if len(failed_list_2) != 0 else True
+    logging.warning("Failed calculations in sub-system "+str(it_subsys_nr)) if len(failed_list_1)+len(failed_list_2) != 0 else True
     cf.write_file(local_apath.parent/(str(it_subsys_nr)+"_skipped.txt"),skipped_list) if len(skipped_list) != 0 else True
+    logging.warning("Skipped calculations in sub-system "+str(it_subsys_nr)) if len(skipped_list) != 0 else True
     del timings_1, timings_sum_1, not_converged_list_1, failed_list_1
     del timings_2, timings_sum_2, not_converged_list_2, failed_list_2
     del average_per_step, local_apath
