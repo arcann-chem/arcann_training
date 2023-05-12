@@ -57,6 +57,8 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
     timings_1 = []
     timings_sum_2 = 0
     timings_2 = []
+    converged_subsys_step_1 = 0
+    converged_subsys_step_2 = 0
     not_converged_list_1 = []
     not_converged_list_2 = []
     failed_list_1 = []
@@ -80,6 +82,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
                 cp2k_output_1 = cf.read_file(cp2k_output_file_1)
                 if any("SCF run converged in " in f for f in cp2k_output_1):
                     step_1 = step_1 + 1
+                    converged_subsys_step_1 = converged_subsys_step_1 + 1
                     timings_1 = [zzz for zzz in cp2k_output_1 if "CP2K                                 1  1.0" in zzz]
                     timings_sum_1 = timings_sum_1 + float(timings_1[0].split(" ")[-1])
                 elif any("SCF run NOT converged in " in f for f in cp2k_output_1):
@@ -96,6 +99,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
                 cp2k_output_2 = cf.read_file(cp2k_output_file_2)
                 if any("SCF run converged in " in f for f in cp2k_output_2):
                     step_2 = step_2 + 1
+                    converged_subsys_step_2 = converged_subsys_step_2 + 1
                     timings_2 = [zzz for zzz in cp2k_output_2 if "CP2K                                 1  1.0" in zzz]
                     timings_sum_2 = timings_sum_2 + float(timings_2[0].split(" ")[-1])
                 elif any("SCF run NOT converged in " in f for f in cp2k_output_2):
@@ -122,6 +126,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
                 cp2k_output_1 = cf.read_file(cp2k_output_file_1)
                 if any("SCF run converged in " in f for f in cp2k_output_1):
                     step_1 = step_1 + 1
+                    converged_subsys_step_1 = converged_subsys_step_1 + 1
                     timings_1 = [zzz for zzz in cp2k_output_1 if "CP2K                                 1  1.0" in zzz]
                     timings_sum_1 = timings_sum_1 + float(timings_1[0].split(" ")[-1])
                 elif any("SCF run NOT converged in " in f for f in cp2k_output_1):
@@ -138,6 +143,7 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
                 cp2k_output_2 = cf.read_file(cp2k_output_file_2)
                 if any("SCF run converged in " in f for f in cp2k_output_2):
                     step_2 = step_2 + 1
+                    converged_subsys_step_2 = converged_subsys_step_2 + 1
                     timings_2 = [zzz for zzz in cp2k_output_2 if "CP2K                                 1  1.0" in zzz]
                     timings_sum_2 = timings_sum_2 + float(timings_2[0].split(" ")[-1])
                 elif any("SCF run NOT converged in " in f for f in cp2k_output_2):
@@ -157,8 +163,8 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
         logging.critical("Aborting...")
         sys.exit(1)
 
-    timings_1 = timings_sum_1/step_1
-    timings_2 = timings_sum_2/step_2
+    timings_1 = timings_sum_1/converged_subsys_step_1
+    timings_2 = timings_sum_2/converged_subsys_step_2
     labeling_json["subsys_nr"][it_subsys_nr]["timing_s"] = [timings_1, timings_2]
     labeling_json["subsys_nr"][it_subsys_nr]["candidates_skipped"] = skipped_subsys_candidates
     labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed_skipped"] = skipped_subsys_disturbed
