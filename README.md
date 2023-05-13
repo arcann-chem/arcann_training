@@ -185,7 +185,7 @@ There are 9 such scripts that you must now execute in order after having eventua
 
 ### Example
 
-Suppose that you just ran the `initialization.py` file described in the previous example. You must now perform the first training phase in Jean-Zay. Update (or copy for the first time) the full `$WORK_DIR` from your local machine to Jean-Zay (where you must have also ):
+Suppose that you just ran the `initialization.py` file described in the previous example. You must now perform the first training phase in Jean-Zay. Update (or copy for the first time) the full `$WORK_DIR` from your local machine to Jean-Zay (where you must have also a copy of this repository, ideally in your home directory):
 ```
 rsync -rvu $WORK_DIR USER@jean-zay.idris.fr:/PATH/TO/JZ/WORK_DIR
 ```
@@ -234,7 +234,35 @@ Once you are satisfied with your exploration parameters (see example below) you 
 
 ### EXAMPLE
 
-After the first training phase of your ice&water NNP you now have starting models that can be used to propagate reactive MD. For this go to the `$WORK_DIR/001-exploration` folder 
+After the first training phase of your ice&water NNP you now have starting models that can be used to propagate reactive MD. For this go to the `$WORK_DIR/001-exploration` folder (in Jean-Zay!) and copy the exploration scripts from the repository. For the first iteration we might be satisfied with the options selected during initialization and the defaults (2 simulations per NNP and per subsystem, 10 ps simulations with the time-step chosen during initialization, here 0.25 fs, etc.) so we might directly run exploration scripts 1 to 3 (waiting for the `Slurm` jobs to finish as always). These will have created 3 directories (one per subsystem) `ice/`, `water/` and `water-reactive/`, in which there will be 3 subdirectories (one per trained NNP) `1/`, `2/` and `3/`, in which again there will be 2 subdirectories (option chosen during initialization) `0001/` and `0002/`. This means that a total of 18 MD trajectories will be performed for this first iteration (180 ps total simulation time). Be careful, the total exploration time can quickly become huge, especially if you have many subsystems.
+
+Since this is the first exploration phase we might want to generate only a few candidate configurations to check whether our initial NNP are stable enough to give physically meaningful configurations, we might as well want to use a relatively strict error criterion for candidate selection. All this can be done by modifying the header of the `exploration4_devi.py` script:
+```python
+## deepmd_iterative_apath
+# deepmd_iterative_apath: str = ""
+## These are the default
+nb_candidates_max: list= [50, 50, 100] #int
+# s_low: list = [0.1, 0.1] #float
+s_high: list = [0.5, 0.5, 0.8] #float
+s_high_max: list = [1.0, 1.0, 1.5] #float
+# ignore_first_x_ps: list = [0.5, 0.5] #float
+```
+Note that here we allow slightly larger deviations (0.8 eV/Ang) and collect a larger number of candidates (max 100) for the more complex third system (reactive water). Once we have executed this script all that is left is to decide wether we want to include disturbed candidates in the training set. Here we might want to do so only for the ice system, since explorations at lower temperature explore a more reduced zone of the phase space and it is easier to be trapped in meta-stable states. This can be done by modifying the `exploration5_devi.py` header:
+```python
+## deepmd_iterative_apath
+# deepmd_iterative_apath: str = ""
+## These are the default
+atomsk_fpath: str ="/gpfswork/rech/nvs/commun/programs/apps/atomsk/0.11.2/bin/atomsk"
+# vmd_fpath: str=""
+disturbed_min_value: list = [0.5, 0.0, 0.0] #float
+disturbed_candidates_value: list = [0.5, 0.0, 0.0] #float
+```
+where we have indicated the path to the `Atomsk` code used for creating the disturbed geometries. **NOTE: I AM NOT SURE OF HOW THIS WORKS, WHAT HAVE WE INDICATED? PROPORTION OF DISTURBED CANDIDATES AND AMPLITUDE?**
+
+**Note:** we have not indicated the path to a `VMD` executable, meaning that `vmd` should be in our path when executing the `exploration5_devi.py` script (loaded as a module for example).
+
+We can finally clean up the working folder by running the `exploration9_clean.py` script and move on to the labeling phase! (Don't forget to keep your local folder updated so that you can analyze all these results)
+
 
 
 ### i-PI quantum nuclei simulations
@@ -245,7 +273,33 @@ After the first training phase of your ice&water NNP you now have starting model
 
 ## Labeling
 
-<!-- TODO labeling-->
+In the labeling phase we will use the `CP2K` code to compute the electronic energies, atomic forces and (sometimes) the stress tensor of the candidate configurations obtained in the exploration phase. For this we need to go to the `XXX-labeling` folder and copy all the labeling scripts. It is very important to have a look at the header of the `labeling1_prep.py` script to choose the computational resources to be used in the electronic structure calculations (number of nodes and MPI/OpenMP tasks). Note that defaults are insufficient for most condensed systems, you should have previously determined the resources required by your specific system(s). Once you have submitted this script, folders will have been created for each subsystem within which there will be as many folders as candidate configurations (maximum number of 99999 per iteration), containing all required files to run CP2K. Make sure that you have prepared (and correctly named!) template `Slurm` submission files for your machine in the `~/deepmd_iterative_py/jobs/` folder. You can then submit the calculations by executing the `labeling2_launch.py` script. Once these are finished you can check the results with `labeling3_check.py`. Since candidate configurations are not always very stable (or even physically meaningful if you were too generous with deviation thresholds) some DFT calculations might not have converged, this will be indicated by the code. You can either perform manually the calculations with a different setup until the result is satisfactory or skip the problematic configurations by creating empty `skip` files in the folders that should be ignored. Keep running `labeling3_check.py` until you get a "Success!" message. Use the `labeling4_extract.py` file to set up everything for the training phase and eventually run the `labeling9_clean.py` script to clean up your folder. CP2K wavefunctions might be stored in an archive with a command given by the code that must be executed manually (if one wishes to keep these files as, for example, starting points for higher level calculations). You can also delete all files but the archives created by the code if you want. 
+
+### EXAMPLE
+
+After the first exploration phase we recovered 47, 50 and 92 candidates for our `ice`, `water` and `water-reactive` systems for which we must now compute the electronic structure at our chosen reference level of theory (for example revPBE0-D3). We will have prepared (during initialization) 2 `CP2K` scripts for each system, a first quick calculation at a lower level of theory (for example PBE) and then that at our reference level. We will first copy all this data to the machine were we will perform the labeling (here Irene, where we must have another copy of this repo as well):
+```
+rsync -rvu $WORK_DIR USER@irene-amd-fr.ccc.cea.fr:PATH/TO/IRENE/WORK_DIR
+```
+
+ If we are using a larger number of atoms for the reactive system to ensure proper solvation and separation of the ion pair we might need to use more resources for those calculations. If we are using the 128 CPU nodes of the `rome` partition our `labeling1_prep.py` script might look somthing like this:
+```python
+## deepmd_iterative_apath
+# deepmd_iterative_apath: str = ""
+## Either shortcut (machine_file.json) or Project name / allocation / arch
+# user_spec = "v100"
+# user_spec = ["nvs","v100","v100"]
+# slurm_email: str = ""
+cp2k_1_walltime_h: list = [0.5, 0.5, 0.5] #float
+cp2k_2_walltime_h: list = [1.0, 1.0, 1.5] #float
+nb_NODES: list = [1, 1, 1] #int
+nb_MPI_per_NODE: list = [32, 32, 64] #int
+nb_OPENMP_per_MPI: list = [2, 2, 2] #int
+```
+where the reactive water calculations use full nodes and have a higher wall time of 1h30min. Note that we did not change the `user_spec` variable even if the default is that of Jean-Zay because the cluster is automatically detected by the code and the corresponding default partition (indicated in `machine_file.json`) will be used. We can now run the first 2 scripts and wait for the electronic structure calculations to finish. When running the check file the script might tell us that there are failed configurations in the `water-reactive` folder! we can see which calculations did not converge in the `water-reactive/2_failed.txt` file. Suppose there were 2 failed jobs, the 13-th and the 54-th. We might just do `touch water-reactive/00013/skip` and `touch water-reactive/00054/skip` and run the `labeling3_check.py` script again. This time it will inform us that some configurations will be skipped, but the final message should be that check phase is a success. All that is left to do now is run the `labeling4_extract.py` script, clean up with the `labeling9_clean.py` script, store wavefunctions and remove all unwanted data and finally update our local folder. We have now augmented our total training set and might do a new training iteration and keep iterating until convergence is reached!  
+
+
+
 
 <div id="usage-test"></div>
 
