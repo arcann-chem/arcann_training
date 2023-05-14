@@ -419,6 +419,9 @@ for it_nnp in range(1,config_json["nb_nnp"] + 1):
     slurm_file = slurm_file_master.copy()
     slurm_file = cf.replace_in_list(slurm_file,"_R_DEEPMD_VERSION_",str(training_json["deepmd_model_version"]))
 
+    # replace CHECKPOINT in slurm job file => model.ckpt as defined in the input by this training prep script
+    slurm_file = cf.replace_in_list(slurm_file,"_R_CHECKPOINT_","model.ckpt")
+
     slurm_file = cf.replace_in_list(slurm_file,"_R_PROJECT_",cluster_spec["project_name"])
     slurm_file = cf.replace_in_list(slurm_file,"_R_ALLOC_",cluster_spec["allocation_name"])
     slurm_file = cf.delete_in_list(slurm_file,"_R_PARTITON_") if cluster_spec["partition"] is None else cf.replace_in_list(slurm_file,"_R_PARTITION_",cluster_spec["partition"])
