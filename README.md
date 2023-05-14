@@ -222,8 +222,6 @@ and you are ready to move on to the exploration phase!
 
 ## Exploration
 
-<!-- TODO exploration-->
-
 In the exploration phase we will generate new configurations (referred to as **candidates**) to include in the training set. For this we will perform MD simulations with either the LAMMPS (classical nuclei) or i-PI (quantum nuclei) softwares. Go to the current iteration exploration folder `XXX-exploration` created at the end of the previous training phase. Copy all exploration scripts to this folder and have a look at the `exploration1_prep.py` to check the exploration parameters. The phase is slightly different if you use LAMMPS or i-PI, both phase workflows are detailed below.
 
 ### LAMMPS classical nuclei simulations
@@ -263,7 +261,7 @@ We can finally clean up the working folder by running the `exploration9_clean.py
 
 ### i-PI quantum nuclei simulations
 
-<!-- TODO i-PI -->
+Simulations explicitly including nuclear quantum effects by path-integral molecular dynamics with i-PI are quite similar to classical nuclei simulations with LAMMPS. Although the input files are different (see `examples/i-PI_exploration/*.xml`), the preparation, launch and check phases (`exploration1_prep.py`, `exploration2_launch.py` and `exploration3_check.py`) can be done exactly as previously (see [LAMMPS classical nuclei simulations](#lammps-classical-nuclei-simulations) above). Then, before executing `exploration4_devi.py` and `exploration5_extract.py`, you must run `explorationX_selectbeads.py`, `explorationX_rerun.py` and `explorationX_recheck.py` in this order. These 3 scripts do not have options or special parameters that need to be tuned but require `VMD` and `Atomsk`. After that, you can run `exploration4_devi.py`, `exploration5_extract.py` and `exploration9_clean.py` as for LAMMPS MD simulations.
 
 <div id="usage-labeling"></div>
 
@@ -292,10 +290,7 @@ nb_NODES: list = [1, 1, 1] #int
 nb_MPI_per_NODE: list = [32, 32, 64] #int
 nb_OPENMP_per_MPI: list = [2, 2, 2] #int
 ```
-where the reactive water calculations use full nodes and have a higher wall time of 1h30min. Note that we did not change the `user_spec` variable even if the default is that of Jean-Zay because the cluster is automatically detected by the code and the corresponding default partition (indicated in `machine_file.json`) will be used. We can now run the first 2 scripts and wait for the electronic structure calculations to finish. When running the check file the script might tell us that there are failed configurations in the `water-reactive` folder! we can see which calculations did not converge in the `water-reactive/2_failed.txt` file. Suppose there were 2 failed jobs, the 13-th and the 54-th. We might just do `touch water-reactive/00013/skip` and `touch water-reactive/00054/skip` and run the `labeling3_check.py` script again. This time it will inform us that some configurations will be skipped, but the final message should be that check phase is a success. All that is left to do now is run the `labeling4_extract.py` script, clean up with the `labeling9_clean.py` script, store wavefunctions and remove all unwanted data and finally update our local folder. We have now augmented our total training set and might do a new training iteration and keep iterating until convergence is reached!  
-
-
-
+where the reactive water calculations use full nodes and have a higher wall time of 1h30min. The wall times should be set for the first iteration but can be guessed automatically later using the average time per CP2K calculation measured in the previous iteration. Note that we did not change the `user_spec` variable even if the default is that of Jean-Zay because the cluster is automatically detected by the code and the corresponding default partition (indicated in `machine_file.json`) will be used. We can now run the first 2 scripts and wait for the electronic structure calculations to finish. When running the check file the script might tell us that there are failed configurations in the `water-reactive` folder! we can see which calculations did not converge in the `water-reactive/2_failed.txt` file. Suppose there were 2 failed jobs, the 13-th and the 54-th. We might just do `touch water-reactive/00013/skip` and `touch water-reactive/00054/skip` and run the `labeling3_check.py` script again. This time it will inform us that some configurations will be skipped, but the final message should be that check phase is a success. All that is left to do now is run the `labeling4_extract.py` script, clean up with the `labeling9_clean.py` script, store wavefunctions and remove all unwanted data and finally update our local folder. We have now augmented our total training set and might do a new training iteration and keep iterating until convergence is reached!
 
 <div id="usage-test"></div>
 
