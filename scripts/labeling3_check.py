@@ -175,23 +175,23 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
     cf.remove_file(local_apath.parent/(str(it_subsys_nr)+"_skipped.txt"))
     cf.write_file(local_apath.parent/(str(it_subsys_nr)+"_1_not_converged.txt"),not_converged_list_1) if len(not_converged_list_1) != 0 else True
     cf.write_file(local_apath.parent/(str(it_subsys_nr)+"_2_not_converged.txt"),not_converged_list_2) if len(not_converged_list_2) != 0 else True
-    logging.warning("Not converged calculations in sub-system "+str(it_subsys_nr)) if len(not_converged_list_1)+len(not_converged_list_2) != 0 else True
+    logging.warning(str(it_subsys_nr)+" | first step: "+str(len(not_converged_list_1))+" calculations did not converge. List in "+str(it_subsys_nr)+"/"+str(it_subsys_nr)+"_1_not_converged.txt") if len(not_converged_list_1) != 0 else True
+    logging.warning(str(it_subsys_nr)+" | second step: "+str(len(not_converged_list_2))+" calculations did not converge. List in "+str(it_subsys_nr)+"/"+str(it_subsys_nr)+"_2_not_converged.txt") if len(not_converged_list_2) != 0 else True
     cf.write_file(local_apath.parent/(str(it_subsys_nr)+"_1_failed.txt"),failed_list_1) if len(failed_list_1) != 0 else True
     cf.write_file(local_apath.parent/(str(it_subsys_nr)+"_2_failed.txt"),failed_list_2) if len(failed_list_2) != 0 else True
-    logging.warning("Failed calculations in sub-system "+str(it_subsys_nr)) if len(failed_list_1)+len(failed_list_2) != 0 else True
+    logging.warning(str(it_subsys_nr)+" | first step: "+str(len(failed_list_1))+" calculations failed. List in "+str(it_subsys_nr)+"/"+str(it_subsys_nr)+"_1_failed.txt") if len(failed_list_1) != 0 else True
+    logging.warning(str(it_subsys_nr)+" | second step: "+str(len(failed_list_2))+" calculations failed. List in "+str(it_subsys_nr)+"/"+str(it_subsys_nr)+"_2_failed.txt") if len(failed_list_2) != 0 else True
     cf.write_file(local_apath.parent/(str(it_subsys_nr)+"_skipped.txt"),skipped_list) if len(skipped_list) != 0 else True
-    logging.warning("Skipped calculations in sub-system "+str(it_subsys_nr)) if len(skipped_list) != 0 else True
+    logging.info(str(it_subsys_nr)+": "+str(len(skipped_list))+" configurations skipped. List in "+str(it_subsys_nr)+"/"+str(it_subsys_nr)+"_skipped.txt") if len(skipped_list) != 0 else True
     del timings_1, timings_sum_1, not_converged_list_1, failed_list_1
     del timings_2, timings_sum_2, not_converged_list_2, failed_list_2
     del average_per_step, local_apath
 
 if total_steps != (step_1+skipped):
     logging.warning("Some jobs have failed/not converged/still running (first step). Check manually")
-    logging.warning("See 1_not_converged.txt / 1_failed.txt")
 if total_steps != (step_2+skipped):
     logging.critical("Some jobs have failed/not converged/still running (second step). Check manually")
     logging.critical("Or create files named \"skip\" to skip some configurations")
-    logging.critical("See 2_not_converged.txt / 2_failed.txt")
     sys.exit(1)
 else:
     labeling_json["is_checked"] = True
