@@ -164,7 +164,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                 ### Atomsk XYZ -> LMP
                 cf.remove_file(starting_structures_apath/(min_file_name+".lmp"))
                 # create properties file for Atomsk with Lammps types in the correct order
-                with open(str(starting_structures_apath/"propertiesatomsk.txt"),"w") as propfile:
+                with open("propertiesatomsk.txt","w") as propfile:
                     propfile.write("type\n")
                     for iat,at in enumerate(config_json["type_map"]):
                         propfile.write(at+" "+str(iat+1)+"\n")
@@ -173,11 +173,11 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                             "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][0]), "H1",\
                             "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][1]), "H2",\
                             "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][2]), "H3",\
-                            "-properties", str(starting_structures_apath/"propertiesatomsk.txt"),\
+                            "-properties", "propertiesatomsk.txt",\
                             str(starting_structures_apath/(min_file_name+".lmp"))],\
                             stdout=log_file,\
                             stderr=subprocess.STDOUT)
-                cf.remove_file((starting_structures_apath/"propertiesatomsk.txt"))
+                cf.remove_file((Path()/"propertiesatomsk.txt"))
 
                 if ("disturbed_min_value" in globals() and disturbed_min_value[it0_subsys_nr] != 0) \
                         or (int(current_iteration_zfill) > 1 and prevexploration_json["subsys_nr"][it_subsys_nr]["disturbed_min"]):
@@ -199,7 +199,7 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     ### Atomsk XYZ -> LMP
                     cf.remove_file((starting_structures_apath/(min_file_name+"_disturbed.lmp")))
                     # create properties file for Atomsk with Lammps types in the correct order
-                    with open(str(starting_structures_apath/"propertiesatomsk.txt"),"w") as propfile:
+                    with open("propertiesatomsk.txt","w") as propfile:
                         propfile.write("type\n")
                         for iat,at in enumerate(config_json["type_map"]):
                             propfile.write(at+" "+str(iat+1)+"\n")
@@ -208,11 +208,11 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                             "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][0]), "H1",\
                             "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][1]), "H2",\
                             "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][2]), "H3",\
-                            "-properties", str(starting_structures_apath/"propertiesatomsk.txt"),\
+                            "-properties", "propertiesatomsk.txt",\
                             str(starting_structures_apath/(min_file_name+"_disturbed.lmp"))],\
                             stdout=log_file,\
                             stderr=subprocess.STDOUT)
-                    cf.remove_file((starting_structures_apath/"propertiesatomsk.txt"))
+                    cf.remove_file((Path()/"propertiesatomsk.txt"))
 
                     del disturbed_min_value_subsys
                 del min_file_name
