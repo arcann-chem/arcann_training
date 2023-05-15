@@ -62,107 +62,114 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
     data_apath.mkdir(exist_ok=True)
     (data_apath/"set.000").mkdir(exist_ok=True)
 
-    force_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"], config_json["subsys_nr"][it_subsys_nr]["nb_atm"] * 3 ))
-    energy_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"]))
-    coord_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"], config_json["subsys_nr"][it_subsys_nr]["nb_atm"] * 3 ))
-    box_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"], 9))
-    virial_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"], 9))
+    force_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"]-labeling_json["subsys_nr"][it_subsys_nr]["candidates_skipped"], config_json["subsys_nr"][it_subsys_nr]["nb_atm"] * 3 ))
+    energy_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"]-labeling_json["subsys_nr"][it_subsys_nr]["candidates_skipped"]))
+    coord_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"]-labeling_json["subsys_nr"][it_subsys_nr]["candidates_skipped"], config_json["subsys_nr"][it_subsys_nr]["nb_atm"] * 3 ))
+    box_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"]-labeling_json["subsys_nr"][it_subsys_nr]["candidates_skipped"], 9))
+    virial_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"]-labeling_json["subsys_nr"][it_subsys_nr]["candidates_skipped"], 9))
     is_virial = False
 
     box_array_raw[:,0] = config_json["subsys_nr"][it_subsys_nr]["cell"][0]
     box_array_raw[:,4] = config_json["subsys_nr"][it_subsys_nr]["cell"][1]
     box_array_raw[:,8] = config_json["subsys_nr"][it_subsys_nr]["cell"][2]
 
-    volume = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"]))
+    volume = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"]-labeling_json["subsys_nr"][it_subsys_nr]["candidates_skipped"]))
     volume = box_array_raw[:,0] * box_array_raw[:,4] * box_array_raw[:,8]
 
     wannier_not_converged = ["#Indexes start at 0\n"]
     is_wannier = False
+    
+    # counter for non skipped configurations
+    it_step_not_skipped = 0
 
     for it_step in range(1, labeling_json["subsys_nr"][it_subsys_nr]["candidates"] + 1):
         it_step_zfill = str(it_step).zfill(5)
         local_apath = Path(".").resolve()/it_subsys_nr/it_step_zfill
 
-        if it_step == 1:
-            cf.check_file(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp"),True,True,"Input data file (lmp file) not present.")
-            lammps_data = cf.read_file(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp"))
-            index = [idx for idx, s in enumerate(lammps_data) if "Atoms" in s][0]
-            del lammps_data[0:index+2]
-            lammps_data = lammps_data[0:config_json["subsys_nr"][it_subsys_nr]["nb_atm"]+1]
-            lammps_data = [" ".join(f.replace("\n","").split()) for f in lammps_data]
-            lammps_data = [g.split(" ")[1:2] for g in lammps_data]
-            type_atom_array = np.asarray(lammps_data,dtype=np.int64).flatten()
-            type_atom_array = type_atom_array - 1
-            np.savetxt(str(subsys_path/"type.raw"),type_atom_array,delimiter=" ",newline=" ",fmt="%d")
-            np.savetxt(str(data_apath/"type.raw"),type_atom_array,delimiter=" ",newline=" ",fmt="%d")
-            cp2k_out = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+".out"))
-            cp2k_out = [zzz for zzz in cp2k_out if "CP2K| version string:" in zzz]
-            cp2k_out = [" ".join(f.replace("\n","").split()) for f in cp2k_out]
-            cp2k_out = [g.split(" ")[-1] for g in cp2k_out]
-            cp2k_version = float(cp2k_out[0])
-            del lammps_data, cp2k_out, type_atom_array, index
+        if not (local_apath/"skip").is_file():
+            it_step_not_skipped += 1
 
-        if (local_apath/("2_labeling_"+it_step_zfill+"-Stress_Tensor.st")).is_file():
-            stress_xyz = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Stress_Tensor.st"))
-            if cp2k_version < 8.1:
-                del stress_xyz[0:4]
-                stress_xyz = stress_xyz[0:3]
-                stress_xyz = [" ".join(f.replace("\n","").split()) for f in stress_xyz]
-                stress_xyz = [g.split(" ")[1:4] for g in stress_xyz]
-                stress_xyz_array = np.asarray(stress_xyz,dtype=np.float64).flatten()
-                virial_array_raw[it_step-1,:] = stress_xyz_array * volume[it_step-1] / eV_per_A3_to_GPa
-                is_virial = True
-                del stress_xyz, stress_xyz_array
-            else:
-                True
-                logging.info("Stress tensors are currently not supported for CP2K version 8.1 or above")
-                ### #TODO: cp2k_version > 8.1 for stress
+            if it_step_not_skipped == 1:
+                cf.check_file(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp"),True,True,"Input data file (lmp file) not present.")
+                lammps_data = cf.read_file(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp"))
+                index = [idx for idx, s in enumerate(lammps_data) if "Atoms" in s][0]
+                del lammps_data[0:index+2]
+                lammps_data = lammps_data[0:config_json["subsys_nr"][it_subsys_nr]["nb_atm"]+1]
+                lammps_data = [" ".join(f.replace("\n","").split()) for f in lammps_data]
+                lammps_data = [g.split(" ")[1:2] for g in lammps_data]
+                type_atom_array = np.asarray(lammps_data,dtype=np.int64).flatten()
+                type_atom_array = type_atom_array - 1
+                np.savetxt(str(subsys_path/"type.raw"),type_atom_array,delimiter=" ",newline=" ",fmt="%d")
+                np.savetxt(str(data_apath/"type.raw"),type_atom_array,delimiter=" ",newline=" ",fmt="%d")
+                cp2k_out = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+".out"))
+                cp2k_out = [zzz for zzz in cp2k_out if "CP2K| version string:" in zzz]
+                cp2k_out = [" ".join(f.replace("\n","").split()) for f in cp2k_out]
+                cp2k_out = [g.split(" ")[-1] for g in cp2k_out]
+                cp2k_version = float(cp2k_out[0])
+                del lammps_data, cp2k_out, type_atom_array, index
 
-        force_cp2k = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Forces.for"))
-        del force_cp2k[0:4]
-        del force_cp2k[-1]
-        force_cp2k = [" ".join(f.replace("\n","").split()) for f in force_cp2k]
-        force_cp2k = [g.split(" ")[3:] for g in force_cp2k]
-        force_array = np.asarray(force_cp2k,dtype=np.float64).flatten()
-        force_array_raw[it_step-1,:] = force_array*au_to_eV_per_A
-        del force_array, force_cp2k
+            if (local_apath/("2_labeling_"+it_step_zfill+"-Stress_Tensor.st")).is_file():
+                stress_xyz = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Stress_Tensor.st"))
+                if cp2k_version < 8.1:
+                    del stress_xyz[0:4]
+                    stress_xyz = stress_xyz[0:3]
+                    stress_xyz = [" ".join(f.replace("\n","").split()) for f in stress_xyz]
+                    stress_xyz = [g.split(" ")[1:4] for g in stress_xyz]
+                    stress_xyz_array = np.asarray(stress_xyz,dtype=np.float64).flatten()
+                    virial_array_raw[it_step_not_skipped-1,:] = stress_xyz_array * volume[it_step_not_skipped-1] / eV_per_A3_to_GPa
+                    is_virial = True
+                    del stress_xyz, stress_xyz_array
+                else:
+                    True
+                    logging.info("Stress tensors are currently not supported for CP2K version 8.1 or above")
+                    ### #TODO: cp2k_version > 8.1 for stress
 
-        energy_cp2k = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Force_Eval.fe"))
-        del energy_cp2k[0]
-        del energy_cp2k[-1]
-        energy_cp2k = [" ".join(f.replace("\n","").split()) for f in energy_cp2k]
-        energy_cp2k = [g.split(" ")[-1] for g in energy_cp2k]
-        energy_array = np.asarray(energy_cp2k,dtype=np.float64).flatten()
-        energy_array_raw[it_step-1] = energy_array*Ha_to_eV
-        del energy_array, energy_cp2k
+            force_cp2k = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Forces.for"))
+            del force_cp2k[0:4]
+            del force_cp2k[-1]
+            force_cp2k = [" ".join(f.replace("\n","").split()) for f in force_cp2k]
+            force_cp2k = [g.split(" ")[3:] for g in force_cp2k]
+            force_array = np.asarray(force_cp2k,dtype=np.float64).flatten()
+            force_array_raw[it_step_not_skipped-1,:] = force_array*au_to_eV_per_A
+            del force_array, force_cp2k
 
-        coord_xyz = cf.read_file(local_apath/("labeling_"+it_step_zfill+".xyz"))
-        del coord_xyz[0:2]
-        coord_xyz = [" ".join(f.replace("\n","").split()) for f in coord_xyz]
-        coord_xyz = [g.split(" ")[1:] for g in coord_xyz]
-        coord_array = np.asarray(coord_xyz,dtype=np.float64).flatten()
-        coord_array_raw[it_step-1,:] = coord_array
-        del coord_array, coord_xyz
+            energy_cp2k = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Force_Eval.fe"))
+            del energy_cp2k[0]
+            if energy_cp2k[-1] == '\n':
+                del energy_cp2k[-1]
+            energy_cp2k = [" ".join(f.replace("\n","").split()) for f in energy_cp2k]
+            energy_cp2k = [g.split(" ")[-1] for g in energy_cp2k]
+            energy_array = np.asarray(energy_cp2k,dtype=np.float64).flatten()
+            energy_array_raw[it_step_not_skipped-1] = energy_array*Ha_to_eV
+            del energy_array, energy_cp2k
 
-        if (local_apath/("2_labeling_"+it_step_zfill+"-Wannier.xyz")).is_file():
-            wannier_xyz = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Wannier.xyz"))
-            del wannier_xyz[0:2+config_json["subsys_nr"][it_subsys_nr]["nb_atm"]]
-            wannier_xyz = [" ".join(f.replace("\n","").split()) for f in wannier_xyz]
-            wannier_xyz = [g.split(" ")[1:] for g in wannier_xyz]
-            wannier_array = np.asarray(wannier_xyz,dtype=np.float64).flatten()
-            if it_step == 1:
-                wannier_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"], len(wannier_xyz) * 3 ))
-            wannier_array_raw[it_step-1,:] = wannier_array
-            is_wannier = True
-            del wannier_array, wannier_xyz
-            ### Check if wannier centers are not converged
-            cp2k_output_file_2 = local_apath/("2_labeling_"+it_step_zfill+".out")
-            cp2k_output_2 = cf.read_file(cp2k_output_file_2)
-            if any("LOCALIZATION! loop did not converge within the maximum number of iterations" in f for f in cp2k_output_2):
-                wannier_not_converged.append(str(it_step-1)+"\n")
+            coord_xyz = cf.read_file(local_apath/("labeling_"+it_step_zfill+".xyz"))
+            del coord_xyz[0:2]
+            coord_xyz = [" ".join(f.replace("\n","").split()) for f in coord_xyz]
+            coord_xyz = [g.split(" ")[1:] for g in coord_xyz]
+            coord_array = np.asarray(coord_xyz,dtype=np.float64).flatten()
+            coord_array_raw[it_step_not_skipped-1,:] = coord_array
+            del coord_array, coord_xyz
 
-        del it_step_zfill, local_apath
-    del it_step
+            if (local_apath/("2_labeling_"+it_step_zfill+"-Wannier.xyz")).is_file():
+                wannier_xyz = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Wannier.xyz"))
+                del wannier_xyz[0:2+config_json["subsys_nr"][it_subsys_nr]["nb_atm"]]
+                wannier_xyz = [" ".join(f.replace("\n","").split()) for f in wannier_xyz]
+                wannier_xyz = [g.split(" ")[1:] for g in wannier_xyz]
+                wannier_array = np.asarray(wannier_xyz,dtype=np.float64).flatten()
+                if it_step_not_skipped == 1:
+                    wannier_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates"]-labeling_json["subsys_nr"][it_subsys_nr]["candidates_skipped"], len(wannier_xyz) * 3 ))
+                wannier_array_raw[it_step_not_skipped-1,:] = wannier_array
+                is_wannier = True
+                del wannier_array, wannier_xyz
+                ### Check if wannier centers are not converged
+                cp2k_output_file_2 = local_apath/("2_labeling_"+it_step_zfill+".out")
+                cp2k_output_2 = cf.read_file(cp2k_output_file_2)
+                if any("LOCALIZATION! loop did not converge within the maximum number of iterations" in f for f in cp2k_output_2):
+                    wannier_not_converged.append(str(it_step_not_skipped-1)+"\n")
+
+            del it_step_zfill, local_apath
+    del it_step, it_step_not_skipped
 
     np.savetxt(str(subsys_path/"box.raw"),box_array_raw,delimiter=" ")
     np.save(str(data_apath/"set.000"/"box"),box_array_raw)
@@ -187,99 +194,107 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
         data_apath.mkdir(exist_ok=True)
         (data_apath/"set.000").mkdir(exist_ok=True)
 
-        force_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"], config_json["subsys_nr"][it_subsys_nr]["nb_atm"] * 3 ))
-        energy_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"]))
-        coord_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"], config_json["subsys_nr"][it_subsys_nr]["nb_atm"] * 3 ))
-        box_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"], 9))
-        virial_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"], 9))
+        force_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"]-labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed_skipped"], config_json["subsys_nr"][it_subsys_nr]["nb_atm"] * 3 ))
+        energy_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"]-labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed_skipped"]))
+        coord_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"]-labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed_skipped"], config_json["subsys_nr"][it_subsys_nr]["nb_atm"] * 3 ))
+        box_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"]-labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed_skipped"], 9))
+        virial_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"]-labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed_skipped"], 9))
         is_virial = False
 
         wannier_not_converged = ["#Indexes start at 0\n"]
         is_wannier = False
 
+        # counter for non skipped configurations
+        it_step_not_skipped = 0
+
         for count,it_step in enumerate(range(labeling_json["subsys_nr"][it_subsys_nr]["candidates"] + 1, labeling_json["subsys_nr"][it_subsys_nr]["candidates"] + labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"] + 1 )):
             it_step_zfill = str(it_step).zfill(5)
             local_apath = Path(".").resolve()/it_subsys_nr/it_step_zfill
-            if count == 0:
-                cf.check_file(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp"),True,True,"Input data file (lmp file) not present.")
-                lammps_data = cf.read_file(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp"))
-                index = [idx for idx, s in enumerate(lammps_data) if "Atoms" in s][0]
-                del lammps_data[0:index+2]
-                lammps_data = lammps_data[0:config_json["subsys_nr"][it_subsys_nr]["nb_atm"]+1]
-                lammps_data = [" ".join(f.replace("\n","").split()) for f in lammps_data]
-                lammps_data = [g.split(" ")[1:2] for g in lammps_data]
-                type_atom_array = np.asarray(lammps_data,dtype=np.int64).flatten()
-                type_atom_array = type_atom_array - 1
-                np.savetxt(str(subsys_path/"type-disturbed.raw"),type_atom_array,delimiter=" ",newline=" ",fmt="%d")
-                np.savetxt(str(data_apath/"type.raw"),type_atom_array,delimiter=" ",newline=" ",fmt="%d")
-                cp2k_out = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+".out"))
-                cp2k_out = [zzz for zzz in cp2k_out if "CP2K| version string:" in zzz]
-                cp2k_out = [" ".join(f.replace("\n","").split()) for f in cp2k_out]
-                cp2k_out = [g.split(" ")[-1] for g in cp2k_out]
-                cp2k_version = float(cp2k_out[0])
-                del lammps_data, cp2k_out, type_atom_array, index
 
-            if (local_apath/("2_labeling_"+it_step_zfill+"-Stress_Tensor.st")).is_file():
-                stress_xyz = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Stress_Tensor.st"))
-                if cp2k_version < 8.1:
-                    del stress_xyz[0:4]
-                    stress_xyz = stress_xyz[0:3]
-                    stress_xyz = [" ".join(f.replace("\n","").split()) for f in stress_xyz]
-                    stress_xyz = [g.split(" ")[1:4] for g in stress_xyz]
-                    stress_xyz_array = np.asarray(stress_xyz,dtype=np.float64).flatten()
-                    virial_array_raw[count,:] = stress_xyz_array * volume[count] / eV_per_A3_to_GPa
-                    is_virial = True
-                    del stress_xyz, stress_xyz_array
-                else:
-                    True
-                    logging.info("Stress tensors are currently not supported for CP2K version 8.1 or above")
-                    ### #TODO: cp2k_version > 8.1 for stress
+            if not (local_apath/"skip").is_file():
+                it_step_not_skipped += 1
 
-            force_cp2k = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Forces.for"))
-            del force_cp2k[0:4]
-            del force_cp2k[-1]
-            force_cp2k = [" ".join(f.replace("\n","").split()) for f in force_cp2k]
-            force_cp2k = [g.split(" ")[3:] for g in force_cp2k]
-            force_array = np.asarray(force_cp2k,dtype=np.float64).flatten()
-            force_array_raw[count,:] = force_array*au_to_eV_per_A
-            del force_array, force_cp2k
+                if it_step_not_skipped == 1:
+                    cf.check_file(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp"),True,True,"Input data file (lmp file) not present.")
+                    lammps_data = cf.read_file(training_iterative_apath/"inputs"/(it_subsys_nr+".lmp"))
+                    index = [idx for idx, s in enumerate(lammps_data) if "Atoms" in s][0]
+                    del lammps_data[0:index+2]
+                    lammps_data = lammps_data[0:config_json["subsys_nr"][it_subsys_nr]["nb_atm"]+1]
+                    lammps_data = [" ".join(f.replace("\n","").split()) for f in lammps_data]
+                    lammps_data = [g.split(" ")[1:2] for g in lammps_data]
+                    type_atom_array = np.asarray(lammps_data,dtype=np.int64).flatten()
+                    type_atom_array = type_atom_array - 1
+                    np.savetxt(str(subsys_path/"type-disturbed.raw"),type_atom_array,delimiter=" ",newline=" ",fmt="%d")
+                    np.savetxt(str(data_apath/"type.raw"),type_atom_array,delimiter=" ",newline=" ",fmt="%d")
+                    cp2k_out = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+".out"))
+                    cp2k_out = [zzz for zzz in cp2k_out if "CP2K| version string:" in zzz]
+                    cp2k_out = [" ".join(f.replace("\n","").split()) for f in cp2k_out]
+                    cp2k_out = [g.split(" ")[-1] for g in cp2k_out]
+                    cp2k_version = float(cp2k_out[0])
+                    del lammps_data, cp2k_out, type_atom_array, index
 
-            energy_cp2k = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Force_Eval.fe"))
-            del energy_cp2k[0]
-            del energy_cp2k[-1]
-            energy_cp2k = [" ".join(f.replace("\n","").split()) for f in energy_cp2k]
-            energy_cp2k = [g.split(" ")[-1] for g in energy_cp2k]
-            energy_array = np.asarray(energy_cp2k,dtype=np.float64).flatten()
-            energy_array_raw[count] = energy_array*Ha_to_eV
-            del energy_array, energy_cp2k
+                if (local_apath/("2_labeling_"+it_step_zfill+"-Stress_Tensor.st")).is_file():
+                    stress_xyz = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Stress_Tensor.st"))
+                    if cp2k_version < 8.1:
+                        del stress_xyz[0:4]
+                        stress_xyz = stress_xyz[0:3]
+                        stress_xyz = [" ".join(f.replace("\n","").split()) for f in stress_xyz]
+                        stress_xyz = [g.split(" ")[1:4] for g in stress_xyz]
+                        stress_xyz_array = np.asarray(stress_xyz,dtype=np.float64).flatten()
+                        virial_array_raw[it_step_not_skipped-1,:] = stress_xyz_array * volume[it_step_not_skipped-1] / eV_per_A3_to_GPa
+                        is_virial = True
+                        del stress_xyz, stress_xyz_array
+                    else:
+                        True
+                        logging.info("Stress tensors are currently not supported for CP2K version 8.1 or above")
+                        ### #TODO: cp2k_version > 8.1 for stress
 
-            coord_xyz = cf.read_file(local_apath/("labeling_"+it_step_zfill+".xyz"))
-            del coord_xyz[0:2]
-            coord_xyz = [" ".join(f.replace("\n","").split()) for f in coord_xyz]
-            coord_xyz = [g.split(" ")[1:] for g in coord_xyz]
-            coord_array = np.asarray(coord_xyz,dtype=np.float64).flatten()
-            coord_array_raw[count,:] = coord_array
-            del coord_array, coord_xyz
+                force_cp2k = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Forces.for"))
+                del force_cp2k[0:4]
+                del force_cp2k[-1]
+                force_cp2k = [" ".join(f.replace("\n","").split()) for f in force_cp2k]
+                force_cp2k = [g.split(" ")[3:] for g in force_cp2k]
+                force_array = np.asarray(force_cp2k,dtype=np.float64).flatten()
+                force_array_raw[it_step_not_skipped-1,:] = force_array*au_to_eV_per_A
+                del force_array, force_cp2k
 
-            if (local_apath/("2_labeling_"+it_step_zfill+"-Wannier.xyz")).is_file():
-                wannier_xyz = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Wannier.xyz"))
-                del wannier_xyz[0:2+config_json["subsys_nr"][it_subsys_nr]["nb_atm"]]
-                wannier_xyz = [" ".join(f.replace("\n","").split()) for f in wannier_xyz]
-                wannier_xyz = [g.split(" ")[1:] for g in wannier_xyz]
-                wannier_array = np.asarray(wannier_xyz,dtype=np.float64).flatten()
-                if it_step == 1:
-                    wannier_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"], len(wannier_xyz) * 3 ))
-                wannier_array_raw[it_step-1,:] = wannier_array
-                is_wannier = True
-                del wannier_array, wannier_xyz
-                ### Check if wannier centers are not converged
-                cp2k_output_file_2 = local_apath/("2_labeling_"+it_step_zfill+".out")
-                cp2k_output_2 = cf.read_file(cp2k_output_file_2)
-                if any("LOCALIZATION! loop did not converge within the maximum number of iterations" in f for f in cp2k_output_2):
-                    wannier_not_converged.append(str(count)+"\n")
+                energy_cp2k = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Force_Eval.fe"))
+                del energy_cp2k[0]
+                if energy_cp2k[-1] == '\n':
+                    del energy_cp2k[-1]
+                energy_cp2k = [" ".join(f.replace("\n","").split()) for f in energy_cp2k]
+                energy_cp2k = [g.split(" ")[-1] for g in energy_cp2k]
+                energy_array = np.asarray(energy_cp2k,dtype=np.float64).flatten()
+                energy_array_raw[it_step_not_skipped-1] = energy_array*Ha_to_eV
+                del energy_array, energy_cp2k
 
-            del it_step_zfill, local_apath
-        del it_step
+                coord_xyz = cf.read_file(local_apath/("labeling_"+it_step_zfill+".xyz"))
+                del coord_xyz[0:2]
+                coord_xyz = [" ".join(f.replace("\n","").split()) for f in coord_xyz]
+                coord_xyz = [g.split(" ")[1:] for g in coord_xyz]
+                coord_array = np.asarray(coord_xyz,dtype=np.float64).flatten()
+                coord_array_raw[it_step_not_skipped-1,:] = coord_array
+                del coord_array, coord_xyz
+
+                if (local_apath/("2_labeling_"+it_step_zfill+"-Wannier.xyz")).is_file():
+                    wannier_xyz = cf.read_file(local_apath/("2_labeling_"+it_step_zfill+"-Wannier.xyz"))
+                    del wannier_xyz[0:2+config_json["subsys_nr"][it_subsys_nr]["nb_atm"]]
+                    wannier_xyz = [" ".join(f.replace("\n","").split()) for f in wannier_xyz]
+                    wannier_xyz = [g.split(" ")[1:] for g in wannier_xyz]
+                    wannier_array = np.asarray(wannier_xyz,dtype=np.float64).flatten()
+                    if it_step_not_skipped == 1:
+                        wannier_array_raw = np.zeros((labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed"]-labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed_skipped"], len(wannier_xyz) * 3 ))
+                    wannier_array_raw[it_step_not_skipped-1,:] = wannier_array
+                    is_wannier = True
+                    del wannier_array, wannier_xyz
+                    ### Check if wannier centers are not converged
+                    cp2k_output_file_2 = local_apath/("2_labeling_"+it_step_zfill+".out")
+                    cp2k_output_2 = cf.read_file(cp2k_output_file_2)
+                    if any("LOCALIZATION! loop did not converge within the maximum number of iterations" in f for f in cp2k_output_2):
+                        wannier_not_converged.append(str(it_step_not_skipped-1)+"\n")
+
+                del it_step_zfill, local_apath
+        del it_step, it_step_not_skipped
 
         box_array_raw[:,0] = config_json["subsys_nr"][it_subsys_nr]["cell"][0]
         box_array_raw[:,4] = config_json["subsys_nr"][it_subsys_nr]["cell"][1]
