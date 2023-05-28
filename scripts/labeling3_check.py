@@ -162,9 +162,17 @@ for it_subsys_nr in labeling_json["subsys_nr"]:
         logging.critical("Or create files named \"skip\" to skip some configurations")
         logging.critical("Aborting...")
         sys.exit(1)
-
-    timings_1 = timings_sum_1/converged_subsys_step_1
-    timings_2 = timings_sum_2/converged_subsys_step_2
+    
+    # For the very special case where there are no converged subsystems (e.g., if you skipped all calculations)
+    if converged_subsys_step_1 != 0:
+        timings_1 = timings_sum_1/converged_subsys_step_1
+    else:
+        timings_1 = 900.0 # defaults to 15 min
+    if converged_subsys_step_2 != 0:
+        timings_2 = timings_sum_2/converged_subsys_step_2
+    else:
+        timings_2 = 3600.0 # defaults to 1h
+    
     labeling_json["subsys_nr"][it_subsys_nr]["timing_s"] = [timings_1, timings_2]
     labeling_json["subsys_nr"][it_subsys_nr]["candidates_skipped"] = skipped_subsys_candidates
     labeling_json["subsys_nr"][it_subsys_nr]["candidates_disturbed_skipped"] = skipped_subsys_disturbed
