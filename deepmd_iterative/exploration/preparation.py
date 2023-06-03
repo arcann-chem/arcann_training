@@ -1,6 +1,6 @@
 """
 Created: 2023/01/01
-Last modified: 2023/04/17
+Last modified: 2023/06/03
 """
 from pathlib import Path
 import logging
@@ -201,7 +201,7 @@ def main(
     current_config["job_email"] = get_key_in_dict("job_email", user_config, prev_exploration_config, default_config)
     del jobs_path, job_file_name
 
-    ### Preparation of the exploration
+    # Preparation of the exploration
     exploration_config["subsys_nr"] = {}
 
     # Loop through each subsystem and set its exploration

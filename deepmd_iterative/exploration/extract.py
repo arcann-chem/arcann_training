@@ -1,6 +1,6 @@
 """
 Created: 2023/01/01
-Last modified: 2023/04/17
+Last modified: 2023/04/21
 """
 from pathlib import Path
 import logging
@@ -164,6 +164,7 @@ def main(
                 QbC_stats = load_json_file(local_path/"QbC_stats.json",True,False)
                 QbC_indexes = load_json_file(local_path/"QbC_indexes.json",True,False)
                 logging.debug(QbC_stats)
+
                 # Selection of the min for the next iteration starting point
                 if QbC_stats["minimum_index"] != -1:
                     if exploration_config["exploration_type"] == "lammps":
@@ -215,8 +216,37 @@ def main(
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.STDOUT,
                     )
+                    
+                    if 
 
+                        if ("disturbed_min_value" in globals() and disturbed_min_value[it0_subsys_nr] != 0) \
+                            or (int(current_iteration_zfill) > 1 and prevexploration_json["subsys_nr"][it_subsys_nr]["disturbed_min"]):
 
+                        disturbed_min_value_subsys = disturbed_min_value[it0_subsys_nr] if "disturbed_min_value" in globals() else prevexploration_json["subsys_nr"][it_subsys_nr]["disturbed_min"]
+                        cf.remove_file((starting_structures_apath/(min_file_name+"_disturbed.xyz")))
+                        (starting_structures_apath/(min_file_name+"_disturbed.xyz")).write_text((starting_structures_apath/(min_file_name+".xyz")).read_text())
+
+                        ### Atomsk XYZ ==> XYZ_disturbed
+                        subprocess.call([atomsk_bin, "-ow", str(starting_structures_apath/(min_file_name+"_disturbed.xyz")),\
+                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][0]), "H1",\
+                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][1]), "H2",\
+                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][2]), "H3",\
+                            "-disturb", str(disturbed_min_value_subsys),\
+                            "xyz"],\
+                            stdout=subprocess.DEVNULL,\
+                            stderr=subprocess.STDOUT)
+                        ### Atomsk XYZ -> LMP
+                        cf.remove_file((starting_structures_apath/(min_file_name+"_disturbed.lmp")))
+                        subprocess.call([atomsk_bin, "-ow", str(starting_structures_apath/(min_file_name+"_disturbed.xyz")),\
+                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][0]), "H1",\
+                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][1]), "H2",\
+                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][2]), "H3",\
+                            str(starting_structures_apath/(min_file_name+"_disturbed.lmp"))],\
+                            stdout=subprocess.DEVNULL,\
+                            stderr=subprocess.STDOUT)
+
+                        del disturbed_min_value_subsys
+                    del min_file_name
 
 
     return 0

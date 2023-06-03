@@ -1,6 +1,6 @@
 """
 Created: 2023/01/01
-Last modified: 2023/04/17
+Last modified: 2023/04/21
 
 Functions
 ---------
@@ -226,6 +226,8 @@ def get_subsys_deviation(
     Union[float, int],
     Union[float, int],
     Union[float, int],
+    Union[float, int],
+    Union[float, int],
 ]:
 
     subsys_values = []
@@ -239,6 +241,22 @@ def get_subsys_deviation(
         subsys_values.append(new_input_json[key][it0_subsys_nr])
     return tuple(subsys_values)
 
+
+@catch_errors_decorator
+def get_subsys_disturb(
+    new_input_json: Dict, it0_subsys_nr: int
+) -> Tuple[
+    Union[float, int],
+    Union[float, int],
+]:
+
+    subsys_values = []
+    for key in [
+        "disturbed_min_value",
+        "distrubed_candidate_value",
+    ]:
+        subsys_values.append(new_input_json[key][it0_subsys_nr])
+    return tuple(subsys_values)
 
 @catch_errors_decorator
 def generate_starting_points(
@@ -501,6 +519,8 @@ def set_input_explordevi_json(
         "sigma_high",
         "sigma_high_limit",
         "ignore_first_x_ps",
+        "",
+        "",
     ]:
         # Get the value
         default_used = False

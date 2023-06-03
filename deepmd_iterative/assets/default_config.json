@@ -43,6 +43,8 @@
         "sigma_low": [0.2],
         "sigma_high": [0.7],
         "sigma_high_limit": [1.0],
-        "ignore_first_x_ps": [0.5]
+        "ignore_first_x_ps": [0.5],
+        "disturbed_min_value": [0.0],
+        "distrubed_candidate_value": [0.0]
     }
 }
