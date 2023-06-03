@@ -27,6 +27,7 @@ atomsk_fpath: str ="/gpfswork/rech/nvs/commun/programs/apps/atomsk/0.11.2/bin/at
 import sys
 from pathlib import Path
 import logging
+import re
 
 logging.basicConfig(level=logging.INFO,format="%(levelname)s: %(message)s")
 
@@ -157,9 +158,15 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
         for it_list_plumed_files in list_plumed_files:
             plumed_input[it_list_plumed_files.name] = cf.read_file(it_list_plumed_files)
             if any("MOVINGRESTRAINT" in zzz for zzz in plumed_input[it_list_plumed_files.name]):
-                SMD_step = [zzz for zzz in plumed_input[it_list_plumed_files.name] if "STEP" in zzz]
                 with_plumed_smd = 1
-                subsys_SMD_nb_steps = SMD_step[-1].split(" ")[0].split("=")[-1]
+                step_matches = re.findall(r"STEP\d*\s*=\s*(\d+)", "".join(plumed_input[it_list_plumed_files.name]))
+                if len(step_matches) > 0:
+                    subsys_SMD_nb_steps = int(step_matches[-1])
+                else:
+                    logging.critical("STEP not found for MOVINGRESTRAINT.")
+                    logging.critical("Aborting...")
+                    sys.exit(1)
+
         del list_plumed_files, it_list_plumed_files
 
     ### Timestep
