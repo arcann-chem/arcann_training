@@ -5,6 +5,7 @@ atomsk_fpath: str ="/gpfswork/rech/nvs/commun/programs/apps/atomsk/0.11.2/bin/at
 # vmd_fpath: str=""
 # disturbed_min_value: list = [0.0, 0.0] #float
 # disturbed_candidates_value: list = [0.0, 0.0] #float
+disturbed_idxs: list = [] # int ; 1-based ordering
 
 ###################################### No change past here
 import sys
@@ -188,14 +189,25 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
 
                     ### Atomsk XYZ ==> XYZ_disturbed
                     with open(training_iterative_apath/"atomsk.log", "a") as log_file:
-                        subprocess.call([atomsk_bin, "-ow", str(starting_structures_apath/(min_file_name+"_disturbed.xyz")),\
-                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][0]), "H1",\
-                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][1]), "H2",\
-                            "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][2]), "H3",\
-                            "-disturb", str(disturbed_min_value_subsys),\
-                            "xyz"],\
-                            stdout=log_file,\
-                            stderr=subprocess.STDOUT)
+                        if len(disturbed_idxs) == 0:
+                            subprocess.call([atomsk_bin, "-ow", str(starting_structures_apath/(min_file_name+"_disturbed.xyz")),\
+                                "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][0]), "H1",\
+                                "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][1]), "H2",\
+                                "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][2]), "H3",\
+                                "-disturb", str(disturbed_min_value_subsys),\
+                                "xyz"],\
+                                stdout=log_file,\
+                                stderr=subprocess.STDOUT)
+                        else:
+                            subprocess.call([atomsk_bin, "-ow", str(starting_structures_apath/(min_file_name+"_disturbed.xyz")),\
+                                "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][0]), "H1",\
+                                "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][1]), "H2",\
+                                "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][2]), "H3",\
+                                "-select", ",".join([str(idx) for idx in disturbed_idxs]),\
+                                "-disturb", str(disturbed_min_value_subsys),\
+                                "xyz"],\
+                                stdout=log_file,\
+                                stderr=subprocess.STDOUT)
                     ### Atomsk XYZ -> LMP
                     cf.remove_file((starting_structures_apath/(min_file_name+"_disturbed.lmp")))
                     # create properties file for Atomsk with Lammps types in the correct order
@@ -259,14 +271,25 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     for it_vmd_xyz_files in vmd_xyz_files:
                         ### Atomsk XYZ ==> XYZ_disturbed
                         with open(training_iterative_apath/"atomsk.log", "a") as log_file:
-                            subprocess.call([atomsk_bin, "-ow", str(it_vmd_xyz_files),\
-                                "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][0]), "H1",\
-                                "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][1]), "H2",\
-                                "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][2]), "H3",\
-                                "-disturb", str(disturbed_candidates_value[it0_subsys_nr]),\
-                                "xyz", str(it_vmd_xyz_files)+"_disturbed"],\
-                                stdout=log_file,\
-                                stderr=subprocess.STDOUT)
+                            if len(disturbed_idxs) == 0:
+                                subprocess.call([atomsk_bin, "-ow", str(it_vmd_xyz_files),\
+                                    "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][0]), "H1",\
+                                    "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][1]), "H2",\
+                                    "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][2]), "H3",\
+                                    "-disturb", str(disturbed_candidates_value[it0_subsys_nr]),\
+                                    "xyz", str(it_vmd_xyz_files)+"_disturbed"],\
+                                    stdout=log_file,\
+                                    stderr=subprocess.STDOUT)
+                            else:
+                                subprocess.call([atomsk_bin, "-ow", str(it_vmd_xyz_files),\
+                                    "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][0]), "H1",\
+                                    "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][1]), "H2",\
+                                    "-cell", "set", str(config_json["subsys_nr"][it_subsys_nr]["cell"][2]), "H3",\
+                                    "-select", ",".join([str(idx) for idx in disturbed_idxs]),\
+                                    "-disturb", str(disturbed_candidates_value[it0_subsys_nr]),\
+                                    "xyz", str(it_vmd_xyz_files)+"_disturbed"],\
+                                    stdout=log_file,\
+                                    stderr=subprocess.STDOUT)
                     del it_vmd_xyz_files, vmd_xyz_files
 
                     cf.remove_file(local_apath/("temp_candidates_"+str(it_subsys_nr)+"_"+str(it_nnp)+"_"+current_iteration_zfill+"_disturbed.xyz"))
