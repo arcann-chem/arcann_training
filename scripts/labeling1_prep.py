@@ -287,6 +287,9 @@ for it0_subsys_nr, it_subsys_nr in enumerate(subsys_list):
             (subsys_apath/d_step_iter_str).mkdir(exist_ok=True)
             cf.check_dir((subsys_apath/d_step_iter_str),True)
 
+            cp2k_input_t1 = cf.replace_in_list(cp2k_input_1,"XXXXX",d_step_iter_str)
+            cp2k_input_t2 = cf.replace_in_list(cp2k_input_2,"XXXXX",d_step_iter_str)
+            
             cf.write_file(subsys_apath/d_step_iter_str/("1_labeling_"+d_step_iter_str+".inp"),cp2k_input_t1)
             cf.write_file(subsys_apath/d_step_iter_str/("2_labeling_"+d_step_iter_str+".inp"),cp2k_input_t2)
 
