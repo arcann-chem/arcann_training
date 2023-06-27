@@ -45,10 +45,10 @@ Very fancy DeepMD-based semi-automatic highly-customizable iterative training pr
 
 <!-- TODO: Prerequisites  -->
 
-* python>=3.7.3
-* numpy>=1.17.3
-* setuptools>=40.8.0
-* atomsk >= beta-0.11.2 <!-- TODO: List of steps  -->
+* python >= 3.7.3
+* numpy >= 1.17.3
+* setuptools >= 40.8.0
+* atomsk >= beta-0.12.1 <!-- TODO: List of steps  -->
 * VMD >= 1.9.4 <!-- TODO: List of steps  -->
 
 <div id="installation"></div>
@@ -73,7 +73,7 @@ pip install -e .
 
 ### Inputs
 
-Default value are located in __inputs.json__ located in __src/deepmd_iterative/data/__
+Default value are located in __default_config.json__ located in __src/arcann/assets/__
 
 Initialization
 
