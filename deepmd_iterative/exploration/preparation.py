@@ -1,6 +1,6 @@
 """
 Created: 2023/01/01
-Last modified: 2023/06/03
+Last modified: 2023/07/01
 """
 from pathlib import Path
 import logging
@@ -401,9 +401,11 @@ def main(
                 subprocess.run(
                     [
                         atomsk_bin,
-                        str(training_path / "files" / subsys_lammps_data_fn),
+                        str(Path("../") / "files" / subsys_lammps_data_fn),
+                        #str(training_path / "files" / subsys_lammps_data_fn),
                         "xyz",
-                        str(training_path / "files" / it_subsys_nr),
+                        str(Path("../") / "files" / it_subsys_nr),
+                        #str(training_path / "files" / it_subsys_nr),
                         "-ow",
                     ],
                     stdout=subprocess.DEVNULL,

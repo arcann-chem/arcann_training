@@ -3,6 +3,7 @@
     {
         "hostname": "jean-zay",
         "walltime_format": "hours",
+        "job_scheduler": "slurm",
         "launch_command": "sbatch",
         "v100": {
             "project_name": "nvs",
@@ -91,6 +92,7 @@
     {
         "hostname": "irene",
         "walltime_format": "seconds",
+        "job_scheduler": "ccc_slurm",
         "launch_command": "ccc_msub",
         "cpu": {
             "project_name": "gen7156",
