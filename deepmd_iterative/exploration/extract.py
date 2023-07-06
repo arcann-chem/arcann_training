@@ -1,6 +1,6 @@
 """
 Created: 2023/01/01
-Last modified: 2023/04/21
+Last modified: 2023/07/01
 """
 from pathlib import Path
 import logging
@@ -217,7 +217,10 @@ def main(
                         stderr=subprocess.STDOUT,
                     )
                     
-                    if 
+                    if (exploration_config["subsys_nr"][it_subsys_nr]["disturbed_start"] and exploration_config["subsys_nr"][it_subsys_nr]["disturbed_min_value"] != 0) \
+                        or (curr_iter > 1 and prev_exploration_config["subsys_nr"][it_subsys_nr]["disturbed_min"]):
+                            
+                        disturbed_min_value_subsys = disturbed_min_value_subsys
 
                         if ("disturbed_min_value" in globals() and disturbed_min_value[it0_subsys_nr] != 0) \
                             or (int(current_iteration_zfill) > 1 and prevexploration_json["subsys_nr"][it_subsys_nr]["disturbed_min"]):
