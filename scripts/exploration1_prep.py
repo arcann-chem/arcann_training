@@ -308,8 +308,13 @@ for it0_subsys_nr,it_subsys_nr in enumerate(config_json["subsys_nr"]):
                     if len(starting_point_list) == 0:
                         starting_point_list = starting_point_list_bckp.copy()
                     RAND = random.randrange(0,len(starting_point_list))
-                    subsys_lammps_data_fn = starting_point_list[RAND]
-                    subsys_lammps_data = cf.read_file(training_iterative_apath/"starting_structures"/subsys_lammps_data_fn)
+                    if with_plumed_smd == 1:
+                        subsys_lammps_data_fn = it_subsys_nr+".lmp"
+                        subsys_lammps_data = cf.read_file(training_iterative_apath/"inputs"/subsys_lammps_data_fn)
+                    else:
+                        subsys_lammps_data_fn = starting_point_list[RAND]
+                        subsys_lammps_data = cf.read_file(training_iterative_apath/"starting_structures"/subsys_lammps_data_fn)
+
                     exploration_input = cf.replace_in_list(exploration_input,"_R_DATA_FILE_",subsys_lammps_data_fn)
 
                     ### Get again the subsys_cell and nb_atom
