@@ -1,3 +1,10 @@
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Very fancy DeepMD-based semi-automatic highly-customizable iterative training procedure. #
+#   Copyright 2022-2023 ArcaNN developers group <https://github.com/arcann-chem>                     #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
+
 ## deepmd_iterative_apath
 # deepmd_iterative_apath: str = ""
 ## Project name / allocation / arch (nvs/v100/a100 or gen7156/rome/cpu)

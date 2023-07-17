@@ -1,3 +1,10 @@
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Very fancy DeepMD-based semi-automatic highly-customizable iterative training procedure. #
+#   Copyright 2022-2023 ArcaNN developers group <https://github.com/arcann-chem>                     #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
+
 mol new _R_PDB_FILE_
 animate delete all
 mol addfile _R_DCD_FILE_ first 0 last -1 step 1 waitfor all

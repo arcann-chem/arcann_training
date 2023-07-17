@@ -1,3 +1,10 @@
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Very fancy DeepMD-based semi-automatic highly-customizable iterative training procedure. #
+#   Copyright 2022-2023 ArcaNN developers group <https://github.com/arcann-chem>                     #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
+
 ## deepmd_iterative_apath
 # deepmd_iterative_apath: str = ""
 ## Either shortcut (machine_file.json) or Project name / allocation / arch
@@ -21,7 +28,7 @@
 # initial_exploration_time_ps = [10, 10] #int
 # init_job_walltime_h: list = [1, 1] #int / LAMMPS
 # init_job_walltime_h: list = [10, 10] #int / i-PI
-atomsk_fpath: str ="/gpfswork/rech/nvs/commun/programs/apps/atomsk/0.11.2/bin/atomsk"
+# atomsk_fpath: str = ""
 
 ###################################### No change past here
 import sys

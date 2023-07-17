@@ -1,4 +1,10 @@
 #!/bin/bash
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Very fancy DeepMD-based semi-automatic highly-customizable iterative training procedure. #
+#   Copyright 2022-2023 ArcaNN developers group <https://github.com/arcann-chem>                     #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
 
 cp control/datasets_initial.json control/datasets_initial.json.bak
 mv control/datasets_initial.json control/initial_datasets.json
