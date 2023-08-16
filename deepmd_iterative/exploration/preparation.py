@@ -1,15 +1,22 @@
 """
-Created: 2023/01/01
-Last modified: 2023/07/01
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Automatic training of Reactive Chemical Architecture with Neural Networks                #
+#   Copyright 2023 ArcaNN developers group <https://github.com/arcann-chem>                          #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
+Created: 2022/01/01
+Last modified: 2023/08/16
 """
-from pathlib import Path
-import logging
-import sys
+# Standard library modules
 import copy
+import logging
 import random
 import subprocess
+import sys
+from pathlib import Path
 
-# deepmd_iterative imports
+# Local imports
 from deepmd_iterative.common.check import validate_step_folder, check_atomsk
 from deepmd_iterative.exploration.utils import (
     generate_starting_points,
@@ -53,7 +60,7 @@ def main(
     current_step: str,
     current_phase: str,
     deepmd_iterative_path: Path,
-    fake_machine = None,
+    fake_machine=None,
     user_config_filename: str = "input.json",
 ):
     # Get the current path and set the training path as the parent of the current path
@@ -61,7 +68,9 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}")
+    logging.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}"
+    )
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
@@ -76,7 +85,9 @@ def main(
     logging.debug(f"curr_iter, padded_curr_iter: {curr_iter}, {padded_curr_iter}")
 
     # Load the default config (JSON)
-    default_config = load_default_json_file(deepmd_iterative_path / "assets" / "default_config.json")[current_step]
+    default_config = load_default_json_file(
+        deepmd_iterative_path / "assets" / "default_config.json"
+    )[current_step]
     default_config_present = bool(default_config)
     logging.debug(f"default_config: {default_config}")
     logging.debug(f"default_config_present: {default_config_present}")
@@ -104,9 +115,13 @@ def main(
     if curr_iter > 0:
         prev_iter = curr_iter - 1
         padded_prev_iter = str(prev_iter).zfill(3)
-        prev_training_config = load_json_file((control_path / f"training_{padded_prev_iter}.json"))
+        prev_training_config = load_json_file(
+            (control_path / f"training_{padded_prev_iter}.json")
+        )
         if prev_iter > 0:
-            prev_exploration_config = load_json_file((control_path / f"exploration_{padded_prev_iter}.json"))
+            prev_exploration_config = load_json_file(
+                (control_path / f"exploration_{padded_prev_iter}.json")
+            )
         else:
             prev_exploration_config = {}
     else:
@@ -114,13 +129,19 @@ def main(
         prev_exploration_config = {}
 
     # Check if the atomsk package is installed
-    atomsk_bin = check_atomsk(get_key_in_dict("atomsk_path", user_config, prev_exploration_config, default_config))
+    atomsk_bin = check_atomsk(
+        get_key_in_dict(
+            "atomsk_path", user_config, prev_exploration_config, default_config
+        )
+    )
     # Update new input
     current_config["atomsk_path"] = atomsk_bin
 
     # Get the machine keyword (input override previous training override default_config)
     # And update the new input
-    user_machine_keyword = get_machine_keyword(user_config, prev_training_config, default_config)
+    user_machine_keyword = get_machine_keyword(
+        user_config, prev_training_config, default_config
+    )
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     current_config["user_machine_keyword"] = user_machine_keyword
     logging.debug(f"current_config: {current_config}")
@@ -164,14 +185,22 @@ def main(
         "deepmd_model_version": prev_training_config["deepmd_model_version"],
         "nnp_count": main_config["nnp_count"],
         "exploration_type": main_config["exploration_type"],
-        "traj_count": get_key_in_dict("traj_count", user_config, prev_exploration_config, default_config)
+        "traj_count": get_key_in_dict(
+            "traj_count", user_config, prev_exploration_config, default_config
+        ),
     }
     # Update the new input
     current_config["traj_count"] = exploration_config["traj_count"]
     logging.debug(f"current_config: {current_config}")
 
     # Fill the missing values from the input. We don't do exploration because it is subsys dependent and single value and not list
-    current_config = set_input_explor_json(user_config,prev_exploration_config,default_config,current_config,main_config)
+    current_config = set_input_explor_json(
+        user_config,
+        prev_exploration_config,
+        default_config,
+        current_config,
+        main_config,
+    )
     logging.debug(f"current_config: {current_config}")
 
     # Set additional machine-related parameters in the JSON file
@@ -187,8 +216,10 @@ def main(
 
     # Check if the job file exists
     job_file_name = f"job_deepmd_{exploration_config['exploration_type']}_{exploration_config['arch_type']}_{machine}.sh"
-    if (current_path.parent / "files" / job_file_name ).is_file():
-            master_job_file = textfile_to_string_list(current_path.parent / "files" / job_file_name)
+    if (current_path.parent / "files" / job_file_name).is_file():
+        master_job_file = textfile_to_string_list(
+            current_path.parent / "files" / job_file_name
+        )
     else:
         check_file_existence(
             jobs_path / job_file_name,
@@ -198,7 +229,9 @@ def main(
             jobs_path / job_file_name,
         )
     logging.debug(f"master_job_file: {master_job_file[0:5]}, {master_job_file[-5:-1]}")
-    current_config["job_email"] = get_key_in_dict("job_email", user_config, prev_exploration_config, default_config)
+    current_config["job_email"] = get_key_in_dict(
+        "job_email", user_config, prev_exploration_config, default_config
+    )
     del jobs_path, job_file_name
 
     # Preparation of the exploration
@@ -206,7 +239,6 @@ def main(
 
     # Loop through each subsystem and set its exploration
     for it0_subsys_nr, it_subsys_nr in enumerate(main_config["subsys_nr"]):
-
         random.seed()
         exploration_config["subsys_nr"][it_subsys_nr] = {}
 
@@ -284,7 +316,9 @@ def main(
             subsys_print_mult,
             subsys_disturbed_start,
         ) = get_subsys_exploration(current_config, it0_subsys_nr)
-        logging.debug(f"{subsys_timestep_ps,subsys_temperature_K,subsys_exp_time_ps,subsys_max_exp_time_ps,subsys_job_walltime_h,subsys_init_exp_time_ps,subsys_init_job_walltime_h,subsys_print_mult,subsys_disturbed_start}")
+        logging.debug(
+            f"{subsys_timestep_ps,subsys_temperature_K,subsys_exp_time_ps,subsys_max_exp_time_ps,subsys_job_walltime_h,subsys_init_exp_time_ps,subsys_init_job_walltime_h,subsys_print_mult,subsys_disturbed_start}"
+        )
 
         # Set the subsys params for exploration
         if curr_iter == 1:
@@ -354,7 +388,9 @@ def main(
                         subsys_nb_steps = subsys_max_exp_time_ps / subsys_timestep_ps
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(subsys_nb_steps)}"
                 # Update the new input
-                current_config['subsys_exp_time_ps'] = subsys_nb_steps * subsys_timestep_ps
+                current_config["subsys_exp_time_ps"] = (
+                    subsys_nb_steps * subsys_timestep_ps
+                )
 
                 # Walltime
                 if "subsys_job_walltime_h" in user_config:
@@ -371,7 +407,9 @@ def main(
                         * 1.20
                     )
                 # Update the new input
-                current_config['subsys_job_walltime_h'] = subsys_walltime_approx_s / 3600
+                current_config["subsys_job_walltime_h"] = (
+                    subsys_walltime_approx_s / 3600
+                )
 
             # Get print freq
             subsys_print_every_x_steps = subsys_nb_steps * subsys_print_mult
@@ -402,10 +440,10 @@ def main(
                     [
                         atomsk_bin,
                         str(Path("../") / "files" / subsys_lammps_data_fn),
-                        #str(training_path / "files" / subsys_lammps_data_fn),
+                        # str(training_path / "files" / subsys_lammps_data_fn),
                         "xyz",
                         str(Path("../") / "files" / it_subsys_nr),
-                        #str(training_path / "files" / it_subsys_nr),
+                        # str(training_path / "files" / it_subsys_nr),
                         "-ow",
                     ],
                     stdout=subprocess.DEVNULL,
@@ -451,7 +489,9 @@ def main(
                         subsys_nb_steps = subsys_max_exp_time_ps / subsys_timestep_ps
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(subsys_nb_steps)}"
                 # Update the new input
-                current_config['subsys_exp_time_ps'] = subsys_nb_steps * subsys_timestep_ps
+                current_config["subsys_exp_time_ps"] = (
+                    subsys_nb_steps * subsys_timestep_ps
+                )
 
                 # Walltime
                 if user_config_present:
@@ -468,7 +508,9 @@ def main(
                         * 1.20
                     )
                 # Update the new input
-                current_config['subsys_job_walltime_h'] = subsys_walltime_approx_s / 3600
+                current_config["subsys_job_walltime_h"] = (
+                    subsys_walltime_approx_s / 3600
+                )
 
             # Get print freq
             subsys_print_every_x_steps = subsys_nb_steps * subsys_print_mult
@@ -477,7 +519,6 @@ def main(
         # Now it is by NNP and by traj_count
         for it_nnp in range(1, main_config["nnp_count"] + 1):
             for it_number in range(1, exploration_config["traj_count"] + 1):
-
                 local_path = (
                     Path(".").resolve()
                     / str(it_subsys_nr)
@@ -580,11 +621,10 @@ def main(
                             it_subsys_lammps_in, key, value
                         )
                     string_list_to_textfile(
-                        local_path
-                        / (f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.in"),
+                        local_path / (f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.in"),
                         it_subsys_lammps_in,
                     )
-                    
+
                     # Slurm file
                     job_file = replace_in_slurm_file_general(
                         master_job_file,
@@ -593,7 +633,7 @@ def main(
                         machine_walltime_format,
                         current_config["job_email"],
                     )
-                    
+
                     job_file = replace_substring_in_string_list(
                         job_file,
                         "_R_DEEPMD_VERSION_",
@@ -720,9 +760,7 @@ def main(
                             it_subsys_ipi_xml_aslist, key, value
                         )
                     del key, value
-                    it_subsys_ipi_xml = string_list_to_xml(
-                        it_subsys_ipi_xml_aslist
-                    )
+                    it_subsys_ipi_xml = string_list_to_xml(it_subsys_ipi_xml_aslist)
                     write_xml_file(
                         it_subsys_ipi_xml,
                         local_path
@@ -800,8 +838,12 @@ def main(
         exploration_config["subsys_nr"][it_subsys_nr][
             "temperature_K"
         ] = subsys_temperature_K
-        exploration_config["subsys_nr"][it_subsys_nr]["timestep_ps"] = subsys_timestep_ps
-        exploration_config["subsys_nr"][it_subsys_nr]["disturbed_start"] = subsys_disturbed_start
+        exploration_config["subsys_nr"][it_subsys_nr][
+            "timestep_ps"
+        ] = subsys_timestep_ps
+        exploration_config["subsys_nr"][it_subsys_nr][
+            "disturbed_start"
+        ] = subsys_disturbed_start
 
         main_config["subsys_nr"][it_subsys_nr]["cell"] = subsys_cell
         main_config["subsys_nr"][it_subsys_nr]["nb_atm"] = subsys_nb_atm
@@ -828,7 +870,9 @@ def main(
     write_json_file(
         exploration_config, (control_path / f"exploration_{padded_curr_iter}.json")
     )
-    backup_and_overwrite_json_file(current_config, (current_path / user_config_filename))
+    backup_and_overwrite_json_file(
+        current_config, (current_path / user_config_filename)
+    )
     return 0
 
 
@@ -838,8 +882,8 @@ if __name__ == "__main__":
             "exploration",
             "preparation",
             Path(sys.argv[1]),
-            fake_machine = sys.argv[2],
-            user_config_filename = sys.argv[3],
+            fake_machine=sys.argv[2],
+            user_config_filename=sys.argv[3],
         )
     else:
         pass

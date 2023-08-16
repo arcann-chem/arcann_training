@@ -1,20 +1,27 @@
 """
-Created: 2023/01/01
-Last modified: 2023/04/17
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Automatic training of Reactive Chemical Architecture with Neural Networks                #
+#   Copyright 2023 ArcaNN developers group <https://github.com/arcann-chem>                          #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
+Created: 2022/01/01
+Last modified: 2023/08/16
 """
-from pathlib import Path
+# Standard library modules
 import logging
 import sys
+from pathlib import Path
 
 # Non-standard library imports
 import numpy as np
 
-# deepmd_iterative imports
+# Local imports
 from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
 )
-from deepmd_iterative.common.list import (textfile_to_string_list)
+from deepmd_iterative.common.list import textfile_to_string_list
 from deepmd_iterative.common.filesystem import (
     remove_files_matching_glob,
 )
@@ -25,13 +32,15 @@ def main(
     current_step: str,
     current_phase: str,
     deepmd_iterative_path: Path,
-    fake_machine = None,
+    fake_machine=None,
     user_config_filename: str = "input.json",
 ):
     current_path = Path(".").resolve()
     training_path = current_path.parent
 
-    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}")
+    logging.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}"
+    )
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
@@ -78,7 +87,6 @@ def main(
 
         for it_nnp in range(1, main_config["nnp_count"] + 1):
             for it_number in range(1, exploration_config["traj_count"] + 1):
-
                 local_path = (
                     Path(".").resolve()
                     / str(it_subsys_nr)
@@ -123,7 +131,9 @@ def main(
                         del lammps_output
                     elif (local_path / "skip").is_file():
                         skipped_count += 1
-                        exploration_config["subsys_nr"][it_subsys_nr]["skipped_count"] += 1
+                        exploration_config["subsys_nr"][it_subsys_nr][
+                            "skipped_count"
+                        ] += 1
                         logging.warning(f"{lammps_output_file} skipped")
                     else:
                         logging.critical(f"{lammps_output_file} failed. Check manually")
@@ -174,7 +184,9 @@ def main(
                         del ipi_output
                     elif (local_path / "skip").is_file():
                         skipped_count += 1
-                        exploration_config["subsys_nr"][it_subsys_nr]["skipped_count"] += 1
+                        exploration_config["subsys_nr"][it_subsys_nr][
+                            "skipped_count"
+                        ] += 1
                         logging.warning(f"{ipi_output_file} skipped")
                     else:
                         logging.critical(f"{ipi_output_file} failed. Check manually")
@@ -216,7 +228,8 @@ def main(
 
     exploration_config["is_checked"] = True
     write_json_file(
-        exploration_config, (control_path / f"exploration_{current_iteration_zfill}.json")
+        exploration_config,
+        (control_path / f"exploration_{current_iteration_zfill}.json"),
     )
     logging.info("Deleting SLURM out/error files...")
     logging.info("Deleting NNP PB files...")

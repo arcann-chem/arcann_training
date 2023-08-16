@@ -1,5 +1,17 @@
+"""
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Automatic training of Reactive Chemical Architecture with Neural Networks                #
+#   Copyright 2023 ArcaNN developers group <https://github.com/arcann-chem>                          #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
+Created: 2022/01/01
+Last modified: 2023/08/16
+"""
+# Standard library modules
 import unittest
 
+# Local imports
 from deepmd_iterative.common.json_parameters import set_main_config
 
 
@@ -79,7 +91,11 @@ class TestSetConfigJson(unittest.TestCase):
             set_main_config(input_json, self.default_json)
 
     def test_set_main_config_with_missing_input(self):
-        input_json = {"system": "My system", "nnp_count": 4, "exploration_type": "lammps"}
+        input_json = {
+            "system": "My system",
+            "nnp_count": 4,
+            "exploration_type": "lammps",
+        }
         with self.assertRaises(SystemExit):
             set_main_config(input_json, self.default_json)
 

@@ -1,22 +1,31 @@
-
-from pathlib import Path
+"""
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Automatic training of Reactive Chemical Architecture with Neural Networks                #
+#   Copyright 2023 ArcaNN developers group <https://github.com/arcann-chem>                          #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
+Created: 2022/01/01
+Last modified: 2023/08/16
+"""
+# Standard library modules
 import json
-
-# Unittest imports
-import unittest
 import tempfile
+import unittest
+from pathlib import Path
 
-# Non-standard library imports
+# Third-party modules
 import numpy as np
 
+# Local imports
 from deepmd_iterative.exploration.utils import (
     create_models_list,
     get_last_frame_number,
     update_subsys_nb_steps_factor,
 )
 
-class TestCreateModelsList(unittest.TestCase):
 
+class TestCreateModelsList(unittest.TestCase):
     def setUp(self):
         # Create a temporary directory for the test
         self.temp_dir = tempfile.TemporaryDirectory()
@@ -28,7 +37,7 @@ class TestCreateModelsList(unittest.TestCase):
         self.training_dir.mkdir()
         self.local_dir.mkdir()
         self.nnp_dir.mkdir()
-    
+
         # Create a temporary config JSON file for the test
         self.config_file = Path(self.temp_dir.name) / "config.json"
         with self.config_file.open(mode="w") as f:
@@ -80,20 +89,25 @@ class TestCreateModelsList(unittest.TestCase):
         for i in range(1, 4):
             nnp_link = self.local_dir / f"graph_{i}_000_compressed.pb"
             self.assertTrue(nnp_link.is_symlink())
-            self.assertEqual(nnp_link.resolve(), self.training_dir / "NNP" / f"graph_{i}_000_compressed.pb")
-    
-class TestGetLastFrameNumber(unittest.TestCase):
+            self.assertEqual(
+                nnp_link.resolve(),
+                self.training_dir / "NNP" / f"graph_{i}_000_compressed.pb",
+            )
 
+
+class TestGetLastFrameNumber(unittest.TestCase):
     def test_get_last_frame_number(self):
         # Test the function with various inputs
-        model_deviation = np.array([
-            [1, 2, 3, 4, 0.1],
-            [2, 3, 4, 5, 0.2],
-            [3, 4, 5, 6, 0.3],
-            [4, 5, 6, 7, 0.4],
-            [5, 6, 7, 8, 0.5],
-            [6, 7, 8, 9, 0.6],
-        ])
+        model_deviation = np.array(
+            [
+                [1, 2, 3, 4, 0.1],
+                [2, 3, 4, 5, 0.2],
+                [3, 4, 5, 6, 0.3],
+                [4, 5, 6, 7, 0.4],
+                [5, 6, 7, 8, 0.5],
+                [6, 7, 8, 9, 0.6],
+            ]
+        )
         self.assertEqual(get_last_frame_number(model_deviation, 0.2, False), 1)
         self.assertEqual(get_last_frame_number(model_deviation, 0.4, False), 3)
         self.assertEqual(get_last_frame_number(model_deviation, 0.6, False), 5)
@@ -102,10 +116,9 @@ class TestGetLastFrameNumber(unittest.TestCase):
         self.assertEqual(get_last_frame_number(model_deviation, 0.4, True), 2)
         self.assertEqual(get_last_frame_number(model_deviation, 0.6, True), 4)
         self.assertEqual(get_last_frame_number(model_deviation, 0.7, True), -1)
-        
+
 
 class TestUpdateNbStepsFactor(unittest.TestCase):
-
     def setUp(self):
         # Create a temporary directory for the test
         self.temp_dir = tempfile.TemporaryDirectory()
@@ -113,7 +126,9 @@ class TestUpdateNbStepsFactor(unittest.TestCase):
         # Create a temporary JSON file for the test
         self.temp_file = Path(self.temp_dir.name) / "prevexploration.json"
         with self.temp_file.open(mode="w") as f:
-            f.write('{"subsys_nr": [{"nb_candidates": 5, "nb_rejected": 0, "nb_total": 100}]}')
+            f.write(
+                '{"subsys_nr": [{"nb_candidates": 5, "nb_rejected": 0, "nb_total": 100}]}'
+            )
 
     def tearDown(self):
         # Clean up the temporary directory and file

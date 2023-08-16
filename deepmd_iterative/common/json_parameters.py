@@ -1,6 +1,12 @@
 """
-Created: 2023/01/01
-Last modified: 2023/04/17
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Automatic training of Reactive Chemical Architecture with Neural Networks                #
+#   Copyright 2023 ArcaNN developers group <https://github.com/arcann-chem>                          #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
+Created: 2022/01/01
+Last modified: 2023/08/16
 
 Functions
 ---------
@@ -107,7 +113,7 @@ def get_machine_keyword(
         value = default_json[key]
     else:
         # The key is not present in any of the JSON.
-        error_msg = f"\'{key}\' not found in any JSON."
+        error_msg = f"'{key}' not found in any JSON."
         raise KeyError(error_msg)
 
     # Check if the value is of the correct type.
@@ -125,7 +131,6 @@ def get_machine_keyword(
             '{key}' should be a boolean: false or true (Meaning it is deactivated)\n
             '{key}' should be a list of strings in the form: [\"project\", \"allocation\", \"arch_name\"]"""
         raise TypeError(error_msg)
-
 
     return value
 
@@ -201,4 +206,3 @@ def set_main_config(user_config: Dict, default_config: Dict) -> Tuple[Dict, Dict
         main_config["subsys_nr"][key] = {}
 
     return main_config, current_config, padded_curr_iter
-

@@ -1,6 +1,12 @@
 """
-Created: 2023/01/01
-Last modified: 2023/04/17
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Automatic training of Reactive Chemical Architecture with Neural Networks                #
+#   Copyright 2023 ArcaNN developers group <https://github.com/arcann-chem>                          #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
+Created: 2022/01/01
+Last modified: 2023/08/16
 """
 # Standard library modules
 import argparse
@@ -76,9 +82,11 @@ if __name__ == "__main__":
             step_name, phase_name, deepmd_iterative_path, fake_cluster, input_fn
         )
         del submodule, submodule_name
-    except (ModuleNotFoundError) as e:
+    except ModuleNotFoundError as e:
         exit_code = 1
-        logging.error(f"Step/Phase: '{submodule_name.split('.')[-2]} / {submodule_name.split('.')[-1]}' are not a valid combination.")
+        logging.error(
+            f"Step/Phase: '{submodule_name.split('.')[-2]} / {submodule_name.split('.')[-1]}' are not a valid combination."
+        )
         logging.error(f"Aborting...")
         logging.error(f"{e}")
     except Exception as e:

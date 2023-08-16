@@ -1,6 +1,12 @@
 """
-Created: 2023/01/01
-Last modified: 2023/04/17
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Automatic training of Reactive Chemical Architecture with Neural Networks                #
+#   Copyright 2023 ArcaNN developers group <https://github.com/arcann-chem>                          #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
+Created: 2022/01/01
+Last modified: 2023/08/16
 
 The lammps module provides functions to manipulate LAMMPS data (as list of strings).
 
@@ -22,7 +28,7 @@ from deepmd_iterative.common.utils import catch_errors_decorator
 @catch_errors_decorator
 def read_lammps_data(
     lines: List[str],
-) -> Tuple[int, int, np.ndarray, Dict[int,float], np.ndarray]:
+) -> Tuple[int, int, np.ndarray, Dict[int, float], np.ndarray]:
     """
     Read LAMMPS data file and extract required information.
 

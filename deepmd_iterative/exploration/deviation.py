@@ -1,16 +1,23 @@
 """
-Created: 2023/01/01
-Last modified: 2023/04/17
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Automatic training of Reactive Chemical Architecture with Neural Networks                #
+#   Copyright 2023 ArcaNN developers group <https://github.com/arcann-chem>                          #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
+Created: 2022/01/01
+Last modified: 2023/08/16
 """
-from pathlib import Path
+# Standard library modules
+import copy
 import logging
 import sys
-import copy
+from pathlib import Path
 
 # Non-standard library imports
 import numpy as np
 
-# deepmd_iterative imports
+# Local imports
 from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
@@ -19,13 +26,18 @@ from deepmd_iterative.common.json import (
 )
 from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.generate_config import set_subsys_params_deviation
-from deepmd_iterative.exploration.utils import get_last_frame_number, set_input_explordevi_json, get_subsys_deviation
+from deepmd_iterative.exploration.utils import (
+    get_last_frame_number,
+    set_input_explordevi_json,
+    get_subsys_deviation,
+)
+
 
 def main(
     current_step: str,
     current_phase: str,
     deepmd_iterative_path: Path,
-    fake_machine = None,
+    fake_machine=None,
     user_config_filename: str = "input.json",
 ):
     # Get the current path and set the training path as the parent of the current path
@@ -33,7 +45,9 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}")
+    logging.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}"
+    )
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
@@ -47,7 +61,9 @@ def main(
     curr_iter = int(padded_curr_iter)
 
     # Load the default config (JSON)
-    default_config = load_default_json_file(deepmd_iterative_path / "assets" / "default_config.json")[current_step]
+    default_config = load_default_json_file(
+        deepmd_iterative_path / "assets" / "default_config.json"
+    )[current_step]
     default_config_present = bool(default_config)
     logging.debug(f"default_config: {default_config}")
     logging.debug(f"default_config_present: {default_config_present}")
@@ -75,9 +91,13 @@ def main(
     if curr_iter > 0:
         prev_iter = curr_iter - 1
         padded_prev_iter = str(prev_iter).zfill(3)
-        prev_training_config = load_json_file((control_path / f"training_{padded_prev_iter}.json"))
+        prev_training_config = load_json_file(
+            (control_path / f"training_{padded_prev_iter}.json")
+        )
         if prev_iter > 0:
-            prev_exploration_config = load_json_file((control_path / ("exploration_" + padded_prev_iter + ".json")))
+            prev_exploration_config = load_json_file(
+                (control_path / ("exploration_" + padded_prev_iter + ".json"))
+            )
         else:
             prev_exploration_config = {}
     else:
@@ -98,10 +118,15 @@ def main(
         return 1
 
     # Fill the missing values from the input. We don't do exploration because it is subsys dependent and single value and not list
-    current_config = set_input_explordevi_json(user_config,prev_exploration_config,default_config,current_config,main_config)
+    current_config = set_input_explordevi_json(
+        user_config,
+        prev_exploration_config,
+        default_config,
+        current_config,
+        main_config,
+    )
     logging.debug(f"current_config: {current_config}")
     for it0_subsys_nr, it_subsys_nr in enumerate(main_config["subsys_nr"]):
-
         # Set the subsys params for deviation selection
         (
             max_candidates,
@@ -109,7 +134,7 @@ def main(
             sigma_high,
             sigma_high_limit,
             ignore_first_x_ps,
-        ) = get_subsys_deviation(current_config,it0_subsys_nr)
+        ) = get_subsys_deviation(current_config, it0_subsys_nr)
 
         # Initialize
         exploration_config["subsys_nr"][it_subsys_nr] = {
@@ -140,7 +165,6 @@ def main(
 
         for it_nnp in range(1, main_config["nnp_count"] + 1):
             for it_number in range(1, exploration_config["traj_count"] + 1):
-
                 logging.debug(f"{it_subsys_nr} / {it_nnp} / {it_number}")
 
                 # Get the local path and the name of model_deviation file
@@ -213,7 +237,9 @@ def main(
                     end_row_number = get_last_frame_number(
                         model_deviation,
                         sigma_high_limit,
-                        exploration_config["subsys_nr"][it_subsys_nr]["disturbed_start"],
+                        exploration_config["subsys_nr"][it_subsys_nr][
+                            "disturbed_start"
+                        ],
                     )
                     logging.debug(
                         f"end_row_number: {end_row_number}, start_row_number: {start_row_number}"
@@ -425,7 +451,6 @@ def main(
 
     del it0_subsys_nr, it_subsys_nr
     for it0_subsys_nr, it_subsys_nr in enumerate(exploration_config["subsys_nr"]):
-
         # Set the subsys params for deviation selection
         (
             max_candidates,
@@ -433,7 +458,7 @@ def main(
             sigma_high,
             sigma_high_limit,
             ignore_first_x_ps,
-        ) = get_subsys_deviation(current_config,it0_subsys_nr)
+        ) = get_subsys_deviation(current_config, it0_subsys_nr)
 
         # Initialize
         exploration_config["subsys_nr"][it_subsys_nr] = {
@@ -444,7 +469,6 @@ def main(
 
         for it_nnp in range(1, main_config["nnp_count"] + 1):
             for it_number in range(1, exploration_config["traj_count"] + 1):
-
                 # Get the local path and the name of model_deviation file
                 local_path = (
                     Path(".").resolve()
@@ -464,10 +488,11 @@ def main(
 
                 # If it was not skipped
                 if not (local_path / "skip").is_file():
-
                     # If candidates_count is over max_candidates
                     if (
-                        exploration_config["subsys_nr"][it_subsys_nr]["candidates_count"]
+                        exploration_config["subsys_nr"][it_subsys_nr][
+                            "candidates_count"
+                        ]
                         <= max_candidates
                     ):
                         selection_factor = 1
@@ -589,7 +614,9 @@ def main(
     write_json_file(
         exploration_config, (control_path / f"exploration_{padded_curr_iter}.json")
     )
-    backup_and_overwrite_json_file(current_config, (current_path / user_config_filename))
+    backup_and_overwrite_json_file(
+        current_config, (current_path / user_config_filename)
+    )
     logging.info(
         f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success !"
     )

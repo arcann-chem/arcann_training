@@ -1,3 +1,13 @@
+"""
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Automatic training of Reactive Chemical Architecture with Neural Networks                #
+#   Copyright 2023 ArcaNN developers group <https://github.com/arcann-chem>                          #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
+Created: 2022/01/01
+Last modified: 2023/08/16
+"""
 # Standard library modules
 import logging
 import os
@@ -17,6 +27,7 @@ from deepmd_iterative.common.check import (
 
 class TestCheckAtomsk(unittest.TestCase):
     """Test case for `check_atomsk` function."""
+
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
         vmd_file = Path(self.tempdir) / "atomsk"
@@ -64,6 +75,7 @@ class TestCheckAtomsk(unittest.TestCase):
 
 class TestCheckVMD(unittest.TestCase):
     """Test case for `check_vmd` function."""
+
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
         vmd_file = Path(self.tempdir) / "vmd"
@@ -111,6 +123,7 @@ class TestCheckVMD(unittest.TestCase):
 
 class TestValidateStepFolder(unittest.TestCase):
     """Test case for `validate_step_folder` function."""
+
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.step_name = "step1"

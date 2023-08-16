@@ -1,6 +1,12 @@
 """
-Created: 2023/01/01
-Last modified: 2023/04/21
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Automatic training of Reactive Chemical Architecture with Neural Networks                #
+#   Copyright 2023 ArcaNN developers group <https://github.com/arcann-chem>                          #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
+Created: 2022/01/01
+Last modified: 2023/08/16
 
 Functions
 ---------
@@ -35,6 +41,7 @@ import numpy as np
 
 # Local imports
 from deepmd_iterative.common.utils import catch_errors_decorator
+
 
 @catch_errors_decorator
 def set_input_explor_json(
@@ -86,7 +93,7 @@ def set_input_explor_json(
         error_msg = f"{config_json['exploration_type']} is not known."
         raise ValueError(error_msg)
 
-    subsys_count = len(config_json.get('subsys_nr', []))
+    subsys_count = len(config_json.get("subsys_nr", []))
 
     for key in [
         "timestep_ps",
@@ -99,7 +106,6 @@ def set_input_explor_json(
         "disturbed_start",
         "print_interval_mult",
     ]:
-
         # Get the value
         default_used = False
         if key in input_json:
@@ -229,7 +235,6 @@ def get_subsys_deviation(
     Union[float, int],
     Union[float, int],
 ]:
-
     subsys_values = []
     for key in [
         "max_candidates",
@@ -245,11 +250,7 @@ def get_subsys_deviation(
 @catch_errors_decorator
 def get_subsys_disturb(
     new_input_json: Dict, it0_subsys_nr: int
-) -> Tuple[
-    Union[float, int],
-    Union[float, int],
-]:
-
+) -> Tuple[Union[float, int], Union[float, int],]:
     subsys_values = []
     for key in [
         "disturbed_min_value",
@@ -257,6 +258,7 @@ def get_subsys_disturb(
     ]:
         subsys_values.append(new_input_json[key][it0_subsys_nr])
     return tuple(subsys_values)
+
 
 @catch_errors_decorator
 def generate_starting_points(
@@ -291,7 +293,7 @@ def generate_starting_points(
     Returns
     -------
     Tuple[List[str], List[str], bool]
-        A tuple containing the starting point file names, the backup starting point file names, 
+        A tuple containing the starting point file names, the backup starting point file names,
         and a boolean indicating whether to start from a disturbed minimum.
     """
 
@@ -511,7 +513,7 @@ def set_input_explordevi_json(
         error_msg = f"{config_json['exploration_type']} is not known."
         raise ValueError(error_msg)
 
-    subsys_count = len(config_json.get('subsys_nr', []))
+    subsys_count = len(config_json.get("subsys_nr", []))
 
     for key in [
         "max_candidates",
@@ -563,7 +565,8 @@ def set_input_explordevi_json(
             elif isinstance(value, (int, float)):
                 new_input_json[key] = [value] * subsys_count
             else:
-                error_msg = f"Wrong type: the type is {type(it_value)} it should be int/float."
+                error_msg = (
+                    f"Wrong type: the type is {type(it_value)} it should be int/float."
+                )
                 raise TypeError(error_msg)
     return new_input_json
-

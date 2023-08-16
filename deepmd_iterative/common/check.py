@@ -1,6 +1,12 @@
 """
-Created: 2023/01/01
-Last modified: 2023/04/17
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Automatic training of Reactive Chemical Architecture with Neural Networks                #
+#   Copyright 2023 ArcaNN developers group <https://github.com/arcann-chem>                          #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
+Created: 2022/01/01
+Last modified: 2023/08/16
 
 This module contains functions for checking the availability of certain commands on the system, as well as a function for validating the current working directory during the execution of a specific step.
 
@@ -21,6 +27,7 @@ from pathlib import Path
 
 # Local imports
 from deepmd_iterative.common.utils import catch_errors_decorator
+
 
 # Unittested
 @catch_errors_decorator

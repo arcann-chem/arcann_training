@@ -1,4 +1,12 @@
 #!/bin/bash
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Automatic training of Reactive Chemical Architecture with Neural Networks                #
+#   Copyright 2023 ArcaNN developers group <https://github.com/arcann-chem>                          #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
+# Created: 2022/01/01
+# Last modified: 2023/08/16
 # Project/Account
 #SBATCH --account=_R_PROJECT_@_R_ALLOC_
 # QoS/Partition/SubPartition

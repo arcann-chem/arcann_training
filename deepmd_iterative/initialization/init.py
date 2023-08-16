@@ -1,6 +1,12 @@
 """
-Created: 2023/01/01
-Last modified: 2023/04/14
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Automatic training of Reactive Chemical Architecture with Neural Networks                #
+#   Copyright 2023 ArcaNN developers group <https://github.com/arcann-chem>                          #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
+Created: 2022/01/01
+Last modified: 2023/08/16
 """
 # Standard library modules
 import logging
@@ -41,7 +47,9 @@ def main(
     logging.info(f"-" * 88)
 
     # Load the default config (JSON)
-    default_config = load_default_json_file(deepmd_iterative_path / "assets" / "default_config.json")[current_step]
+    default_config = load_default_json_file(
+        deepmd_iterative_path / "assets" / "default_config.json"
+    )[current_step]
     default_config_present = bool(default_config)
     logging.debug(f"default_config: {default_config}")
     logging.debug(f"default_config_present: {default_config_present}")
@@ -59,7 +67,9 @@ def main(
     )
 
     # Create the config JSON file (and set everything)
-    main_config, current_config, padded_curr_iter = set_main_config(user_config, default_config)
+    main_config, current_config, padded_curr_iter = set_main_config(
+        user_config, default_config
+    )
     logging.debug(f"main_config: {main_config}")
     logging.debug(f"current_config : {current_config }")
     logging.debug(f"padded_curr_iter : {padded_curr_iter}")
@@ -89,7 +99,9 @@ def main(
         for data_type in ["box", "coord", "energy", "force"]:
             check_file_existence(initial_dataset_set_path / (data_type + ".npy"))
         del data_type
-        initial_datasets_info[initial_dataset_path.name] = np.load(initial_dataset_set_path / "box.npy").shape[0]
+        initial_datasets_info[initial_dataset_path.name] = np.load(
+            initial_dataset_set_path / "box.npy"
+        ).shape[0]
     logging.debug(f"initial_datasets_info: {initial_datasets_info}")
     del initial_dataset_path, initial_datasets_paths, initial_dataset_set_path
 
@@ -106,11 +118,19 @@ def main(
     logging.info(f"-" * 88)
     write_json_file(main_config, (control_path / "config.json"))
     write_json_file(initial_datasets_info, (control_path / "initial_datasets.json"))
-    backup_and_overwrite_json_file(current_config, (current_path / user_config_filename))
+    backup_and_overwrite_json_file(
+        current_config, (current_path / user_config_filename)
+    )
 
     # Delete
     del current_path, control_path, training_path
-    del default_config, default_config_present, user_config, user_config_present, user_config_filename
+    del (
+        default_config,
+        default_config_present,
+        user_config,
+        user_config_present,
+        user_config_filename,
+    )
     del main_config, initial_datasets_info, current_config
 
     logging.info(f"-" * 88)
@@ -126,8 +146,8 @@ if __name__ == "__main__":
             "initialization",
             "init",
             Path(sys.argv[1]),
-            fake_machine = sys.argv[2],
-            user_config_filename = sys.argv[3],
+            fake_machine=sys.argv[2],
+            user_config_filename=sys.argv[3],
         )
     else:
         pass

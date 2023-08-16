@@ -1,6 +1,12 @@
 """
-Created: 2023/01/01
-Last modified: 2023/04/17
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Automatic training of Reactive Chemical Architecture with Neural Networks                #
+#   Copyright 2023 ArcaNN developers group <https://github.com/arcann-chem>                          #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
+Created: 2022/01/01
+Last modified: 2023/08/16
 
 The utils module provides functions to manipulate lists.
 
@@ -100,7 +106,7 @@ def replace_substring_in_string_list(
     if not substring_in:
         raise ValueError("Invalid input. substring_in must be a non-empty string.")
 
-    #if not substring_out:
+    # if not substring_out:
     #    raise ValueError("Invalid input. substring_out must be a non-empty string.")
 
     output_list = [

@@ -1,13 +1,20 @@
 """
-Created: 2023/01/01
-Last modified: 2023/04/17
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Automatic training of Reactive Chemical Architecture with Neural Networks                #
+#   Copyright 2023 ArcaNN developers group <https://github.com/arcann-chem>                          #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
+Created: 2022/01/01
+Last modified: 2023/08/16
 """
-from pathlib import Path
+# Standard library modules
 import logging
-import sys
 import subprocess
+import sys
+from pathlib import Path
 
-# deepmd_iterative imports
+# Local imports
 from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.filesystem import (
     check_directory,
@@ -26,7 +33,7 @@ def main(
     current_step: str,
     current_phase: str,
     deepmd_iterative_path: Path,
-    fake_machine = None,
+    fake_machine=None,
     user_config_filename: str = "input.json",
 ):
     # Get the current path and set the training path as the parent of the current path
@@ -34,7 +41,9 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}")
+    logging.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}"
+    )
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
@@ -65,7 +74,9 @@ def main(
         local_path = Path(".").resolve() / f"{nnp}"
         check_file_existence(local_path / f"graph_{nnp}_{padded_curr_iter}.pb")
         if training_config["is_compressed"]:
-            check_file_existence(local_path / f"graph_{nnp}_{padded_curr_iter}_compressed.pb")
+            check_file_existence(
+                local_path / f"graph_{nnp}_{padded_curr_iter}_compressed.pb"
+            )
 
         remove_file(local_path / "checkpoint")
         remove_file(local_path / "input_v2_compat")
@@ -102,7 +113,11 @@ def main(
                 [
                     "rsync",
                     "-a",
-                    str(local_path / f"{nnp}" / f"graph_{nnp}_{padded_curr_iter}_compressed.pb"),
+                    str(
+                        local_path
+                        / f"{nnp}"
+                        / f"graph_{nnp}_{padded_curr_iter}_compressed.pb"
+                    ),
                     str((training_path / "NNP")),
                 ]
             )
@@ -122,9 +137,7 @@ def main(
     padded_curr_iter = str(curr_iter).zfill(3)
 
     for step in ["exploration", "reactive", "labeling", "training"]:
-        (training_path / f"{padded_curr_iter}-{step}").mkdir(
-            exist_ok=True
-        )
+        (training_path / f"{padded_curr_iter}-{step}").mkdir(exist_ok=True)
         check_directory(training_path / f"{padded_curr_iter}-{step}")
     del step
 
@@ -157,8 +170,8 @@ if __name__ == "__main__":
             "training",
             "update_iter",
             Path(sys.argv[1]),
-            fake_machine = sys.argv[2],
-            user_config_filename = sys.argv[3],
+            fake_machine=sys.argv[2],
+            user_config_filename=sys.argv[3],
         )
     else:
         pass

@@ -1,12 +1,19 @@
 """
-Created: 2023/01/01
-Last modified: 2023/04/17
+#----------------------------------------------------------------------------------------------------#
+#   ArcaNN: Automatic training of Reactive Chemical Architecture with Neural Networks                #
+#   Copyright 2023 ArcaNN developers group <https://github.com/arcann-chem>                          #
+#                                                                                                    #
+#   SPDX-License-Identifier: AGPL-3.0-only                                                           #
+#----------------------------------------------------------------------------------------------------#
+Created: 2022/01/01
+Last modified: 2023/08/16
 """
-from pathlib import Path
+# Standard library modules
 import logging
 import sys
+from pathlib import Path
 
-# deepmd_iterative imports
+# Local imports
 from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.json import (
     load_json_file,
@@ -18,7 +25,7 @@ def main(
     current_step: str,
     current_phase: str,
     deepmd_iterative_path: Path,
-    fake_machine = None,
+    fake_machine=None,
     user_config_filename: str = "input.json",
 ):
     # Get the current path and set the training path as the parent of the current path
@@ -26,7 +33,9 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}")
+    logging.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}"
+    )
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
@@ -98,8 +107,8 @@ if __name__ == "__main__":
             "training",
             "check_freeze",
             Path(sys.argv[1]),
-            fake_machine = sys.argv[2],
-            user_config_filename = sys.argv[3],
+            fake_machine=sys.argv[2],
+            user_config_filename=sys.argv[3],
         )
     else:
         pass
