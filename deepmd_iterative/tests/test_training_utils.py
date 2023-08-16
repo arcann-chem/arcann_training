@@ -69,19 +69,19 @@ class TestCalculateDecaySteps(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             calculate_decay_steps(0)
         error_msg = str(cm.exception)
-        expected_error_msg = f"nb_structures must be a positive integer"
+        expected_error_msg = f"'nb_structures' must be a positive integer"
         self.assertEqual(error_msg, expected_error_msg)
 
         with self.assertRaises(ValueError) as cm:
             calculate_decay_steps(-100)
         error_msg = str(cm.exception)
-        expected_error_msg = f"nb_structures must be a positive integer"
+        expected_error_msg = f"'nb_structures' must be a positive integer"
         self.assertEqual(error_msg, expected_error_msg)
 
         with self.assertRaises(ValueError) as cm:
             calculate_decay_steps(100, min_decay_steps=-500)
         error_msg = str(cm.exception)
-        expected_error_msg = f"min_decay_steps must be a positive integer"
+        expected_error_msg = f"'min_decay_steps' must be a positive integer"
         self.assertEqual(error_msg, expected_error_msg)
 
     def test_calculate_decay_steps_output_type(self):
@@ -125,22 +125,22 @@ class TestCalculateDecayRate(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             calculate_decay_rate(100, -0.01, 0.001, 5000)
         error_msg = str(cm.exception)
-        expected_error_msg = f"start_lr must be a positive number."
+        expected_error_msg = f"'start_lr' must be a positive number."
         self.assertEqual(error_msg, expected_error_msg)
         with self.assertRaises(ValueError) as cm:
             calculate_decay_rate(100, 0, 0.001, 5000)
         error_msg = str(cm.exception)
-        expected_error_msg = f"start_lr must be a positive number."
+        expected_error_msg = f"'start_lr' must be a positive number."
         self.assertEqual(error_msg, expected_error_msg)
         with self.assertRaises(ValueError) as cm:
             calculate_decay_rate(100, 0.01, 0.001, 0)
         error_msg = str(cm.exception)
-        expected_error_msg = f"decay_steps must be a positive integer."
+        expected_error_msg = f"'decay_steps' must be a positive integer."
         self.assertEqual(error_msg, expected_error_msg)
         with self.assertRaises(ValueError) as cm:
             calculate_decay_rate(100, 0.01, 0.001, 0.0003)
         error_msg = str(cm.exception)
-        expected_error_msg = f"decay_steps must be a positive integer."
+        expected_error_msg = f"'decay_steps' must be a positive integer."
         self.assertEqual(error_msg, expected_error_msg)
 
     def test_calculate_decay_rate_output_type(self):
@@ -208,7 +208,7 @@ class TestCalculateLearningRate(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             calculate_learning_rate(100, 0.01, 0.1, 3213332.2)
         error_msg = str(cm.exception)
-        expected_error_msg = f"decay_steps must be a positive integer"
+        expected_error_msg = f"'decay_steps' must be a positive integer"
         self.assertEqual(error_msg, expected_error_msg)
 
     def test_calculate_learning_rate_output_type(self):

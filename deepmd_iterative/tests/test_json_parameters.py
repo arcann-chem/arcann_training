@@ -87,7 +87,7 @@ class TestSetConfigJson(unittest.TestCase):
             "nnp_count": "not a number",
             "exploration_type": "invalid",
         }
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(TypeError):
             set_main_config(input_json, self.default_json)
 
     def test_set_main_config_with_missing_input(self):
@@ -96,7 +96,7 @@ class TestSetConfigJson(unittest.TestCase):
             "nnp_count": 4,
             "exploration_type": "lammps",
         }
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(ValueError):
             set_main_config(input_json, self.default_json)
 
     def test_set_main_config_with_invalid_input2(self):
@@ -105,7 +105,7 @@ class TestSetConfigJson(unittest.TestCase):
             "subsys_nr": ["subsys1", 2],
             "nnp_count": 2,
         }
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(TypeError):
             set_main_config(input_json, self.default_json)
 
 

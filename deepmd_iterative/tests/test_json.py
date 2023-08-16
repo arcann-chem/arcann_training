@@ -228,7 +228,7 @@ class TestLoadDefaultJsonFile(unittest.TestCase):
         with self.assertRaises(TypeError) as cm:
             load_default_json_file("invalid_path.json")
         error_msg = str(cm.exception)
-        expected_error_msg = f"file_path must be a Path object."
+        expected_error_msg = f"'file_path' must be a Path object."
         self.assertEqual(error_msg, expected_error_msg)
 
 
@@ -288,7 +288,7 @@ class TestLoadJsonFile(unittest.TestCase):
         with self.assertRaises(TypeError) as cm:
             load_json_file("invalid_path.json")
         error_msg = str(cm.exception)
-        expected_error_msg = f"file_path must be a Path object."
+        expected_error_msg = f"'file_path' must be a Path object."
         self.assertEqual(error_msg, expected_error_msg)
 
 
