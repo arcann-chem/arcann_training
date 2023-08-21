@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/21
 """
 # Standard library modules
 import argparse
@@ -47,7 +47,10 @@ if __name__ == "__main__":
     deepmd_iterative_path = Path(__file__).parent
 
     if int(args.verbose) == 1:
-        logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s"
+            )
     else:
         logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
