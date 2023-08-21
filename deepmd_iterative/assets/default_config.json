@@ -1,8 +1,7 @@
 {
     "initialization":
     {
-        "system": "",
-        "subsys_nr": [""],
+        "systems_auto": [""],
         "nnp_count": 3,
         "exploration_type": "lammps"
     },

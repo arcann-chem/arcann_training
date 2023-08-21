@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/21
 """
 # Standard library modules
 import copy
@@ -134,6 +134,7 @@ def main(
         machine,
         machine_spec,
         machine_walltime_format,
+        machine_job_scheduler,
         machine_launch_command,
     ) = get_machine_spec_for_step(
         deepmd_iterative_path,
@@ -145,6 +146,7 @@ def main(
     logging.debug(f"machine: {machine}")
     logging.debug(f"machine_spec: {machine_spec}")
     logging.debug(f"machine_walltime_format: {machine_walltime_format}")
+    logging.debug(f"machine_job_scheduler: {machine_job_scheduler}")
     logging.debug(f"machine_launch_command: {machine_launch_command}")
 
     if fake_machine is not None:
@@ -189,9 +191,9 @@ def main(
 
     # Check if the job file exists
     job_file_name = f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh"
-    if (current_path.parent / "files" / job_file_name).is_file():
+    if (current_path.parent / "user_files" / job_file_name).is_file():
         master_job_file = textfile_to_string_list(
-            current_path.parent / "files" / job_file_name
+            current_path.parent / "user_files" / job_file_name
         )
     else:
         check_file_existence(
@@ -210,7 +212,7 @@ def main(
     # Check if the default input json file exists
     dp_train_input_path = (
         training_path
-        / "files"
+        / "user_files"
         / (
             f"dptrain_{training_config['deepmd_model_version']}_{training_config['deepmd_model_type_descriptor']}.json"
         )
@@ -282,107 +284,107 @@ def main(
 
     # This trick remove duplicates from list via set
     subsystems = list(set(subsystems))
-    subsystems = [i for i in subsystems if i not in main_config["subsys_nr"]]
+    subsystems = [i for i in subsystems if i not in main_config["systems_auto"]]
     subsystems = [
         i
         for i in subsystems
-        if i not in [zzz + "-disturbed" for zzz in main_config["subsys_nr"]]
+        if i not in [zzz + "-disturbed" for zzz in main_config["systems_auto"]]
     ]
     subsystems = sorted(subsystems)
-    main_config["subsys_r"] = subsystems
+    main_config["systems_adhoc"] = subsystems
     del subsystems
 
     # TODO As function
-    # Non-Reactive (aka subsys_nr in the initialization first) && all the others are REACTIVE !
+    # Automatic Systems (aka systems_auto in the initialization first) && all the others are not automated !
     # Total and what is added just for this iteration
-    added_nr_count = 0
-    added_r_count = 0
-    added_nr_iter_count = 0
-    added_r_iter_count = 0
+    added_auto_count = 0
+    added_adhoc_count = 0
+    added_auto_iter_count = 0
+    added_adhoc_iter_count = 0
 
     if curr_iter > 0:
         for iteration in np.arange(1, curr_iter + 1):
             padded_iteration = str(iteration).zfill(3)
             try:
-                for subsys_nr in main_config["subsys_nr"]:
-                    if (data_path / f"{subsys_nr}_{padded_iteration}").is_dir():
+                for system_auto in main_config["systems_auto"]:
+                    if (data_path / f"{system_auto}_{padded_iteration}").is_dir():
                         dp_train_input_datasets.append(
-                            f"{(Path(data_path.parts[-1]) / (subsys_nr+'_'+padded_iteration) / '_')}"[
+                            f"{(Path(data_path.parts[-1]) / (system_auto+'_'+padded_iteration) / '_')}"[
                                 :-1
                             ]
                         )
-                        training_datasets.append(f"{subsys_nr}_{padded_iteration}")
-                        added_nr_count += np.load(
+                        training_datasets.append(f"{system_auto}_{padded_iteration}")
+                        added_auto_count += np.load(
                             data_path
-                            / f"{subsys_nr}_{padded_iteration}"
+                            / f"{system_auto}_{padded_iteration}"
                             / "set.000"
                             / "box.npy"
                         ).shape[0]
                         if iteration == curr_iter:
-                            added_nr_iter_count += np.load(
+                            added_auto_iter_count += np.load(
                                 data_path
-                                / f"{subsys_nr}_{padded_iteration}"
+                                / f"{system_auto}_{padded_iteration}"
                                 / "set.000"
                                 / "box.npy"
                             ).shape[0]
-                del subsys_nr
+                del system_auto
             except (KeyError, NameError):
                 pass
             try:
-                for subsys_disturbed in [
-                    zzz + "-disturbed" for zzz in main_config["subsys_nr"]
+                for system_auto_disturbed in [
+                    zzz + "-disturbed" for zzz in main_config["systems_auto"]
                 ]:
-                    if (data_path / f"{subsys_disturbed}_{padded_iteration}").is_dir():
+                    if (data_path / f"{system_auto_disturbed}_{padded_iteration}").is_dir():
                         dp_train_input_datasets.append(
-                            f"{(Path(data_path.parts[-1]) / (subsys_disturbed+'_'+padded_iteration) / '_')}"[
+                            f"{(Path(data_path.parts[-1]) / (system_auto_disturbed+'_'+padded_iteration) / '_')}"[
                                 :-1
                             ]
                         )
                         training_datasets.append(
-                            f"{subsys_disturbed}_{padded_iteration}"
+                            f"{system_auto_disturbed}_{padded_iteration}"
                         )
-                        added_nr_count += np.load(
+                        added_auto_count += np.load(
                             data_path
-                            / f"{subsys_disturbed}_{padded_iteration}"
+                            / f"{system_auto_disturbed}_{padded_iteration}"
                             / "set.000"
                             / "box.npy"
                         ).shape[0]
                         if iteration == curr_iter:
-                            added_nr_iter_count += np.load(
+                            added_auto_iter_count += np.load(
                                 data_path
-                                / f"{subsys_disturbed}_{padded_iteration}"
+                                / f"{system_auto_disturbed}_{padded_iteration}"
                                 / "set.000"
                                 / "box.npy"
                             ).shape[0]
-                del subsys_disturbed
+                del system_auto_disturbed
             except (KeyError, NameError):
                 pass
             try:
-                for subsys_r in main_config["subsys_r"]:
-                    if (data_path / f"{subsys_r}_{padded_iteration}").is_dir():
+                for system_adhoc in main_config["systems_adhoc"]:
+                    if (data_path / f"{system_adhoc}_{padded_iteration}").is_dir():
                         dp_train_input_datasets.append(
-                            f"{(Path(data_path.parts[-1]) / (subsys_r+'_'+padded_iteration) / '_')}"[
+                            f"{(Path(data_path.parts[-1]) / (system_adhoc+'_'+padded_iteration) / '_')}"[
                                 :-1
                             ]
                         )
-                        training_datasets.append(f"{subsys_r}_{padded_iteration}")
-                        added_nr_count = (
-                            added_nr_count
+                        training_datasets.append(f"{system_adhoc}_{padded_iteration}")
+                        added_auto_count = (
+                            added_auto_count
                             + np.load(
                                 data_path
-                                / f"{subsys_r}_{padded_iteration}"
+                                / f"{system_adhoc}_{padded_iteration}"
                                 / "set.000"
                                 / "box.npy"
                             ).shape[0]
                         )
                         if iteration == curr_iter:
-                            added_nr_iter_count += np.load(
+                            added_auto_iter_count += np.load(
                                 data_path
-                                / f"{subsys_r}_{padded_iteration}"
+                                / f"{system_adhoc}_{padded_iteration}"
                                 / "set.000"
                                 / "box.npy"
                             ).shape[0]
-                del subsys_r
+                del system_adhoc
             except (KeyError, NameError):
                 pass
         del iteration, padded_iteration
@@ -406,9 +408,9 @@ def main(
         del extra_datasets
 
     # Total
-    trained_count = initial_count + added_nr_count + added_r_count + extra_count
+    trained_count = initial_count + added_auto_count + added_adhoc_count + extra_count
     logging.debug(
-        f"trained_count: {trained_count} = {initial_count} + {added_nr_count} + {added_r_count} + {extra_count}"
+        f"trained_count: {trained_count} = {initial_count} + {added_auto_count} + {added_adhoc_count} + {extra_count}"
     )
     logging.debug(f"dp_train_input_datasets: {dp_train_input_datasets}")
 
@@ -421,17 +423,17 @@ def main(
         "training_datasets": training_datasets,
         "trained_count": trained_count,
         "initial_count": initial_count,
-        "added_nr_count": added_nr_count,
-        "added_r_count": added_r_count,
-        "added_nr_iter_count": added_nr_iter_count,
-        "added_r_iter_count": added_r_iter_count,
+        "added_auto_count": added_auto_count,
+        "added_adhoc_count": added_adhoc_count,
+        "added_auto_iter_count": added_auto_iter_count,
+        "added_adhoc_iter_count": added_adhoc_iter_count,
         "extra_count": extra_count,
     }
     logging.debug(f"training_config: {training_config}")
 
     del training_datasets
     del trained_count, initial_count, extra_count
-    del added_nr_count, added_r_count, added_nr_iter_count, added_r_iter_count
+    del added_auto_count, added_adhoc_count, added_auto_iter_count, added_adhoc_iter_count
 
     # Here calculate the parameters
     # decay_steps it auto-recalculated as funcion of trained_count

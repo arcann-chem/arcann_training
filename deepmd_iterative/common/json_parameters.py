@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/21
 
 Functions
 ---------
@@ -122,7 +122,7 @@ def get_machine_keyword(
         and not (isinstance(value, str) and value != "")
         and not (
             isinstance(value, List)
-            and [isinstance(value[_], str) for _ in range(len(value))]
+            and all([isinstance(value[_], str) for _ in range(len(value))])
         )
     ):
         # The value is not of the correct type.
@@ -176,12 +176,9 @@ def set_main_config(user_config: Dict, default_config: Dict) -> Tuple[Dict, Dict
     logging.debug(f"Type check complete")
 
     current_config = deepcopy(user_config)
-    for key in ["system", "subsys_nr", "nnp_count", "exploration_type"]:
-        if key == "system" and key not in user_config:
-            error_msg = f"'{key}' is not provided, it is mandatory. It should of type {type(default_config[key])}."
-            raise ValueError(error_msg)
-        if key == "subsys_nr" and key not in user_config:
-            error_msg = f"'subsys_nr' is not provided, it is mandatory. It should be a list of {type(default_config['subsys_nr'][0])}."
+    for key in ["systems_auto", "nnp_count", "exploration_type"]:
+        if key == "systems_auto" and key not in user_config:
+            error_msg = f"'systems_auto' is not provided, it is mandatory. It should be a list of {type(default_config['systems_auto'][0])}."
             raise ValueError(error_msg)
         elif (
             key in user_config
@@ -201,8 +198,8 @@ def set_main_config(user_config: Dict, default_config: Dict) -> Tuple[Dict, Dict
     main_config["current_iteration"] = 0
     padded_curr_iter = str(main_config["current_iteration"]).zfill(3)
 
-    main_config["subsys_nr"] = {}
-    for key in user_config["subsys_nr"]:
-        main_config["subsys_nr"][key] = {}
+    main_config["systems_auto"] = {}
+    for key in user_config["systems_auto"]:
+        main_config["systems_auto"][key] = {}
 
     return main_config, current_config, padded_curr_iter

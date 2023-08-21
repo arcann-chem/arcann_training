@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/21
 
 The utils module provides functions for the training step.
 
@@ -116,9 +116,19 @@ def set_training_config(
             error_msg = f"'{key}' not found in any JSON."
             raise ValueError(error_msg)
 
-        if not isinstance(training_json[key], type(default_config[key])):
-            error_msg = f"Wrong type: '{key}' is a {type(training_json[key])}. It should be a {type(default_config[key])}."
-            raise TypeError(error_msg)
+        if key == "user_machine_keyword":
+            pass
+            # This is already checked
+            # if not isinstance(training_json[key], bool) and not isinstance(training_json[key], str) and not isinstance(training_json[key], list):
+            #     error_msg = f"Wrong type: '{key}' is a {type(training_json[key])}. It should be a {bool} , or {str} or a {list} of 3 {str}."
+            #     raise TypeError(error_msg)
+            # elif isinstance(training_json[key], list) and ( len(training_json[key]) != 3 or not all(isinstance(_, str) for _ in training_json[key])):
+            #     error_msg = f"Wrong type: '{key}' is a {type(training_json[key])}, but it should be a {type(list)} of exactly 3 {type(str)}."
+            #     raise TypeError(error_msg)
+        else:
+            if not isinstance(training_json[key], type(default_config[key])):
+                error_msg = f"Wrong type: '{key}' is a {type(training_json[key])}. It should be a {type(default_config[key])}."
+                raise TypeError(error_msg)
 
     return training_json, current_config
 

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/21
 
 The machine module provides functions for machine operations.
 
@@ -64,7 +64,7 @@ def get_host_name() -> str:
         return hostname  # Hostname is already fully-qualified
     else:
         try:
-            hostname = socket.gethostbyaddr(hostname, timeout=2)[0]
+            hostname = socket.gethostbyaddr(hostname)[0]
             return hostname
         except socket.timeout:
             return hostname
@@ -126,7 +126,7 @@ def get_machine_config_files(
     machine_configs = []
 
     # Check for 'machine.json' file in the training directory.
-    training_config_path = training_path / "files" / "machine.json"
+    training_config_path = training_path / "user_files" / "machine.json"
     if training_config_path.is_file():
         machine_configs.append(load_json_file(training_config_path))
 
@@ -241,7 +241,7 @@ def get_machine_spec_for_step(
         # Iterate over all keys in the configuration for the selected machine
         for config_key, config_data in config.get(machine_shortname, {}).items():
             # Skip keys that are not relevant to the machine specification
-            if config_key not in ["hostname", "walltime_format", "launch_command"]:
+            if config_key not in ["hostname", "walltime_format", "job_scheduler", "launch_command"]:
                 # Check if the current keyword matches the user keyword
                 if (
                     user_machine_keyword is None
@@ -265,6 +265,7 @@ def get_machine_spec_for_step(
                             machine_shortname,
                             config_data,
                             config[machine_shortname]["walltime_format"],
+                            config[machine_shortname]["job_scheduler"],
                             config[machine_shortname]["launch_command"],
                         )
 
