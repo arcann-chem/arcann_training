@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 # Created: 2022/01/01
-# Last modified: 2023/08/16
+# Last modified: 2023/08/21
 # Project/Account
 #SBATCH --account=_R_PROJECT_@_R_ALLOC_
 # QoS/Partition/SubPartition
@@ -40,10 +40,16 @@ EXTRA_FILES=("_R_DATA_FILE_" "_R_PLUMED_FILES_LIST_")
 NB_CLIENT_PER_GPU=8
 
 #----------------------------------------------
-## Nothing needed to be changed past this point
+#----------------------------------------------
+# Nothing needed to be changed past this point
 
-### Project Switch
-eval "$(idrenv -d _R_PROJECT_)"
+# Project Switch and update SCRATCH
+PROJECT_NAME=${SLURM_JOB_ACCOUNT:0:3}
+eval "$(idrenv -d "${PROJECT_NAME}")"
+# Compare PROJECT_NAME and IDRPROJ for inequality
+if [[ "${PROJECT_NAME}" != "${IDRPROJ}" ]]; then
+    SCRATCH=${SCRATCH/${IDRPROJ}/${PROJECT_NAME}}
+fi
 
 # Go where the job has been launched
 cd "${SLURM_SUBMIT_DIR}" || exit 1

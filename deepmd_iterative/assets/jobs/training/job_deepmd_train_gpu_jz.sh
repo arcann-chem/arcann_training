@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 # Created: 2022/01/01
-# Last modified: 2023/08/16
+# Last modified: 2023/08/21
 # Project/Account
 #SBATCH --account=_R_PROJECT_@_R_ALLOC_
 # QoS/Partition/SubPartition
@@ -38,10 +38,16 @@ DeepMD_INPUT="training"
 DeepMD_DATA_DIR="../data"
 
 #----------------------------------------------
-## Nothing needed to be changed past this point
+#----------------------------------------------
+# Nothing needed to be changed past this point
 
-### Project Switch
-eval "$(idrenv -d _R_PROJECT_)"
+# Project Switch and update SCRATCH
+PROJECT_NAME=${SLURM_JOB_ACCOUNT:0:3}
+eval "$(idrenv -d "${PROJECT_NAME}")"
+# Compare PROJECT_NAME and IDRPROJ for inequality
+if [[ "${PROJECT_NAME}" != "${IDRPROJ}" ]]; then
+    SCRATCH=${SCRATCH/${IDRPROJ}/${PROJECT_NAME}}
+fi
 
 # Go where the job has been launched
 cd "${SLURM_SUBMIT_DIR}" || exit 1
@@ -58,7 +64,7 @@ if [ "${SLURM_JOB_QOS:4:3}" == "gpu" ]; then
         . /gpfswork/rech/nvs/commun/programs/apps/deepmd-kit/2.0.3-cuda10.1_plumed-2.7.4/etc/profile.d/conda.sh
         conda activate /gpfswork/rech/nvs/commun/programs/apps/deepmd-kit/2.0.3-cuda10.1_plumed-2.7.4
         log="--log-path ${DeepMD_INPUT}.log"
-     elif [ "${DeepMD_MODEL_VERSION}" = "1.3" ]; then
+    elif [ "${DeepMD_MODEL_VERSION}" = "1.3" ]; then
         module purge
         . /gpfswork/rech/nvs/commun/programs/apps/deepmd-kit/1.3.3-cuda10.1_plumed-2.6.2/etc/profile.d/conda.sh
         conda activate /gpfswork/rech/nvs/commun/programs/apps/deepmd-kit/1.3.3-cuda10.1_plumed-2.6.2
