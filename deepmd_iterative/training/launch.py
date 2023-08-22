@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/21
+Last modified: 2023/08/22
 """
 # Standard library modules
 import copy
@@ -26,10 +26,9 @@ from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
 )
-from deepmd_iterative.common.json_parameters import get_machine_keyword
-
 from deepmd_iterative.common.machine import (
     assert_same_machine,
+    get_machine_keyword,
     get_machine_spec_for_step,
 )
 

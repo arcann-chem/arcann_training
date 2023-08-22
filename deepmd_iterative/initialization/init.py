@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/21
+Last modified: 2023/08/22
 """
 # Standard library modules
 import logging
@@ -24,7 +24,7 @@ from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
 )
-from deepmd_iterative.common.json_parameters import set_main_config
+from deepmd_iterative.initialization.utils import set_main_config
 
 
 # Main function

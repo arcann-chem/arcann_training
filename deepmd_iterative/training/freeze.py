@@ -27,15 +27,12 @@ from deepmd_iterative.common.json import (
     load_default_json_file,
     backup_and_overwrite_json_file,
 )
-from deepmd_iterative.common.json_parameters import (
-    get_machine_keyword,
-)
 from deepmd_iterative.common.list import (
     replace_substring_in_string_list,
     string_list_to_textfile,
     textfile_to_string_list,
 )
-from deepmd_iterative.common.machine import get_machine_spec_for_step
+from deepmd_iterative.common.machine import get_machine_keyword, get_machine_spec_for_step
 from deepmd_iterative.common.slurm import replace_in_slurm_file_general
 
 
