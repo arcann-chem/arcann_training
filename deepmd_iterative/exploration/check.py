@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/22
 """
 # Standard library modules
 import logging
@@ -72,14 +72,14 @@ def main(
     skipped_count = 0
     forced_count = 0
 
-    for it0_subsys_nr, it_subsys_nr in enumerate(main_config["subsys_nr"]):
+    for system_auto_index, system_auto in enumerate(main_config["systems_auto"]):
         # Counters
         average_per_step = 0
-        subsys_count = 0
+        system_count = 0
         timings_sum = 0
         timings = []
-        exploration_config["subsys_nr"][it_subsys_nr] = {
-            **exploration_config["subsys_nr"][it_subsys_nr],
+        exploration_config["systems_auto"][system_auto] = {
+            **exploration_config["systems_auto"][system_auto],
             "completed_count": 0,
             "forced_count": 0,
             "skipped_count": 0,
@@ -89,7 +89,7 @@ def main(
             for it_number in range(1, exploration_config["traj_count"] + 1):
                 local_path = (
                     Path(".").resolve()
-                    / str(it_subsys_nr)
+                    / str(system_auto)
                     / str(it_nnp)
                     / (str(it_number).zfill(5))
                 )
@@ -98,14 +98,14 @@ def main(
                 if exploration_config["exploration_type"] == "lammps":
                     lammps_output_file = (
                         local_path
-                        / f"{it_subsys_nr}_{it_nnp}_{current_iteration_zfill}.log"
+                        / f"{system_auto}_{it_nnp}_{current_iteration_zfill}.log"
                     )
                     if lammps_output_file.is_file():
                         lammps_output = textfile_to_string_list(lammps_output_file)
                         if any("Total wall time:" in f for f in lammps_output):
-                            subsys_count += 1
+                            system_count += 1
                             completed_count += 1
-                            exploration_config["subsys_nr"][it_subsys_nr][
+                            exploration_config["systems_auto"][system_auto][
                                 "completed_count"
                             ] += 1
                             timings = [
@@ -114,13 +114,13 @@ def main(
                             timings_sum += float(timings[0].split(" ")[3])
                         elif (local_path / "skip").is_file():
                             skipped_count += 1
-                            exploration_config["subsys_nr"][it_subsys_nr][
+                            exploration_config["systems_auto"][system_auto][
                                 "skipped_count"
                             ] += 1
                             logging.warning(f"{lammps_output_file} skipped")
                         elif (local_path / "force").is_file():
                             forced_count += 1
-                            exploration_config["subsys_nr"][it_subsys_nr][
+                            exploration_config["systems_auto"][system_auto][
                                 "forced_count"
                             ] += 1
                             logging.warning(f"{lammps_output_file} forced")
@@ -131,7 +131,7 @@ def main(
                         del lammps_output
                     elif (local_path / "skip").is_file():
                         skipped_count += 1
-                        exploration_config["subsys_nr"][it_subsys_nr][
+                        exploration_config["systems_auto"][system_auto][
                             "skipped_count"
                         ] += 1
                         logging.warning(f"{lammps_output_file} skipped")
@@ -143,14 +143,14 @@ def main(
                 elif exploration_config["exploration_type"] == "i-PI":
                     ipi_output_file = (
                         local_path
-                        / f"{it_subsys_nr}_{it_nnp}_{current_iteration_zfill}.i-PI.server.log"
+                        / f"{system_auto}_{it_nnp}_{current_iteration_zfill}.i-PI.server.log"
                     )
                     if ipi_output_file.is_file():
                         ipi_output = textfile_to_string_list(ipi_output_file)
                         if any("SIMULATION: Exiting cleanly" in f for f in ipi_output):
-                            subsys_count += 1
+                            system_count += 1
                             completed_count += 1
-                            exploration_config["subsys_nr"][it_subsys_nr][
+                            exploration_config["systems_auto"][system_auto][
                                 "completed_count"
                             ] += 1
                             ipi_time = [
@@ -167,13 +167,13 @@ def main(
                             del ipi_time, ipi_time2, timings
                         elif (local_path / "skip").is_file():
                             skipped_count += 1
-                            exploration_config["subsys_nr"][it_subsys_nr][
+                            exploration_config["systems_auto"][system_auto][
                                 "skipped_count"
                             ] += 1
                             logging.warning(f"{ipi_output_file} skipped")
                         elif (local_path / "force").is_file():
                             forced_count += 1
-                            exploration_config["subsys_nr"][it_subsys_nr][
+                            exploration_config["systems_auto"][system_auto][
                                 "forced_count"
                             ] += 1
                             logging.warning(f"{ipi_output_file} forced")
@@ -184,7 +184,7 @@ def main(
                         del ipi_output
                     elif (local_path / "skip").is_file():
                         skipped_count += 1
-                        exploration_config["subsys_nr"][it_subsys_nr][
+                        exploration_config["systems_auto"][system_auto][
                             "skipped_count"
                         ] += 1
                         logging.warning(f"{ipi_output_file} skipped")
@@ -200,21 +200,21 @@ def main(
 
                 del local_path
 
-        timings = timings_sum / subsys_count
+        timings = timings_sum / system_count
 
         if exploration_config["exploration_type"] == "lammps":
             average_per_step = (
-                timings / exploration_config["subsys_nr"][it_subsys_nr]["nb_steps"]
+                timings / exploration_config["systems_auto"][system_auto]["nb_steps"]
             )
         elif exploration_config["exploration_type"] == "i-PI":
             average_per_step = timings
-        exploration_config["subsys_nr"][it_subsys_nr]["s_per_step"] = average_per_step
-        del timings, average_per_step, subsys_count, timings_sum
+        exploration_config["systems_auto"][system_auto]["s_per_step"] = average_per_step
+        del timings, average_per_step, system_count, timings_sum
 
-    del it_subsys_nr, it_nnp, it_number
+    del system_auto, it_nnp, it_number
 
     if (completed_count + skipped_count + forced_count) != (
-        len(exploration_config["subsys_nr"])
+        len(exploration_config["systems_auto"])
         * exploration_config["nnp_count"]
         * exploration_config["traj_count"]
     ):
@@ -234,12 +234,12 @@ def main(
     logging.info("Deleting SLURM out/error files...")
     logging.info("Deleting NNP PB files...")
     logging.info("Removing extra log/error files...")
-    for it_subsys_nr in exploration_config["subsys_nr"]:
+    for system_auto in exploration_config["systems_auto"]:
         for it_nnp in range(1, exploration_config["nnp_count"] + 1):
             for it_number in range(1, exploration_config["traj_count"] + 1):
                 local_path = (
                     Path(".").resolve()
-                    / str(it_subsys_nr)
+                    / str(system_auto)
                     / str(it_nnp)
                     / (str(it_number).zfill(5))
                 )
@@ -253,7 +253,7 @@ def main(
                 del local_path
             del it_number
         del it_nnp
-    del it_subsys_nr
+    del system_auto
     del completed_count
     logging.info("Cleaning done!")
 
