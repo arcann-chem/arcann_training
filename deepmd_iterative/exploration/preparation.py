@@ -31,13 +31,10 @@ from deepmd_iterative.common.filesystem import (
 from deepmd_iterative.common.ipi import get_temperature_from_ipi_xml
 from deepmd_iterative.common.json import (
     backup_and_overwrite_json_file,
+    get_key_in_dict,
     load_default_json_file,
     load_json_file,
     write_json_file,
-)
-from deepmd_iterative.common.json_parameters import (
-    get_machine_keyword,
-    get_key_in_dict,
 )
 from deepmd_iterative.common.list import (
     replace_substring_in_string_list,
@@ -45,7 +42,7 @@ from deepmd_iterative.common.list import (
     textfile_to_string_list,
 )
 from deepmd_iterative.common.lammps import read_lammps_data
-from deepmd_iterative.common.machine import get_machine_spec_for_step
+from deepmd_iterative.common.machine import get_machine_keyword, get_machine_spec_for_step
 from deepmd_iterative.common.plumed import analyze_plumed_file_for_movres
 from deepmd_iterative.common.slurm import replace_in_slurm_file_general
 from deepmd_iterative.common.xml import (

@@ -26,10 +26,9 @@ from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
 )
-from deepmd_iterative.common.json_parameters import get_machine_keyword
-
 from deepmd_iterative.common.machine import (
     assert_same_machine,
+    get_machine_keyword,
     get_machine_spec_for_step,
 )
 

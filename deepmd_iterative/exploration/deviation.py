@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/22
 """
 # Standard library modules
 import copy
@@ -25,11 +25,10 @@ from deepmd_iterative.common.json import (
     backup_and_overwrite_json_file,
 )
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.generate_config import set_subsys_params_deviation
 from deepmd_iterative.exploration.utils import (
     get_last_frame_number,
     set_input_explordevi_json,
-    get_subsys_deviation,
+    get_system_deviation,
 )
 
 
@@ -117,7 +116,7 @@ def main(
         logging.critical("Aborting...")
         return 1
 
-    # Fill the missing values from the input. We don't do exploration because it is subsys dependent and single value and not list
+    # Fill the missing values from the input. We don't do exploration because it is system dependent and single value and not list
     current_config = set_input_explordevi_json(
         user_config,
         prev_exploration_config,
@@ -126,19 +125,19 @@ def main(
         main_config,
     )
     logging.debug(f"current_config: {current_config}")
-    for it0_subsys_nr, it_subsys_nr in enumerate(main_config["subsys_nr"]):
-        # Set the subsys params for deviation selection
+    for system_auto_index, system_auto in enumerate(main_config["systems_auto"]):
+        # Set the system params for deviation selection
         (
             max_candidates,
             sigma_low,
             sigma_high,
             sigma_high_limit,
             ignore_first_x_ps,
-        ) = get_subsys_deviation(current_config, it0_subsys_nr)
+        ) = get_system_deviation(current_config, system_auto_index)
 
         # Initialize
-        exploration_config["subsys_nr"][it_subsys_nr] = {
-            **exploration_config["subsys_nr"][it_subsys_nr],
+        exploration_config["systems_auto"][system_auto] = {
+            **exploration_config["systems_auto"][system_auto],
             "max_candidates": max_candidates,
             "sigma_low": sigma_low,
             "sigma_high": sigma_high,
@@ -156,26 +155,26 @@ def main(
 
         while (
             start_row_number
-            * exploration_config["subsys_nr"][it_subsys_nr]["print_every_x_steps"]
-            * exploration_config["subsys_nr"][it_subsys_nr]["timestep_ps"]
-            < exploration_config["subsys_nr"][it_subsys_nr]["ignore_first_x_ps"]
+            * exploration_config["systems_auto"][system_auto]["print_every_x_steps"]
+            * exploration_config["systems_auto"][system_auto]["timestep_ps"]
+            < exploration_config["systems_auto"][system_auto]["ignore_first_x_ps"]
         ):
             start_row_number = start_row_number + 1
         logging.debug(f"start_row_number: {start_row_number}")
 
         for it_nnp in range(1, main_config["nnp_count"] + 1):
             for it_number in range(1, exploration_config["traj_count"] + 1):
-                logging.debug(f"{it_subsys_nr} / {it_nnp} / {it_number}")
+                logging.debug(f"{system_auto} / {it_nnp} / {it_number}")
 
                 # Get the local path and the name of model_deviation file
                 local_path = (
                     Path(".").resolve()
-                    / str(it_subsys_nr)
+                    / str(system_auto)
                     / str(it_nnp)
                     / str(it_number).zfill(5)
                 )
                 model_deviation_filename = (
-                    f"model_devi_{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.out"
+                    f"model_devi_{system_auto}_{it_nnp}_{padded_curr_iter}.out"
                 )
 
                 # Create the JSON data for Query-by-Committee
@@ -193,8 +192,8 @@ def main(
                 # Get the number of exptected steps
                 nb_steps_expected = (
                     (
-                        exploration_config["subsys_nr"][it_subsys_nr]["nb_steps"]
-                        // exploration_config["subsys_nr"][it_subsys_nr][
+                        exploration_config["systems_auto"][system_auto]["nb_steps"]
+                        // exploration_config["systems_auto"][system_auto][
                             "print_every_x_steps"
                         ]
                     )
@@ -215,7 +214,7 @@ def main(
                     if nb_steps_expected > (total_row_number - start_row_number):
                         QbC_stats["total_count"] = nb_steps_expected
                         logging.critical(
-                            f"Exploration {it_subsys_nr}/{it_nnp}/{it_number}"
+                            f"Exploration {system_auto}/{it_nnp}/{it_number}"
                         )
                         logging.critical(
                             f"Mismatch between expected ({nb_steps_expected}) number of steps"
@@ -223,7 +222,7 @@ def main(
                         logging.critical(
                             f"and actual ({total_row_number}) number of steps in the deviation file."
                         )
-                        if (local_path / "forced").is_file():
+                        if (local_path / "force").is_file():
                             logging.warning(
                                 "but it has been forced, so it should be ok"
                             )
@@ -237,7 +236,7 @@ def main(
                     end_row_number = get_last_frame_number(
                         model_deviation,
                         sigma_high_limit,
-                        exploration_config["subsys_nr"][it_subsys_nr][
+                        exploration_config["systems_auto"][system_auto][
                             "disturbed_start"
                         ],
                     )
@@ -269,9 +268,9 @@ def main(
                         mean_deviation_max_f = np.mean(
                             model_deviation[start_row_number:, 4]
                         )
-                        std_deviation = np.std(model_deviation[start_row_number:, 4])
+                        std_deviation_max_f = np.std(model_deviation[start_row_number:, 4])
                         good = np.array([])
-                        rejected = model_deviation[start_row_number:, 0]
+                        rejected = model_deviation[start_row_number:, :]
                         candidates = np.array([])
                         # In this case, it is skipped
                         skipped_traj += 1
@@ -339,14 +338,8 @@ def main(
                     }
 
                     # If the traj is smaller than expected (forced case) add the missing as rejected
-                    if (
-                        QbC_stats["good_count"]
-                        + QbC_stats["rejected_count"]
-                        + QbC_stats["candidates_count"]
-                    ) < nb_steps_expected:
-                        QbC_stats["rejected_count"] = (
-                            QbC_stats["rejected_count"]
-                            + QbC_stats
+                    if (QbC_stats["good_count"] + QbC_stats["rejected_count"] + QbC_stats["candidates_count"]) < nb_steps_expected:
+                        QbC_stats["rejected_count"] = ( QbC_stats["rejected_count"] + nb_steps_expected
                             - (
                                 QbC_stats["good_count"]
                                 + QbC_stats["rejected_count"]
@@ -356,18 +349,18 @@ def main(
 
                     # Only if we have corect stats, add it
                     if (end_row_number > start_row_number) or (end_row_number == -1):
-                        exploration_config["subsys_nr"][it_subsys_nr][
+                        exploration_config["systems_auto"][system_auto][
                             "mean_deviation_max_f"
                         ] = (
-                            exploration_config["subsys_nr"][it_subsys_nr][
+                            exploration_config["systems_auto"][system_auto][
                                 "mean_deviation_max_f"
                             ]
                             + QbC_stats["mean_deviation_max_f"]
                         )
-                        exploration_config["subsys_nr"][it_subsys_nr][
+                        exploration_config["systems_auto"][system_auto][
                             "std_deviation_max_f"
                         ] = (
-                            exploration_config["subsys_nr"][it_subsys_nr][
+                            exploration_config["systems_auto"][system_auto][
                                 "std_deviation_max_f"
                             ]
                             + QbC_stats["std_deviation_max_f"]
@@ -395,16 +388,16 @@ def main(
                         "candidates_count": 0,
                     }
 
-                exploration_config["subsys_nr"][it_subsys_nr]["total_count"] = (
-                    exploration_config["subsys_nr"][it_subsys_nr]["total_count"]
+                exploration_config["systems_auto"][system_auto]["total_count"] = (
+                    exploration_config["systems_auto"][system_auto]["total_count"]
                     + QbC_stats["total_count"]
                 )
-                exploration_config["subsys_nr"][it_subsys_nr]["candidates_count"] = (
-                    exploration_config["subsys_nr"][it_subsys_nr]["candidates_count"]
+                exploration_config["systems_auto"][system_auto]["candidates_count"] = (
+                    exploration_config["systems_auto"][system_auto]["candidates_count"]
                     + QbC_stats["candidates_count"]
                 )
-                exploration_config["subsys_nr"][it_subsys_nr]["rejected_count"] = (
-                    exploration_config["subsys_nr"][it_subsys_nr]["rejected_count"]
+                exploration_config["systems_auto"][system_auto]["rejected_count"] = (
+                    exploration_config["systems_auto"][system_auto]["rejected_count"]
                     + QbC_stats["rejected_count"]
                 )
 
@@ -422,17 +415,17 @@ def main(
 
             del it_number
 
-        # Average for the subsys (with adjustment, remove the skipped ones)
-        exploration_config["subsys_nr"][it_subsys_nr][
+        # Average for the system (with adjustment, remove the skipped ones)
+        exploration_config["systems_auto"][system_auto][
             "mean_deviation_max_f"
-        ] = exploration_config["subsys_nr"][it_subsys_nr]["mean_deviation_max_f"] / (
+        ] = exploration_config["systems_auto"][system_auto]["mean_deviation_max_f"] / (
             exploration_config["nnp_count"]
             + len(range(1, exploration_config["traj_count"] + 1))
             - skipped_traj
         )
-        exploration_config["subsys_nr"][it_subsys_nr][
+        exploration_config["systems_auto"][system_auto][
             "std_deviation_max_f"
-        ] = exploration_config["subsys_nr"][it_subsys_nr]["std_deviation_max_f"] / (
+        ] = exploration_config["systems_auto"][system_auto]["std_deviation_max_f"] / (
             exploration_config["nnp_count"]
             + len(range(1, exploration_config["traj_count"] + 1))
             - skipped_traj
@@ -449,20 +442,20 @@ def main(
             start_row_number,
         )
 
-    del it0_subsys_nr, it_subsys_nr
-    for it0_subsys_nr, it_subsys_nr in enumerate(exploration_config["subsys_nr"]):
-        # Set the subsys params for deviation selection
+    del system_auto_index, system_auto
+    for system_auto_index, system_auto in enumerate(exploration_config["systems_auto"]):
+        # Set the system params for deviation selection
         (
             max_candidates,
             sigma_low,
             sigma_high,
             sigma_high_limit,
             ignore_first_x_ps,
-        ) = get_subsys_deviation(current_config, it0_subsys_nr)
+        ) = get_system_deviation(current_config, system_auto_index)
 
         # Initialize
-        exploration_config["subsys_nr"][it_subsys_nr] = {
-            **exploration_config["subsys_nr"][it_subsys_nr],
+        exploration_config["systems_auto"][system_auto] = {
+            **exploration_config["systems_auto"][system_auto],
             "kept_count": 0,
             "discarded_count": 0,
         }
@@ -472,12 +465,12 @@ def main(
                 # Get the local path and the name of model_deviation file
                 local_path = (
                     Path(".").resolve()
-                    / str(it_subsys_nr)
+                    / str(system_auto)
                     / str(it_nnp)
                     / str(it_number).zfill(5)
                 )
                 model_deviation_filename = (
-                    f"model_devi_{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.out"
+                    f"model_devi_{system_auto}_{it_nnp}_{padded_curr_iter}.out"
                 )
 
                 # Create the JSON data for Query-by-Committee
@@ -490,7 +483,7 @@ def main(
                 if not (local_path / "skip").is_file():
                     # If candidates_count is over max_candidates
                     if (
-                        exploration_config["subsys_nr"][it_subsys_nr][
+                        exploration_config["systems_auto"][system_auto][
                             "candidates_count"
                         ]
                         <= max_candidates
@@ -499,7 +492,7 @@ def main(
                     else:
                         selection_factor = (
                             QbC_stats["candidates_count"]
-                            / exploration_config["subsys_nr"][it_subsys_nr][
+                            / exploration_config["systems_auto"][system_auto][
                                 "candidates_count"
                             ]
                         )
@@ -590,12 +583,12 @@ def main(
                         "minimum_index": -1,
                     }
 
-                exploration_config["subsys_nr"][it_subsys_nr]["kept_count"] = (
-                    exploration_config["subsys_nr"][it_subsys_nr]["kept_count"]
+                exploration_config["systems_auto"][system_auto]["kept_count"] = (
+                    exploration_config["systems_auto"][system_auto]["kept_count"]
                     + QbC_stats["kept_count"]
                 )
-                exploration_config["subsys_nr"][it_subsys_nr]["discarded_count"] = (
-                    exploration_config["subsys_nr"][it_subsys_nr]["discarded_count"]
+                exploration_config["systems_auto"][system_auto]["discarded_count"] = (
+                    exploration_config["systems_auto"][system_auto]["discarded_count"]
                     + QbC_stats["discarded_count"]
                 )
 
@@ -608,7 +601,7 @@ def main(
         del it_nnp
 
         del max_candidates, sigma_low, sigma_high, sigma_high_limit, ignore_first_x_ps
-    del it0_subsys_nr, it_subsys_nr
+    del system_auto_index, system_auto
 
     exploration_config["is_deviated"] = True
     write_json_file(
