@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/22
 """
 # Standard library modules
 import copy
@@ -21,8 +21,8 @@ from deepmd_iterative.common.check import validate_step_folder, check_atomsk
 from deepmd_iterative.exploration.utils import (
     generate_starting_points,
     create_models_list,
-    update_subsys_nb_steps_factor,
-    get_subsys_exploration,
+    update_system_nb_steps_factor,
+    get_system_exploration,
     set_input_explor_json,
 )
 from deepmd_iterative.common.filesystem import (
@@ -156,6 +156,7 @@ def main(
         machine,
         machine_spec,
         machine_walltime_format,
+        machine_job_scheduler,
         machine_launch_command,
     ) = get_machine_spec_for_step(
         deepmd_iterative_path,
@@ -167,6 +168,7 @@ def main(
     logging.debug(f"machine: {machine}")
     logging.debug(f"machine_spec: {machine_spec}")
     logging.debug(f"machine_walltime_format: {machine_walltime_format}")
+    logging.debug(f"machine_job_scheduler: {machine_job_scheduler}")
     logging.debug(f"machine_launch_command: {machine_launch_command}")
 
     if fake_machine is not None:
@@ -193,7 +195,7 @@ def main(
     current_config["traj_count"] = exploration_config["traj_count"]
     logging.debug(f"current_config: {current_config}")
 
-    # Fill the missing values from the input. We don't do exploration because it is subsys dependent and single value and not list
+    # Fill the missing values from the input. We don't do exploration because it is system dependent and single value and not list
     current_config = set_input_explor_json(
         user_config,
         prev_exploration_config,
@@ -216,9 +218,9 @@ def main(
 
     # Check if the job file exists
     job_file_name = f"job_deepmd_{exploration_config['exploration_type']}_{exploration_config['arch_type']}_{machine}.sh"
-    if (current_path.parent / "files" / job_file_name).is_file():
+    if (current_path.parent / "user_files" / job_file_name).is_file():
         master_job_file = textfile_to_string_list(
-            current_path.parent / "files" / job_file_name
+            current_path.parent / "user_files" / job_file_name
         )
     else:
         check_file_existence(
@@ -235,35 +237,35 @@ def main(
     del jobs_path, job_file_name
 
     # Preparation of the exploration
-    exploration_config["subsys_nr"] = {}
+    exploration_config["systems_auto"] = {}
 
-    # Loop through each subsystem and set its exploration
-    for it0_subsys_nr, it_subsys_nr in enumerate(main_config["subsys_nr"]):
+    # Loop through each system and set its exploration
+    for system_auto_index, system_auto in enumerate(main_config["systems_auto"]):
         random.seed()
-        exploration_config["subsys_nr"][it_subsys_nr] = {}
+        exploration_config["systems_auto"][system_auto] = {}
 
         plumed = [False, False, False]
         exploration_type = -1
 
         input_replace_dict = {}
 
-        # Get the input file (.in or .xml) for the current subsystem and check if plumed is being used
+        # Get the input file (.in or .xml) for the current system and check if plumed is being used
         if exploration_config["exploration_type"] == "lammps":
             exploration_type = 0
-            subsys_lammps_in = textfile_to_string_list(
-                training_path / "files" / (it_subsys_nr + ".in")
+            master_system_lammps_in = textfile_to_string_list(
+                training_path / "user_files" / (system_auto + ".in")
             )
             # Check if the LAMMPS input file contains any "plumed" lines
-            if any("plumed" in zzz for zzz in subsys_lammps_in):
+            if any("plumed" in zzz for zzz in master_system_lammps_in):
                 plumed[0] = True
         elif exploration_config["exploration_type"] == "i-PI":
             exploration_type = 1
-            subsys_ipi_xml = read_xml_file(
-                training_path / "files" / (it_subsys_nr + ".xml")
+            master_system_ipi_xml = read_xml_file(
+                training_path / "user_files" / (system_auto + ".xml")
             )
-            subsys_ipi_xml_aslist = xml_to_string_list(subsys_ipi_xml)
+            master_system_ipi_xml_aslist = xml_to_string_list(master_system_ipi_xml)
             # Create a JSON object with placeholders for the dp-i-PI input file parameters
-            subsys_ipi_json = {
+            master_system_ipi_json = {
                 "verbose": False,
                 "use_unix": False,
                 "port": "_R_NB_PORT_",
@@ -273,153 +275,153 @@ def main(
                 "atom_type": {},
             }
             # Check if the XML input file contains any "plumed" lines
-            if any("plumed" in zzz for zzz in subsys_ipi_xml_aslist):
+            if any("plumed" in zzz for zzz in master_system_ipi_xml_aslist):
                 plumed[0] = True
 
-        # If plumed is being used for the current subsystem, get the plumed input files
+        # If plumed is being used for the current system, get the plumed input files
         if plumed[0] == 1:
-            # Find all plumed files associated with the current subsystem
-            plumed_files_list = [
+            # Find all plumed files associated with the current system
+            plumed_files = [
                 plumed_file
-                for plumed_file in (training_path / "files").glob(
-                    f"plumed*_{it_subsys_nr}.dat"
+                for plumed_file in (training_path / "user_files").glob(
+                    f"plumed*_{system_auto}.dat"
                 )
             ]
             # If no plumed files are found, print an error message and exit
-            if len(plumed_files_list) == 0:
+            if len(plumed_files) == 0:
                 error_msg = "Plumed in (LAMMPS) input but no plumed files found."
                 logging.error(f"{error_msg}\nAborting...")
                 sys.exit(1)
             # Read the contents of each plumed file into a dictionary
             plumed_input = {}
-            for it_plumed_files_list in plumed_files_list:
-                plumed_input[it_plumed_files_list.name] = textfile_to_string_list(
-                    it_plumed_files_list
-                )
+            for plumed_file in plumed_files:
+                plumed_input[plumed_file.name] = textfile_to_string_list(plumed_file)
             # Analyze each plumed file to determine whether it contains MOVINGRESTRAINTS keyword (SMD)
-            for it_plumed_files_list in plumed_files_list:
+            for plumed_file in plumed_files:
                 plumed[1], plumed[2] = analyze_plumed_file_for_movres(
-                    plumed_input[it_plumed_files_list.name]
+                    plumed_input[plumed_file.name]
                 )
                 if plumed[1] and plumed[2] != 0:
                     break
 
-        # Set the subsys params for exploration
+        # Set the system params for exploration
         (
-            subsys_timestep_ps,
-            subsys_temperature_K,
-            subsys_exp_time_ps,
-            subsys_max_exp_time_ps,
-            subsys_job_walltime_h,
-            subsys_init_exp_time_ps,
-            subsys_init_job_walltime_h,
-            subsys_print_mult,
-            subsys_disturbed_start,
-        ) = get_subsys_exploration(current_config, it0_subsys_nr)
+            system_timestep_ps,
+            system_temperature_K,
+            system_exp_time_ps,
+            system_max_exp_time_ps,
+            system_job_walltime_h,
+            system_init_exp_time_ps,
+            system_init_job_walltime_h,
+            system_print_mult,
+            system_disturbed_start,
+        ) = get_system_exploration(current_config, system_auto_index)
         logging.debug(
-            f"{subsys_timestep_ps,subsys_temperature_K,subsys_exp_time_ps,subsys_max_exp_time_ps,subsys_job_walltime_h,subsys_init_exp_time_ps,subsys_init_job_walltime_h,subsys_print_mult,subsys_disturbed_start}"
+            f"{system_timestep_ps,system_temperature_K,system_exp_time_ps,system_max_exp_time_ps,system_job_walltime_h,system_init_exp_time_ps,system_init_job_walltime_h,system_print_mult,system_disturbed_start}"
         )
 
-        # Set the subsys params for exploration
+        # Set the system params for exploration
         if curr_iter == 1:
             # No distrubed start
-            subsys_disturbed_start = False
+            system_disturbed_start = False
 
         else:
             # Get starting points
             (
                 starting_points,
                 starting_points_bckp,
-                subsys_disturbed_start,
+                system_disturbed_start,
             ) = generate_starting_points(
                 exploration_type,
-                it_subsys_nr,
+                system_auto,
                 training_path,
                 padded_curr_iter,
                 prev_exploration_config,
                 user_config_present,
-                subsys_disturbed_start,
+                system_disturbed_start,
             )
 
         # LAMMPS Input
-        input_replace_dict["_R_TIMESTEP_"] = f"{subsys_timestep_ps}"
+        input_replace_dict["_R_TIMESTEP_"] = f"{system_timestep_ps}"
 
         if exploration_type == 0:
-            input_replace_dict["_R_TEMPERATURE_"] = f"{subsys_temperature_K}"
+            input_replace_dict["_R_TEMPERATURE_"] = f"{system_temperature_K}"
 
             # First exploration
             if curr_iter == 1:
-                subsys_lammps_data_fn = it_subsys_nr + ".lmp"
-                subsys_lammps_data = textfile_to_string_list(
-                    training_path / "files" / subsys_lammps_data_fn
+                system_lammps_data_fn = system_auto + ".lmp"
+                system_lammps_data = textfile_to_string_list(
+                    training_path / "user_files" / system_lammps_data_fn
                 )
-                input_replace_dict["_R_DATA_FILE_"] = subsys_lammps_data_fn
+                input_replace_dict["_R_DATA_FILE_"] = system_lammps_data_fn
 
                 # Default time and nb steps
                 if plumed[1]:
-                    subsys_nb_steps = plumed[2]
+                    system_nb_steps = plumed[2]
                 else:
-                    subsys_nb_steps = subsys_init_exp_time_ps / subsys_timestep_ps
-                input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(subsys_nb_steps)}"
+                    system_nb_steps = system_init_exp_time_ps / system_timestep_ps
+                input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(system_nb_steps)}"
 
-                subsys_walltime_approx_s = subsys_init_job_walltime_h * 3600
+                system_walltime_approx_s = system_init_job_walltime_h * 3600
 
                 # Get the cell and nb of atoms: It can be done now because the starting point is the same by NNP and by traj
-                subsys_nb_atm, num_atom_types, box, masses, coords = read_lammps_data(
-                    subsys_lammps_data
+                system_nb_atm, num_atom_types, box, masses, coords = read_lammps_data(
+                    system_lammps_data
                 )
-                subsys_cell = [box[1] - box[0], box[3] - box[2], box[5] - box[4]]
+                system_cell = [box[1] - box[0], box[3] - box[2], box[5] - box[4]]
 
             # Subsequent ones
             else:
                 # SMD wins
                 if plumed[1]:
-                    subsys_nb_steps = plumed[2]
+                    system_nb_steps = plumed[2]
                 # User inputs
-                elif "subsys_exp_time_ps" in user_config:
-                    subsys_nb_steps = subsys_exp_time_ps / subsys_timestep_ps
+                elif "system_exp_time_ps" in user_config:
+                    system_nb_steps = system_exp_time_ps / system_timestep_ps
                 # Auto value
                 else:
-                    subsys_nb_steps *= update_subsys_nb_steps_factor(
-                        prev_exploration_config, it_subsys_nr
+                    system_nb_steps *= update_system_nb_steps_factor(
+                        prev_exploration_config, system_auto
                     )
-                    ### Update if over Max value
-                    if subsys_nb_steps > subsys_max_exp_time_ps / subsys_timestep_ps:
-                        subsys_nb_steps = subsys_max_exp_time_ps / subsys_timestep_ps
-                input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(subsys_nb_steps)}"
+                    # Update if over Max value
+                    if system_nb_steps > system_max_exp_time_ps / system_timestep_ps:
+                        system_nb_steps = system_max_exp_time_ps / system_timestep_ps
+                input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(system_nb_steps)}"
                 # Update the new input
-                current_config["subsys_exp_time_ps"] = (
-                    subsys_nb_steps * subsys_timestep_ps
+                current_config["system_exp_time_ps"] = (
+                    system_nb_steps * system_timestep_ps
                 )
 
                 # Walltime
-                if "subsys_job_walltime_h" in user_config:
-                    subsys_walltime_approx_s = int(subsys_job_walltime_h * 3600)
+                if "system_job_walltime_h" in user_config:
+                    system_walltime_approx_s = int(system_job_walltime_h * 3600)
                 else:
                     # Abritary factor
-                    subsys_walltime_approx_s = int(
+                    system_walltime_approx_s = int(
                         (
-                            prev_exploration_config["subsys_nr"][it_subsys_nr][
+                            prev_exploration_config["systems_auto"][system_auto][
                                 "s_per_step"
                             ]
-                            * subsys_nb_steps
+                            * system_nb_steps
                         )
                         * 1.20
                     )
                 # Update the new input
-                current_config["subsys_job_walltime_h"] = (
-                    subsys_walltime_approx_s / 3600
+                current_config["system_job_walltime_h"] = (
+                    system_walltime_approx_s / 3600
                 )
 
             # Get print freq
-            subsys_print_every_x_steps = subsys_nb_steps * subsys_print_mult
-            input_replace_dict["_R_PRINT_FREQ_"] = f"{int(subsys_print_every_x_steps)}"
+            system_print_every_x_steps = system_nb_steps * system_print_mult
+            input_replace_dict["_R_PRINT_FREQ_"] = f"{int(system_print_every_x_steps)}"
 
         # i-PI // UNTESTED
         elif exploration_type == 1:
-            subsys_temperature_K = float(get_temperature_from_ipi_xml(subsys_ipi_xml))
-            if subsys_temperature_K == -1:
-                error_msg = f"No temperature found in the xml: {training_path / 'files' / (it_subsys_nr + '.xml')}."
+            system_temperature_K = float(
+                get_temperature_from_ipi_xml(master_system_ipi_xml)
+            )
+            if system_temperature_K == -1:
+                error_msg = f"No temperature found in the xml: {training_path / 'files' / (system_auto + '.xml')}."
                 logging.error(f"{error_msg}\nAborting...")
                 sys.exit(1)
 
@@ -428,155 +430,155 @@ def main(
 
             # First exploration
             if curr_iter == 1:
-                subsys_lammps_data_fn = it_subsys_nr + ".lmp"
-                subsys_lammps_data = textfile_to_string_list(
-                    training_path / "files" / subsys_lammps_data_fn
+                system_lammps_data_fn = system_auto + ".lmp"
+                system_lammps_data = textfile_to_string_list(
+                    training_path / "user_files" / system_lammps_data_fn
                 )
-                subsys_ipi_xyz_fn = it_subsys_nr + ".xyz"
-                input_replace_dict["_R_DATA_FILE_"] = subsys_ipi_xyz_fn
-                subsys_ipi_json["coord_file"] = subsys_ipi_xyz_fn
+                system_ipi_xyz_fn = system_auto + ".xyz"
+                input_replace_dict["_R_DATA_FILE_"] = system_ipi_xyz_fn
+                master_system_ipi_json["coord_file"] = system_ipi_xyz_fn
                 # Get the XYZ file from LMP
                 subprocess.run(
                     [
                         atomsk_bin,
-                        str(Path("../") / "files" / subsys_lammps_data_fn),
-                        # str(training_path / "files" / subsys_lammps_data_fn),
+                        str(Path("../") / "user_files" / system_lammps_data_fn),
+                        # str(training_path / "user_files" / system_lammps_data_fn),
                         "xyz",
-                        str(Path("../") / "files" / it_subsys_nr),
-                        # str(training_path / "files" / it_subsys_nr),
+                        str(Path("../") / "user_files" / system_auto),
+                        # str(training_path / "user_files" / system_auto),
                         "-ow",
                     ],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.STDOUT,
                 )
-                subsys_ipi_xyz = textfile_to_string_list(
-                    training_path / "files" / subsys_ipi_xyz_fn
+                system_ipi_xyz = textfile_to_string_list(
+                    training_path / "user_files" / system_ipi_xyz_fn
                 )
                 # Default time and nb steps
                 if plumed[1]:
-                    subsys_nb_steps = plumed[2]
+                    system_nb_steps = plumed[2]
                 else:
-                    subsys_nb_steps = subsys_init_exp_time_ps / subsys_timestep_ps
-                input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(subsys_nb_steps)}"
+                    system_nb_steps = system_init_exp_time_ps / system_timestep_ps
+                input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(system_nb_steps)}"
 
-                subsys_walltime_approx_s = subsys_init_job_walltime_h * 3600
+                system_walltime_approx_s = system_init_job_walltime_h * 3600
 
                 # Get the cell and nb of atoms: It can be done now because the starting point is the same by NNP and by traj
-                subsys_nb_atm, num_atom_types, box, masses, coords = read_lammps_data(
-                    subsys_lammps_data
+                system_nb_atm, num_atom_types, box, masses, coords = read_lammps_data(
+                    system_lammps_data
                 )
-                subsys_cell = [box[1] - box[0], box[3] - box[2], box[5] - box[4]]
-                input_replace_dict["_R_CELL_"] = f"{subsys_cell}"
+                system_cell = [box[1] - box[0], box[3] - box[2], box[5] - box[4]]
+                input_replace_dict["_R_CELL_"] = f"{system_cell}"
                 # Get the type_map from config (key added after first training)
                 for it_zzz, zzz in enumerate(main_config["type_map"]):
-                    subsys_ipi_json["atom_type"][str(zzz)] = it_zzz
+                    master_system_ipi_json["atom_type"][str(zzz)] = it_zzz
 
             # Subsequent ones
             else:
                 # SMD wins
                 if plumed[1]:
-                    subsys_nb_steps = plumed[2]
+                    system_nb_steps = plumed[2]
                 # User inputs
-                elif "subsys_exp_time_ps" in user_config:
-                    subsys_nb_steps = subsys_exp_time_ps / subsys_timestep_ps
+                elif "system_exp_time_ps" in user_config:
+                    system_nb_steps = system_exp_time_ps / system_timestep_ps
                 # Auto value
                 else:
-                    subsys_nb_steps *= update_subsys_nb_steps_factor(
-                        prev_exploration_config, it_subsys_nr
+                    system_nb_steps *= update_system_nb_steps_factor(
+                        prev_exploration_config, system_auto
                     )
-                    ### Update if over Max value
-                    if subsys_nb_steps > subsys_max_exp_time_ps / subsys_timestep_ps:
-                        subsys_nb_steps = subsys_max_exp_time_ps / subsys_timestep_ps
-                input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(subsys_nb_steps)}"
+                    # Update if over Max value
+                    if system_nb_steps > system_max_exp_time_ps / system_timestep_ps:
+                        system_nb_steps = system_max_exp_time_ps / system_timestep_ps
+                input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(system_nb_steps)}"
                 # Update the new input
-                current_config["subsys_exp_time_ps"] = (
-                    subsys_nb_steps * subsys_timestep_ps
+                current_config["system_exp_time_ps"] = (
+                    system_nb_steps * system_timestep_ps
                 )
 
                 # Walltime
                 if user_config_present:
-                    subsys_walltime_approx_s = int(subsys_job_walltime_h * 3600)
+                    system_walltime_approx_s = int(system_job_walltime_h * 3600)
                 else:
                     # Abritary factor
-                    subsys_walltime_approx_s = int(
+                    system_walltime_approx_s = int(
                         (
-                            prev_exploration_config["subsys_nr"][it_subsys_nr][
+                            prev_exploration_config["systems_auto"][system_auto][
                                 "s_per_step"
                             ]
-                            * subsys_nb_steps
+                            * system_nb_steps
                         )
                         * 1.20
                     )
                 # Update the new input
-                current_config["subsys_job_walltime_h"] = (
-                    subsys_walltime_approx_s / 3600
+                current_config["system_job_walltime_h"] = (
+                    system_walltime_approx_s / 3600
                 )
 
             # Get print freq
-            subsys_print_every_x_steps = subsys_nb_steps * subsys_print_mult
-            input_replace_dict["_R_PRINT_FREQ_"] = f"{int(subsys_print_every_x_steps)}"
+            system_print_every_x_steps = system_nb_steps * system_print_mult
+            input_replace_dict["_R_PRINT_FREQ_"] = f"{int(system_print_every_x_steps)}"
 
         # Now it is by NNP and by traj_count
-        for it_nnp in range(1, main_config["nnp_count"] + 1):
-            for it_number in range(1, exploration_config["traj_count"] + 1):
+        for nnp_index in range(1, main_config["nnp_count"] + 1):
+            for traj_index in range(1, exploration_config["traj_count"] + 1):
                 local_path = (
                     Path(".").resolve()
-                    / str(it_subsys_nr)
-                    / str(it_nnp)
-                    / (str(it_number).zfill(5))
+                    / str(system_auto)
+                    / str(nnp_index)
+                    / (str(traj_index).zfill(5))
                 )
                 local_path.mkdir(exist_ok=True, parents=True)
 
                 models_list, models_string = create_models_list(
                     main_config,
                     prev_training_config,
-                    it_nnp,
-                    padded_curr_iter,
+                    nnp_index,
+                    padded_prev_iter,
                     training_path,
                     local_path,
                 )
 
                 # LAMMPS
                 if exploration_type == 0:
-                    it_subsys_lammps_in = copy.deepcopy(subsys_lammps_in)
+                    system_lammps_in = copy.deepcopy(master_system_lammps_in)
                     input_replace_dict[
                         "_R_SEED_VEL_"
-                    ] = f"{it_nnp}{random.randrange(0, 1000)}{it_number}{padded_curr_iter}"
+                    ] = f"{nnp_index}{random.randrange(0, 1000)}{traj_index}{padded_curr_iter}"
                     input_replace_dict[
                         "_R_SEED_THER_"
-                    ] = f"{it_nnp}{random.randrange(0, 1000)}{it_number}{padded_curr_iter}"
+                    ] = f"{nnp_index}{random.randrange(0, 1000)}{traj_index}{padded_curr_iter}"
                     input_replace_dict[
                         "_R_DCD_OUT_"
-                    ] = f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.dcd"
+                    ] = f"{system_auto}_{nnp_index}_{padded_curr_iter}.dcd"
                     input_replace_dict[
                         "_R_RESTART_OUT_"
-                    ] = f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.restart"
+                    ] = f"{system_auto}_{nnp_index}_{padded_curr_iter}.restart"
                     input_replace_dict["_R_MODEL_FILES_LIST_"] = models_string
                     input_replace_dict[
                         "_R_DEVI_OUT_"
-                    ] = f"model_devi_{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.out"
+                    ] = f"model_devi_{system_auto}_{nnp_index}_{padded_curr_iter}.out"
                     # Get data files (starting points) and number of steps
                     if curr_iter > 1:
                         if len(starting_points) == 0:
                             starting_point_list = copy.deepcopy(starting_points_bckp)
-                        subsys_lammps_data_fn = starting_point_list[
+                        system_lammps_data_fn = starting_point_list[
                             random.randrange(0, len(starting_point_list))
                         ]
-                        subsys_lammps_data = textfile_to_string_list(
+                        system_lammps_data = textfile_to_string_list(
                             training_path
                             / "starting_structures"
-                            / subsys_lammps_data_fn
+                            / system_lammps_data_fn
                         )
-                        input_replace_dict["_R_DATA_FILE_"] = subsys_lammps_data_fn
-                        # Get again the subsys_cell and nb_atom
+                        input_replace_dict["_R_DATA_FILE_"] = system_lammps_data_fn
+                        # Get again the system_cell and nb_atom
                         (
-                            subsys_nb_atm,
+                            system_nb_atm,
                             num_atom_types,
                             box,
                             masses,
                             coords,
-                        ) = read_lammps_data(subsys_lammps_data)
-                        subsys_cell = [
+                        ) = read_lammps_data(system_lammps_data)
+                        system_cell = [
                             box[1] - box[0],
                             box[3] - box[2],
                             box[5] - box[4],
@@ -586,17 +588,17 @@ def main(
                     if plumed[0]:
                         input_replace_dict[
                             "_R_PLUMED_IN_"
-                        ] = f"plumed_{it_subsys_nr}.dat"
+                        ] = f"plumed_{system_auto}.dat"
                         input_replace_dict[
                             "_R_PLUMED_OUT_"
-                        ] = f"plumed_{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.log"
+                        ] = f"plumed_{system_auto}_{nnp_index}_{padded_curr_iter}.log"
                         for it_plumed_input in plumed_input:
                             plumed_input[
                                 it_plumed_input
                             ] = replace_substring_in_string_list(
                                 plumed_input[it_plumed_input],
                                 "_R_PRINT_FREQ_",
-                                f"{int(subsys_print_every_x_steps)}",
+                                f"{int(system_print_every_x_steps)}",
                             )
                             string_list_to_textfile(
                                 local_path / it_plumed_input,
@@ -605,31 +607,32 @@ def main(
 
                     # Write DATA file
                     string_list_to_textfile(
-                        local_path / subsys_lammps_data_fn, subsys_lammps_data
+                        local_path / system_lammps_data_fn, system_lammps_data
                     )
 
-                    exploration_config["subsys_nr"][it_subsys_nr]["nb_steps"] = int(
-                        subsys_nb_steps
+                    exploration_config["systems_auto"][system_auto]["nb_steps"] = int(
+                        system_nb_steps
                     )
-                    exploration_config["subsys_nr"][it_subsys_nr][
+                    exploration_config["systems_auto"][system_auto][
                         "print_every_x_steps"
-                    ] = int(subsys_print_every_x_steps)
+                    ] = int(system_print_every_x_steps)
 
                     #  Write INPUT file
                     for key, value in input_replace_dict.items():
-                        it_subsys_lammps_in = replace_substring_in_string_list(
-                            it_subsys_lammps_in, key, value
+                        system_lammps_in = replace_substring_in_string_list(
+                            system_lammps_in, key, value
                         )
                     string_list_to_textfile(
-                        local_path / (f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.in"),
-                        it_subsys_lammps_in,
+                        local_path
+                        / (f"{system_auto}_{nnp_index}_{padded_curr_iter}.in"),
+                        system_lammps_in,
                     )
 
                     # Slurm file
                     job_file = replace_in_slurm_file_general(
                         master_job_file,
                         machine_spec,
-                        subsys_walltime_approx_s,
+                        system_walltime_approx_s,
                         machine_walltime_format,
                         current_config["job_email"],
                     )
@@ -647,10 +650,10 @@ def main(
                     job_file = replace_substring_in_string_list(
                         job_file,
                         "_R_INPUT_FILE_",
-                        f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}",
+                        f"{system_auto}_{nnp_index}_{padded_curr_iter}",
                     )
                     job_file = replace_substring_in_string_list(
-                        job_file, "_R_DATA_FILE_", f"{subsys_lammps_data_fn}"
+                        job_file, "_R_DATA_FILE_", f"{system_lammps_data_fn}"
                     )
                     job_file = replace_substring_in_string_list(
                         job_file, ' "_R_RERUN_FILE_"', ""
@@ -677,64 +680,64 @@ def main(
                         / f"job_deepmd_{exploration_config['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
                         job_file,
                     )
-                    del it_subsys_lammps_in
+                    del system_lammps_in
                     del job_file
                 # i-PI
                 elif exploration_type == 1:
-                    it_subsys_ipi_json = copy.deepcopy(subsys_ipi_json)
-                    it_subsys_ipi_xml_aslist = copy.deepcopy(subsys_ipi_xml_aslist)
+                    system_ipi_json = copy.deepcopy(master_system_ipi_json)
+                    system_ipi_xml_aslist = copy.deepcopy(master_system_ipi_xml_aslist)
                     input_replace_dict[
                         "_R_SEED_"
-                    ] = f"{it_nnp}{random.randrange(0, 1000)}{it_number}{padded_curr_iter}"
+                    ] = f"{nnp_index}{random.randrange(0, 1000)}{traj_index}{padded_curr_iter}"
                     input_replace_dict[
-                        "_R_SUBSYS_"
-                    ] = f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}"
+                        "_R_SYS_"
+                    ] = f"{system_auto}_{nnp_index}_{padded_curr_iter}"
                     # Get data files (starting points) and number of steps
                     if curr_iter > 1:
                         if len(starting_points) == 0:
                             starting_point_list = copy.deepcopy(starting_points_bckp)
-                        subsys_ipi_xyz_fn = starting_point_list[
+                        system_ipi_xyz_fn = starting_point_list[
                             random.randrange(0, len(starting_point_list))
                         ]
-                        subsys_ipi_xyz = textfile_to_string_list(
-                            training_path / "starting_structures" / subsys_ipi_xyz_fn
+                        system_ipi_xyz = textfile_to_string_list(
+                            training_path / "starting_structures" / system_ipi_xyz_fn
                         )
-                        input_replace_dict["_R_XYZ_"] = subsys_ipi_xyz_fn
-                        it_subsys_ipi_json["coord_file"] = subsys_ipi_xyz_fn
+                        input_replace_dict["_R_XYZ_"] = system_ipi_xyz_fn
+                        system_ipi_json["coord_file"] = system_ipi_xyz_fn
                         for it_zzz, zzz in enumerate(main_config["type_map"]):
-                            it_subsys_ipi_json["atom_type"][str(zzz)] = it_zzz
-                        subsys_lammps_data = textfile_to_string_list(
+                            system_ipi_json["atom_type"][str(zzz)] = it_zzz
+                        system_lammps_data = textfile_to_string_list(
                             training_path
                             / "starting_structures"
-                            / subsys_ipi_xyz_fn.replace(".xyz", ".lmp")
+                            / system_ipi_xyz_fn.replace(".xyz", ".lmp")
                         )
-                        # Get again the subsys_cell and nb_atom
+                        # Get again the system_cell and nb_atom
                         (
-                            subsys_nb_atm,
+                            system_nb_atm,
                             num_atom_types,
                             box,
                             masses,
                             coords,
-                        ) = read_lammps_data(subsys_lammps_data)
-                        subsys_cell = [
+                        ) = read_lammps_data(system_lammps_data)
+                        system_cell = [
                             box[1] - box[0],
                             box[3] - box[2],
                             box[5] - box[4],
                         ]
-                        input_replace_dict["_R_CELL_"] = f"{subsys_cell}"
+                        input_replace_dict["_R_CELL_"] = f"{system_cell}"
 
                     # Plumed files
                     if plumed[0]:
                         input_replace_dict[
                             "_R_PLUMED_IN_"
-                        ] = f"plumed_{it_subsys_nr}.dat"
+                        ] = f"plumed_{system_auto}.dat"
                         for it_plumed_input in plumed_input:
                             plumed_input[
                                 it_plumed_input
                             ] = replace_substring_in_string_list(
                                 plumed_input[it_plumed_input],
                                 "_R_PRINT_FREQ_",
-                                f"{int(subsys_print_every_x_steps)}",
+                                f"{int(system_print_every_x_steps)}",
                             )
                             # Because of weird units of time
                             plumed_input[
@@ -743,7 +746,7 @@ def main(
                                 plumed_input[it_plumed_input],
                                 "UNITS LENGTH",
                                 "UNITS TIME="
-                                + str(2.4188843e-05 / subsys_timestep_ps)
+                                + str(2.4188843e-05 / system_timestep_ps)
                                 + " LENGTH",
                             )
                             string_list_to_textfile(
@@ -752,31 +755,31 @@ def main(
                             )
                         del it_plumed_input
 
-                    it_subsys_ipi_json["graph_file"] = models_list[0]
+                    system_ipi_json["graph_file"] = models_list[0]
 
                     #  Write INPUT files
                     for key, value in input_replace_dict.items():
-                        it_subsys_ipi_xml_aslist = replace_substring_in_string_list(
-                            it_subsys_ipi_xml_aslist, key, value
+                        system_ipi_xml_aslist = replace_substring_in_string_list(
+                            system_ipi_xml_aslist, key, value
                         )
                     del key, value
-                    it_subsys_ipi_xml = string_list_to_xml(it_subsys_ipi_xml_aslist)
+                    system_ipi_xml = string_list_to_xml(system_ipi_xml_aslist)
                     write_xml_file(
-                        it_subsys_ipi_xml,
+                        system_ipi_xml,
                         local_path
-                        / (f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.xml"),
+                        / (f"{system_auto}_{nnp_index}_{padded_curr_iter}.xml"),
                     )
                     write_json_file(
-                        it_subsys_ipi_json,
+                        system_ipi_json,
                         local_path
-                        / (f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}.json"),
+                        / (f"{system_auto}_{nnp_index}_{padded_curr_iter}.json"),
                     )
 
                     # Slurm file
                     job_file = replace_in_slurm_file_general(
                         master_job_file,
                         machine_spec,
-                        subsys_walltime_approx_s,
+                        system_walltime_approx_s,
                         machine_walltime_format,
                         current_config["job_email"],
                     )
@@ -792,10 +795,10 @@ def main(
                     job_file = replace_substring_in_string_list(
                         job_file,
                         "_R_INPUT_FILE_",
-                        f"{it_subsys_nr}_{it_nnp}_{padded_curr_iter}",
+                        f"{system_auto}_{nnp_index}_{padded_curr_iter}",
                     )
                     job_file = replace_substring_in_string_list(
-                        job_file, "_R_DATA_FILE_", f"{subsys_ipi_xyz_fn}"
+                        job_file, "_R_DATA_FILE_", f"{system_ipi_xyz_fn}"
                     )
                     if plumed[0] == 1:
                         for n, it_plumed_input in enumerate(plumed_input):
@@ -821,9 +824,9 @@ def main(
                         job_file,
                     )
                     del (
-                        it_subsys_ipi_xml_aslist,
-                        it_subsys_ipi_xml,
-                        it_subsys_ipi_json,
+                        system_ipi_xml_aslist,
+                        system_ipi_xml,
+                        system_ipi_json,
                     )
                     del job_file
                 else:
@@ -831,29 +834,29 @@ def main(
                     logging.error(f"{error_msg}\nAborting...")
                     sys.exit(1)
 
-            del it_number, models_list, models_string, local_path
+            del traj_index, models_list, models_string, local_path
 
-        del it_nnp
+        del nnp_index
 
-        exploration_config["subsys_nr"][it_subsys_nr][
+        exploration_config["systems_auto"][system_auto][
             "temperature_K"
-        ] = subsys_temperature_K
-        exploration_config["subsys_nr"][it_subsys_nr][
+        ] = system_temperature_K
+        exploration_config["systems_auto"][system_auto][
             "timestep_ps"
-        ] = subsys_timestep_ps
-        exploration_config["subsys_nr"][it_subsys_nr][
+        ] = system_timestep_ps
+        exploration_config["systems_auto"][system_auto][
             "disturbed_start"
-        ] = subsys_disturbed_start
+        ] = system_disturbed_start
 
-        main_config["subsys_nr"][it_subsys_nr]["cell"] = subsys_cell
-        main_config["subsys_nr"][it_subsys_nr]["nb_atm"] = subsys_nb_atm
+        main_config["systems_auto"][system_auto]["cell"] = system_cell
+        main_config["systems_auto"][system_auto]["nb_atm"] = system_nb_atm
 
         if plumed[0] == 1:
             del plumed_input, plumed
-        del subsys_temperature_K, subsys_cell, subsys_nb_atm, subsys_nb_steps
-        del subsys_lammps_data, subsys_timestep_ps, subsys_walltime_approx_s
+        del system_temperature_K, system_cell, system_nb_atm, system_nb_steps
+        del system_lammps_data, system_timestep_ps, system_walltime_approx_s
 
-    del it0_subsys_nr, it_subsys_nr, master_job_file
+    del system_auto_index, system_auto, master_job_file
 
     exploration_config["is_locked"] = True
     exploration_config["is_launched"] = False

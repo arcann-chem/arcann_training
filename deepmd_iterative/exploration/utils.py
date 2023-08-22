@@ -6,17 +6,17 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/22
 
 Functions
 ---------
 set_input_explor_json(input_json: Dict, previous_json: Dict, default_json: Dict, new_input_json: Dict, config_json: Dict) -> Dict
     Update and complete input JSON with user-defined parameters, previously defined parameters, and default parameters for training.
 
-get_subsys_exploration(new_input_json: Dict, it0_subsys_nr: int) -> Tuple[Union[float, int],Union[float, int],Union[float, int],Union[float, int],Union[float, int],Union[float, int],Union[float, int],Union[float, int],bool]
-    Returns a tuple of subsystem exploration parameters based on the input JSON and subsystem number.
+get_system_exploration(new_input_json: Dict, system_auto_index: int) -> Tuple[Union[float, int],Union[float, int],Union[float, int],Union[float, int],Union[float, int],Union[float, int],Union[float, int],Union[float, int],bool]
+    Returns a tuple of system exploration parameters based on the input JSON and system number.
 
-generate_starting_points(exploration_type: int, it_subsys_nr: int, training_path: str, previous_iteration_zfill: str, prevexploration_json: Dict, input_present: bool, subsys_disturbed_start: bool) -> Tuple[List[str], List[str], bool]
+generate_starting_points(exploration_type: int, system_auto: int, training_path: str, previous_iteration_zfill: str, prevexploration_json: Dict, input_present: bool, system_disturbed_start: bool) -> Tuple[List[str], List[str], bool]
     Generates a list of starting point file names.
 
 create_models_list(config_json: Dict, prevtraining_json: Dict, it_nnp: int, previous_iteration_zfill: str, training_path: Path, local_path: Path) -> Tuple[List[str], str]
@@ -25,8 +25,8 @@ create_models_list(config_json: Dict, prevtraining_json: Dict, it_nnp: int, prev
 get_last_frame_number(model_deviation: np.ndarray, sigma_high_limit: float, is_start_disturbed: bool) -> int
     Returns the index of the last frame to be processed based on the given parameters.
 
-update_subsys_nb_steps_factor(previous_exploration_config: Dict, it0_subsys_nr: int) -> int
-    Calculates a ratio based on information from a dictionary and returns a multiplying factor for subsys_nb_steps.
+update_system_nb_steps_factor(previous_exploration_config: Dict, system_auto_index: int) -> int
+    Calculates a ratio based on information from a dictionary and returns a multiplying factor for system_nb_steps.
 
 set_input_explordevi_json(input_json: Dict, previous_json: Dict, default_json: Dict, new_input_json: Dict, config_json: Dict) -> Dict
     Updates the training JSON with input JSON, previous JSON and default JSON.
@@ -66,7 +66,7 @@ def set_input_explor_json(
     new_input_json : dict
         Input JSON updated/completed with previous/defaults.
     config_json : dict
-        Configuration JSON containing exploration type and subsystem count parameters.
+        Configuration JSON containing exploration type and system count parameters.
 
     Returns
     -------
@@ -82,7 +82,7 @@ def set_input_explor_json(
     TypeError
         If the value type is not int/float or bool (for disturbed_start).
     ValueError
-        If the length of the value list is not equal to subsystem count.
+        If the length of the value list is not equal to system count.
     """
 
     if config_json["exploration_type"] == "lammps":
@@ -93,7 +93,7 @@ def set_input_explor_json(
         error_msg = f"{config_json['exploration_type']} is not known."
         raise ValueError(error_msg)
 
-    subsys_count = len(config_json.get("subsys_nr", []))
+    system_count = len(config_json.get("systems_auto", []))
 
     for key in [
         "timestep_ps",
@@ -123,16 +123,16 @@ def set_input_explor_json(
             error_msg = f"'{key}' not found in any JSON."
             raise KeyError(error_msg)
 
-        # Everything is subsys dependent so a list
+        # Everything is system dependent so a list
         new_input_json[key] = []
 
         # Default is used for the key
         if default_used:
-            new_input_json[key] = [value[0][exploration_dep]] * subsys_count
+            new_input_json[key] = [value[0][exploration_dep]] * system_count
         else:
             # Check if previous or user provided a list
             if isinstance(value, List):
-                if len(value) == subsys_count:
+                if len(value) == system_count:
                     for it_value in value:
                         if (
                             isinstance(it_value, (int, float))
@@ -145,14 +145,14 @@ def set_input_explor_json(
                             error_msg = f"Wrong type: the type is {type(it_value)} it should be int/float or bool (for disturbed_start)."
                             raise TypeError(error_msg)
                 else:
-                    error_msg = f"Wrong size: The length of the list should be {subsys_count} [Subsys]."
+                    error_msg = f"Wrong size: The length of the list should be {system_count} [systems]."
                     raise ValueError(error_msg)
 
             # If it is not a List
             elif (isinstance(value, (int, float)) and key != "disturbed_start") or (
                 isinstance(value, (bool)) and key == "disturbed_start"
             ):
-                new_input_json[key] = [value] * subsys_count
+                new_input_json[key] = [value] * system_count
             else:
                 error_msg = f"Wrong type: the type is {type(it_value)} it should be int/float or bool (for disturbed_start)."
                 raise TypeError(error_msg)
@@ -161,8 +161,8 @@ def set_input_explor_json(
 
 
 @catch_errors_decorator
-def get_subsys_exploration(
-    new_input_json: Dict, it0_subsys_nr: int
+def get_system_exploration(
+    new_input_json: Dict, system_auto_index: int
 ) -> Tuple[
     Union[float, int],
     Union[float, int],
@@ -175,19 +175,19 @@ def get_subsys_exploration(
     bool,
 ]:
     """
-    Returns a tuple of subsystem exploration parameters based on the input JSON and subsystem number.
+    Returns a tuple of system exploration parameters based on the input JSON and system number.
 
     Parameters
     ----------
     new_input_json : Dict[str, Any]
         A dictionary object containing input parameters.
-    it0_subsys_nr : int
-        An integer representing the subsystem index.
+    system_auto_index : int
+        An integer representing the system index.
 
     Returns
     -------
     Tuple[float, float, float, float, float, float, float, float, bool]
-        A tuple containing the subsystem exploration parameters:
+        A tuple containing the system exploration parameters:
         - timestep_ps : float
             The simulation timestep in picoseconds.
         - temperature_K : float
@@ -207,7 +207,7 @@ def get_subsys_exploration(
         - disturbed_start : bool
             Whether to start the exploration from a disturbed minimum.
     """
-    subsys_values = []
+    system_values = []
     for key in [
         "timestep_ps",
         "temperature_K",
@@ -219,13 +219,13 @@ def get_subsys_exploration(
         "print_interval_mult",
         "disturbed_start",
     ]:
-        subsys_values.append(new_input_json[key][it0_subsys_nr])
-    return tuple(subsys_values)
+        system_values.append(new_input_json[key][system_auto_index])
+    return tuple(system_values)
 
 
 @catch_errors_decorator
-def get_subsys_deviation(
-    new_input_json: Dict, it0_subsys_nr: int
+def get_system_deviation(
+    new_input_json: Dict, system_auto_index: int
 ) -> Tuple[
     Union[float, int],
     Union[float, int],
@@ -235,7 +235,7 @@ def get_subsys_deviation(
     Union[float, int],
     Union[float, int],
 ]:
-    subsys_values = []
+    system_values = []
     for key in [
         "max_candidates",
         "sigma_low",
@@ -243,32 +243,32 @@ def get_subsys_deviation(
         "sigma_high_limit",
         "ignore_first_x_ps",
     ]:
-        subsys_values.append(new_input_json[key][it0_subsys_nr])
-    return tuple(subsys_values)
+        system_values.append(new_input_json[key][system_auto_index])
+    return tuple(system_values)
 
 
 @catch_errors_decorator
-def get_subsys_disturb(
-    new_input_json: Dict, it0_subsys_nr: int
+def get_system_disturb(
+    new_input_json: Dict, system_auto_index: int
 ) -> Tuple[Union[float, int], Union[float, int],]:
-    subsys_values = []
+    system_values = []
     for key in [
         "disturbed_min_value",
         "distrubed_candidate_value",
     ]:
-        subsys_values.append(new_input_json[key][it0_subsys_nr])
-    return tuple(subsys_values)
+        system_values.append(new_input_json[key][system_auto_index])
+    return tuple(system_values)
 
 
 @catch_errors_decorator
 def generate_starting_points(
     exploration_type: int,
-    it_subsys_nr: int,
+    system_auto: int,
     training_path: str,
     previous_iteration_zfill: str,
     prevexploration_json: Dict,
     input_present: bool,
-    subsys_disturbed_start: bool,
+    system_disturbed_start: bool,
 ) -> Tuple[List[str], List[str], bool]:
     """
     Generates a list of starting point file names.
@@ -277,8 +277,8 @@ def generate_starting_points(
     ----------
     exploration_type : int
         An integer representing the exploration type (1 for "lammps" or 2 for "i-PI").
-    it_subsys_nr : int
-        An integer representing the subsystem index.
+    system_auto : int
+        An integer representing the system index.
     training_path : str
         The path to the training directory.
     previous_iteration_zfill : str
@@ -287,7 +287,7 @@ def generate_starting_points(
         A dictionary containing information about the previous exploration.
     input_present : bool
         A boolean indicating whether an input file is present.
-    subsys_disturbed_start : bool
+    system_disturbed_start : bool
         A boolean indicating whether to start from a disturbed minimum.
 
     Returns
@@ -303,10 +303,10 @@ def generate_starting_points(
     elif exploration_type == 2:
         file_extension = "xyz"
 
-    # Get list of starting point file names for subsystem and iteration
+    # Get list of starting point file names for system and iteration
     starting_points_path = list(
         Path(training_path, "starting_structures").glob(
-            f"{previous_iteration_zfill}_{it_subsys_nr}_*.{file_extension}"
+            f"{previous_iteration_zfill}_{system_auto}_*.{file_extension}"
         )
     )
     starting_points_all = [str(zzz).split("/")[-1] for zzz in starting_points_path]
@@ -317,19 +317,19 @@ def generate_starting_points(
     starting_points_bckp = starting_points.copy()
     starting_points_disturbed_bckp = starting_points_disturbed.copy()
 
-    # Check if subsystem should start from a disturbed minimum
-    if input_present and subsys_disturbed_start:
+    # Check if system should start from a disturbed minimum
+    if input_present and system_disturbed_start:
         # If input file is present and disturbed start is requested, use disturbed starting points
         starting_points = starting_points_disturbed.copy()
         starting_points_bckp = starting_points_disturbed_bckp.copy()
         return starting_points, starting_points_bckp, True
     elif not input_present:
-        # If input file is not present, check if subsystem started from disturbed minimum in previous iteration
+        # If input file is not present, check if system started from disturbed minimum in previous iteration
         if (
-            prevexploration_json["subsys_nr"][it_subsys_nr]["disturbed_start"]
-            and prevexploration_json["subsys_nr"][it_subsys_nr]["disturbed_min"]
+            prevexploration_json["systems_auto"][system_auto]["disturbed_start"]
+            and prevexploration_json["systems_auto"][system_auto]["disturbed_min"]
         ):
-            # If subsystem started from disturbed minimum in previous iteration, use disturbed starting points
+            # If system started from disturbed minimum in previous iteration, use disturbed starting points
             starting_points = starting_points_disturbed.copy()
             starting_points_bckp = starting_points_disturbed_bckp.copy()
             return starting_points, starting_points_bckp, True
@@ -451,31 +451,31 @@ def get_last_frame_number(
 
 # Unittested
 @catch_errors_decorator
-def update_subsys_nb_steps_factor(
-    previous_exploration_config: Dict, it0_subsys_nr: int
+def update_system_nb_steps_factor(
+    previous_exploration_config: Dict, system_auto_index: int
 ) -> int:
     """
-    Calculates a ratio based on information from a dictionary and returns a multiplying factor for subsys_nb_steps.
+    Calculates a ratio based on information from a dictionary and returns a multiplying factor for system_nb_steps.
 
     Parameters
     ----------
     previous_exploration_config : Dict
         A dictionary containing information about a previous exploration.
-    it0_subsys_nr : int
-        An integer representing the subsystem index.
+    system_auto_index : int
+        An integer representing the system index.
 
     Returns
     -------
     int
-        An integer representing the multiplying factor for subsys_nb_steps.
+        An integer representing the multiplying factor for system_nb_steps.
     """
     # Calculate the ratio of ill-described candidates to the total number of candidates
     ill_described_ratio = (
-        previous_exploration_config["subsys_nr"][it0_subsys_nr]["nb_candidates"]
-        + previous_exploration_config["subsys_nr"][it0_subsys_nr]["nb_rejected"]
-    ) / previous_exploration_config["subsys_nr"][it0_subsys_nr]["nb_total"]
+        previous_exploration_config["systems_auto"][system_auto_index]["nb_candidates"]
+        + previous_exploration_config["systems_auto"][system_auto_index]["nb_rejected"]
+    ) / previous_exploration_config["systems_auto"][system_auto_index]["nb_total"]
 
-    # Return a multiplying factor for subsys_nb_steps based on the ratio of ill-described candidates
+    # Return a multiplying factor for system_nb_steps based on the ratio of ill-described candidates
     if ill_described_ratio < 0.10:
         return 4
     elif ill_described_ratio < 0.20:
@@ -513,7 +513,7 @@ def set_input_explordevi_json(
         error_msg = f"{config_json['exploration_type']} is not known."
         raise ValueError(error_msg)
 
-    subsys_count = len(config_json.get("subsys_nr", []))
+    system_count = len(config_json.get("systems_auto", []))
 
     for key in [
         "max_candidates",
@@ -541,16 +541,16 @@ def set_input_explordevi_json(
             error_msg = f"'{key}' not found in any JSON."
             raise KeyError(error_msg)
 
-        # Everything is subsys dependent so a list
+        # Everything is system dependent so a list
         new_input_json[key] = []
 
         # Default is used for the key
         if default_used:
-            new_input_json[key] = [value[exploration_dep]] * subsys_count
+            new_input_json[key] = [value[exploration_dep]] * system_count
         else:
             # Check if previous or user provided a list
             if isinstance(value, List):
-                if len(value) == subsys_count:
+                if len(value) == system_count:
                     for it_value in value:
                         if isinstance(it_value, (int, float)):
                             new_input_json[key].append(it_value)
@@ -558,12 +558,12 @@ def set_input_explordevi_json(
                             error_msg = f"Wrong type: the type is {type(it_value)} it should be int/float."
                             raise TypeError(error_msg)
                 else:
-                    error_msg = f"Wrong size: The length of the list should be {subsys_count} [Subsys]."
+                    error_msg = f"Wrong size: The length of the list should be {system_count} [systems]."
                     raise ValueError(error_msg)
 
             # If it is not a List
             elif isinstance(value, (int, float)):
-                new_input_json[key] = [value] * subsys_count
+                new_input_json[key] = [value] * system_count
             else:
                 error_msg = (
                     f"Wrong type: the type is {type(it_value)} it should be int/float."

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/22
 """
 
 # Standard library modules
@@ -25,10 +25,10 @@ def set_subsys_params_deviation(
     config_json: Dict,
     step_name: str,
     default_present: bool,
-    it0_subsys_nr: int,
+    system_auto_index: int,
 ) -> Tuple[int, float, float, float, float]:
     """
-    Sets candidate selection parameters for a specific subsystem.
+    Sets candidate selection parameters for a specific system.
 
     Args:
         input_json (Dict): A dictionary containing the input JSON data.
@@ -37,10 +37,10 @@ def set_subsys_params_deviation(
         config_json (Dict): A dictionary containing the config JSON data.
         step_name (str): A string representing the name of the step.
         default_present (bool): A boolean indicating whether the default input JSON data is present.
-        it0_subsys_nr (int): An integer representing the subsystem index.
+        system_auto_index (int): An integer representing the system index.
 
     Returns:
-        A tuple containing the following candidate selection parameters for the specified subsystem:
+        A tuple containing the following candidate selection parameters for the specified system:
         - maximum number of candidates (int)
         - lower limit for sigma (float)
         - upper limit for sigma (float)
@@ -55,8 +55,8 @@ def set_subsys_params_deviation(
         default_input_json,
         step_name,
         default_present,
-        subsys_index=it0_subsys_nr,
-        subsys_number=len(config_json["subsys_nr"]),
+        system_index=system_auto_index,
+        system_count=len(config_json["system_auto"]),
     )
 
     sigma_low = read_key_input_json(
@@ -66,8 +66,8 @@ def set_subsys_params_deviation(
         default_input_json,
         step_name,
         default_present,
-        subsys_index=it0_subsys_nr,
-        subsys_number=len(config_json["subsys_nr"]),
+        system_index=system_auto_index,
+        system_count=len(config_json["system_auto"]),
     )
 
     sigma_high = read_key_input_json(
@@ -77,8 +77,8 @@ def set_subsys_params_deviation(
         default_input_json,
         step_name,
         default_present,
-        subsys_index=it0_subsys_nr,
-        subsys_number=len(config_json["subsys_nr"]),
+        system_index=system_auto_index,
+        system_count=len(config_json["system_auto"]),
     )
 
     sigma_high_limit = read_key_input_json(
@@ -88,8 +88,8 @@ def set_subsys_params_deviation(
         default_input_json,
         step_name,
         default_present,
-        subsys_index=it0_subsys_nr,
-        subsys_number=len(config_json["subsys_nr"]),
+        system_index=system_auto_index,
+        system_count=len(config_json["system_auto"]),
     )
 
     ignore_first_x_ps = read_key_input_json(
@@ -99,8 +99,8 @@ def set_subsys_params_deviation(
         default_input_json,
         step_name,
         default_present,
-        subsys_index=it0_subsys_nr,
-        subsys_number=len(config_json["subsys_nr"]),
+        system_index=system_auto_index,
+        system_count=len(config_json["system_auto"]),
     )
 
     return max_candidates, sigma_low, sigma_high, sigma_high_limit, ignore_first_x_ps

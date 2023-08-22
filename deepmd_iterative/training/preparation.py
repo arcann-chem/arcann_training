@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/21
+Last modified: 2023/08/22
 """
 # Standard library modules
 import copy
@@ -234,7 +234,7 @@ def main(
 
     # This is building the datasets (roughly 200 lines)
     # TODO later
-    subsystems = []
+    systems = []
     extra_datasets = []
     validation_datasets = []
     for data_dir in data_path.iterdir():
@@ -251,7 +251,7 @@ def main(
                     # Escape if set iter is superior as iter, it is only for reprocessing old stuff.
                     try:
                         if int(data_dir.name.rsplit("_", 1)[-1]) <= curr_iter:
-                            subsystems.append(data_dir.name.rsplit("_", 1)[0])
+                            systems.append(data_dir.name.rsplit("_", 1)[0])
                     # TODO: Better except clause
                     except:
                         pass
@@ -283,16 +283,16 @@ def main(
     del initial_datasets_info
 
     # This trick remove duplicates from list via set
-    subsystems = list(set(subsystems))
-    subsystems = [i for i in subsystems if i not in main_config["systems_auto"]]
-    subsystems = [
+    systems = list(set(systems))
+    systems = [i for i in systems if i not in main_config["systems_auto"]]
+    systems = [
         i
-        for i in subsystems
+        for i in systems
         if i not in [zzz + "-disturbed" for zzz in main_config["systems_auto"]]
     ]
-    subsystems = sorted(subsystems)
-    main_config["systems_adhoc"] = subsystems
-    del subsystems
+    systems = sorted(systems)
+    main_config["systems_adhoc"] = systems
+    del systems
 
     # TODO As function
     # Automatic Systems (aka systems_auto in the initialization first) && all the others are not automated !

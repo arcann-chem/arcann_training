@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/22
 """
 # Standard library modules
 import copy
@@ -107,17 +107,19 @@ def main(
         machine,
         machine_spec,
         machine_walltime_format,
+        machine_job_scheduler,
         machine_launch_command,
     ) = get_machine_spec_for_step(
         deepmd_iterative_path,
         training_path,
-        "training",
+        "exploration",
         fake_machine,
         user_machine_keyword,
     )
     logging.debug(f"machine: {machine}")
     logging.debug(f"machine_spec: {machine_spec}")
     logging.debug(f"machine_walltime_format: {machine_walltime_format}")
+    logging.debug(f"machine_job_scheduler: {machine_job_scheduler}")
     logging.debug(f"machine_launch_command: {machine_launch_command}")
 
     if fake_machine is not None:
@@ -147,14 +149,14 @@ def main(
 
     # Launch the jobs
     completed_count = 0
-    for it0_subsys_nr, it_subsys_nr in enumerate(main_config["subsys_nr"]):
-        for it_nnp in range(1, main_config["nnp_count"] + 1):
-            for it_number in range(1, exploration_config["traj_count"] + 1):
+    for system_auto_index, system_auto in enumerate(main_config["systems_auto"]):
+        for nnp_index in range(1, main_config["nnp_count"] + 1):
+            for traj_index in range(1, exploration_config["traj_count"] + 1):
                 local_path = (
                     Path(".").resolve()
-                    / str(it_subsys_nr)
-                    / str(it_nnp)
-                    / (str(it_number).zfill(5))
+                    / str(system_auto)
+                    / str(nnp_index)
+                    / (str(traj_index).zfill(5))
                 )
 
                 if (
@@ -170,25 +172,25 @@ def main(
                             ]
                         )
                         logging.info(
-                            f"Exploration - {it_subsys_nr} {it_nnp} {it_number} launched."
+                            f"Exploration - {system_auto} {nnp_index} {traj_index} launched."
                         )
                         completed_count += 1
                     except FileNotFoundError:
                         logging.critical(
-                            f"Exploration - {it_subsys_nr} {it_nnp} {it_number} NOT launched - {exploration_config['launch_command']} not found."
+                            f"Exploration - {system_auto} {nnp_index} {traj_index} NOT launched - {exploration_config['launch_command']} not found."
                         )
                     change_directory(local_path.parent.parent.parent)
                 else:
                     logging.critical(
-                        f"Exploration - {it_subsys_nr} {it_nnp} {it_number} NOT launched - No job file."
+                        f"Exploration - {system_auto} {nnp_index} {traj_index} NOT launched - No job file."
                     )
                 del local_path
-            del it_number
-        del it_nnp
-    del it0_subsys_nr, it_subsys_nr
+            del traj_index
+        del nnp_index
+    del system_auto_index, system_auto
 
     if completed_count == (
-        len(exploration_config["subsys_nr"])
+        len(exploration_config["systems_auto"])
         * exploration_config["nnp_count"]
         * exploration_config["traj_count"]
     ):
@@ -203,7 +205,7 @@ def main(
 
     logging.info(f"-" * 88)
     if completed_count == (
-        len(exploration_config["subsys_nr"])
+        len(exploration_config["systems_auto"])
         * exploration_config["nnp_count"]
         * exploration_config["traj_count"]
     ):
