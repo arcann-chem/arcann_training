@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/22
 
 The ipi module provides functions to manipulate i-PI data (as XML tree).
 
@@ -49,7 +49,7 @@ def get_temperature_from_ipi_xml(input_file: str) -> float:
     try:
         tree = ET.parse(input_file)
     except (OSError, ET.ParseError) as e:
-        error_msg = f"Error reading input file {input_file}: {e}"
+        error_msg = f"Error reading input file `{input_file}`:`{e}`"
         raise Exception(error_msg)
     root = tree.getroot()
 
@@ -59,11 +59,11 @@ def get_temperature_from_ipi_xml(input_file: str) -> float:
             try:
                 temperature = float(child.text)
             except ValueError as e:
-                error_msg = f"Error parsing temperature value in {input_file}: {e}"
+                error_msg = f"Error parsing temperature value in `{input_file}`: `{e}`"
                 raise ValueError(error_msg)
 
     if temperature is None:
-        error_msg = f"Temperature value not found in {input_file}"
+        error_msg = f"Temperature value not found in `{input_file}`"
         raise ValueError(error_msg)
 
     return temperature
