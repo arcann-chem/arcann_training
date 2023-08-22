@@ -44,6 +44,6 @@
         "sigma_high_limit": [1.0],
         "ignore_first_x_ps": [0.5],
         "disturbed_min_value": [0.0],
-        "distrubed_candidate_value": [0.0]
+        "disturbed_candidate_value": [0.0]
     }
 }
