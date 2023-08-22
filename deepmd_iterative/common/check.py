@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/22
 
 This module contains functions for checking the availability of certain commands on the system, as well as a function for validating the current working directory during the execution of a specific step.
 
@@ -65,7 +65,7 @@ def check_atomsk(atomsk_path: str = None) -> str:
             return str(Path(atomsk_path).resolve())
         else:
             logging.warning(
-                f"Atomsk path {atomsk_path} is invalid. Checking environment variable and system path..."
+                f"Atomsk path `{atomsk_path}` is invalid. Checking environment variable and system path..."
             )
 
     # Check if ATOMSK_PATH is defined and is valid
@@ -81,7 +81,7 @@ def check_atomsk(atomsk_path: str = None) -> str:
         )
         return str(Path(atomsk.strip().decode()).resolve())
     except subprocess.CalledProcessError:
-        error_msg = "Atomsk not found."
+        error_msg = f"Atomsk not found"
         raise FileNotFoundError(error_msg)
 
 
@@ -120,7 +120,7 @@ def check_vmd(vmd_path: str = None) -> str:
         return str(Path(vmd_path).resolve())
     else:
         logging.warning(
-            f"VMD path {vmd_path} is invalid. Checking environment variable and system path..."
+            f"VMD path `{vmd_path}` is invalid. Checking environment variable and system path..."
         )
 
     # Check if VMD_PATH is defined and is valid
@@ -136,7 +136,7 @@ def check_vmd(vmd_path: str = None) -> str:
         vmd_path = Path(vmd.strip().decode())
         return f"{vmd_path}"
     except subprocess.CalledProcessError:
-        error_msg = "VMD not found."
+        error_msg = f"VMD not found"
         raise FileNotFoundError(error_msg)
 
 
@@ -165,5 +165,5 @@ def validate_step_folder(step_name: str) -> None:
 
     # Check if the current directory name contains the step name
     if step_name not in current_directory.name:
-        error_msg = f"The current directory ({current_directory}) does not match the expected directory for the {step_name} step."
+        error_msg = f"The current directory `{current_directory}` does not match the expected directory for the `{step_name}` step"
         raise ValueError(error_msg)

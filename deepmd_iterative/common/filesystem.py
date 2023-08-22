@@ -6,27 +6,27 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/22
 
-The filesystem module provides functions to handle file and directory management 
+The filesystem module provides functions to handle file and directory management
 
 Functions
 ---------
 change_directory(directory_path: Path) -> None
     A function to change the current working directory to the given path.
-    
+
 check_directory(directory_path: Path, abort_on_error: bool = True, error_msg: str = "default") -> None
     A function to check if the given directory exists and logs a warning or raises an error if it does not.
-    
+
 check_file_existence(file_path: Path, expected_existence: bool = True, abort_on_error: bool = True, error_msg: str = "default") -> None
     A function to check if a file exists or not and logs a message or raises an error depending on the parameters.
-    
+
 remove_file(file_path: Path) -> None
     A function to delete a file at the specified path if it exists.
-    
+
 remove_files_matching_glob(directory_path: Path, file_glob: str) -> None
     A function to remove all files in a directory that match a specified file glob pattern.
-    
+
 remove_tree(directory_path: Path) -> None
     A function to recursively remove a directory tree and its contents.
 """
@@ -64,14 +64,14 @@ def change_directory(directory_path: Path) -> None:
 
     # Check if the directory exists and is a ddir
     if not directory_path.is_dir():
-        error_msg = f"Directory not found: {directory_path}"
+        error_msg = f"Directory not found: `{directory_path}`"
         raise FileNotFoundError(error_msg)
 
     # Try to change the directory
     try:
         os.chdir(directory_path)
     except OSError as e:
-        error_msg = f"Error in changing directory to {directory_path}: {e}"
+        error_msg = f"Error in changing directory to `{directory_path}`: `{e}`"
         raise OSError(error_msg)
 
 
@@ -105,7 +105,7 @@ def check_directory(
     if not directory_path.is_dir():
         # Create error message
         if error_msg == "default":
-            error_msg = f"Directory not found: {directory_path}"
+            error_msg = f"Directory not found: `{directory_path}`"
 
         # Log or raise error and abort if needed
         if abort_on_error:
@@ -152,7 +152,7 @@ def check_file_existence(
 
     if exists != expected_existence:
         if expected_existence:
-            message = f"File not found: {file_path.name} not in {file_path.parent}"
+            message = f"File not found: `{file_path.name}` not in `{file_path.parent}`"
             if abort_on_error:
                 raise FileNotFoundError(
                     message if error_msg == "default" else error_msg
@@ -160,7 +160,7 @@ def check_file_existence(
             else:
                 logging.warning(message if error_msg == "default" else error_msg)
         else:
-            message = f"File found: {file_path.name}  in {file_path.parent}"
+            message = f"File found: `{file_path.name}` in `{file_path.parent}`"
             if abort_on_error:
                 raise FileExistsError(message if error_msg == "default" else error_msg)
             else:
@@ -219,15 +219,15 @@ def remove_files_matching_glob(directory_path: Path, file_glob: str) -> None:
 
     # Remove the matching files
     if not directory_path.is_dir():
-        error_msg = f"Not a directory {directory_path}."
+        error_msg = f"Not a directory `{directory_path}`"
         raise NotADirectoryError(error_msg)
 
     for file_path in directory_path.glob(file_glob):
         try:
             file_path.unlink()
-            logging.debug(f"Removed file: {file_path}")
+            logging.debug(f"Removed file: `{file_path}`")
         except Exception as e:
-            error_msg = f"Failed to remove file {file_path}: {e}"
+            error_msg = f"Failed to remove file `{file_path}`: `{e}`"
             raise Exception(error_msg)
 
 
