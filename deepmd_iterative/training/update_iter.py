@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/22
 """
 # Standard library modules
 import logging
@@ -79,7 +79,7 @@ def main(
             )
 
         remove_file(local_path / "checkpoint")
-        remove_file(local_path / "input_v2_compat")
+        remove_file(local_path / "input_v2_compat.json")
         logging.info("Deleting SLURM out/error files...")
         remove_files_matching_glob(local_path, "DeepMD_*")
         logging.info("Deleting the previous model.ckpt...")
@@ -136,7 +136,7 @@ def main(
     main_config["curr_iter"] = curr_iter
     padded_curr_iter = str(curr_iter).zfill(3)
 
-    for step in ["exploration", "reactive", "labeling", "training"]:
+    for step in ["exploration", "adhoc", "labeling", "training"]:
         (training_path / f"{padded_curr_iter}-{step}").mkdir(exist_ok=True)
         check_directory(training_path / f"{padded_curr_iter}-{step}")
     del step

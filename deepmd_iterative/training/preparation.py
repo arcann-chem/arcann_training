@@ -334,7 +334,9 @@ def main(
                 for system_auto_disturbed in [
                     zzz + "-disturbed" for zzz in main_config["systems_auto"]
                 ]:
-                    if (data_path / f"{system_auto_disturbed}_{padded_iteration}").is_dir():
+                    if (
+                        data_path / f"{system_auto_disturbed}_{padded_iteration}"
+                    ).is_dir():
                         dp_train_input_datasets.append(
                             f"{(Path(data_path.parts[-1]) / (system_auto_disturbed+'_'+padded_iteration) / '_')}"[
                                 :-1
@@ -433,7 +435,12 @@ def main(
 
     del training_datasets
     del trained_count, initial_count, extra_count
-    del added_auto_count, added_adhoc_count, added_auto_iter_count, added_adhoc_iter_count
+    del (
+        added_auto_count,
+        added_adhoc_count,
+        added_auto_iter_count,
+        added_adhoc_iter_count,
+    )
 
     # Here calculate the parameters
     # decay_steps it auto-recalculated as funcion of trained_count

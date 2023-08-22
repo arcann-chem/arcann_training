@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/22
 """
 # Standard library modules
 import copy
@@ -121,6 +121,7 @@ def main(
         machine,
         machine_spec,
         machine_walltime_format,
+        machine_job_scheduler,
         machine_launch_command,
     ) = get_machine_spec_for_step(
         deepmd_iterative_path,
@@ -132,6 +133,7 @@ def main(
     logging.debug(f"machine: {machine}")
     logging.debug(f"machine_spec: {machine_spec}")
     logging.debug(f"machine_walltime_format: {machine_walltime_format}")
+    logging.debug(f"machine_job_scheduler: {machine_job_scheduler}")
     logging.debug(f"machine_launch_command: {machine_launch_command}")
 
     if fake_machine is not None:
@@ -142,9 +144,9 @@ def main(
 
     # Check if the job file exists
     job_file_name = f"job_deepmd_freeze_{machine_spec['arch_type']}_{machine}.sh"
-    if (current_path.parent / "files" / job_file_name).is_file():
+    if (current_path.parent / "user_files" / job_file_name).is_file():
         master_job_file = textfile_to_string_list(
-            current_path.parent / "files" / job_file_name
+            current_path.parent / "user_files" / job_file_name
         )
     else:
         check_file_existence(
