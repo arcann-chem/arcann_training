@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/22
 
 The slurm module provides functions to manipulate SLURM data (as list of strings).
 
@@ -108,7 +108,7 @@ def replace_in_slurm_file_general(
         logging.warning(
             "Approximate wall time superior than the maximun time allowed by the QoS"
         )
-        logging.warning("Settign the maximum QoS time as walltime")
+        logging.warning(f"Settign the maximum QoS time as walltime: `{convert_seconds_to_hh_mm_ss(max_qos_time)}`")
         slurm_file = (
             replace_substring_in_string_list(
                 slurm_file, "_R_WALLTIME_", convert_seconds_to_hh_mm_ss(max_qos_time)

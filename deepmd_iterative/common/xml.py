@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/22
 
 The xml module provides functions to manipulate XML data (as XML tree / list of strings).
 
@@ -113,7 +113,7 @@ def read_xml_file(xml_file_path: Path) -> ET.ElementTree:
     """
     # Check if the file exists
     if not xml_file_path.is_file():
-        error_msg = f"File not found {xml_file_path.name} not in {xml_file_path.parent}"
+        error_msg = f"File not found `{xml_file_path.name}` not in `{xml_file_path.parent}`"
         raise FileNotFoundError(error_msg)
     else:
         try:
@@ -121,7 +121,7 @@ def read_xml_file(xml_file_path: Path) -> ET.ElementTree:
                 xml_tree = ET.parse(xml_file)
                 return xml_tree
         except ET.ParseError:
-            error_msg = f"Failed to parse XML file: {xml_file_path.name}"
+            error_msg = f"Failed to parse XML file: `{xml_file_path.name}`"
             raise ET.ParseError(error_msg)
 
 

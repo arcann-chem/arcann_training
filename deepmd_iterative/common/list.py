@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/22
 
 The utils module provides functions to manipulate lists.
 
@@ -60,12 +60,12 @@ def exclude_substring_from_string_list(
         If input_list is empty.
     """
     if not isinstance(input_list, list) or not isinstance(substring, str):
-        raise TypeError(
-            "Invalid input type. input_list must be a list of strings and substring must be a string."
-        )
+        error_msg = f"Invalid input type. `{input_list}` must be a {type([])} of {type('')} and substring must be a {type('')}"
+        raise TypeError(error_msg)
 
     if len(input_list) == 0:
-        raise ValueError("input_list must not be empty.")
+        error_msg = f"`{input_list}` must not be empty"
+        raise ValueError(error_msg)
 
     output_list = [string.strip() for string in input_list if substring not in string]
     return output_list
@@ -101,10 +101,12 @@ def replace_substring_in_string_list(
         If substring_in is an empty string.
     """
     if not isinstance(input_list, list):
-        raise TypeError("Invalid input type. input_list must be a list of strings.")
+        error_msg = f"Invalid input type. `{input_list}` must be a `{type([])}` of `{type('')}`"
+        raise TypeError(error_msg)
 
     if not substring_in:
-        raise ValueError("Invalid input. substring_in must be a non-empty string.")
+        error_msg = f"Invalid input. `{substring_in}` must be a non-empty `{type('')}`"
+        raise ValueError(error_msg)
 
     # if not substring_out:
     #    raise ValueError("Invalid input. substring_out must be a non-empty string.")
@@ -150,17 +152,17 @@ def string_list_to_textfile(file_path: Path, string_list: List[str]) -> None:
     """
 
     if not isinstance(file_path, Path):
-        error_msg = f"file_path must be a Path object"
+        error_msg = f"`{file_path}` must be a {type(Path(''))}"
         raise TypeError(error_msg)
 
     if not isinstance(string_list, list) or not all(
         isinstance(s, str) for s in string_list
     ):
-        error_msg = f"string_list must be a list of strings"
+        error_msg = f"`{string_list}` must be a `{type([])}` of `{type('')}`"
         raise TypeError(error_msg)
 
     if not string_list:
-        error_msg = f"string_list must not be empty"
+        error_msg = f"`{string_list}` must not be empty"
         raise ValueError(error_msg)
 
     try:
@@ -168,7 +170,7 @@ def string_list_to_textfile(file_path: Path, string_list: List[str]) -> None:
             text_file.write("\n".join(string_list))
             text_file.write("\n")
     except OSError as e:
-        error_msg = f"error writing to file {file_path}: {e}"
+        error_msg = f"error writing to file `{file_path}`: `{e}`"
         raise OSError(error_msg)
 
 
@@ -208,16 +210,18 @@ def textfile_to_string_list(file_path: Path) -> List[str]:
     """
 
     if not isinstance(file_path, Path):
-        raise TypeError("file_path must be a Path object")
+        error_msg = (f"`{file_path}` must be a {type(Path(''))}")
+        raise TypeError(error_msg)
 
     if not file_path.exists() or not file_path.is_file():
-        raise FileNotFoundError(f"file {file_path} does not exist")
+        error_msg = f"File `{file_path}` does not exist"
+        raise FileNotFoundError(error_msg)
 
     try:
         with file_path.open("r") as text_file:
             file_content = text_file.readlines()
     except OSError as e:
-        error_msg = f"error reading the file {file_path}: {e}"
+        error_msg = f"error reading the file `{file_path}`: `{e}`"
         raise OSError(error_msg)
 
     with file_path.open("r") as text_file:

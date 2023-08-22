@@ -103,8 +103,9 @@ def set_input_explor_json(
         "job_walltime_h",
         "init_exp_time_ps",
         "init_job_walltime_h",
-        "disturbed_start",
         "print_interval_mult",
+        "disturbed_start",
+
     ]:
         # Get the value
         default_used = False
@@ -521,8 +522,6 @@ def set_input_explordevi_json(
         "sigma_high",
         "sigma_high_limit",
         "ignore_first_x_ps",
-        "",
-        "",
     ]:
         # Get the value
         default_used = False
