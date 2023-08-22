@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/22
 
 The utils module provides helper functions.
 
@@ -48,7 +48,7 @@ def catch_errors_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             return func(*args, **kwargs)
         except Exception as e:
             logging.debug(
-                f"An error occurred while executing {func.__name__}: {e.__class__.__name__}"
+                f"An error occurred while executing `{func.__name__}`: `{e.__class__.__name__}`"
             )
             logging.error(f"{e}")
             logging.error(f"Aborting...")
