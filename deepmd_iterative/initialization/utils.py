@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/22
+Last modified: 2023/08/24
 
 set_main_config(user_config: Dict, default_config: Dict) -> Tuple[Dict, Dict, str]
     Set the main configuration (JSON) by validating the input JSON with a default JSON. If the input JSON is invalid, an error is raised and the script is terminated.
@@ -51,26 +51,26 @@ def set_main_config(user_config: Dict, default_config: Dict) -> Tuple[Dict, Dict
     for key in default_config.keys():
         if key in user_config:
             if not isinstance(default_config[key], type(user_config[key])):
-                error_msg = f"Wrong type: '{key}' is {type(user_config[key])}. It should be {type(default_config[key])}."
+                error_msg = f"Wrong type: '{key}' is '{type(user_config[key])}'. It should be '{type(default_config[key])}'"
                 raise TypeError(error_msg)
             if isinstance(user_config[key], List):
                 for element in user_config[key]:
                     if not isinstance(element, type(default_config[key][0])):
-                        error_msg = f"Wrong type: '{key}' is a list of {type(element)}. It should be a list of {type(default_config[key][0])}."
+                        error_msg = f"Wrong type: '{key}' is a list of '{type(element)}'. It should be a list of '{type(default_config[key][0])}'"
                         raise TypeError(error_msg)
     logging.debug(f"Type check complete")
 
     current_config = deepcopy(user_config)
     for key in ["systems_auto", "nnp_count", "exploration_type"]:
         if key == "systems_auto" and key not in user_config:
-            error_msg = f"'systems_auto' is not provided, it is mandatory. It should be a list of {type(default_config['systems_auto'][0])}."
+            error_msg = f"'systems_auto' is not provided, it is mandatory. It should be a list of '{type(default_config['systems_auto'][0])}'"
             raise ValueError(error_msg)
         elif (
             key in user_config
             and key == "exploration_type"
             and not (user_config[key] == "lammps" or user_config[key] == "i-PI")
         ):
-            error_msg = f"'{key}' should be a string: lammps or i-PI."
+            error_msg = f"'{key}' should be a string: 'lammps' or 'i-PI'"
             raise ValueError(error_msg)
         else:
             main_config[key] = (

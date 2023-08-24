@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/22
+Last modified: 2023/08/24
 """
 # Standard library modules
 import copy
@@ -91,8 +91,8 @@ def main(
     )
 
     # Check if we can continue
-    if not training_config["is_frozen"]:
-        logging.error(f"Lock found. Execute first: training check_freeze.")
+    if not training_config['is_frozen']:
+        logging.error(f"Lock found. Execute first: training check_freeze")
         logging.error(f"Aborting...")
         return 1
 
@@ -105,7 +105,7 @@ def main(
         user_config, training_config, default_config
     )
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
-    current_config["user_machine_keyword"] = user_machine_keyword
+    current_config['user_machine_keyword'] = user_machine_keyword
     logging.debug(f"current_config: {current_config}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
     user_machine_keyword = (
@@ -134,9 +134,9 @@ def main(
     logging.debug(f"machine_launch_command: {machine_launch_command}")
 
     if fake_machine is not None:
-        logging.info(f"Pretending to be on: {fake_machine}.")
+        logging.info(f"Pretending to be on: {fake_machine}")
     else:
-        logging.info(f"We are on: {machine}.")
+        logging.info(f"We are on: {machine}")
     del fake_machine
 
     # Check if the job file exists
@@ -148,7 +148,7 @@ def main(
     else:
         check_file_existence(
             jobs_path / job_file_name,
-            error_msg=f"No SLURM file present for {current_step.capitalize()} / {current_phase.capitalize()} on this machine.",
+            error_msg=f"No SLURM file present for {current_step.capitalize()} / {current_phase.capitalize()} on this machine",
         )
         master_job_file = textfile_to_string_list(
             jobs_path / job_file_name,
@@ -159,7 +159,7 @@ def main(
     # Prep and launch DP Compress
     completed_count = 0
     walltime_approx_s = 7200
-    for nnp in range(1, main_config["nnp_count"] + 1):
+    for nnp in range(1, main_config['nnp_count'] + 1):
         local_path = Path(".").resolve() / f"{nnp}"
 
         check_file_existence(local_path / "model.ckpt.index")
@@ -169,7 +169,7 @@ def main(
             machine_spec,
             walltime_approx_s,
             machine_walltime_format,
-            current_config["job_email"],
+            current_config['job_email'],
         )
 
         job_file = replace_substring_in_string_list(
@@ -203,15 +203,15 @@ def main(
                         f"./job_deepmd_compress_{machine_spec['arch_type']}_{machine}.sh",
                     ]
                 )
-                logging.info(f"DP Compress - {nnp} launched.")
+                logging.info(f"DP Compress - '{nnp}' launched")
                 completed_count += 1
             except FileNotFoundError:
                 logging.critical(
-                    f"DP Compress - {nnp} NOT launched - {training_config['launch_command']} not found."
+                    f"DP Compress - '{nnp}' NOT launched - '{training_config['launch_command']}' not found"
                 )
             change_directory(local_path.parent)
         else:
-            logging.critical(f"DP Compress - {nnp} NOT launched - No job file.")
+            logging.critical(f"DP Compress - '{nnp}' NOT launched - No job file")
         del local_path
 
     del nnp, master_job_file
@@ -227,7 +227,7 @@ def main(
     )
     logging.info(f"-" * 88)
 
-    if completed_count == main_config["nnp_count"]:
+    if completed_count == main_config['nnp_count']:
         logging.info(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
         )
@@ -236,8 +236,8 @@ def main(
         logging.critical(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!"
         )
-        logging.critical(f"Some SLURM jobs did not launch correctly.")
-        logging.critical(f"Please launch manually before continuing to the next step.")
+        logging.critical(f"Some SLURM jobs did not launch correctly")
+        logging.critical(f"Please launch manually before continuing to the next step")
     del completed_count
 
     # Cleaning

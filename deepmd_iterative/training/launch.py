@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/22
+Last modified: 2023/08/24
 """
 # Standard library modules
 import copy
@@ -88,8 +88,8 @@ def main(
     )
 
     # Check if we can continue
-    if training_config["is_launched"]:
-        logging.critical(f"Already launched.")
+    if training_config['is_launched']:
+        logging.critical(f"Already launched")
         continuing = input(
             f"Should it be run again? (Y for Yes, anything else to abort)"
         )
@@ -98,8 +98,8 @@ def main(
         else:
             logging.error(f"Aborting...")
             return 1
-    if not training_config["is_locked"]:
-        logging.error(f"Lock found. Execute first: training preparation.")
+    if not training_config['is_locked']:
+        logging.error(f"Lock found. Execute first: training preparation")
         logging.error(f"Aborting...")
         return 1
 
@@ -109,7 +109,7 @@ def main(
         user_config, training_config, default_config
     )
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
-    current_config["user_machine_keyword"] = user_machine_keyword
+    current_config['user_machine_keyword'] = user_machine_keyword
     logging.debug(f"current_config: {current_config}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
     user_machine_keyword = (
@@ -138,9 +138,9 @@ def main(
     logging.debug(f"machine_launch_command: {machine_launch_command}")
 
     if fake_machine is not None:
-        logging.info(f"Pretending to be on: {fake_machine}.")
+        logging.info(f"Pretending to be on: {fake_machine}")
     else:
-        logging.info(f"We are on: {machine}.")
+        logging.info(f"We are on: {machine}")
     del fake_machine
 
     # Check prep/launch
@@ -148,7 +148,7 @@ def main(
 
     # Launch the jobs
     completed_count = 0
-    for nnp in range(1, main_config["nnp_count"] + 1):
+    for nnp in range(1, main_config['nnp_count'] + 1):
         local_path = Path(".").resolve() / f"{nnp}"
         if (
             local_path / f"job_deepmd_train_{training_config['arch_type']}_{machine}.sh"
@@ -157,24 +157,24 @@ def main(
             try:
                 subprocess.run(
                     [
-                        training_config["launch_command"],
+                        training_config['launch_command'],
                         f"./job_deepmd_train_{training_config['arch_type']}_{machine}.sh",
                     ]
                 )
-                logging.info(f"DP Train - {nnp} launched.")
+                logging.info(f"DP Train - '{nnp}' launched")
                 completed_count += 1
             except FileNotFoundError:
                 logging.critical(
-                    f"DP Train - {nnp} NOT launched - {training_config['launch_command']} not found."
+                    f"DP Train - '{nnp}' NOT launched - '{training_config['launch_command']}' not found"
                 )
             change_directory(local_path.parent)
         else:
-            logging.critical(f"DP Train - {nnp} NOT launched - No job file.")
+            logging.critical(f"DP Train - '{nnp}' NOT launched - No job file")
         del local_path
     del nnp
 
-    if completed_count == main_config["nnp_count"]:
-        training_config["is_launched"] = True
+    if completed_count == main_config['nnp_count']:
+        training_config['is_launched'] = True
 
     write_json_file(
         training_config, (control_path / f"training_{padded_curr_iter}.json")
@@ -184,7 +184,7 @@ def main(
     )
 
     logging.info(f"-" * 88)
-    if completed_count == main_config["nnp_count"]:
+    if completed_count == main_config['nnp_count']:
         logging.info(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
         )
@@ -192,10 +192,10 @@ def main(
         logging.critical(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!"
         )
-        logging.critical(f"Some SLURM jobs did not launch correctly.")
-        logging.critical(f"Please launch manually before continuing to the next step.")
+        logging.critical(f"Some SLURM jobs did not launch correctly")
+        logging.critical(f"Please launch manually before continuing to the next step")
         logging.critical(
-            f'Replace the key "is_launched" to True in the training_{padded_curr_iter}.json.'
+            f"Replace the key 'is_launched' to 'True' in the 'training_{padded_curr_iter}'.json"
         )
     del completed_count
 

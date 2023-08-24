@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/22
+Last modified: 2023/08/24
 """
 # Standard library modules
 import logging
@@ -86,8 +86,8 @@ def main(
     # Check if data exists, get init_* datasets and extract number of atoms and cell dimensions
     initial_datasets_paths = [_ for _ in (training_path / "data").glob("init_*")]
     if len(initial_datasets_paths) == 0:
-        logging.error("No initial datasets found.")
-        logging.error("Aborting...")
+        logging.error(f"No initial datasets found")
+        logging.error(f"Aborting...")
         return 1
     logging.debug(f"initial_datasets_paths: {initial_datasets_paths}")
 

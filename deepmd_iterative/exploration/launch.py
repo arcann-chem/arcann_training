@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/22
+Last modified: 2023/08/24
 """
 # Standard library modules
 import copy
@@ -93,7 +93,7 @@ def main(
         user_config, exploration_config, default_config
     )
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
-    current_config["user_machine_keyword"] = user_machine_keyword
+    current_config['user_machine_keyword'] = user_machine_keyword
     logging.debug(f"current_config: {current_config}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
     user_machine_keyword = (
@@ -122,17 +122,17 @@ def main(
     logging.debug(f"machine_launch_command: {machine_launch_command}")
 
     if fake_machine is not None:
-        logging.info(f"Pretending to be on: {fake_machine}.")
+        logging.info(f"Pretending to be on: {fake_machine}")
     else:
-        logging.info(f"We are on: {machine}.")
+        logging.info(f"We are on: {machine}")
     del fake_machine
 
     # Check prep/launch
     assert_same_machine(machine, exploration_config)
 
     # Checks
-    if exploration_config["is_launched"]:
-        logging.critical(f"Already launched.")
+    if exploration_config['is_launched']:
+        logging.critical(f"Already launched")
         continuing = input(
             f"Should it be run again? (Y for Yes, anything else to abort)"
         )
@@ -141,16 +141,16 @@ def main(
         else:
             logging.error(f"Aborting...")
             return 1
-    if not exploration_config["is_locked"]:
-        logging.error(f"Lock found. Execute first: training preparation.")
+    if not exploration_config['is_locked']:
+        logging.error(f"Lock found. Execute first: training preparation")
         logging.error(f"Aborting...")
         return 1
 
     # Launch the jobs
     completed_count = 0
-    for system_auto_index, system_auto in enumerate(main_config["systems_auto"]):
-        for nnp_index in range(1, main_config["nnp_count"] + 1):
-            for traj_index in range(1, exploration_config["traj_count"] + 1):
+    for system_auto_index, system_auto in enumerate(main_config['systems_auto']):
+        for nnp_index in range(1, main_config['nnp_count'] + 1):
+            for traj_index in range(1, exploration_config['traj_count'] + 1):
                 local_path = (
                     Path(".").resolve()
                     / str(system_auto)
@@ -166,22 +166,22 @@ def main(
                     try:
                         subprocess.run(
                             [
-                                exploration_config["launch_command"],
+                                exploration_config['launch_command'],
                                 f"./job_deepmd_{exploration_config['exploration_type']}_{exploration_config['arch_type']}_{machine}.sh",
                             ]
                         )
                         logging.info(
-                            f"Exploration - {system_auto} {nnp_index} {traj_index} launched."
+                            f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' launched"
                         )
                         completed_count += 1
                     except FileNotFoundError:
                         logging.critical(
-                            f"Exploration - {system_auto} {nnp_index} {traj_index} NOT launched - {exploration_config['launch_command']} not found."
+                            f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' NOT launched - '{exploration_config['launch_command']}' not found"
                         )
                     change_directory(local_path.parent.parent.parent)
                 else:
                     logging.critical(
-                        f"Exploration - {system_auto} {nnp_index} {traj_index} NOT launched - No job file."
+                        f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' NOT launched - No job file"
                     )
                 del local_path
             del traj_index
@@ -189,11 +189,11 @@ def main(
     del system_auto_index, system_auto
 
     if completed_count == (
-        len(exploration_config["systems_auto"])
-        * exploration_config["nnp_count"]
-        * exploration_config["traj_count"]
+        len(exploration_config['systems_auto'])
+        * exploration_config['nnp_count']
+        * exploration_config['traj_count']
     ):
-        exploration_config["is_launched"] = True
+        exploration_config['is_launched'] = True
 
     write_json_file(
         exploration_config, (control_path / f"exploration_{padded_curr_iter}.json")
@@ -204,9 +204,9 @@ def main(
 
     logging.info(f"-" * 88)
     if completed_count == (
-        len(exploration_config["systems_auto"])
-        * exploration_config["nnp_count"]
-        * exploration_config["traj_count"]
+        len(exploration_config['systems_auto'])
+        * exploration_config['nnp_count']
+        * exploration_config['traj_count']
     ):
         logging.info(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
@@ -215,10 +215,10 @@ def main(
         logging.critical(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!"
         )
-        logging.critical(f"Some SLURM jobs did not launch correctly.")
-        logging.critical(f"Please launch manually before continuing to the next step.")
+        logging.critical(f"Some SLURM jobs did not launch correctly")
+        logging.critical(f"Please launch manually before continuing to the next step")
         logging.critical(
-            f'Replace the key "is_launched" to True in the training_{padded_curr_iter}.json.'
+            f"Replace the key 'is_launched' to 'True' in the 'training_{padded_curr_iter}.json'"
         )
     del completed_count
 

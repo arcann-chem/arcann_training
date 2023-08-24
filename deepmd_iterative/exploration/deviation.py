@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/22
+Last modified: 2023/08/24
 """
 # Standard library modules
 import copy
@@ -104,16 +104,16 @@ def main(
         prev_exploration_config = {}
 
     # Checks
-    if not exploration_config["is_checked"]:
-        logging.error(f"Lock found. Execute first: exploration check.")
+    if not exploration_config['is_checked']:
+        logging.error(f"Lock found. Execute first: exploration check")
         logging.error(f"Aborting...")
         return 1
     if (
-        exploration_config["exploration_type"] == "i-PI"
-        and not exploration_config["is_rechecked"]
+        exploration_config['exploration_type'] == "i-PI"
+        and not exploration_config['is_rechecked']
     ):
-        logging.critical("Lock found. Execute first: first: exploration recheck.")
-        logging.critical("Aborting...")
+        logging.critical(f"Lock found. Execute first: first: exploration recheck")
+        logging.critical(f"Aborting...")
         return 1
 
     # Fill the missing values from the input. We don't do exploration because it is system dependent and single value and not list
@@ -125,7 +125,7 @@ def main(
         main_config,
     )
     logging.debug(f"current_config: {current_config}")
-    for system_auto_index, system_auto in enumerate(main_config["systems_auto"]):
+    for system_auto_index, system_auto in enumerate(main_config['systems_auto']):
         # Set the system params for deviation selection
         (
             max_candidates,
@@ -136,8 +136,8 @@ def main(
         ) = get_system_deviation(current_config, system_auto_index)
 
         # Initialize
-        exploration_config["systems_auto"][system_auto] = {
-            **exploration_config["systems_auto"][system_auto],
+        exploration_config['systems_auto'][system_auto] = {
+            **exploration_config['systems_auto'][system_auto],
             "max_candidates": max_candidates,
             "sigma_low": sigma_low,
             "sigma_high": sigma_high,
@@ -155,15 +155,15 @@ def main(
 
         while (
             start_row_number
-            * exploration_config["systems_auto"][system_auto]["print_every_x_steps"]
-            * exploration_config["systems_auto"][system_auto]["timestep_ps"]
-            < exploration_config["systems_auto"][system_auto]["ignore_first_x_ps"]
+            * exploration_config['systems_auto'][system_auto]['print_every_x_steps']
+            * exploration_config['systems_auto'][system_auto]['timestep_ps']
+            < exploration_config['systems_auto'][system_auto]['ignore_first_x_ps']
         ):
             start_row_number = start_row_number + 1
         logging.debug(f"start_row_number: {start_row_number}")
 
-        for it_nnp in range(1, main_config["nnp_count"] + 1):
-            for it_number in range(1, exploration_config["traj_count"] + 1):
+        for it_nnp in range(1, main_config['nnp_count'] + 1):
+            for it_number in range(1, exploration_config['traj_count'] + 1):
                 logging.debug(f"{system_auto} / {it_nnp} / {it_number}")
 
                 # Get the local path and the name of model_deviation file
@@ -192,8 +192,8 @@ def main(
                 # Get the number of exptected steps
                 nb_steps_expected = (
                     (
-                        exploration_config["systems_auto"][system_auto]["nb_steps"]
-                        // exploration_config["systems_auto"][system_auto][
+                        exploration_config['systems_auto'][system_auto]['nb_steps']
+                        // exploration_config['systems_auto'][system_auto][
                             "print_every_x_steps"
                         ]
                     )
@@ -206,28 +206,28 @@ def main(
                     model_deviation = np.genfromtxt(
                         str(local_path / model_deviation_filename)
                     )
-                    if exploration_config["exploration_type"] == "lammps":
+                    if exploration_config['exploration_type'] == "lammps":
                         total_row_number = model_deviation.shape[0]
-                    elif exploration_config["exploration_type"] == "i-PI":
+                    elif exploration_config['exploration_type'] == "i-PI":
                         total_row_number = model_deviation.shape[0] + 1
 
                     if nb_steps_expected > (total_row_number - start_row_number):
-                        QbC_stats["total_count"] = nb_steps_expected
+                        QbC_stats['total_count'] = nb_steps_expected
                         logging.critical(
-                            f"Exploration {system_auto}/{it_nnp}/{it_number}"
+                            f"Exploration '{system_auto}' / '{it_nnp}' / '{it_number}'"
                         )
                         logging.critical(
-                            f"Mismatch between expected ({nb_steps_expected}) number of steps"
+                            f"Mismatch between expected ('{nb_steps_expected}') number of steps"
                         )
                         logging.critical(
-                            f"and actual ({total_row_number}) number of steps in the deviation file."
+                            f"and actual ('{total_row_number - start_row_number}') number of steps in the deviation file"
                         )
                         if (local_path / "force").is_file():
                             logging.warning(
                                 "but it has been forced, so it should be ok"
                             )
                     elif nb_steps_expected == (total_row_number - start_row_number):
-                        QbC_stats["total_count"] = total_row_number - start_row_number
+                        QbC_stats['total_count'] = total_row_number - start_row_number
                     else:
                         logging.error("Unknown error. Please BUG REPORT")
                         logging.error("Aborting...")
@@ -236,7 +236,7 @@ def main(
                     end_row_number = get_last_frame_number(
                         model_deviation,
                         sigma_high_limit,
-                        exploration_config["systems_auto"][system_auto][
+                        exploration_config['systems_auto'][system_auto][
                             "disturbed_start"
                         ],
                     )
@@ -338,32 +338,32 @@ def main(
                     }
 
                     # If the traj is smaller than expected (forced case) add the missing as rejected
-                    if (QbC_stats["good_count"] + QbC_stats["rejected_count"] + QbC_stats["candidates_count"]) < nb_steps_expected:
-                        QbC_stats["rejected_count"] = ( QbC_stats["rejected_count"] + nb_steps_expected
+                    if (QbC_stats['good_count'] + QbC_stats['rejected_count'] + QbC_stats['candidates_count']) < nb_steps_expected:
+                        QbC_stats['rejected_count'] = ( QbC_stats['rejected_count'] + nb_steps_expected
                             - (
-                                QbC_stats["good_count"]
-                                + QbC_stats["rejected_count"]
-                                + QbC_stats["candidates_count"]
+                                QbC_stats['good_count']
+                                + QbC_stats['rejected_count']
+                                + QbC_stats['candidates_count']
                             )
                         )
 
                     # Only if we have corect stats, add it
                     if (end_row_number > start_row_number) or (end_row_number == -1):
-                        exploration_config["systems_auto"][system_auto][
+                        exploration_config['systems_auto'][system_auto][
                             "mean_deviation_max_f"
                         ] = (
-                            exploration_config["systems_auto"][system_auto][
+                            exploration_config['systems_auto'][system_auto][
                                 "mean_deviation_max_f"
                             ]
-                            + QbC_stats["mean_deviation_max_f"]
+                            + QbC_stats['mean_deviation_max_f']
                         )
-                        exploration_config["systems_auto"][system_auto][
+                        exploration_config['systems_auto'][system_auto][
                             "std_deviation_max_f"
                         ] = (
-                            exploration_config["systems_auto"][system_auto][
+                            exploration_config['systems_auto'][system_auto][
                                 "std_deviation_max_f"
                             ]
-                            + QbC_stats["std_deviation_max_f"]
+                            + QbC_stats['std_deviation_max_f']
                         )
                     del end_row_number
 
@@ -388,17 +388,17 @@ def main(
                         "candidates_count": 0,
                     }
 
-                exploration_config["systems_auto"][system_auto]["total_count"] = (
-                    exploration_config["systems_auto"][system_auto]["total_count"]
-                    + QbC_stats["total_count"]
+                exploration_config['systems_auto'][system_auto]['total_count'] = (
+                    exploration_config['systems_auto'][system_auto]['total_count']
+                    + QbC_stats['total_count']
                 )
-                exploration_config["systems_auto"][system_auto]["candidates_count"] = (
-                    exploration_config["systems_auto"][system_auto]["candidates_count"]
-                    + QbC_stats["candidates_count"]
+                exploration_config['systems_auto'][system_auto]['candidates_count'] = (
+                    exploration_config['systems_auto'][system_auto]['candidates_count']
+                    + QbC_stats['candidates_count']
                 )
-                exploration_config["systems_auto"][system_auto]["rejected_count"] = (
-                    exploration_config["systems_auto"][system_auto]["rejected_count"]
-                    + QbC_stats["rejected_count"]
+                exploration_config['systems_auto'][system_auto]['rejected_count'] = (
+                    exploration_config['systems_auto'][system_auto]['rejected_count']
+                    + QbC_stats['rejected_count']
                 )
 
                 write_json_file(QbC_stats, local_path / "QbC_stats.json", False)
@@ -416,18 +416,18 @@ def main(
             del it_number
 
         # Average for the system (with adjustment, remove the skipped ones)
-        exploration_config["systems_auto"][system_auto][
+        exploration_config['systems_auto'][system_auto][
             "mean_deviation_max_f"
-        ] = exploration_config["systems_auto"][system_auto]["mean_deviation_max_f"] / (
-            exploration_config["nnp_count"]
-            + len(range(1, exploration_config["traj_count"] + 1))
+        ] = exploration_config['systems_auto'][system_auto]['mean_deviation_max_f'] / (
+            exploration_config['nnp_count']
+            + len(range(1, exploration_config['traj_count'] + 1))
             - skipped_traj
         )
-        exploration_config["systems_auto"][system_auto][
+        exploration_config['systems_auto'][system_auto][
             "std_deviation_max_f"
-        ] = exploration_config["systems_auto"][system_auto]["std_deviation_max_f"] / (
-            exploration_config["nnp_count"]
-            + len(range(1, exploration_config["traj_count"] + 1))
+        ] = exploration_config['systems_auto'][system_auto]['std_deviation_max_f'] / (
+            exploration_config['nnp_count']
+            + len(range(1, exploration_config['traj_count'] + 1))
             - skipped_traj
         )
 
@@ -443,7 +443,7 @@ def main(
         )
 
     del system_auto_index, system_auto
-    for system_auto_index, system_auto in enumerate(exploration_config["systems_auto"]):
+    for system_auto_index, system_auto in enumerate(exploration_config['systems_auto']):
         # Set the system params for deviation selection
         (
             max_candidates,
@@ -454,14 +454,14 @@ def main(
         ) = get_system_deviation(current_config, system_auto_index)
 
         # Initialize
-        exploration_config["systems_auto"][system_auto] = {
-            **exploration_config["systems_auto"][system_auto],
+        exploration_config['systems_auto'][system_auto] = {
+            **exploration_config['systems_auto'][system_auto],
             "kept_count": 0,
             "discarded_count": 0,
         }
 
-        for it_nnp in range(1, main_config["nnp_count"] + 1):
-            for it_number in range(1, exploration_config["traj_count"] + 1):
+        for it_nnp in range(1, main_config['nnp_count'] + 1):
+            for it_number in range(1, exploration_config['traj_count'] + 1):
                 # Get the local path and the name of model_deviation file
                 local_path = (
                     Path(".").resolve()
@@ -483,7 +483,7 @@ def main(
                 if not (local_path / "skip").is_file():
                     # If candidates_count is over max_candidates
                     if (
-                        exploration_config["systems_auto"][system_auto][
+                        exploration_config['systems_auto'][system_auto][
                             "candidates_count"
                         ]
                         <= max_candidates
@@ -491,23 +491,23 @@ def main(
                         selection_factor = 1
                     else:
                         selection_factor = (
-                            QbC_stats["candidates_count"]
-                            / exploration_config["systems_auto"][system_auto][
+                            QbC_stats['candidates_count']
+                            / exploration_config['systems_auto'][system_auto][
                                 "candidates_count"
                             ]
                         )
 
                     # Get the local max_candidates
-                    QbC_stats["selection_factor"] = selection_factor
+                    QbC_stats['selection_factor'] = selection_factor
                     max_candidates_local = int(
                         np.floor(max_candidates * selection_factor)
                     )
                     if selection_factor == 1:
-                        QbC_stats["max_candidates_local"] = -1
+                        QbC_stats['max_candidates_local'] = -1
                     else:
-                        QbC_stats["max_candidates_local"] = max_candidates_local
+                        QbC_stats['max_candidates_local'] = max_candidates_local
 
-                    candidate_indexes = np.array(QbC_indexes["candidate_indexes"])
+                    candidate_indexes = np.array(QbC_indexes['candidate_indexes'])
 
                     # Selection of candidates (as linearly as possible, keeping the first and the last ones)
                     if len(candidate_indexes) > max_candidates_local:
@@ -558,15 +558,15 @@ def main(
                             if temp_min < min_val:
                                 min_val = temp_min
                                 min_index = kept_idx
-                        QbC_stats["minimum_index"] = int(min_index)
+                        QbC_stats['minimum_index'] = int(min_index)
                     # Last of good
-                    elif len(QbC_indexes["good_indexes"]) > 0:
-                        QbC_stats["minimum_index"] = int(
-                            QbC_indexes["good_indexes"][-1]
+                    elif len(QbC_indexes['good_indexes']) > 0:
+                        QbC_stats['minimum_index'] = int(
+                            QbC_indexes['good_indexes'][-1]
                         )
                     # Nothing
                     else:
-                        QbC_stats["minimum_index"] = -1
+                        QbC_stats['minimum_index'] = -1
 
                 else:
                     QbC_indexes = {
@@ -583,13 +583,13 @@ def main(
                         "minimum_index": -1,
                     }
 
-                exploration_config["systems_auto"][system_auto]["kept_count"] = (
-                    exploration_config["systems_auto"][system_auto]["kept_count"]
-                    + QbC_stats["kept_count"]
+                exploration_config['systems_auto'][system_auto]['kept_count'] = (
+                    exploration_config['systems_auto'][system_auto]['kept_count']
+                    + QbC_stats['kept_count']
                 )
-                exploration_config["systems_auto"][system_auto]["discarded_count"] = (
-                    exploration_config["systems_auto"][system_auto]["discarded_count"]
-                    + QbC_stats["discarded_count"]
+                exploration_config['systems_auto'][system_auto]['discarded_count'] = (
+                    exploration_config['systems_auto'][system_auto]['discarded_count']
+                    + QbC_stats['discarded_count']
                 )
 
                 write_json_file(QbC_stats, local_path / "QbC_stats.json", False)
@@ -603,7 +603,7 @@ def main(
         del max_candidates, sigma_low, sigma_high, sigma_high_limit, ignore_first_x_ps
     del system_auto_index, system_auto
 
-    exploration_config["is_deviated"] = True
+    exploration_config['is_deviated'] = True
     write_json_file(
         exploration_config, (control_path / f"exploration_{padded_curr_iter}.json")
     )

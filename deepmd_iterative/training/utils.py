@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/22
+Last modified: 2023/08/24
 
 The utils module provides functions for the training step.
 
@@ -113,7 +113,7 @@ def set_training_config(
             current_config[key] = default_config[key]
         else:
             # The key is not present in any of the dictionaries.
-            error_msg = f"'{key}' not found in any JSON."
+            error_msg = f"'{key}' not found in any JSON"
             raise ValueError(error_msg)
 
         if key == "user_machine_keyword":
@@ -127,7 +127,7 @@ def set_training_config(
             #     raise TypeError(error_msg)
         else:
             if not isinstance(training_json[key], type(default_config[key])):
-                error_msg = f"Wrong type: '{key}' is a {type(training_json[key])}. It should be a {type(default_config[key])}."
+                error_msg = f"Wrong type: '{key}' is a '{type(training_json[key])}' and it should be a '{type(default_config[key])}'"
                 raise TypeError(error_msg)
 
     return training_json, current_config
@@ -158,12 +158,12 @@ def calculate_decay_steps(num_structures: int, min_decay_steps: int = 5000) -> i
     """
     # Check if num_structures is a positive integer
     if not isinstance(num_structures, int) or num_structures <= 0:
-        error_msg = "'nb_structures' must be a positive integer"
+        error_msg = f"The argument num_structures must be a positive integer"
         raise ValueError(error_msg)
 
     # Check if min_decay_steps is a positive integer
     if not isinstance(min_decay_steps, int) or min_decay_steps <= 0:
-        error_msg = "'min_decay_steps' must be a positive integer"
+        error_msg = f"The argument min_decay_steps must be a positive integer"
         raise ValueError(error_msg)
 
     # Round down to the nearest multiple of 10000
@@ -212,11 +212,11 @@ def calculate_decay_rate(
     """
     # Check that the start learning rate is a positive number.
     if start_lr <= 0 or not isinstance(start_lr, (int, float)):
-        error_msg = "'start_lr' must be a positive number."
+        error_msg = f"The argument start_lr must be a positive number"
         raise ValueError(error_msg)
 
     if decay_steps <= 0 or not isinstance(decay_steps, int):
-        error_msg = "'decay_steps' must be a positive integer."
+        error_msg = f"The argument decay_steps must be a positive integer"
         raise ValueError(error_msg)
 
     # Calculate the decay rate using the given training parameters
@@ -261,10 +261,10 @@ def calculate_learning_rate(
         isinstance(arg, (int, float))
         for arg in (current_step, start_lr, decay_rate, decay_steps)
     ):
-        error_msg = "All arguments must be positive."
+        error_msg = f"All arguments must be positive"
         raise ValueError(error_msg)
     if not isinstance(decay_steps, int):
-        error_msg = "'decay_steps' must be a positive integer"
+        error_msg = f"The argument decay_steps must be a positive integer"
         raise ValueError(error_msg)
 
     # Calculate the learning rate based on the current training step
@@ -302,7 +302,7 @@ def check_initial_datasets(training_dir: Path) -> Dict[str, int]:
 
     # Check if the 'initial_datasets.json' file exists
     if not initial_datasets_info_file.is_file():
-        error_msg = f"The 'initial_datasets.json' file is missing from '{initial_datasets_info_file.parent}'."
+        error_msg = f"The initial_datasets.json file is missing from '{initial_datasets_info_file.parent}'"
         raise FileNotFoundError(error_msg)
 
     # Load the 'initial_datasets.json' file
@@ -315,18 +315,18 @@ def check_initial_datasets(training_dir: Path) -> Dict[str, int]:
 
         # Check if the dataset exists in the 'data' subfolder
         if not dataset_path.is_dir():
-            error_msg = f"Initial dataset '{dataset_name}' is missing from the 'data' subfolder."
+            error_msg = f"Initial dataset '{dataset_name}' is missing from the data subfolder"
             raise FileNotFoundError(error_msg)
 
         # Check if the number of samples in the dataset matches the expected count
         box_path = dataset_path / "set.000" / "box.npy"
         if not box_path.is_file():
-            error_msg = f"No 'box.npy' found in the dataset '{dataset_name}'."
+            error_msg = f"No box.npy found in the dataset '{dataset_name}'"
             raise FileNotFoundError(error_msg)
 
         num_samples = len(np.load(str(box_path)))
         if num_samples != expected_num_samples:
-            error_msg = f"Unexpected number of samples ({num_samples}) found in initial dataset '{dataset_name}'. Expected {expected_num_samples}."
+            error_msg = f"Unexpected number of samples ('{num_samples}') found in initial dataset '{dataset_name}'. Expected:'{expected_num_samples}'"
             raise ValueError(error_msg)
 
     return initial_datasets_info
@@ -353,22 +353,22 @@ def validate_deepmd_config(training_config) -> None:
         If the configuration is not valid with respect to machine/arch_name/arch and DeePMD.
     """
     # Check DeePMD version
-    if training_config["deepmd_model_version"] not in [2.0, 2.1]:
-        error_msg = f"Invalid deepmd model version (2.0 or 2.1): {training_config['deepmd_model_version']}."
+    if training_config['deepmd_model_version'] not in [2.0, 2.1]:
+        error_msg = f"Invalid deepmd model version (2.0 or 2.1): '{training_config['deepmd_model_version']}'."
         raise ValueError(error_msg)
 
     # Check DeePMD descriptor type
-    if training_config["deepmd_model_type_descriptor"] not in ["se_e2_a"]:
-        error_msg = f"Invalid deepmd type descriptor (se_e2_a): {training_config['deepmd_model_type_descriptor']}."
+    if training_config['deepmd_model_type_descriptor'] not in ["se_e2_a"]:
+        error_msg = f"Invalid deepmd type descriptor (se_e2_a): '{training_config['deepmd_model_type_descriptor']}'."
         raise ValueError(error_msg)
 
     # Check mismatch between machine/arch_name/arch and DeePMD
-    if training_config["deepmd_model_version"] < 2.0:
-        error_msg = "Only version >= 2.0 on Jean Zay!"
+    if training_config['deepmd_model_version'] < 2.0:
+        error_msg = f"Only version >= 2.0 on Jean Zay!"
         raise ValueError(error_msg)
     if (
-        training_config["deepmd_model_version"] < 2.1
-        and training_config["arch_name"] == "a100"
+        training_config['deepmd_model_version'] < 2.1
+        and training_config['arch_name'] == "a100"
     ):
-        error_msg = "Only version >= 2.1 on Jean Zay A100!"
+        error_msg = f"Only version >= 2.1 on Jean Zay A100!"
         raise ValueError(error_msg)

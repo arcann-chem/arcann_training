@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/24
 """
 # Standard library modules
 import logging
@@ -56,30 +56,30 @@ def main(
     )
 
     # Check if we can continue
-    if not training_config["is_checked"]:
-        logging.error(f"Lock found. Execute first: training check.")
+    if not training_config['is_checked']:
+        logging.error(f"Lock found. Execute first: training check")
         logging.error(f"Aborting...")
         return 1
 
     completed_count = 0
-    for nnp in range(1, main_config["nnp_count"] + 1):
+    for nnp in range(1, main_config['nnp_count'] + 1):
         local_path = Path(".").resolve() / f"{nnp}"
         if (local_path / f"graph_{nnp}_{padded_curr_iter}.pb").is_file():
             completed_count += 1
         else:
-            logging.critical(f"DP Freeze - {nnp} not finished/failed.")
+            logging.critical(f"DP Freeze - '{nnp}' not finished/failed")
         del local_path
     del nnp
     logging.debug(f"completed_count: {completed_count}")
 
-    if completed_count == main_config["nnp_count"]:
-        training_config["is_frozen"] = True
+    if completed_count == main_config['nnp_count']:
+        training_config['is_frozen'] = True
     else:
         logging.error(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!"
         )
-        logging.error(f"Some DP Freeze did not finished correctly.")
-        logging.error(f"Please check manually before relaunching this step.")
+        logging.error(f"Some DP Freeze did not finished correctly")
+        logging.error(f"Please check manually before relaunching this step")
         logging.error(f"Aborting...")
         return 1
     del completed_count

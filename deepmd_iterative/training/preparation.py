@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/22
+Last modified: 2023/08/24
 """
 # Standard library modules
 import copy
@@ -118,7 +118,7 @@ def main(
         user_config, previous_training_config, default_config
     )
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
-    current_config["user_machine_keyword"] = user_machine_keyword
+    current_config['user_machine_keyword'] = user_machine_keyword
     logging.debug(f"current_config: {current_config}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
     user_machine_keyword = (
@@ -147,9 +147,9 @@ def main(
     logging.debug(f"machine_launch_command: {machine_launch_command}")
 
     if fake_machine is not None:
-        logging.info(f"Pretending to be on: {fake_machine}.")
+        logging.info(f"Pretending to be on: {fake_machine}")
     else:
-        logging.info(f"We are on: {machine}.")
+        logging.info(f"We are on: {machine}")
     del fake_machine
 
     # Check if we can continue
@@ -157,9 +157,9 @@ def main(
         labeling_config = load_json_file(
             (control_path / f"labeling_{padded_curr_iter}.json")
         )
-        if not labeling_config["is_extracted"]:
-            logging.error("Lock found. Run/Check first: labeling extract.")
-            logging.error("Aborting...")
+        if not labeling_config['is_extracted']:
+            logging.error(f"Lock found. Run/Check first: labeling extract")
+            logging.error(f"Aborting...")
             return 1
     else:
         labeling_config = {}
@@ -179,10 +179,10 @@ def main(
     training_config = {
         **training_config,
         "machine": machine,
-        "project_name": machine_spec["project_name"],
-        "allocation_name": machine_spec["allocation_name"],
-        "arch_name": machine_spec["arch_name"],
-        "arch_type": machine_spec["arch_type"],
+        "project_name": machine_spec['project_name'],
+        "allocation_name": machine_spec['allocation_name'],
+        "arch_name": machine_spec['arch_name'],
+        "arch_type": machine_spec['arch_type'],
         "launch_command": machine_launch_command,
     }
 
@@ -195,7 +195,7 @@ def main(
     else:
         check_file_existence(
             jobs_path / job_file_name,
-            error_msg=f"No SLURM file present for {current_step.capitalize()} / {current_phase.capitalize()} on this machine.",
+            error_msg=f"No SLURM file present for {current_step.capitalize()} / {current_phase.capitalize()} on this machine",
         )
         master_job_file = textfile_to_string_list(
             jobs_path / job_file_name,
@@ -215,8 +215,8 @@ def main(
         )
     ).resolve()
     dp_train_input = load_json_file(dp_train_input_path)
-    main_config["type_map"] = {}
-    main_config["type_map"] = dp_train_input["model"]["type_map"]
+    main_config['type_map'] = {}
+    main_config['type_map'] = dp_train_input['model']['type_map']
     del dp_train_input_path
     logging.debug(f"dp_train_input: {dp_train_input}")
     logging.debug(f"main_config: {main_config}")
@@ -265,7 +265,7 @@ def main(
 
     # Initial
     initial_count = 0
-    if training_config["use_initial_datasets"]:
+    if training_config['use_initial_datasets']:
         for it_datasets_initial_json in initial_datasets_info.keys():
             if (data_path / it_datasets_initial_json).is_dir():
                 dp_train_input_datasets.append(
@@ -281,14 +281,14 @@ def main(
 
     # This trick remove duplicates from list via set
     systems = list(set(systems))
-    systems = [i for i in systems if i not in main_config["systems_auto"]]
+    systems = [i for i in systems if i not in main_config['systems_auto']]
     systems = [
         i
         for i in systems
-        if i not in [zzz + "-disturbed" for zzz in main_config["systems_auto"]]
+        if i not in [zzz + "-disturbed" for zzz in main_config['systems_auto']]
     ]
     systems = sorted(systems)
-    main_config["systems_adhoc"] = systems
+    main_config['systems_adhoc'] = systems
     del systems
 
     # TODO As function
@@ -303,7 +303,7 @@ def main(
         for iteration in np.arange(1, curr_iter + 1):
             padded_iteration = str(iteration).zfill(3)
             try:
-                for system_auto in main_config["systems_auto"]:
+                for system_auto in main_config['systems_auto']:
                     if (data_path / f"{system_auto}_{padded_iteration}").is_dir():
                         dp_train_input_datasets.append(
                             f"{(Path(data_path.parts[-1]) / (system_auto+'_'+padded_iteration) / '_')}"[
@@ -329,7 +329,7 @@ def main(
                 pass
             try:
                 for system_auto_disturbed in [
-                    zzz + "-disturbed" for zzz in main_config["systems_auto"]
+                    zzz + "-disturbed" for zzz in main_config['systems_auto']
                 ]:
                     if (
                         data_path / f"{system_auto_disturbed}_{padded_iteration}"
@@ -359,7 +359,7 @@ def main(
             except (KeyError, NameError):
                 pass
             try:
-                for system_adhoc in main_config["systems_adhoc"]:
+                for system_adhoc in main_config['systems_adhoc']:
                     if (data_path / f"{system_adhoc}_{padded_iteration}").is_dir():
                         dp_train_input_datasets.append(
                             f"{(Path(data_path.parts[-1]) / (system_adhoc+'_'+padded_iteration) / '_')}"[
@@ -391,10 +391,10 @@ def main(
 
     # Finally the extra sets !
     extra_count = 0
-    if training_config["use_extra_datasets"]:
-        main_config["extra_datasets"] = extra_datasets
+    if training_config['use_extra_datasets']:
+        main_config['extra_datasets'] = extra_datasets
         del extra_datasets
-        for extra_dataset in main_config["extra_datasets"]:
+        for extra_dataset in main_config['extra_datasets']:
             dp_train_input_datasets.append(
                 f"{(Path(data_path.parts[-1]) / extra_dataset / '_')}"[:-1]
             )
@@ -414,7 +414,7 @@ def main(
     logging.debug(f"dp_train_input_datasets: {dp_train_input_datasets}")
 
     # Update the inputs with the sets
-    dp_train_input["training"]["training_data"]["systems"] = dp_train_input_datasets
+    dp_train_input['training']['training_data']['systems'] = dp_train_input_datasets
 
     # Update the training JSON
     training_config = {
@@ -443,16 +443,16 @@ def main(
     # decay_steps it auto-recalculated as funcion of trained_count
     logging.debug(f"training_config - decay_steps: {training_config['decay_steps']}")
     logging.debug(f"current_config - decay_steps: {current_config['decay_steps']}")
-    if not training_config["decay_steps_fixed"]:
+    if not training_config['decay_steps_fixed']:
         decay_steps = calculate_decay_steps(
-            training_config["trained_count"], training_config["decay_steps"]
+            training_config['trained_count'], training_config['decay_steps']
         )
         logging.debug(f"Recalculating decay_steps")
         # Update the training JSON and the new input JSON:
-        training_config["decay_steps"] = decay_steps
-        current_config["decay_steps"] = decay_steps
+        training_config['decay_steps'] = decay_steps
+        current_config['decay_steps'] = decay_steps
     else:
-        decay_steps = training_config["decay_steps"]
+        decay_steps = training_config['decay_steps']
     logging.debug(f"decay_steps: {decay_steps}")
     logging.debug(f"training_config - decay_steps: {training_config['decay_steps']}")
     logging.debug(f"current_config - decay_steps: {current_config['decay_steps']}")
@@ -464,26 +464,26 @@ def main(
     logging.debug(
         f"current_config - numb_steps / decay_rate: {current_config['numb_steps']} / {current_config['decay_rate']}"
     )
-    numb_steps = training_config["numb_steps"]
+    numb_steps = training_config['numb_steps']
     decay_rate_new = calculate_decay_rate(
         numb_steps,
-        training_config["start_lr"],
-        training_config["stop_lr"],
-        training_config["decay_steps"],
+        training_config['start_lr'],
+        training_config['stop_lr'],
+        training_config['decay_steps'],
     )
-    while decay_rate_new < training_config["decay_rate"]:
+    while decay_rate_new < training_config['decay_rate']:
         numb_steps = numb_steps + 10000
         decay_rate_new = calculate_decay_rate(
             numb_steps,
-            training_config["start_lr"],
-            training_config["stop_lr"],
-            training_config["decay_steps"],
+            training_config['start_lr'],
+            training_config['stop_lr'],
+            training_config['decay_steps'],
         )
     # Update the training JSON and the new input JSON:
-    training_config["numb_steps"] = int(numb_steps)
-    training_config["decay_rate"] = decay_rate_new
-    current_config["numb_steps"] = int(numb_steps)
-    current_config["decay_rate"] = decay_rate_new
+    training_config['numb_steps'] = int(numb_steps)
+    training_config['decay_rate'] = decay_rate_new
+    current_config['numb_steps'] = int(numb_steps)
+    current_config['decay_rate'] = decay_rate_new
     logging.debug(f"numb_steps: {numb_steps}")
     logging.debug(f"decay_rate: {decay_rate_new}")
     logging.debug(
@@ -495,9 +495,9 @@ def main(
 
     del decay_steps, numb_steps, decay_rate_new
 
-    dp_train_input["training"]["numb_steps"] = training_config["numb_steps"]
-    dp_train_input["learning_rate"]["decay_steps"] = training_config["decay_steps"]
-    dp_train_input["learning_rate"]["stop_lr"] = training_config["stop_lr"]
+    dp_train_input['training']['numb_steps'] = training_config['numb_steps']
+    dp_train_input['learning_rate']['decay_steps'] = training_config['decay_steps']
+    dp_train_input['learning_rate']['stop_lr'] = training_config['stop_lr']
 
     # Set frozen/compressed bool !
     training_config = {
@@ -524,8 +524,8 @@ def main(
     del dp_train_input_dataset, localdata_path, dp_train_input_datasets
 
     # Change some inside output
-    dp_train_input["training"]["disp_file"] = "lcurve.out"
-    dp_train_input["training"]["save_ckpt"] = "model.ckpt"
+    dp_train_input['training']['disp_file'] = "lcurve.out"
+    dp_train_input['training']['save_ckpt'] = "model.ckpt"
 
     logging.debug(f"training_config: {training_config}")
     logging.debug(f"user_config: {user_config}")
@@ -536,31 +536,31 @@ def main(
     # Create the inputs/jobfiles for each NNP with random SEED
 
     # Walltime
-    if "s_per_step" in user_config and user_config["s_per_step"] > 0:
+    if "s_per_step" in user_config and user_config['s_per_step'] > 0:
         walltime_approx_s = int(
-            np.ceil((training_config["numb_steps"] * user_config["s_per_step"]))
+            np.ceil((training_config['numb_steps'] * user_config['s_per_step']))
         )
         logging.debug(f"s_per_step: {user_config['s_per_step']}")
     elif "s_per_step" in previous_training_config:
         walltime_approx_s = int(
             np.ceil(
                 (
-                    training_config["numb_steps"]
-                    * (previous_training_config["s_per_step"] * 1.50)
+                    training_config['numb_steps']
+                    * (previous_training_config['s_per_step'] * 1.50)
                 )
             )
         )
         logging.debug(f"s_per_step: {previous_training_config['s_per_step']}")
     else:
         walltime_approx_s = int(
-            np.ceil((training_config["numb_steps"] * default_config["s_per_step"]))
+            np.ceil((training_config['numb_steps'] * default_config['s_per_step']))
         )
         logging.debug(f"s_per_step: {default_config['s_per_step']}")
     # Set it to the input as -1, so the user knows it can be used but use auto
-    current_config["s_per_step"] = -1
+    current_config['s_per_step'] = -1
     logging.debug(f"walltime_approx_s: {walltime_approx_s}")
 
-    for nnp in range(1, main_config["nnp_count"] + 1):
+    for nnp in range(1, main_config['nnp_count'] + 1):
         local_path = Path(".").resolve() / f"{nnp}"
         local_path.mkdir(exist_ok=True)
         check_directory(local_path)
@@ -568,21 +568,21 @@ def main(
         random.seed()
         random_0_1000 = random.randrange(0, 1000)
 
-        if training_config["deepmd_model_type_descriptor"] == "se_ar":
-            dp_train_input["model"]["descriptor"]["a"]["seed"] = int(
+        if training_config['deepmd_model_type_descriptor'] == "se_ar":
+            dp_train_input['model']['descriptor']['a']['seed'] = int(
                 f"{nnp}{random_0_1000}{padded_curr_iter}"
             )
-            dp_train_input["model"]["descriptor"]["r"]["seed"] = int(
+            dp_train_input['model']['descriptor']['r']['seed'] = int(
                 f"{nnp}{random_0_1000}{padded_curr_iter}"
             )
         else:
-            dp_train_input["model"]["descriptor"]["seed"] = int(
+            dp_train_input['model']['descriptor']['seed'] = int(
                 f"{nnp}{random_0_1000}{padded_curr_iter}"
             )
-        dp_train_input["model"]["fitting_net"]["seed"] = int(
+        dp_train_input['model']['fitting_net']['seed'] = int(
             f"{nnp}{random_0_1000}{padded_curr_iter}"
         )
-        dp_train_input["training"]["seed"] = int(
+        dp_train_input['training']['seed'] = int(
             f"{nnp}{random_0_1000}{padded_curr_iter}"
         )
 
@@ -595,7 +595,7 @@ def main(
             machine_spec,
             walltime_approx_s,
             machine_walltime_format,
-            training_config["job_email"],
+            training_config['job_email'],
         )
 
         job_file = replace_substring_in_string_list(

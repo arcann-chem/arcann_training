@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/22
+Last modified: 2023/08/24
 
 Functions
 ---------
@@ -85,12 +85,12 @@ def set_input_explor_json(
         If the length of the value list is not equal to system count.
     """
 
-    if config_json["exploration_type"] == "lammps":
+    if config_json['exploration_type'] == "lammps":
         exploration_dep = 0
-    elif config_json["exploration_type"] == "i-PI":
+    elif config_json['exploration_type'] == "i-PI":
         exploration_dep = 1
     else:
-        error_msg = f"{config_json['exploration_type']} is not known."
+        error_msg = f"'{config_json['exploration_type']}' is not known"
         raise ValueError(error_msg)
 
     system_count = len(config_json.get("systems_auto", []))
@@ -121,7 +121,7 @@ def set_input_explor_json(
             value = default_json[key]
             default_used = True
         else:
-            error_msg = f"'{key}' not found in any JSON."
+            error_msg = f"'{key}' not found in any JSON"
             raise KeyError(error_msg)
 
         # Everything is system dependent so a list
@@ -143,10 +143,10 @@ def set_input_explor_json(
                         ):
                             new_input_json[key].append(it_value)
                         else:
-                            error_msg = f"Wrong type: the type is {type(it_value)} it should be int/float or bool (for disturbed_start)."
+                            error_msg = f"Wrong type: the type is '{type(it_value)}' it should be '{type(1)}'/'{type(1.0)}' or '{type(True)}' (for disturbed_start)"
                             raise TypeError(error_msg)
                 else:
-                    error_msg = f"Wrong size: The length of the list should be {system_count} [systems]."
+                    error_msg = f"Wrong size: The length of the list should be {system_count} [systems]"
                     raise ValueError(error_msg)
 
             # If it is not a List
@@ -155,7 +155,7 @@ def set_input_explor_json(
             ):
                 new_input_json[key] = [value] * system_count
             else:
-                error_msg = f"Wrong type: the type is {type(it_value)} it should be int/float or bool (for disturbed_start)."
+                error_msg = f"Wrong type: the type is '{type(it_value)}' it should be '{type(1)}'/'{type(1.0)}' or '{type(True)}' (for disturbed_start)"
                 raise TypeError(error_msg)
 
     return new_input_json
@@ -327,8 +327,8 @@ def generate_starting_points(
     elif not input_present:
         # If input file is not present, check if system started from disturbed minimum in previous iteration
         if (
-            prevexploration_json["systems_auto"][system_auto]["disturbed_start"]
-            and prevexploration_json["systems_auto"][system_auto]["disturbed_min"]
+            prevexploration_json['systems_auto'][system_auto]['disturbed_start']
+            and prevexploration_json['systems_auto'][system_auto]['disturbed_min']
         ):
             # If system started from disturbed minimum in previous iteration, use disturbed starting points
             starting_points = starting_points_disturbed.copy()
@@ -377,13 +377,13 @@ def create_models_list(
     """
 
     # Generate list of NNP model indices and reorder based on current model to propagate
-    list_nnp = [zzz for zzz in range(1, config_json["nnp_count"] + 1)]
+    list_nnp = [zzz for zzz in range(1, config_json['nnp_count'] + 1)]
     reorder_nnp_list = (
         list_nnp[list_nnp.index(it_nnp) :] + list_nnp[: list_nnp.index(it_nnp)]
     )
 
     # Determine whether to use compressed models
-    compress_str = "_compressed" if prevtraining_json["is_compressed"] else ""
+    compress_str = "_compressed" if prevtraining_json['is_compressed'] else ""
 
     # Generate list of model file names
     models_list = [
@@ -392,7 +392,7 @@ def create_models_list(
     ]
 
     # Create symbolic links to the model files in the local directory
-    for it_sub_nnp in range(1, config_json["nnp_count"] + 1):
+    for it_sub_nnp in range(1, config_json['nnp_count'] + 1):
         nnp_apath = (
             training_path
             / "NNP"
@@ -472,9 +472,9 @@ def update_system_nb_steps_factor(
     """
     # Calculate the ratio of ill-described candidates to the total number of candidates
     ill_described_ratio = (
-        previous_exploration_config["systems_auto"][system_auto_index]["nb_candidates"]
-        + previous_exploration_config["systems_auto"][system_auto_index]["nb_rejected"]
-    ) / previous_exploration_config["systems_auto"][system_auto_index]["nb_total"]
+        previous_exploration_config['systems_auto'][system_auto_index]['nb_candidates']
+        + previous_exploration_config['systems_auto'][system_auto_index]['nb_rejected']
+    ) / previous_exploration_config['systems_auto'][system_auto_index]['nb_total']
 
     # Return a multiplying factor for system_nb_steps based on the ratio of ill-described candidates
     if ill_described_ratio < 0.10:
@@ -506,12 +506,12 @@ def set_input_explordevi_json(
     Dict: an input JSON udpated/completed with previous/defaults
     """
 
-    if config_json["exploration_type"] == "lammps":
+    if config_json['exploration_type'] == "lammps":
         exploration_dep = 0
-    elif config_json["exploration_type"] == "i-PI":
+    elif config_json['exploration_type'] == "i-PI":
         exploration_dep = 1
     else:
-        error_msg = f"{config_json['exploration_type']} is not known."
+        error_msg = f"{config_json['exploration_type']} is not known"
         raise ValueError(error_msg)
 
     system_count = len(config_json.get("systems_auto", []))
@@ -537,7 +537,7 @@ def set_input_explordevi_json(
             value = default_json[key]
             default_used = True
         else:
-            error_msg = f"'{key}' not found in any JSON."
+            error_msg = f"'{key}' not found in any JSON"
             raise KeyError(error_msg)
 
         # Everything is system dependent so a list
@@ -554,10 +554,10 @@ def set_input_explordevi_json(
                         if isinstance(it_value, (int, float)):
                             new_input_json[key].append(it_value)
                         else:
-                            error_msg = f"Wrong type: the type is {type(it_value)} it should be int/float."
+                            error_msg = f"Wrong type: the type is '{type(it_value)}' it should be '{type(1)}'/'{type(1.0)}'"
                             raise TypeError(error_msg)
                 else:
-                    error_msg = f"Wrong size: The length of the list should be {system_count} [systems]."
+                    error_msg = f"Wrong size: The length of the list should be '{system_count}' [systems]"
                     raise ValueError(error_msg)
 
             # If it is not a List
@@ -565,7 +565,7 @@ def set_input_explordevi_json(
                 new_input_json[key] = [value] * system_count
             else:
                 error_msg = (
-                    f"Wrong type: the type is {type(it_value)} it should be int/float."
+                    f"Wrong type: the type is '{type(it_value)}' it should be '{type(1)}'/'{type(1.0)}'"
                 )
                 raise TypeError(error_msg)
     return new_input_json

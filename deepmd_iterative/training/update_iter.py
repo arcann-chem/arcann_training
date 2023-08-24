@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/22
+Last modified: 2023/08/24
 """
 # Standard library modules
 import logging
@@ -64,16 +64,16 @@ def main(
     )
 
     # Check if we can continue
-    if not training_config["is_frozen"]:
+    if not training_config['is_frozen']:
         logging.error(f"Lock found. Execute first: training check_freeze")
         logging.error(f"Aborting...")
         return 1
 
     # Check if pb files are present and delete temp files
-    for nnp in range(1, main_config["nnp_count"] + 1):
+    for nnp in range(1, main_config['nnp_count'] + 1):
         local_path = Path(".").resolve() / f"{nnp}"
         check_file_existence(local_path / f"graph_{nnp}_{padded_curr_iter}.pb")
-        if training_config["is_compressed"]:
+        if training_config['is_compressed']:
             check_file_existence(
                 local_path / f"graph_{nnp}_{padded_curr_iter}_compressed.pb"
             )
@@ -107,8 +107,8 @@ def main(
 
     local_path = Path(".").resolve()
 
-    for nnp in range(1, main_config["nnp_count"] + 1):
-        if training_config["is_compressed"]:
+    for nnp in range(1, main_config['nnp_count'] + 1):
+        if training_config['is_compressed']:
             subprocess.run(
                 [
                     "rsync",
@@ -133,7 +133,7 @@ def main(
 
     # Next iteration
     curr_iter = curr_iter + 1
-    main_config["curr_iter"] = curr_iter
+    main_config['curr_iter'] = curr_iter
     padded_curr_iter = str(curr_iter).zfill(3)
 
     for step in ["exploration", "adhoc", "labeling", "training"]:
@@ -143,16 +143,16 @@ def main(
 
     # Delete the temp data folder
     if (local_path / "data").is_dir():
-        logging.info("Deleting the temp data folder...")
+        logging.info(f"Deleting the temp data folder...")
         remove_tree(local_path / "data")
-        logging.info("Cleaning done!")
+        logging.info(f"Cleaning done!")
     del local_path
 
     # Update the config.json
     write_json_file(main_config, (control_path / "config.json"))
 
     logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a succes !"
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
     )
 
     # Cleaning

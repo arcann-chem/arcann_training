@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/08/24
 """
 # Standard library modules
 import logging
@@ -62,15 +62,15 @@ def main(
     )
 
     # Check if we can continue
-    if not training_config["is_launched"]:
-        logging.error(f"Lock found. Execute first: training launch.")
+    if not training_config['is_launched']:
+        logging.error(f"Lock found. Execute first: training launch")
         logging.error(f"Aborting...")
         return 1
 
     # Check the normal termination of the training phase
     s_per_step_per_step_size = []
     completed_count = 0
-    for nnp in range(1, main_config["nnp_count"] + 1):
+    for nnp in range(1, main_config['nnp_count'] + 1):
         local_path = Path(".").resolve() / f"{nnp}"
         if (local_path / "training.out").is_file():
             training_out = textfile_to_string_list((local_path / "training.out"))
@@ -106,29 +106,29 @@ def main(
                 )
                 completed_count += 1
             else:
-                logging.critical(f"DP Train - {nnp} not finished/failed.")
+                logging.critical(f"DP Train - '{nnp}' not finished/failed")
             del training_out, training_out_time, training_out_time_split
         else:
-            logging.critical(f"DP Train - {nnp} still running/no outfile.")
+            logging.critical(f"DP Train - '{nnp}' still running/no outfile")
         del local_path
     del nnp
     logging.debug(f"completed_count: {completed_count}")
 
     logging.info(f"-" * 88)
-    if completed_count == main_config["nnp_count"]:
-        training_config["is_checked"] = True
+    if completed_count == main_config['nnp_count']:
+        training_config['is_checked'] = True
     else:
         logging.critical(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!"
         )
-        logging.critical(f"Some DP Train did not finished correctly.")
-        logging.critical(f"Please check manually before relaunching this step.")
+        logging.critical(f"Some DP Train did not finished correctly")
+        logging.critical(f"Please check manually before relaunching this step")
         logging.critical(f"Aborting...")
         return 1
     del completed_count
 
     if ("s_per_step_per_step_size" in locals()) and ("step_size" in locals()):
-        training_config["s_per_step"] = np.average(s_per_step_per_step_size) / step_size
+        training_config['s_per_step'] = np.average(s_per_step_per_step_size) / step_size
         del s_per_step_per_step_size, step_size
 
     write_json_file(
