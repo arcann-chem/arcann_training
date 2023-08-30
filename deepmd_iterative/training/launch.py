@@ -87,22 +87,6 @@ def main(
         (control_path / f"training_{padded_curr_iter}.json")
     )
 
-    # Check if we can continue
-    if training_config['is_launched']:
-        logging.critical(f"Already launched")
-        continuing = input(
-            f"Should it be run again? (Y for Yes, anything else to abort)"
-        )
-        if continuing == "Y":
-            del continuing
-        else:
-            logging.error(f"Aborting...")
-            return 1
-    if not training_config['is_locked']:
-        logging.error(f"Lock found. Execute first: training preparation")
-        logging.error(f"Aborting...")
-        return 1
-
     # Get the machine keyword (Priority: user > previous > default)
     # And update the current input JSON
     user_machine_keyword = get_machine_keyword(
@@ -146,6 +130,22 @@ def main(
     # Check prep/launch
     assert_same_machine(machine, training_config)
 
+    # Check if we can continue
+    if training_config['is_launched']:
+        logging.critical(f"Already launched")
+        continuing = input(
+            f"Should it be run again? (Y for Yes, anything else to abort)"
+        )
+        if continuing == "Y":
+            del continuing
+        else:
+            logging.error(f"Aborting...")
+            return 1
+    if not training_config['is_locked']:
+        logging.error(f"Lock found. Execute first: training preparation")
+        logging.error(f"Aborting...")
+        return 1
+
     # Launch the jobs
     completed_count = 0
     for nnp in range(1, main_config['nnp_count'] + 1):
@@ -172,7 +172,8 @@ def main(
             logging.critical(f"DP Train - '{nnp}' NOT launched - No job file")
         del local_path
     del nnp
-
+    logging.info(f"-" * 88)
+    # Update the boolean in the training config JSON
     if completed_count == main_config['nnp_count']:
         training_config['is_launched'] = True
 
@@ -184,6 +185,7 @@ def main(
         current_config, (current_path / user_config_filename)
     )
 
+    # End
     logging.info(f"-" * 88)
     if completed_count == main_config['nnp_count']:
         logging.info(

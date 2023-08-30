@@ -499,7 +499,7 @@ def main(
     dp_train_input['learning_rate']['decay_steps'] = training_config['decay_steps']
     dp_train_input['learning_rate']['stop_lr'] = training_config['stop_lr']
 
-    # Set frozen/compressed bool (in the training config JSON)
+    # Set booleans (in the exploration config JSON)
     training_config = {
         **training_config,
         "is_locked": True,
@@ -619,6 +619,7 @@ def main(
         current_config, (current_path / user_config_filename)
     )
 
+    # End
     logging.info(f"-" * 88)
     logging.info(
         f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"

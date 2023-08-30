@@ -68,6 +68,7 @@ def main(
         return 1
 
     # Check the normal termination of the training phase
+    # Counters
     s_per_step_per_step_size = []
     completed_count = 0
     for nnp in range(1, main_config['nnp_count'] + 1):
@@ -115,17 +116,9 @@ def main(
     logging.debug(f"completed_count: {completed_count}")
 
     logging.info(f"-" * 88)
+    # Update the boolean in the training config JSON
     if completed_count == main_config['nnp_count']:
         training_config['is_checked'] = True
-    else:
-        logging.critical(
-            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!"
-        )
-        logging.critical(f"Some DP Train did not finished correctly")
-        logging.critical(f"Please check manually before relaunching this step")
-        logging.critical(f"Aborting...")
-        return 1
-    del completed_count
 
     if ("s_per_step_per_step_size" in locals()) and ("step_size" in locals()):
         training_config['s_per_step'] = np.average(s_per_step_per_step_size) / step_size
@@ -135,10 +128,22 @@ def main(
     write_json_file(
         training_config, (control_path / f"training_{padded_curr_iter}.json")
     )
-
-    logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
-    )
+    
+    # End
+    logging.info(f"-" * 88)
+    if completed_count == main_config['nnp_count']:
+        logging.info(
+            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
+        )
+    else:
+        logging.critical(
+            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!"
+        )
+        logging.critical(f"Some DP Train did not finished correctly")
+        logging.critical(f"Please check manually before relaunching this step")
+        logging.critical(f"Aborting...")
+        return 1
+    del completed_count
 
     # Cleaning
     del current_path, control_path, training_path

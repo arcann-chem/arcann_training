@@ -225,13 +225,13 @@ def main(
     backup_and_overwrite_json_file(
         current_config, (current_path / user_config_filename)
     )
-    logging.info(f"-" * 88)
 
+    # End
+    logging.info(f"-" * 88)
     if completed_count == main_config['nnp_count']:
         logging.info(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
         )
-
     else:
         logging.critical(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!"

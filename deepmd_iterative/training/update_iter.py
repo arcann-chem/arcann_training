@@ -151,6 +151,7 @@ def main(
     # Dump the main config JSON
     write_json_file(main_config, (control_path / "config.json"))
 
+    # End
     logging.info(
         f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
     )

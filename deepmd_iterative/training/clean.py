@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/24
+Last modified: 2023/08/30
 """
 # Standard library modules
 import logging
@@ -79,6 +79,7 @@ def main(
     logging.info(f"Deleting SLURM launch files...")
     remove_files_matching_glob(current_path, "**/*.sh")
 
+    # End
     logging.info(
         f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success !"
     )

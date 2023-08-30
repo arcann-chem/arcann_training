@@ -72,8 +72,22 @@ def main(
     del nnp
     logging.debug(f"completed_count: {completed_count}")
 
+    logging.info(f"-" * 88)
+    # Update the boolean in the training config JSON
     if completed_count == main_config['nnp_count']:
         training_config['is_compressed'] = True
+
+    # Dump the JSON (training config JSON)
+    write_json_file(
+        training_config, (control_path / f"training_{padded_curr_iter}.json")
+    )
+
+    # End
+    logging.info(f"-" * 88)
+    if completed_count == main_config['nnp_count']:
+        logging.info(
+            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
+        )
     else:
         logging.error(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!"
@@ -81,17 +95,7 @@ def main(
         logging.error(f"Some DP Compress did not finished correctly")
         logging.error(f"Please check manually before relaunching this step")
         logging.error(f"Aborting...")
-        return 1
     del completed_count
-
-    # Dump the JSON (training config JSON)
-    write_json_file(
-        training_config, (control_path / f"training_{padded_curr_iter}.json")
-    )
-
-    logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
-    )
 
     # Cleaning
     del current_path, control_path, training_path
