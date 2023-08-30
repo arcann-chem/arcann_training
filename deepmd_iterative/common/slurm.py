@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/22
+Last modified: 2023/08/29
 
 The slurm module provides functions to manipulate SLURM data (as list of strings).
 
@@ -94,14 +94,18 @@ def replace_in_slurm_file_general(
     )
 
     max_qos_time = 0
-    max_qos = 0
+    #max_qos = 0
     for it_qos in machine_spec["qos"]:
         if machine_spec["qos"][it_qos] >= walltime_approx_s:
-            slurm_file = replace_substring_in_string_list(slurm_file, "_R_QOS_", it_qos)
             qos_ok = True
+            break
         else:
-            max_qos = it_qos if machine_spec["qos"][it_qos] > max_qos_time else max_qos
+            max_qos_time = machine_spec["qos"][it_qos]
+            # if machine_spec["qos"][it_qos] > max_qos_time:
+            #     #max_qos = it_qos
+            #     max_qos_time = machine_spec["qos"][it_qos]
             qos_ok = False
+    slurm_file = replace_substring_in_string_list(slurm_file, "_R_QOS_", it_qos)
     del it_qos
 
     if not qos_ok:
