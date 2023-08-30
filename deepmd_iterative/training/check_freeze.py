@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/24
+Last modified: 2023/08/30
 """
 # Standard library modules
 import logging
@@ -48,7 +48,7 @@ def main(
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
 
-    # Get control path and load the main config (JSON) and the training config (JSON)
+    # Get control path, load the main config JSON and the training config JSON
     control_path = training_path / "control"
     main_config = load_json_file((control_path / "config.json"))
     training_config = load_json_file(
@@ -84,6 +84,7 @@ def main(
         return 1
     del completed_count
 
+    # Dump the JSON (training config JSON)
     write_json_file(
         training_config, (control_path / f"training_{padded_curr_iter}.json")
     )

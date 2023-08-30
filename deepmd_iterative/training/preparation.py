@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/24
+Last modified: 2023/08/30
 """
 # Standard library modules
 import copy
@@ -75,7 +75,7 @@ def main(
     curr_iter = int(padded_curr_iter)
     logging.debug(f"curr_iter, padded_curr_iter: {curr_iter}, {padded_curr_iter}")
 
-    # Load the default config (JSON)
+    # Load the default input JSON
     default_config = load_default_json_file(
         deepmd_iterative_path / "assets" / "default_config.json"
     )[current_step]
@@ -83,7 +83,7 @@ def main(
     logging.debug(f"default_config: {default_config}")
     logging.debug(f"default_config_present: {default_config_present}")
 
-    # Load the user config (JSON)
+    # Load the user input JSON
     if (current_path / user_config_filename).is_file():
         user_config = load_json_file((current_path / user_config_filename))
     else:
@@ -92,17 +92,17 @@ def main(
     logging.debug(f"user_config: {user_config}")
     logging.debug(f"user_config_present: {user_config_present}")
 
-    # Make a deepcopy
+    # Make a deepcopy of it to create the current input JSON
     current_config = copy.deepcopy(user_config)
 
-    # Get control path and load the main config (JSON)
+    # Get control path and load the main config JSON
     control_path = training_path / "control"
     main_config = load_json_file((control_path / "config.json"))
 
     # Get extra needed paths
     jobs_path = deepmd_iterative_path / "assets" / "jobs" / current_step
 
-    # Load the previous training config (JSON)
+    # Load the previous training config JSON
     if curr_iter > 0:
         prev_iter = curr_iter - 1
         padded_prev_iter = str(prev_iter).zfill(3)
@@ -112,8 +112,8 @@ def main(
     else:
         previous_training_config = {}
 
-    # Get the machine keyword (input override previous training override default_config)
-    # And update the new input
+    # Get the machine keyword (Priority: user > previous > default)
+    # And update the current input JSON
     user_machine_keyword = get_machine_keyword(
         user_config, previous_training_config, default_config
     )
@@ -164,8 +164,8 @@ def main(
     else:
         labeling_config = {}
 
-    # Create the training JSON file (and set everything)
-    # Priority: input > previous > default
+    # Set both the training config JSON (training_config) and the current input JSON (current_config)
+    # Priority: user > previous > default
     training_config, current_config = set_training_config(
         user_config,
         previous_training_config,
@@ -175,7 +175,7 @@ def main(
     logging.debug(f"training_config: {training_config}")
     logging.debug(f"current_config: {current_config}")
 
-    # Set additional machine-related parameters in the training JSON file (not need in the input)
+    # Set additional machine-related parameters in the training config JSON that are not needed in the current input JSON
     training_config = {
         **training_config,
         "machine": machine,
@@ -245,7 +245,7 @@ def main(
             ):
                 # Escape test sets
                 if "test_" != data_dir.name[:5]:
-                    # Escape if set iter is superior as iter, it is only for reprocessing old stuff.
+                    # Escape if set iter is superior as iter, it is only for reprocessing old stuff
                     try:
                         if int(data_dir.name.rsplit("_", 1)[-1]) <= curr_iter:
                             systems.append(data_dir.name.rsplit("_", 1)[0])
@@ -416,7 +416,7 @@ def main(
     # Update the inputs with the sets
     dp_train_input['training']['training_data']['systems'] = dp_train_input_datasets
 
-    # Update the training JSON
+    # Update the training config JSON
     training_config = {
         **training_config,
         "training_datasets": training_datasets,
@@ -448,7 +448,7 @@ def main(
             training_config['trained_count'], training_config['decay_steps']
         )
         logging.debug(f"Recalculating decay_steps")
-        # Update the training JSON and the new input JSON:
+        # Update the training config JSON and the current input JSON
         training_config['decay_steps'] = decay_steps
         current_config['decay_steps'] = decay_steps
     else:
@@ -479,7 +479,7 @@ def main(
             training_config['stop_lr'],
             training_config['decay_steps'],
         )
-    # Update the training JSON and the new input JSON:
+    # Update the training config JSON and the current input JSON
     training_config['numb_steps'] = int(numb_steps)
     training_config['decay_rate'] = decay_rate_new
     current_config['numb_steps'] = int(numb_steps)
@@ -499,7 +499,7 @@ def main(
     dp_train_input['learning_rate']['decay_steps'] = training_config['decay_steps']
     dp_train_input['learning_rate']['stop_lr'] = training_config['stop_lr']
 
-    # Set frozen/compressed bool !
+    # Set frozen/compressed bool (in the training config JSON)
     training_config = {
         **training_config,
         "is_locked": True,
@@ -609,7 +609,7 @@ def main(
 
     del nnp, walltime_approx_s, dp_train_input
 
-    # Dump the dicts
+    # Dump the JSON (main config JSON, training config JSON and current input JSON)
     logging.info(f"-" * 88)
     write_json_file(main_config, (control_path / "config.json"))
     write_json_file(

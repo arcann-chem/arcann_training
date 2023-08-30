@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/24
+Last modified: 2023/08/30
 """
 # Standard library modules
 import logging
@@ -46,7 +46,7 @@ def main(
     logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
-    # Load the default config (JSON)
+    # Load the default input JSON
     default_config = load_default_json_file(
         deepmd_iterative_path / "assets" / "default_config.json"
     )[current_step]
@@ -54,7 +54,7 @@ def main(
     logging.debug(f"default_config: {default_config}")
     logging.debug(f"default_config_present: {default_config_present}")
 
-    # Load the user config (JSON)
+    # Load the user input JSON
     user_config = load_json_file((current_path / user_config_filename))
     user_config_present = bool(user_config)
     logging.debug(f"user_config: {user_config}")
@@ -66,7 +66,7 @@ def main(
         error_msg=f"No data folder found in: {training_path}",
     )
 
-    # Create the config JSON file (and set everything)
+    # Create and set the main config JSON
     main_config, current_config, padded_curr_iter = set_main_config(
         user_config, default_config
     )
@@ -91,7 +91,7 @@ def main(
         return 1
     logging.debug(f"initial_datasets_paths: {initial_datasets_paths}")
 
-    # Create the initial datasets JSON
+    # Create and set the initial datasets JSON
     initial_datasets_info = {}
     for initial_dataset_path in initial_datasets_paths:
         check_file_existence(initial_dataset_path / "type.raw")
@@ -108,13 +108,13 @@ def main(
     # Populate
     main_config["initial_datasets"] = [zzz for zzz in initial_datasets_info.keys()]
 
-    # DEBUG: Print the dicts
+    # DEBUG: Print the JSON files
     logging.debug(f"main_config: {main_config}")
     logging.debug(f"initial_datasets_info: {initial_datasets_info}")
     logging.debug(f"user_config: {user_config}")
     logging.debug(f"current_config: {current_config}")
 
-    # Dump the dicts
+    # Dump the JSON files (config, initial datasets and input)
     logging.info(f"-" * 88)
     write_json_file(main_config, (control_path / "config.json"))
     write_json_file(initial_datasets_info, (control_path / "initial_datasets.json"))

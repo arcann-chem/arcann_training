@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/24
+Last modified: 2023/08/30
 """
 # Standard library modules
 import copy
@@ -60,7 +60,7 @@ def main(
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
 
-    # Load the default config (JSON)
+    # Load the default input JSON
     default_config = load_default_json_file(
         deepmd_iterative_path / "assets" / "default_config.json"
     )[current_step]
@@ -68,7 +68,7 @@ def main(
     logging.debug(f"default_config: {default_config}")
     logging.debug(f"default_config_present: {default_config_present}")
 
-    # Load the user config (JSON)
+    # Load the user input JSON
     if (current_path / user_config_filename).is_file():
         user_config = load_json_file((current_path / user_config_filename))
     else:
@@ -77,10 +77,10 @@ def main(
     logging.debug(f"user_config: {user_config}")
     logging.debug(f"user_config_present: {user_config_present}")
 
-    # Make a deepcopy
+    # Make a deepcopy of it to create the current input JSON
     current_config = copy.deepcopy(user_config)
 
-    # Get control path and load the main config (JSON) and the training config (JSON)
+    # Get control path, load the main config JSON and the training config JSON
     control_path = training_path / "control"
     main_config = load_json_file((control_path / "config.json"))
     training_config = load_json_file(
@@ -103,8 +103,8 @@ def main(
         logging.error(f"Aborting...")
         return 1
 
-    # Get the machine keyword (input override training override default_json)
-    # And update the new input
+    # Get the machine keyword (Priority: user > previous > default)
+    # And update the current input JSON
     user_machine_keyword = get_machine_keyword(
         user_config, training_config, default_config
     )
@@ -176,6 +176,7 @@ def main(
     if completed_count == main_config['nnp_count']:
         training_config['is_launched'] = True
 
+    # Dump the JSON (training config JSON and current input JSON)
     write_json_file(
         training_config, (control_path / f"training_{padded_curr_iter}.json")
     )
