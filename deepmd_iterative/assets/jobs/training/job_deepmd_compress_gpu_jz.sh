@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 # Created: 2022/01/01
-# Last modified: 2023/08/21
+# Last modified: 2023/08/30
 # Project/Account
 #SBATCH --account=_R_PROJECT_@_R_ALLOC_
 # QoS/Partition/SubPartition
@@ -78,15 +78,21 @@ if [ ! -f ${DeepMD_MODEL}.pb ]; then echo "No pb file found. Aborting..."; exit 
 # MPI/OpenMP setup
 echo "# [$(date)] Started"
 export EXIT_CODE="0"
-export TASKS_PER_NODE=$(( SLURM_NTASKS / SLURM_NNODES ))
 echo "Running on node(s): ${SLURM_NODELIST}"
 echo "Running on ${SLURM_NNODES} node(s)."
-echo "Running ${SLURM_NTASKS} task(s), with ${TASKS_PER_NODE} task(s) per node."
+# Calculate missing values
+if [ -z "${SLURM_NTASKS}" ]; then
+    export SLURM_NTASKS=$(( SLURM_NTASKS_PER_NODE * SLURM_NNODES))
+fi
+if [ -z "${SLURM_NTASKS_PER_NODE}" ]; then
+    export SLURM_NTASKS_PER_NODE=$(( SLURM_NTASKS / SLURM_NNODES ))
+fi
+echo "Running ${SLURM_NTASKS} task(s), with ${SLURM_NTASKS_PER_NODE} task(s) per node."
 echo "Running with ${SLURM_CPUS_PER_TASK} thread(s) per task."
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 
 # Launch command
-SRUN_DeepMD_EXE="srun --export=ALL --mpi=pmix --ntasks=${SLURM_NTASKS} --nodes=${SLURM_NNODES} --ntasks-per-node=${TASKS_PER_NODE} --cpus-per-task=${SLURM_CPUS_PER_TASK} ${DeepMD_EXE}"
+SRUN_DeepMD_EXE="srun --export=ALL --mpi=pmix --ntasks=${SLURM_NTASKS} --nodes=${SLURM_NNODES} --ntasks-per-node=${SLURM_NTASKS_PER_NODE} --cpus-per-task=${SLURM_CPUS_PER_TASK} ${DeepMD_EXE}"
 LAUNCH_CMD="${SRUN_DeepMD_EXE} compress -i ${DeepMD_MODEL}.pb -o ${DeepMD_MODEL}_compressed.pb ${log}"
 
 ${LAUNCH_CMD} >"${DeepMD_MODEL}_compress".out 2>&1 || export EXIT_CODE="1"
