@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/30
+Last modified: 2023/08/31
 """
 # Standard library modules
 import logging
@@ -34,7 +34,7 @@ def main(
     current_phase: str,
     deepmd_iterative_path: Path,
     fake_machine=None,
-    user_config_filename: str = "input.json",
+    user_input_json_filename: str = "input.json",
 ):
     # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
@@ -42,7 +42,7 @@ def main(
 
     # Log the step and phase of the program
     logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}"
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
     )
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
@@ -56,29 +56,29 @@ def main(
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
 
-    # Get control path, load the main config JSON and the training config JSON
+    # Get control path, load the main JSON and the training JSON
     control_path = training_path / "control"
-    main_config = load_json_file((control_path / "config.json"))
-    training_config = load_json_file(
+    main_json = load_json_file((control_path / "config.json"))
+    training_json = load_json_file(
         (control_path / f"training_{padded_curr_iter}.json")
     )
 
     # Check if we can continue
-    if not training_config['is_frozen']:
-        logging.error(f"Lock found. Execute first: training check_freeze")
+    if not training_json["is_frozen"]:
+        logging.error(f"Lock found. Execute first: training check_freeze.")
         logging.error(f"Aborting...")
         return 1
 
     # Check if pb files are present and delete temp files
-    for nnp in range(1, main_config['nnp_count'] + 1):
+    for nnp in range(1, main_json["nnp_count"] + 1):
         local_path = Path(".").resolve() / f"{nnp}"
         check_file_existence(local_path / f"graph_{nnp}_{padded_curr_iter}.pb")
-        if training_config['is_compressed']:
+        if training_json["is_compressed"]:
             check_file_existence(
                 local_path / f"graph_{nnp}_{padded_curr_iter}_compressed.pb"
             )
 
-        remove_file(local_path / "checkpoint")
+        remove_file(local_path / "checkpoint.")
         remove_file(local_path / "input_v2_compat.json")
         logging.info("Deleting SLURM out/error files...")
         remove_files_matching_glob(local_path, "DeepMD_*")
@@ -107,8 +107,8 @@ def main(
 
     local_path = Path(".").resolve()
 
-    for nnp in range(1, main_config['nnp_count'] + 1):
-        if training_config['is_compressed']:
+    for nnp in range(1, main_json["nnp_count"] + 1):
+        if training_json["is_compressed"]:
             subprocess.run(
                 [
                     "rsync",
@@ -133,7 +133,7 @@ def main(
 
     # Next iteration
     curr_iter = curr_iter + 1
-    main_config['curr_iter'] = curr_iter
+    main_json["curr_iter"] = curr_iter
     padded_curr_iter = str(curr_iter).zfill(3)
 
     for step in ["exploration", "adhoc", "labeling", "training"]:
@@ -148,8 +148,8 @@ def main(
         logging.info(f"Cleaning done!")
     del local_path
 
-    # Dump the main config JSON
-    write_json_file(main_config, (control_path / "config.json"))
+    # Dump the JSON files (main)
+    write_json_file(main_json, (control_path / "config.json"))
 
     # End
     logging.info(
@@ -158,8 +158,8 @@ def main(
 
     # Cleaning
     del current_path, control_path, training_path
-    del user_config_filename
-    del main_config, training_config
+    del user_input_json_filename
+    del main_json, training_json
     del curr_iter, padded_curr_iter
 
     return 0
@@ -172,7 +172,7 @@ if __name__ == "__main__":
             "update_iter",
             Path(sys.argv[1]),
             fake_machine=sys.argv[2],
-            user_config_filename=sys.argv[3],
+            user_input_json_filename=sys.argv[3],
         )
     else:
         pass

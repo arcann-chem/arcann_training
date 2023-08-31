@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/30
+Last modified: 2023/08/31
 """
 # Standard library modules
 import logging
@@ -32,7 +32,7 @@ def main(
 
     # Log the step and phase of the program
     logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}"
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
     )
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
@@ -55,13 +55,13 @@ def main(
 
     # Check if we can continue
     if not training_config["is_frozen"]:
-        logging.error(f"Lock found. Execute first: training check_freeze")
+        logging.error(f"Lock found. Execute first: training check_freeze.")
         logging.error(f"Aborting...")
         return 1
     logging.critical(f"This the cleaning step for the training.")
     logging.critical(f"It should be run after training update_iter.")
     continuing = input(
-        f"Do you want to continue?\n[Y for yes, anything else to abort]\n"
+        f"Do you want to continue?\n['Y' for yes, anything else to abort]\n"
     )
     if continuing == "Y":
         del continuing
@@ -81,7 +81,7 @@ def main(
 
     # End
     logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success !"
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
     )
 
     # Cleaning

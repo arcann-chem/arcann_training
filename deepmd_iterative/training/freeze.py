@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/30
+Last modified: 2023/08/31
 """
 # Standard library modules
 import copy
@@ -32,7 +32,10 @@ from deepmd_iterative.common.list import (
     string_list_to_textfile,
     textfile_to_string_list,
 )
-from deepmd_iterative.common.machine import get_machine_keyword, get_machine_spec_for_step
+from deepmd_iterative.common.machine import (
+    get_machine_keyword,
+    get_machine_spec_for_step,
+)
 from deepmd_iterative.common.slurm import replace_in_slurm_file_general
 
 
@@ -41,7 +44,7 @@ def main(
     current_phase: str,
     deepmd_iterative_path: Path,
     fake_machine=None,
-    user_config_filename: str = "input.json",
+    user_input_json_filename: str = "input.json",
 ):
     # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
@@ -49,7 +52,7 @@ def main(
 
     # Log the step and phase of the program
     logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}"
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
     )
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
@@ -64,35 +67,35 @@ def main(
     curr_iter = int(padded_curr_iter)
 
     # Load the default input JSON
-    default_config = load_default_json_file(
+    default_input_json = load_default_json_file(
         deepmd_iterative_path / "assets" / "default_config.json"
     )[current_step]
-    default_config_present = bool(default_config)
-    logging.debug(f"default_config: {default_config}")
-    logging.debug(f"default_config_present: {default_config_present}")
+    default_input_json_present = bool(default_input_json)
+    logging.debug(f"default_input_json: {default_input_json}")
+    logging.debug(f"default_input_json_present: {default_input_json_present}")
 
     # Load the user input JSON
-    if (current_path / user_config_filename).is_file():
-        user_config = load_json_file((current_path / user_config_filename))
+    if (current_path / user_input_json_filename).is_file():
+        user_input_json = load_json_file((current_path / user_input_json_filename))
     else:
-        user_config = {}
-    user_config_present = bool(user_config)
-    logging.debug(f"user_config: {user_config}")
-    logging.debug(f"user_config_present: {user_config_present}")
+        user_input_json = {}
+    user_input_json_present = bool(user_input_json)
+    logging.debug(f"user_input_json: {user_input_json}")
+    logging.debug(f"user_input_json_present: {user_input_json_present}")
 
     # Make a deepcopy of it to create the current input JSON
-    current_config = copy.deepcopy(user_config)
+    merged_input_json = copy.deepcopy(user_input_json)
 
     # Get control path, load the main config JSON and the training config JSON
     control_path = training_path / "control"
-    main_config = load_json_file((control_path / "config.json"))
-    training_config = load_json_file(
+    main_json = load_json_file((control_path / "config.json"))
+    training_json = load_json_file(
         (control_path / f"training_{padded_curr_iter}.json")
     )
 
     # Check if we can continue
-    if not training_config['is_checked']:
-        logging.error(f"Lock found. Execute first: training check")
+    if not training_json["is_checked"]:
+        logging.error(f"Lock found. Execute first: training check.")
         logging.error(f"Aborting...")
         return 1
 
@@ -102,11 +105,11 @@ def main(
     # Get the machine keyword (Priority: user > previous > default)
     # And update the current input JSON
     user_machine_keyword = get_machine_keyword(
-        user_config, training_config, default_config
+        user_input_json, training_json, default_input_json
     )
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
-    current_config['user_machine_keyword'] = user_machine_keyword
-    logging.debug(f"current_config: {current_config}")
+    merged_input_json["user_machine_keyword"] = user_machine_keyword
+    logging.debug(f"merged_input_json: {merged_input_json}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
     user_machine_keyword = (
         None if isinstance(user_machine_keyword, bool) else user_machine_keyword
@@ -134,9 +137,9 @@ def main(
     logging.debug(f"machine_launch_command: {machine_launch_command}")
 
     if fake_machine is not None:
-        logging.info(f"Pretending to be on: {fake_machine}")
+        logging.info(f"Pretending to be on: '{fake_machine}'.")
     else:
-        logging.info(f"We are on: {machine}")
+        logging.info(f"We are on: '{machine}'.")
     del fake_machine
 
     # Check if the job file exists
@@ -148,7 +151,7 @@ def main(
     else:
         check_file_existence(
             jobs_path / job_file_name,
-            error_msg=f"No SLURM file present for {current_step.capitalize()} / {current_phase.capitalize()} on this machine",
+            error_msg=f"No SLURM file present for '{current_step.capitalize()} / {current_phase.capitalize()}' on this machine.",
         )
         master_job_file = textfile_to_string_list(
             jobs_path / job_file_name,
@@ -159,7 +162,7 @@ def main(
     # Prep and launch DP Freeze
     completed_count = 0
     walltime_approx_s = 7200
-    for nnp in range(1, main_config['nnp_count'] + 1):
+    for nnp in range(1, main_json["nnp_count"] + 1):
         local_path = Path(".").resolve() / f"{nnp}"
 
         check_file_existence(local_path / "model.ckpt.index")
@@ -169,11 +172,11 @@ def main(
             machine_spec,
             walltime_approx_s,
             machine_walltime_format,
-            current_config['job_email'],
+            merged_input_json["job_email"],
         )
 
         job_file = replace_substring_in_string_list(
-            job_file, "_R_DEEPMD_VERSION_", f"{training_config['deepmd_model_version']}"
+            job_file, "_R_DEEPMD_VERSION_", f"{training_json['deepmd_model_version']}"
         )
         job_file = replace_substring_in_string_list(
             job_file,
@@ -202,32 +205,32 @@ def main(
                         f"./job_deepmd_freeze_{machine_spec['arch_type']}_{machine}.sh",
                     ]
                 )
-                logging.info(f"DP Freeze - '{nnp}' launched")
+                logging.info(f"DP Freeze - '{nnp}' launched.")
                 completed_count += 1
             except FileNotFoundError:
                 logging.critical(
-                    f"DP Freeze - '{nnp}' NOT launched - '{training_config['launch_command']}' not found"
+                    f"DP Freeze - '{nnp}' NOT launched - '{training_json['launch_command']}' not found."
                 )
             change_directory(local_path.parent)
         else:
-            logging.critical(f"DP Freeze - '{nnp}' NOT launched - No job file")
+            logging.critical(f"DP Freeze - '{nnp}' NOT launched - No job file.")
         del local_path
 
     del nnp, master_job_file
 
-    # Dump the JSON (main config JSON, training config JSON and current input JSON)
+    # Dump the JSON files (main, training and merged input)
     logging.info(f"-" * 88)
-    write_json_file(main_config, (control_path / "config.json"))
+    write_json_file(main_json, (control_path / "config.json"))
     write_json_file(
-        training_config, (control_path / f"training_{padded_curr_iter}.json")
+        training_json, (control_path / f"training_{padded_curr_iter}.json")
     )
     backup_and_overwrite_json_file(
-        current_config, (current_path / user_config_filename)
+        merged_input_json, (current_path / user_input_json_filename)
     )
-
+    
     # End
     logging.info(f"-" * 88)
-    if completed_count == main_config['nnp_count']:
+    if completed_count == main_json["nnp_count"]:
         logging.info(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
         )
@@ -235,20 +238,20 @@ def main(
         logging.critical(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!"
         )
-        logging.critical(f"Some SLURM jobs did not launch correctly")
-        logging.critical(f"Please launch manually before continuing to the next step")
+        logging.critical(f"Some SLURM jobs did not launch correctly.")
+        logging.critical(f"Please launch manually before continuing to the next step.")
     del completed_count
 
     # Cleaning
     del current_path, control_path, training_path
     del (
-        default_config,
-        default_config_present,
-        user_config,
-        user_config_present,
-        user_config_filename,
+        default_input_json,
+        default_input_json_present,
+        user_input_json,
+        user_input_json_present,
+        user_input_json_filename,
     )
-    del main_config, current_config, training_config
+    del main_json, merged_input_json, training_json
     del curr_iter, padded_curr_iter
     del machine, machine_spec, machine_walltime_format, machine_launch_command
 
@@ -262,7 +265,7 @@ if __name__ == "__main__":
             "freeze",
             Path(sys.argv[1]),
             fake_machine=sys.argv[2],
-            user_config_filename=sys.argv[3],
+            user_input_json_filename=sys.argv[3],
         )
     else:
         pass

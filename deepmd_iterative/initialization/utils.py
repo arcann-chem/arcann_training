@@ -6,10 +6,10 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/24
+Last modified: 2023/08/31
 
-set_main_config(user_config: Dict, default_config: Dict) -> Tuple[Dict, Dict, str]
-    Set the main configuration (JSON) by validating the input JSON with a default JSON. If the input JSON is invalid, an error is raised and the script is terminated.
+generate_main_json(user_input_json: Dict, default_input_json: Dict) -> Tuple[Dict, Dict, str]
+    A function to generate the main JSON by combining values from the user input JSON and the default JSON.
 """
 # Standard library modules
 import logging
@@ -21,70 +21,78 @@ from deepmd_iterative.common.utils import catch_errors_decorator
 
 
 @catch_errors_decorator
-def set_main_config(user_config: Dict, default_config: Dict) -> Tuple[Dict, Dict, str]:
+def generate_main_json(
+    user_input_json: Dict, default_input_json: Dict
+) -> Tuple[Dict, Dict, str]:
     """
-    Set the main configuration (JSON) by validating the input JSON with a default JSON. If the input JSON is invalid, an error is raised and the script is terminated.
+    Generate the main JSON by combining values from the user input JSON and the default JSON.
+    If the user input JSON is invalid, an error is raised, and the script is terminated.
+    Additionally, generate the merged input JSON.
 
     Parameters
     ----------
-    user_config : dict
-        The user-defined configuration (JSON) containing user-defined parameters.
-    default_config : dict
-        The default configuration (JSON) containing default parameters.
+    user_input_json : dict
+        The JSON containing user-defined parameters.
+    default_input_json : dict
+        The JSON containing default parameters.
 
     Returns
     -------
     Tuple[Dict, Dict, str]
         A tuple containing:
-        - The main configuration (JSON)
-        - The current configuration (JSON)
+        - The main JSON.
+        - The merged input JSON.
         - A message describing the validation result.
 
     Raises
     ------
     TypeError
-        If the type of a user-defined parameter is not the same as the type of the default parameter.
+        If the type of a user-defined parameter differs from the type of the default parameter.
     ValueError
-        If a mandatory parameter is not provided or if the value of 'exploration_type' is not 'lammps' or 'i-PI'.
+        If a mandatory parameter is missing or if the value of 'exploration_type' is not 'lammps' or 'i-PI'.
     """
-    main_config = {}
-    for key in default_config.keys():
-        if key in user_config:
-            if not isinstance(default_config[key], type(user_config[key])):
-                error_msg = f"Wrong type: '{key}' is '{type(user_config[key])}'. It should be '{type(default_config[key])}'"
+    main_json = {}
+    for key in default_input_json.keys():
+        if key in user_input_json:
+            if not isinstance(default_input_json[key], type(user_input_json[key])):
+                error_msg = f"Type mismatch: '{key}' has type '{type(user_input_json[key])}', but should have type '{type(default_input_json[key])}'."
                 raise TypeError(error_msg)
-            if isinstance(user_config[key], List):
-                for element in user_config[key]:
-                    if not isinstance(element, type(default_config[key][0])):
-                        error_msg = f"Wrong type: '{key}' is a list of '{type(element)}'. It should be a list of '{type(default_config[key][0])}'"
+            if isinstance(user_input_json[key], List):
+                for element in user_input_json[key]:
+                    if not isinstance(element, type(default_input_json[key][0])):
+                        error_msg = f"Type mismatch: Elements in '{key}' are of type '{type(element)}', but they should be of type '{type(default_input_json[key][0])}'."
                         raise TypeError(error_msg)
     logging.debug(f"Type check complete")
 
-    current_config = deepcopy(user_config)
+    merged_input_json = deepcopy(user_input_json)
     for key in ["systems_auto", "nnp_count", "exploration_type"]:
-        if key == "systems_auto" and key not in user_config:
-            error_msg = f"'systems_auto' is not provided, it is mandatory. It should be a list of '{type(default_config['systems_auto'][0])}'"
+        if key == "systems_auto" and key not in user_input_json:
+            error_msg = f"'systems_auto' not provided, it is mandatory. It should be a list of '{type(default_input_json['systems_auto'][0])}'."
             raise ValueError(error_msg)
         elif (
-            key in user_config
+            key in user_input_json
             and key == "exploration_type"
-            and not (user_config[key] == "lammps" or user_config[key] == "i-PI")
+            and not (user_input_json[key] == "lammps" or user_input_json[key] == "i-PI")
         ):
-            error_msg = f"'{key}' should be a string: 'lammps' or 'i-PI'"
+            error_msg = f"'{key}' should be either 'lammps' or 'i-PI'."
             raise ValueError(error_msg)
         else:
-            main_config[key] = (
-                user_config[key] if key in user_config else default_config[key]
+            main_json[key] = (
+                user_input_json[key]
+                if key in user_input_json
+                else default_input_json[key]
             )
-            current_config[key] = (
-                current_config[key] if key in current_config else default_config[key]
+            merged_input_json[key] = (
+                merged_input_json[key]
+                if key in merged_input_json
+                else default_input_json[key]
             )
 
-    main_config["current_iteration"] = 0
-    padded_curr_iter = str(main_config["current_iteration"]).zfill(3)
+    main_json["current_iteration"] = 0
+    padded_curr_iter = str(main_json["current_iteration"]).zfill(3)
 
-    main_config["systems_auto"] = {}
-    for key in user_config["systems_auto"]:
-        main_config["systems_auto"][key] = {}
+    main_json["systems_auto"] = {}
+    for key in user_input_json["systems_auto"]:
+        main_json["systems_auto"][key] = {}
 
-    return main_config, current_config, padded_curr_iter
+    return main_json, merged_input_json, padded_curr_iter

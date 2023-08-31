@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/30
+Last modified: 2023/08/31
 """
 # Standard library modules
 import logging
@@ -32,7 +32,7 @@ def main(
     current_phase: str,
     deepmd_iterative_path: Path,
     fake_machine=None,
-    user_config_filename: str = "input.json",
+    user_input_json_filename: str = "input.json",
 ):
     # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
@@ -40,7 +40,7 @@ def main(
 
     # Log the step and phase of the program
     logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}"
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
     )
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
@@ -54,16 +54,16 @@ def main(
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
 
-    # Get control path, load the main config JSON and the training config JSON
+    # Get control path, load the main JSON and the training JSON
     control_path = training_path / "control"
-    main_config = load_json_file((control_path / "config.json"))
-    training_config = load_json_file(
+    main_json = load_json_file((control_path / "config.json"))
+    training_json = load_json_file(
         (control_path / f"training_{padded_curr_iter}.json")
     )
 
     # Check if we can continue
-    if not training_config['is_launched']:
-        logging.error(f"Lock found. Execute first: training launch")
+    if not training_json["is_launched"]:
+        logging.error(f"Lock found. Execute first: training launch.")
         logging.error(f"Aborting...")
         return 1
 
@@ -71,7 +71,7 @@ def main(
     # Counters
     s_per_step_per_step_size = []
     completed_count = 0
-    for nnp in range(1, main_config['nnp_count'] + 1):
+    for nnp in range(1, main_json["nnp_count"] + 1):
         local_path = Path(".").resolve() / f"{nnp}"
         if (local_path / "training.out").is_file():
             training_out = textfile_to_string_list((local_path / "training.out"))
@@ -107,31 +107,31 @@ def main(
                 )
                 completed_count += 1
             else:
-                logging.critical(f"DP Train - '{nnp}' not finished/failed")
+                logging.critical(f"DP Train - '{nnp}' not finished/failed.")
             del training_out, training_out_time, training_out_time_split
         else:
-            logging.critical(f"DP Train - '{nnp}' still running/no outfile")
+            logging.critical(f"DP Train - '{nnp}' still running/no outfile.")
         del local_path
     del nnp
     logging.debug(f"completed_count: {completed_count}")
 
     logging.info(f"-" * 88)
-    # Update the boolean in the training config JSON
-    if completed_count == main_config['nnp_count']:
-        training_config['is_checked'] = True
+    # Update the boolean in the training JSON
+    if completed_count == main_json["nnp_count"]:
+        training_json["is_checked"] = True
 
     if ("s_per_step_per_step_size" in locals()) and ("step_size" in locals()):
-        training_config['s_per_step'] = np.average(s_per_step_per_step_size) / step_size
+        training_json["s_per_step"] = np.average(s_per_step_per_step_size) / step_size
         del s_per_step_per_step_size, step_size
 
-    # Dump the JSON (training config JSON)
+    # Dump the JSON files (training)
     write_json_file(
-        training_config, (control_path / f"training_{padded_curr_iter}.json")
+        training_json, (control_path / f"training_{padded_curr_iter}.json")
     )
-    
+
     # End
     logging.info(f"-" * 88)
-    if completed_count == main_config['nnp_count']:
+    if completed_count == main_json["nnp_count"]:
         logging.info(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
         )
@@ -139,16 +139,16 @@ def main(
         logging.critical(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!"
         )
-        logging.critical(f"Some DP Train did not finished correctly")
-        logging.critical(f"Please check manually before relaunching this step")
+        logging.critical(f"Some DP Train did not finished correctly.")
+        logging.critical(f"Please check manually before re-exectuing this step.")
         logging.critical(f"Aborting...")
         return 1
     del completed_count
 
     # Cleaning
     del current_path, control_path, training_path
-    del user_config_filename
-    del main_config, training_config
+    del user_input_json_filename
+    del main_json, training_json
     del curr_iter, padded_curr_iter
 
     return 0
@@ -161,7 +161,7 @@ if __name__ == "__main__":
             "check",
             Path(sys.argv[1]),
             fake_machine=sys.argv[2],
-            user_config_filename=sys.argv[3],
+            user_input_json_filename=sys.argv[3],
         )
     else:
         pass
