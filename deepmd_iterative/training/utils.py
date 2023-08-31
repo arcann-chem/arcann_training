@@ -12,8 +12,8 @@ The utils module provides functions for the training step.
 
 Functions
 ---------
-generate_training_json(user_input_json: Dict, previous_training_json: Dict, default_input_json: Dict, merged_input_json: Dict) -> Tuple[Dict, Dict]:
-    A function to generate the training JSON by incorporating values from the user input JSON, the previous training JSON, and the default JSON.
+generate_training_json(user_input_json: Dict, previous_json: Dict, default_input_json: Dict, merged_input_json: Dict) -> Tuple[Dict, Dict]:
+    A function to generate the training JSON by incorporating values from the user input JSON, the previous JSON, and the default JSON.
 
 calculate_decay_steps(num_structures: int, min_decay_steps: int = 5000) -> int
     A function to calculate the number of decay steps for a given number of structures to train.
@@ -46,12 +46,12 @@ from deepmd_iterative.common.utils import catch_errors_decorator
 @catch_errors_decorator
 def generate_training_json(
     user_input_json: Dict,
-    previous_training_json: Dict,
+    previous_json: Dict,
     default_input_json: Dict,
     merged_input_json: Dict,
 ) -> Tuple[Dict, Dict]:
     """
-    Generate the training JSON by incorporating values from the user input JSON, the previous training JSON, and the default JSON.
+    Generate the training JSON by incorporating values from the user input JSON, the previous JSON, and the default JSON.
     If the user input JSON is found to be invalid, an error will be raised and the script execution will be terminated.
     This function also updates the merged input JSON.
 
@@ -59,8 +59,8 @@ def generate_training_json(
     ----------
     user_input_json : dict
         The input JSON provided by the user, containing user-defined parameters.
-    previous_training_json : dict
-        The JSON from the previous training iteration.
+    previous_json : dict
+        The JSON from the previous iteration.
     default_input_json : dict
         The default input JSON containing default parameters.
     merged_input_json : dict
@@ -106,9 +106,9 @@ def generate_training_json(
                 merged_input_json[key] = default_input_json[key]
             else:
                 training_json[key] = user_input_json[key]
-        elif key in previous_training_json:
-            training_json[key] = previous_training_json[key]
-            merged_input_json[key] = previous_training_json[key]
+        elif key in previous_json:
+            training_json[key] = previous_json[key]
+            merged_input_json[key] = previous_json[key]
         elif key in default_input_json:
             training_json[key] = default_input_json[key]
             merged_input_json[key] = default_input_json[key]

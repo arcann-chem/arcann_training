@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/24
+Last modified: 2023/08/31
 """
 # Standard library modules
 import copy
@@ -23,7 +23,7 @@ from deepmd_iterative.exploration.utils import (
     create_models_list,
     update_system_nb_steps_factor,
     get_system_exploration,
-    set_input_explor_json,
+    generate_input_exploration_json,
 )
 from deepmd_iterative.common.filesystem import (
     check_file_existence,
@@ -42,7 +42,10 @@ from deepmd_iterative.common.list import (
     textfile_to_string_list,
 )
 from deepmd_iterative.common.lammps import read_lammps_data
-from deepmd_iterative.common.machine import get_machine_keyword, get_machine_spec_for_step
+from deepmd_iterative.common.machine import (
+    get_machine_keyword,
+    get_machine_spec_for_step,
+)
 from deepmd_iterative.common.plumed import analyze_plumed_file_for_movres
 from deepmd_iterative.common.slurm import replace_in_slurm_file_general
 from deepmd_iterative.common.xml import (
@@ -58,7 +61,7 @@ def main(
     current_phase: str,
     deepmd_iterative_path: Path,
     fake_machine=None,
-    user_config_filename: str = "input.json",
+    user_input_json_filename: str = "input.json",
 ):
     # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
@@ -81,67 +84,71 @@ def main(
     curr_iter = int(padded_curr_iter)
     logging.debug(f"curr_iter, padded_curr_iter: {curr_iter}, {padded_curr_iter}")
 
-    # Load the default config (JSON)
-    default_config = load_default_json_file(
+    # Load the default input JSON
+    default_input_json = load_default_json_file(
         deepmd_iterative_path / "assets" / "default_config.json"
     )[current_step]
-    default_config_present = bool(default_config)
-    logging.debug(f"default_config: {default_config}")
-    logging.debug(f"default_config_present: {default_config_present}")
+    default_input_json_present = bool(default_input_json)
+    logging.debug(f"default_input_json: {default_input_json}")
+    logging.debug(f"default_input_json_present: {default_input_json_present}")
 
-    # Load the user config (JSON)
-    if (current_path / user_config_filename).is_file():
-        user_config = load_json_file((current_path / user_config_filename))
+    # Load the user input JSON
+    if (current_path / user_input_json_filename).is_file():
+        user_input_json = load_json_file((current_path / user_input_json_filename))
     else:
-        user_config = {}
-    user_config_present = bool(user_config)
-    logging.debug(f"user_config: {user_config}")
-    logging.debug(f"user_config_present: {user_config_present}")
+        user_input_json = {}
+    user_input_json_present = bool(user_input_json)
+    logging.debug(f"user_input_json: {user_input_json}")
+    logging.debug(f"user_input_json_present: {user_input_json_present}")
 
-    # Make a deepcopy
-    current_config = copy.deepcopy(user_config)
+    # Make a deepcopy of it to create the merged input JSON
+    merged_input_json = copy.deepcopy(user_input_json)
 
-    # Get control path and load the main config (JSON)
+    # Get control path and load the main JSON
     control_path = training_path / "control"
-    main_config = load_json_file((control_path / "config.json"))
+    main_json = load_json_file((control_path / "config.json"))
 
     # Get extra needed paths
     jobs_path = deepmd_iterative_path / "assets" / "jobs" / current_step
 
-    # Load the previous training config (JSON) and the previous exploration config (JSON)
+    # Load the previous exploration and training JSON
     if curr_iter > 0:
         prev_iter = curr_iter - 1
         padded_prev_iter = str(prev_iter).zfill(3)
-        prev_training_config = load_json_file(
+        previous_training_json = load_json_file(
             (control_path / f"training_{padded_prev_iter}.json")
         )
         if prev_iter > 0:
-            prev_exploration_config = load_json_file(
+            previous_exploration_json = load_json_file(
                 (control_path / f"exploration_{padded_prev_iter}.json")
             )
         else:
-            prev_exploration_config = {}
+            previous_exploration_json = {}
     else:
-        prev_training_config = {}
-        prev_exploration_config = {}
+        previous_training_json = {}
+        previous_exploration_json = {}
 
     # Check if the atomsk package is installed
     atomsk_bin = check_atomsk(
         get_key_in_dict(
-            "atomsk_path", user_config, prev_exploration_config, default_config
+            "atomsk_path",
+            user_input_json,
+            previous_exploration_json,
+            default_input_json,
         )
     )
-    # Update new input
-    current_config['atomsk_path'] = atomsk_bin
+    # Update the merged input JSON
+    merged_input_json["atomsk_path"] = atomsk_bin
+    logging.debug(f"merged_input_json: {merged_input_json}")
 
-    # Get the machine keyword (input override previous training override default_config)
-    # And update the new input
+    # Get the machine keyword (Priority: user > previous > default)
+    # And update the merged input JSON
     user_machine_keyword = get_machine_keyword(
-        user_config, prev_training_config, default_config
+        user_input_json, previous_training_json, default_input_json
     )
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
-    current_config['user_machine_keyword'] = user_machine_keyword
-    logging.debug(f"current_config: {current_config}")
+    merged_input_json["user_machine_keyword"] = user_machine_keyword
+    logging.debug(f"merged_input_json: {merged_input_json}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
     user_machine_keyword = (
         None if isinstance(user_machine_keyword, bool) else user_machine_keyword
@@ -169,52 +176,46 @@ def main(
     logging.debug(f"machine_launch_command: {machine_launch_command}")
 
     if fake_machine is not None:
-        logging.info(f"Pretending to be on: {fake_machine}")
+        logging.info(f"Pretending to be on: '{fake_machine}'.")
     else:
-        logging.info(f"We are on: {machine}")
+        logging.info(f"We are on: '{machine}'.")
     del fake_machine
 
-    # TODO to rewrite
-    # Create the exploration JSON object
-    exploration_config = {}
-
-    # Set the exploration parameters in the JSON file
-    exploration_config = {
-        **exploration_config,
-        "deepmd_model_version": prev_training_config['deepmd_model_version'],
-        "nnp_count": main_config['nnp_count'],
-        "exploration_type": main_config['exploration_type'],
-        "traj_count": get_key_in_dict(
-            "traj_count", user_config, prev_exploration_config, default_config
-        ),
-    }
-    # Update the new input
-    current_config['traj_count'] = exploration_config['traj_count']
-    logging.debug(f"current_config: {current_config}")
-
-    # Fill the missing values from the input. We don't do exploration because it is system dependent and single value and not list
-    current_config = set_input_explor_json(
-        user_config,
-        prev_exploration_config,
-        default_config,
-        current_config,
-        main_config,
+    # Generate/update the merged input JSON
+    # Priority: user > previous > default
+    merged_input_json = generate_input_exploration_json(
+        user_input_json,
+        previous_exploration_json,
+        default_input_json,
+        merged_input_json,
+        main_json,
     )
-    logging.debug(f"current_config: {current_config}")
+    logging.debug(f"merged_input_json: {merged_input_json}")
 
-    # Set additional machine-related parameters in the JSON file
-    exploration_config = {
-        **exploration_config,
+    # TODO to rewrite (set_exploration_json ?)
+    # Generate the exploration JSON
+    exploration_json = {}
+    exploration_json = {
+        **exploration_json,
+        "deepmd_model_version": previous_training_json["deepmd_model_version"],
+        "nnp_count": main_json["nnp_count"],
+        "exploration_type": main_json["exploration_type"],
+        "traj_count": merged_input_json["traj_count"],
+    }
+
+    # Set additional machine-related parameters in the exploration JSON that are not needed in the merged input JSON
+    exploration_json = {
+        **exploration_json,
         "machine": machine,
-        "project_name": machine_spec['project_name'],
-        "allocation_name": machine_spec['allocation_name'],
-        "arch_name": machine_spec['arch_name'],
-        "arch_type": machine_spec['arch_type'],
+        "project_name": machine_spec["project_name"],
+        "allocation_name": machine_spec["allocation_name"],
+        "arch_name": machine_spec["arch_name"],
+        "arch_type": machine_spec["arch_type"],
         "launch_command": machine_launch_command,
     }
 
     # Check if the job file exists
-    job_file_name = f"job_deepmd_{exploration_config['exploration_type']}_{exploration_config['arch_type']}_{machine}.sh"
+    job_file_name = f"job_deepmd_{exploration_json['exploration_type']}_{exploration_json['arch_type']}_{machine}.sh"
     if (current_path.parent / "user_files" / job_file_name).is_file():
         master_job_file = textfile_to_string_list(
             current_path.parent / "user_files" / job_file_name
@@ -228,18 +229,18 @@ def main(
             jobs_path / job_file_name,
         )
     logging.debug(f"master_job_file: {master_job_file[0:5]}, {master_job_file[-5:-1]}")
-    current_config['job_email'] = get_key_in_dict(
-        "job_email", user_config, prev_exploration_config, default_config
+    merged_input_json["job_email"] = get_key_in_dict(
+        "job_email", user_input_json, previous_exploration_json, default_input_json
     )
     del jobs_path, job_file_name
 
     # Preparation of the exploration
-    exploration_config['systems_auto'] = {}
+    exploration_json["systems_auto"] = {}
 
     # Loop through each system and set its exploration
-    for system_auto_index, system_auto in enumerate(main_config['systems_auto']):
+    for system_auto_index, system_auto in enumerate(main_json["systems_auto"]):
         random.seed()
-        exploration_config['systems_auto'][system_auto] = {}
+        exploration_json["systems_auto"][system_auto] = {}
 
         plumed = [False, False, False]
         exploration_type = -1
@@ -247,7 +248,7 @@ def main(
         input_replace_dict = {}
 
         # Get the input file (.in or .xml) for the current system and check if plumed is being used
-        if exploration_config['exploration_type'] == "lammps":
+        if exploration_json["exploration_type"] == "lammps":
             exploration_type = 0
             master_system_lammps_in = textfile_to_string_list(
                 training_path / "user_files" / (system_auto + ".in")
@@ -255,7 +256,7 @@ def main(
             # Check if the LAMMPS input file contains any "plumed" lines
             if any("plumed" in zzz for zzz in master_system_lammps_in):
                 plumed[0] = True
-        elif exploration_config['exploration_type'] == "i-PI":
+        elif exploration_json["exploration_type"] == "i-PI":
             exploration_type = 1
             master_system_ipi_xml = read_xml_file(
                 training_path / "user_files" / (system_auto + ".xml")
@@ -301,7 +302,7 @@ def main(
                 if plumed[1] and plumed[2] != 0:
                     break
 
-        # Set the system params for exploration
+        # Set the individual system params for exploration
         (
             system_timestep_ps,
             system_temperature_K,
@@ -312,16 +313,15 @@ def main(
             system_init_job_walltime_h,
             system_print_mult,
             system_disturbed_start,
-        ) = get_system_exploration(current_config, system_auto_index)
+        ) = get_system_exploration(merged_input_json, system_auto_index)
         logging.debug(
             f"{system_timestep_ps,system_temperature_K,system_exp_time_ps,system_max_exp_time_ps,system_job_walltime_h,system_init_exp_time_ps,system_init_job_walltime_h,system_print_mult,system_disturbed_start}"
         )
 
-        # Set the system params for exploration
+        # Disturbed start ?
         if curr_iter == 1:
             # No distrubed start
             system_disturbed_start = False
-
         else:
             # Get starting points
             (
@@ -333,16 +333,16 @@ def main(
                 system_auto,
                 training_path,
                 padded_curr_iter,
-                prev_exploration_config,
-                user_config_present,
+                previous_exploration_json,
+                user_input_json_present,
                 system_disturbed_start,
             )
 
         # LAMMPS Input
-        input_replace_dict['_R_TIMESTEP_'] = f"{system_timestep_ps}"
+        input_replace_dict["_R_TIMESTEP_"] = f"{system_timestep_ps}"
 
         if exploration_type == 0:
-            input_replace_dict['_R_TEMPERATURE_'] = f"{system_temperature_K}"
+            input_replace_dict["_R_TEMPERATURE_"] = f"{system_temperature_K}"
 
             # First exploration
             if curr_iter == 1:
@@ -350,14 +350,14 @@ def main(
                 system_lammps_data = textfile_to_string_list(
                     training_path / "user_files" / system_lammps_data_fn
                 )
-                input_replace_dict['_R_DATA_FILE_'] = system_lammps_data_fn
+                input_replace_dict["_R_DATA_FILE_"] = system_lammps_data_fn
 
                 # Default time and nb steps
                 if plumed[1]:
                     system_nb_steps = plumed[2]
                 else:
                     system_nb_steps = system_init_exp_time_ps / system_timestep_ps
-                input_replace_dict['_R_NUMBER_OF_STEPS_'] = f"{int(system_nb_steps)}"
+                input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(system_nb_steps)}"
 
                 system_walltime_approx_s = system_init_job_walltime_h * 3600
 
@@ -373,30 +373,30 @@ def main(
                 if plumed[1]:
                     system_nb_steps = plumed[2]
                 # User inputs
-                elif "system_exp_time_ps" in user_config:
+                elif "system_exp_time_ps" in user_input_json:
                     system_nb_steps = system_exp_time_ps / system_timestep_ps
                 # Auto value
                 else:
                     system_nb_steps *= update_system_nb_steps_factor(
-                        prev_exploration_config, system_auto
+                        previous_exploration_json, system_auto
                     )
                     # Update if over Max value
                     if system_nb_steps > system_max_exp_time_ps / system_timestep_ps:
                         system_nb_steps = system_max_exp_time_ps / system_timestep_ps
-                input_replace_dict['_R_NUMBER_OF_STEPS_'] = f"{int(system_nb_steps)}"
+                input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(system_nb_steps)}"
                 # Update the new input
-                current_config['system_exp_time_ps'] = (
+                merged_input_json["system_exp_time_ps"] = (
                     system_nb_steps * system_timestep_ps
                 )
 
                 # Walltime
-                if "system_job_walltime_h" in user_config:
+                if "system_job_walltime_h" in user_input_json:
                     system_walltime_approx_s = int(system_job_walltime_h * 3600)
                 else:
                     # Abritary factor
                     system_walltime_approx_s = int(
                         (
-                            prev_exploration_config['systems_auto'][system_auto][
+                            previous_exploration_json["systems_auto"][system_auto][
                                 "s_per_step"
                             ]
                             * system_nb_steps
@@ -404,13 +404,13 @@ def main(
                         * 1.20
                     )
                 # Update the new input
-                current_config['system_job_walltime_h'] = (
+                merged_input_json["system_job_walltime_h"] = (
                     system_walltime_approx_s / 3600
                 )
 
             # Get print freq
             system_print_every_x_steps = system_nb_steps * system_print_mult
-            input_replace_dict['_R_PRINT_FREQ_'] = f"{int(system_print_every_x_steps)}"
+            input_replace_dict["_R_PRINT_FREQ_"] = f"{int(system_print_every_x_steps)}"
 
         # i-PI // UNTESTED
         elif exploration_type == 1:
@@ -418,12 +418,14 @@ def main(
                 get_temperature_from_ipi_xml(master_system_ipi_xml)
             )
             if system_temperature_K == -1:
-                logging.error(f"No temperature found in the xml: {training_path / 'files' / (system_auto + '.xml')}")
+                logging.error(
+                    f"No temperature found in the xml: {training_path / 'files' / (system_auto + '.xml')}"
+                )
                 logging.error("Aborting...")
                 sys.exit(1)
 
             # TODO: This should be read like temp
-            input_replace_dict['_R_NB_BEADS_'] = str(8)
+            input_replace_dict["_R_NB_BEADS_"] = str(8)
 
             # First exploration
             if curr_iter == 1:
@@ -432,8 +434,8 @@ def main(
                     training_path / "user_files" / system_lammps_data_fn
                 )
                 system_ipi_xyz_fn = system_auto + ".xyz"
-                input_replace_dict['_R_DATA_FILE_'] = system_ipi_xyz_fn
-                master_system_ipi_json['coord_file'] = system_ipi_xyz_fn
+                input_replace_dict["_R_DATA_FILE_"] = system_ipi_xyz_fn
+                master_system_ipi_json["coord_file"] = system_ipi_xyz_fn
                 # Get the XYZ file from LMP
                 subprocess.run(
                     [
@@ -456,7 +458,7 @@ def main(
                     system_nb_steps = plumed[2]
                 else:
                     system_nb_steps = system_init_exp_time_ps / system_timestep_ps
-                input_replace_dict['_R_NUMBER_OF_STEPS_'] = f"{int(system_nb_steps)}"
+                input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(system_nb_steps)}"
 
                 system_walltime_approx_s = system_init_job_walltime_h * 3600
 
@@ -465,10 +467,10 @@ def main(
                     system_lammps_data
                 )
                 system_cell = [box[1] - box[0], box[3] - box[2], box[5] - box[4]]
-                input_replace_dict['_R_CELL_'] = f"{system_cell}"
+                input_replace_dict["_R_CELL_"] = f"{system_cell}"
                 # Get the type_map from config (key added after first training)
-                for it_zzz, zzz in enumerate(main_config['type_map']):
-                    master_system_ipi_json['atom_type'][str(zzz)] = it_zzz
+                for it_zzz, zzz in enumerate(main_json["type_map"]):
+                    master_system_ipi_json["atom_type"][str(zzz)] = it_zzz
 
             # Subsequent ones
             else:
@@ -476,30 +478,30 @@ def main(
                 if plumed[1]:
                     system_nb_steps = plumed[2]
                 # User inputs
-                elif "system_exp_time_ps" in user_config:
+                elif "system_exp_time_ps" in user_input_json:
                     system_nb_steps = system_exp_time_ps / system_timestep_ps
                 # Auto value
                 else:
                     system_nb_steps *= update_system_nb_steps_factor(
-                        prev_exploration_config, system_auto
+                        previous_exploration_json, system_auto
                     )
                     # Update if over Max value
                     if system_nb_steps > system_max_exp_time_ps / system_timestep_ps:
                         system_nb_steps = system_max_exp_time_ps / system_timestep_ps
-                input_replace_dict['_R_NUMBER_OF_STEPS_'] = f"{int(system_nb_steps)}"
+                input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(system_nb_steps)}"
                 # Update the new input
-                current_config['system_exp_time_ps'] = (
+                merged_input_json["system_exp_time_ps"] = (
                     system_nb_steps * system_timestep_ps
                 )
 
                 # Walltime
-                if user_config_present:
+                if user_input_json_present:
                     system_walltime_approx_s = int(system_job_walltime_h * 3600)
                 else:
                     # Abritary factor
                     system_walltime_approx_s = int(
                         (
-                            prev_exploration_config['systems_auto'][system_auto][
+                            previous_exploration_json["systems_auto"][system_auto][
                                 "s_per_step"
                             ]
                             * system_nb_steps
@@ -507,17 +509,17 @@ def main(
                         * 1.20
                     )
                 # Update the new input
-                current_config['system_job_walltime_h'] = (
+                merged_input_json["system_job_walltime_h"] = (
                     system_walltime_approx_s / 3600
                 )
 
             # Get print freq
             system_print_every_x_steps = system_nb_steps * system_print_mult
-            input_replace_dict['_R_PRINT_FREQ_'] = f"{int(system_print_every_x_steps)}"
+            input_replace_dict["_R_PRINT_FREQ_"] = f"{int(system_print_every_x_steps)}"
 
         # Now it is by NNP and by traj_count
-        for nnp_index in range(1, main_config['nnp_count'] + 1):
-            for traj_index in range(1, exploration_config['traj_count'] + 1):
+        for nnp_index in range(1, main_json["nnp_count"] + 1):
+            for traj_index in range(1, exploration_json["traj_count"] + 1):
                 local_path = (
                     Path(".").resolve()
                     / str(system_auto)
@@ -526,9 +528,10 @@ def main(
                 )
                 local_path.mkdir(exist_ok=True, parents=True)
 
+                # Create the model list
                 models_list, models_string = create_models_list(
-                    main_config,
-                    prev_training_config,
+                    main_json,
+                    previous_training_json,
                     nnp_index,
                     padded_prev_iter,
                     training_path,
@@ -550,23 +553,24 @@ def main(
                     input_replace_dict[
                         "_R_RESTART_OUT_"
                     ] = f"{system_auto}_{nnp_index}_{padded_curr_iter}.restart"
-                    input_replace_dict['_R_MODEL_FILES_LIST_'] = models_string
+                    input_replace_dict["_R_MODEL_FILES_LIST_"] = models_string
                     input_replace_dict[
                         "_R_DEVI_OUT_"
                     ] = f"model_devi_{system_auto}_{nnp_index}_{padded_curr_iter}.out"
-                    # Get data files (starting points) and number of steps
+                    # Get data files (starting points) if iteration is > 1
                     if curr_iter > 1:
                         if len(starting_points) == 0:
                             starting_point_list = copy.deepcopy(starting_points_bckp)
                         system_lammps_data_fn = starting_point_list[
                             random.randrange(0, len(starting_point_list))
                         ]
+                        starting_point_list.remove(system_lammps_data_fn)
                         system_lammps_data = textfile_to_string_list(
                             training_path
                             / "starting_structures"
                             / system_lammps_data_fn
                         )
-                        input_replace_dict['_R_DATA_FILE_'] = system_lammps_data_fn
+                        input_replace_dict["_R_DATA_FILE_"] = system_lammps_data_fn
                         # Get again the system_cell and nb_atom
                         (
                             system_nb_atm,
@@ -607,10 +611,10 @@ def main(
                         local_path / system_lammps_data_fn, system_lammps_data
                     )
 
-                    exploration_config['systems_auto'][system_auto]['nb_steps'] = int(
+                    exploration_json["systems_auto"][system_auto]["nb_steps"] = int(
                         system_nb_steps
                     )
-                    exploration_config['systems_auto'][system_auto][
+                    exploration_json["systems_auto"][system_auto][
                         "print_every_x_steps"
                     ] = int(system_print_every_x_steps)
 
@@ -631,13 +635,13 @@ def main(
                         machine_spec,
                         system_walltime_approx_s,
                         machine_walltime_format,
-                        current_config['job_email'],
+                        merged_input_json["job_email"],
                     )
 
                     job_file = replace_substring_in_string_list(
                         job_file,
                         "_R_DEEPMD_VERSION_",
-                        f"{exploration_config['deepmd_model_version']}",
+                        f"{exploration_json['deepmd_model_version']}",
                     )
                     job_file = replace_substring_in_string_list(
                         job_file,
@@ -674,7 +678,7 @@ def main(
                         )
                     string_list_to_textfile(
                         local_path
-                        / f"job_deepmd_{exploration_config['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
+                        / f"job_deepmd_{exploration_json['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
                         job_file,
                     )
                     del system_lammps_in
@@ -696,13 +700,15 @@ def main(
                         system_ipi_xyz_fn = starting_point_list[
                             random.randrange(0, len(starting_point_list))
                         ]
+                        starting_point_list.remove(system_lammps_data_fn)
+
                         system_ipi_xyz = textfile_to_string_list(
                             training_path / "starting_structures" / system_ipi_xyz_fn
                         )
-                        input_replace_dict['_R_XYZ_'] = system_ipi_xyz_fn
-                        system_ipi_json['coord_file'] = system_ipi_xyz_fn
-                        for it_zzz, zzz in enumerate(main_config['type_map']):
-                            system_ipi_json['atom_type'][str(zzz)] = it_zzz
+                        input_replace_dict["_R_XYZ_"] = system_ipi_xyz_fn
+                        system_ipi_json["coord_file"] = system_ipi_xyz_fn
+                        for it_zzz, zzz in enumerate(main_json["type_map"]):
+                            system_ipi_json["atom_type"][str(zzz)] = it_zzz
                         system_lammps_data = textfile_to_string_list(
                             training_path
                             / "starting_structures"
@@ -721,7 +727,7 @@ def main(
                             box[3] - box[2],
                             box[5] - box[4],
                         ]
-                        input_replace_dict['_R_CELL_'] = f"{system_cell}"
+                        input_replace_dict["_R_CELL_"] = f"{system_cell}"
 
                     # Plumed files
                     if plumed[0]:
@@ -752,7 +758,7 @@ def main(
                             )
                         del it_plumed_input
 
-                    system_ipi_json['graph_file'] = models_list[0]
+                    system_ipi_json["graph_file"] = models_list[0]
 
                     #  Write INPUT files
                     for key, value in input_replace_dict.items():
@@ -778,13 +784,13 @@ def main(
                         machine_spec,
                         system_walltime_approx_s,
                         machine_walltime_format,
-                        current_config['job_email'],
+                        merged_input_json["job_email"],
                     )
 
                     job_file = replace_substring_in_string_list(
                         job_file,
                         "_R_DEEPMD_VERSION_",
-                        f"{exploration_config['deepmd_model_version']}",
+                        f"{exploration_json['deepmd_model_version']}",
                     )
                     job_file = replace_substring_in_string_list(
                         job_file, "_R_MODEL_FILES_LIST_", f"{models_list[0]}"
@@ -817,7 +823,7 @@ def main(
                         )
                     string_list_to_textfile(
                         local_path
-                        / f"job_deepmd_{exploration_config['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
+                        / f"job_deepmd_{exploration_json['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
                         job_file,
                     )
                     del (
@@ -835,18 +841,18 @@ def main(
 
         del nnp_index
 
-        exploration_config['systems_auto'][system_auto][
+        exploration_json["systems_auto"][system_auto][
             "temperature_K"
         ] = system_temperature_K
-        exploration_config['systems_auto'][system_auto][
+        exploration_json["systems_auto"][system_auto][
             "timestep_ps"
         ] = system_timestep_ps
-        exploration_config['systems_auto'][system_auto][
+        exploration_json["systems_auto"][system_auto][
             "disturbed_start"
         ] = system_disturbed_start
 
-        main_config['systems_auto'][system_auto]['cell'] = system_cell
-        main_config['systems_auto'][system_auto]['nb_atm'] = system_nb_atm
+        main_json["systems_auto"][system_auto]["cell"] = system_cell
+        main_json["systems_auto"][system_auto]["nb_atm"] = system_nb_atm
 
         if plumed[0] == 1:
             del plumed_input, plumed
@@ -855,23 +861,31 @@ def main(
 
     del system_auto_index, system_auto, master_job_file
 
-    exploration_config['is_locked'] = True
-    exploration_config['is_launched'] = False
-    exploration_config['is_checked'] = False
+    # Set booleans in the exploration JSON
+    exploration_json = {
+        **exploration_json,
+        "is_locked": True,
+        "is_launched": False,
+        "is_checked": False,
+        "is_deviated": False,
+        "is_extracted": False,
+    }
     if exploration_type == 1:
-        exploration_config['is_unbeaded'] = False
-        exploration_config['is_reruned'] = False
-        exploration_config['is_rechecked'] = False
-    exploration_config['is_deviated'] = False
-    exploration_config['is_extracted'] = False
+        exploration_json = {
+            **exploration_json,
+            "is_unbeaded": False,
+            "is_reruned": False,
+            "is_rechecked": False,
+        }
     del exploration_type
 
-    write_json_file(main_config, (control_path / "config.json"))
+    # Dump the JSON files (main, exploration and merged input)
+    write_json_file(main_json, (control_path / "config.json"))
     write_json_file(
-        exploration_config, (control_path / f"exploration_{padded_curr_iter}.json")
+        exploration_json, (control_path / f"exploration_{padded_curr_iter}.json")
     )
     backup_and_overwrite_json_file(
-        current_config, (current_path / user_config_filename)
+        merged_input_json, (current_path / user_input_json_filename)
     )
     return 0
 
@@ -883,7 +897,7 @@ if __name__ == "__main__":
             "preparation",
             Path(sys.argv[1]),
             fake_machine=sys.argv[2],
-            user_config_filename=sys.argv[3],
+            user_input_json_filename=sys.argv[3],
         )
     else:
         pass

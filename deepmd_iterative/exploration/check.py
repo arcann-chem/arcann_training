@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/24
+Last modified: 2023/08/31
 """
 # Standard library modules
 import logging
@@ -33,11 +33,13 @@ def main(
     current_phase: str,
     deepmd_iterative_path: Path,
     fake_machine=None,
-    user_config_filename: str = "input.json",
+    user_input_json_filename: str = "input.json",
 ):
+    # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
     training_path = current_path.parent
 
+    # Log the step and phase of the program
     logging.info(
         f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}"
     )
@@ -46,22 +48,22 @@ def main(
     logging.debug(f"Program path: {deepmd_iterative_path}")
     logging.info(f"-" * 88)
 
-    # Check if correct folder
+    # Check if the current folder is correct for the current step
     validate_step_folder(current_step)
 
-    # Get iteration
-    current_iteration_zfill = Path().resolve().parts[-1].split("-")[0]
-    current_iteration = int(current_iteration_zfill)
+    # Get the current iteration number
+    padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
+    curr_iter = int(padded_curr_iter)
 
-    # Get control path and main_config
+    # Get control path, load the main JSON and the exploration JSON
     control_path = training_path / "control"
-    main_config = load_json_file((control_path / "config.json"))
-    exploration_config = load_json_file(
-        (control_path / f"exploration_{current_iteration_zfill}.json")
+    main_json = load_json_file((control_path / "config.json"))
+    exploration_json = load_json_file(
+        (control_path / f"exploration_{padded_curr_iter}.json")
     )
 
-    # Checks
-    if not exploration_config['is_launched']:
+    # Check if we can continue
+    if not exploration_json["is_launched"]:
         logging.error(f"Lock found. Execute first: exploration launch")
         logging.error(f"Aborting...")
         return 1
@@ -72,21 +74,22 @@ def main(
     skipped_count = 0
     forced_count = 0
 
-    for system_auto_index, system_auto in enumerate(main_config['systems_auto']):
+    for system_auto_index, system_auto in enumerate(main_json["systems_auto"]):
         # Counters
         average_per_step = 0
         system_count = 0
         timings_sum = 0
         timings = []
-        exploration_config['systems_auto'][system_auto] = {
-            **exploration_config['systems_auto'][system_auto],
+        # Update the exploration config JSON
+        exploration_json["systems_auto"][system_auto] = {
+            **exploration_json["systems_auto"][system_auto],
             "completed_count": 0,
             "forced_count": 0,
             "skipped_count": 0,
         }
 
-        for it_nnp in range(1, main_config['nnp_count'] + 1):
-            for it_number in range(1, exploration_config['traj_count'] + 1):
+        for it_nnp in range(1, main_json["nnp_count"] + 1):
+            for it_number in range(1, exploration_json["traj_count"] + 1):
                 local_path = (
                     Path(".").resolve()
                     / str(system_auto)
@@ -95,17 +98,16 @@ def main(
                 )
 
                 # LAMMPS
-                if exploration_config['exploration_type'] == "lammps":
+                if exploration_json["exploration_type"] == "lammps":
                     lammps_output_file = (
-                        local_path
-                        / f"{system_auto}_{it_nnp}_{current_iteration_zfill}.log"
+                        local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.log"
                     )
                     if lammps_output_file.is_file():
                         lammps_output = textfile_to_string_list(lammps_output_file)
                         if any("Total wall time:" in f for f in lammps_output):
                             system_count += 1
                             completed_count += 1
-                            exploration_config['systems_auto'][system_auto][
+                            exploration_json["systems_auto"][system_auto][
                                 "completed_count"
                             ] += 1
                             timings = [
@@ -114,13 +116,13 @@ def main(
                             timings_sum += float(timings[0].split(" ")[3])
                         elif (local_path / "skip").is_file():
                             skipped_count += 1
-                            exploration_config['systems_auto'][system_auto][
+                            exploration_json["systems_auto"][system_auto][
                                 "skipped_count"
                             ] += 1
                             logging.warning(f"'{lammps_output_file}' skipped")
                         elif (local_path / "force").is_file():
                             forced_count += 1
-                            exploration_config['systems_auto'][system_auto][
+                            exploration_json["systems_auto"][system_auto][
                                 "forced_count"
                             ] += 1
                             logging.warning(f"'{lammps_output_file}' forced")
@@ -131,26 +133,28 @@ def main(
                         del lammps_output
                     elif (local_path / "skip").is_file():
                         skipped_count += 1
-                        exploration_config['systems_auto'][system_auto][
+                        exploration_json["systems_auto"][system_auto][
                             "skipped_count"
                         ] += 1
                         logging.warning(f"'{lammps_output_file}' skipped")
                     else:
-                        logging.critical(f"'{lammps_output_file}' failed. Check manually")
+                        logging.critical(
+                            f"'{lammps_output_file}' failed. Check manually"
+                        )
                     del lammps_output_file
 
                 # i-PI
-                elif exploration_config['exploration_type'] == "i-PI":
+                elif exploration_json["exploration_type"] == "i-PI":
                     ipi_output_file = (
                         local_path
-                        / f"{system_auto}_{it_nnp}_{current_iteration_zfill}.i-PI.server.log"
+                        / f"{system_auto}_{it_nnp}_{padded_curr_iter}.i-PI.server.log"
                     )
                     if ipi_output_file.is_file():
                         ipi_output = textfile_to_string_list(ipi_output_file)
                         if any("SIMULATION: Exiting cleanly" in f for f in ipi_output):
                             system_count += 1
                             completed_count += 1
-                            exploration_config['systems_auto'][system_auto][
+                            exploration_json["systems_auto"][system_auto][
                                 "completed_count"
                             ] += 1
                             ipi_time = [
@@ -167,13 +171,13 @@ def main(
                             del ipi_time, ipi_time2, timings
                         elif (local_path / "skip").is_file():
                             skipped_count += 1
-                            exploration_config['systems_auto'][system_auto][
+                            exploration_json["systems_auto"][system_auto][
                                 "skipped_count"
                             ] += 1
                             logging.warning(f"'{ipi_output_file}' skipped")
                         elif (local_path / "force").is_file():
                             forced_count += 1
-                            exploration_config['systems_auto'][system_auto][
+                            exploration_json["systems_auto"][system_auto][
                                 "forced_count"
                             ] += 1
                             logging.warning(f"'{ipi_output_file}' forced")
@@ -184,7 +188,7 @@ def main(
                         del ipi_output
                     elif (local_path / "skip").is_file():
                         skipped_count += 1
-                        exploration_config['systems_auto'][system_auto][
+                        exploration_json["systems_auto"][system_auto][
                             "skipped_count"
                         ] += 1
                         logging.warning(f"'{ipi_output_file}' skipped")
@@ -194,7 +198,7 @@ def main(
 
                 else:
                     logging.error(
-                        f"'{exploration_config['exploration_type']}' unknown. Check manually"
+                        f"'{exploration_json['exploration_type']}' unknown. Check manually"
                     )
                     return 1
 
@@ -202,21 +206,38 @@ def main(
 
         timings = timings_sum / system_count
 
-        if exploration_config['exploration_type'] == "lammps":
+        if exploration_json["exploration_type"] == "lammps":
             average_per_step = (
-                timings / exploration_config['systems_auto'][system_auto]['nb_steps']
+                timings / exploration_json["systems_auto"][system_auto]["nb_steps"]
             )
-        elif exploration_config['exploration_type'] == "i-PI":
+        elif exploration_json["exploration_type"] == "i-PI":
             average_per_step = timings
-        exploration_config['systems_auto'][system_auto]['s_per_step'] = average_per_step
+        exploration_json["systems_auto"][system_auto]["s_per_step"] = average_per_step
         del timings, average_per_step, system_count, timings_sum
 
     del system_auto, it_nnp, it_number
 
+    logging.info(f"-" * 88)
+    # Update the booleans in the exploration JSON
+    if (completed_count + skipped_count + forced_count) == (
+        len(exploration_json["systems_auto"])
+        * exploration_json["nnp_count"]
+        * exploration_json["traj_count"]
+    ):
+        exploration_json["is_checked"] = True
+
+    # Dump the JSON files (exploration JSON)
+    write_json_file(
+        exploration_json,
+        (control_path / f"exploration_{padded_curr_iter}.json"),
+    )
+
+    # End
+    logging.info(f"-" * 88)
     if (completed_count + skipped_count + forced_count) != (
-        len(exploration_config['systems_auto'])
-        * exploration_config['nnp_count']
-        * exploration_config['traj_count']
+        len(exploration_json["systems_auto"])
+        * exploration_json["nnp_count"]
+        * exploration_json["traj_count"]
     ):
         logging.error(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure !"
@@ -226,27 +247,22 @@ def main(
         logging.error(f"Aborting...")
         return 1
 
-    exploration_config['is_checked'] = True
-    write_json_file(
-        exploration_config,
-        (control_path / f"exploration_{current_iteration_zfill}.json"),
-    )
     logging.info("Deleting SLURM out/error files...")
     logging.info("Deleting NNP PB files...")
     logging.info("Removing extra log/error files...")
-    for system_auto in exploration_config['systems_auto']:
-        for it_nnp in range(1, exploration_config['nnp_count'] + 1):
-            for it_number in range(1, exploration_config['traj_count'] + 1):
+    for system_auto in exploration_json["systems_auto"]:
+        for it_nnp in range(1, exploration_json["nnp_count"] + 1):
+            for it_number in range(1, exploration_json["traj_count"] + 1):
                 local_path = (
                     Path(".").resolve()
                     / str(system_auto)
                     / str(it_nnp)
                     / (str(it_number).zfill(5))
                 )
-                if exploration_config['exploration_type'] == "lammps":
+                if exploration_json["exploration_type"] == "lammps":
                     remove_files_matching_glob(local_path, "LAMMPS_*")
                     remove_files_matching_glob(local_path, "*.pb")
-                elif exploration_config['exploration_type'] == "i-PI":
+                elif exploration_json["exploration_type"] == "i-PI":
                     remove_files_matching_glob(local_path, "i-PI_DeepMD*")
                     remove_files_matching_glob(local_path, "*.DP-i-PI.client_*.log")
                     remove_files_matching_glob(local_path, "*.DP-i-PI.client_*.err")
@@ -267,9 +283,9 @@ def main(
 
     # Cleaning
     del control_path
-    del main_config
-    del current_iteration, current_iteration_zfill
-    del exploration_config
+    del main_json
+    del curr_iter, padded_curr_iter
+    del exploration_json
     del training_path, current_path
 
     return 0
@@ -282,7 +298,7 @@ if __name__ == "__main__":
             "check",
             Path(sys.argv[1]),
             fake_machine=sys.argv[2],
-            user_config_filename=sys.argv[3],
+            user_input_json_filename=sys.argv[3],
         )
     else:
         pass
