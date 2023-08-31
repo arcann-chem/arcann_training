@@ -46,7 +46,7 @@ def main(
 
     # Log the step and phase of the program
     logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}"
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
     )
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
@@ -122,9 +122,9 @@ def main(
     logging.debug(f"machine_launch_command: {machine_launch_command}")
 
     if fake_machine is not None:
-        logging.info(f"Pretending to be on: {fake_machine}")
+        logging.info(f"Pretending to be on: '{fake_machine}'.")
     else:
-        logging.info(f"We are on: {machine}")
+        logging.info(f"We are on: '{machine}'.")
     del fake_machine
 
     # Check prep/launch
@@ -132,9 +132,9 @@ def main(
 
     # Check if we can continue
     if exploration_json["is_launched"]:
-        logging.critical(f"Already launched")
+        logging.critical(f"Already launched...")
         continuing = input(
-            f"Should it be run again? (Y for Yes, anything else to abort)"
+            f"Do you want to continue?\n['Y' for yes, anything else to abort]\n"
         )
         if continuing == "Y":
             del continuing
@@ -142,7 +142,7 @@ def main(
             logging.error(f"Aborting...")
             return 1
     if not exploration_json["is_locked"]:
-        logging.error(f"Lock found. Execute first: training preparation")
+        logging.error(f"Lock found. Execute first: training preparation.")
         logging.error(f"Aborting...")
         return 1
 
@@ -171,17 +171,17 @@ def main(
                             ]
                         )
                         logging.info(
-                            f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' launched"
+                            f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' launched."
                         )
                         completed_count += 1
                     except FileNotFoundError:
                         logging.critical(
-                            f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' NOT launched - '{exploration_json['launch_command']}' not found"
+                            f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' NOT launched - '{exploration_json['launch_command']}' not found."
                         )
                     change_directory(local_path.parent.parent.parent)
                 else:
                     logging.critical(
-                        f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' NOT launched - No job file"
+                        f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' NOT launched - No job file."
                     )
                 del local_path
             del traj_index
@@ -219,10 +219,10 @@ def main(
         logging.critical(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!"
         )
-        logging.critical(f"Some SLURM jobs did not launch correctly")
-        logging.critical(f"Please launch manually before continuing to the next step")
+        logging.critical(f"Some SLURM jobs did not launch correctly.")
+        logging.critical(f"Please launch manually before continuing to the next step.")
         logging.critical(
-            f"Replace the key 'is_launched' to 'True' in the 'training_{padded_curr_iter}.json'"
+            f"Replace the key 'is_launched' to 'True' in the 'training_{padded_curr_iter}.json'."
         )
     del completed_count
 

@@ -69,7 +69,7 @@ def main(
 
     # Log the step and phase of the program
     logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}"
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
     )
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
@@ -419,7 +419,7 @@ def main(
             )
             if system_temperature_K == -1:
                 logging.error(
-                    f"No temperature found in the xml: {training_path / 'files' / (system_auto + '.xml')}"
+                    f"No temperature found in the xml: '{training_path / 'files' / (system_auto + '.xml')}'."
                 )
                 logging.error("Aborting...")
                 sys.exit(1)
@@ -833,7 +833,7 @@ def main(
                     )
                     del job_file
                 else:
-                    logging.error(f"Exploration is unknown/not set")
+                    logging.error(f"Exploration is unknown/not set.")
                     logging.error(f"Aborting...")
                     sys.exit(1)
 
@@ -887,6 +887,13 @@ def main(
     backup_and_overwrite_json_file(
         merged_input_json, (current_path / user_input_json_filename)
     )
+    
+    # End
+    logging.info(f"-" * 88)
+    logging.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
+    )
+
     return 0
 
 

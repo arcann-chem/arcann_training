@@ -41,7 +41,7 @@ def main(
 
     # Log the step and phase of the program
     logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}"
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
     )
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
@@ -64,7 +64,7 @@ def main(
 
     # Check if we can continue
     if not exploration_json["is_launched"]:
-        logging.error(f"Lock found. Execute first: exploration launch")
+        logging.error(f"Lock found. Execute first: exploration launch.")
         logging.error(f"Aborting...")
         return 1
 
@@ -119,16 +119,16 @@ def main(
                             exploration_json["systems_auto"][system_auto][
                                 "skipped_count"
                             ] += 1
-                            logging.warning(f"'{lammps_output_file}' skipped")
+                            logging.warning(f"'{lammps_output_file}' skipped.")
                         elif (local_path / "force").is_file():
                             forced_count += 1
                             exploration_json["systems_auto"][system_auto][
                                 "forced_count"
                             ] += 1
-                            logging.warning(f"'{lammps_output_file}' forced")
+                            logging.warning(f"'{lammps_output_file}' forced.")
                         else:
                             logging.critical(
-                                f"'{lammps_output_file}' failed. Check manually"
+                                f"'{lammps_output_file}' failed. Check manually."
                             )
                         del lammps_output
                     elif (local_path / "skip").is_file():
@@ -136,10 +136,10 @@ def main(
                         exploration_json["systems_auto"][system_auto][
                             "skipped_count"
                         ] += 1
-                        logging.warning(f"'{lammps_output_file}' skipped")
+                        logging.warning(f"'{lammps_output_file}' skipped.")
                     else:
                         logging.critical(
-                            f"'{lammps_output_file}' failed. Check manually"
+                            f"'{lammps_output_file}' failed. Check manually."
                         )
                     del lammps_output_file
 
@@ -174,16 +174,16 @@ def main(
                             exploration_json["systems_auto"][system_auto][
                                 "skipped_count"
                             ] += 1
-                            logging.warning(f"'{ipi_output_file}' skipped")
+                            logging.warning(f"'{ipi_output_file}' skipped.")
                         elif (local_path / "force").is_file():
                             forced_count += 1
                             exploration_json["systems_auto"][system_auto][
                                 "forced_count"
                             ] += 1
-                            logging.warning(f"'{ipi_output_file}' forced")
+                            logging.warning(f"'{ipi_output_file}' forced.")
                         else:
                             logging.critical(
-                                f"'{ipi_output_file}' failed. Check manually"
+                                f"'{ipi_output_file}' failed. Check manually."
                             )
                         del ipi_output
                     elif (local_path / "skip").is_file():
@@ -191,14 +191,14 @@ def main(
                         exploration_json["systems_auto"][system_auto][
                             "skipped_count"
                         ] += 1
-                        logging.warning(f"'{ipi_output_file}' skipped")
+                        logging.warning(f"'{ipi_output_file}' skipped.")
                     else:
-                        logging.critical(f"'{ipi_output_file}' failed. Check manually")
+                        logging.critical(f"'{ipi_output_file}' failed. Check manually.")
                     del ipi_output_file
 
                 else:
                     logging.error(
-                        f"'{exploration_json['exploration_type']}' unknown. Check manually"
+                        f"'{exploration_json['exploration_type']}' unknown. Check manually."
                     )
                     return 1
 
@@ -240,10 +240,10 @@ def main(
         * exploration_json["traj_count"]
     ):
         logging.error(
-            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure !"
+            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!"
         )
-        logging.error(f"Please check manually before relaunching this step")
-        logging.error(f"Or create files named 'skip' or 'force' to skip or force")
+        logging.error(f"Please check manually before relaunching this step.")
+        logging.error(f"Or create files named 'skip' or 'force' to skip or force.")
         logging.error(f"Aborting...")
         return 1
 
@@ -274,10 +274,10 @@ def main(
     logging.info("Cleaning done!")
 
     if (skipped_count + forced_count) != 0:
-        logging.warning(f"'{skipped_count}' systems were skipped")
-        logging.warning(f"'{forced_count}' systems were forced")
+        logging.warning(f"'{skipped_count}' systems were skipped.")
+        logging.warning(f"'{forced_count}' systems were forced.")
     logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success !"
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
     )
     del skipped_count, forced_count
 

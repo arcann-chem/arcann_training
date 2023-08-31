@@ -45,7 +45,7 @@ def main(
 
     # Log the step and phase of the program
     logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}"
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
     )
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
@@ -105,14 +105,14 @@ def main(
 
     # Check if we can continue
     if not exploration_json["is_checked"]:
-        logging.error(f"Lock found. Execute first: exploration check")
+        logging.error(f"Lock found. Execute first: exploration check.")
         logging.error(f"Aborting...")
         return 1
     if (
         exploration_json["exploration_type"] == "i-PI"
         and not exploration_json["is_rechecked"]
     ):
-        logging.critical(f"Lock found. Execute first: first: exploration recheck")
+        logging.critical(f"Lock found. Execute first: first: exploration recheck.")
         logging.critical(f"Aborting...")
         return 1
 
@@ -216,22 +216,22 @@ def main(
                     if nb_steps_expected > (total_row_number - start_row_number):
                         QbC_stats["total_count"] = nb_steps_expected
                         logging.critical(
-                            f"Exploration '{system_auto}' / '{it_nnp}' / '{it_number}'"
+                            f"Exploration '{system_auto}' / '{it_nnp}' / '{it_number}'."
                         )
                         logging.critical(
-                            f"Mismatch between expected ('{nb_steps_expected}') number of steps"
+                            f"Mismatch between expected ('{nb_steps_expected}') number of steps."
                         )
                         logging.critical(
-                            f"and actual ('{total_row_number - start_row_number}') number of steps in the deviation file"
+                            f"and actual ('{total_row_number - start_row_number}') number of steps in the deviation file."
                         )
                         if (local_path / "force").is_file():
                             logging.warning(
-                                "but it has been forced, so it should be ok"
+                                "but it has been forced, so it should be ok."
                             )
                     elif nb_steps_expected == (total_row_number - start_row_number):
                         QbC_stats["total_count"] = total_row_number - start_row_number
                     else:
-                        logging.error("Unknown error. Please BUG REPORT")
+                        logging.error("Unknown error. Please BUG REPORT!")
                         logging.error("Aborting...")
                         return 1
 
@@ -446,7 +446,7 @@ def main(
                 * exploration_json["traj_count"]
                 < 0.25
             ):
-                logging.info(
+                logging.warning(
                     "Less than 25% of your exploration trajectories are exploitable. Be careful for the next one."
                 )
             exploration_json["systems_auto"][system_auto]["mean_deviation_max_f"] = (
@@ -646,7 +646,7 @@ def main(
     # End
     logging.info(f"-" * 88)
     logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success !"
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
     )
 
     # Cleaning
