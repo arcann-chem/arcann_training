@@ -6,22 +6,23 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/09/04
 
 Test cases for the xyz module.
 
-Class
------
-TestReadXYZTrajectory
-    Test case for the read_xyz_trajectory() function.
+Classes:
+--------
+TestParseCellFromComment():
+    Test case for the 'parse_cell_from_comment' function.
 
-TestParseCellFromComment
+TestReadXYZTrajectory():
+    Test case for the 'read_xyz_trajectory' function.
 
-TestWriteXYZFrameToFile
-    Test case for the write_xyz_frame() function.
+TestWriteXYZFrameToFile():
+    Test case for the 'write_xyz_frame' function.
 
-TestReadWriteXYZTrajectory
-    Test case for combined use of read_xyz_trajectory() and write_xyz_frame() functions.
+TestReadWriteXYZTrajectory():
+    Test case for combined use of 'read_xyz_trajectory' and 'write_xyz_frame' functions.
 """
 # Standard library modules
 import unittest
@@ -41,6 +42,23 @@ from deepmd_iterative.common.xyz import (
 
 
 class TestParseCellFromComment(unittest.TestCase):
+    """
+    Test case for the 'parse_cell_from_comment' function.
+
+    Methods
+    -------
+    test_nine_numbers_match():
+        Test parsing when nine numbers match pattern.
+    test_three_numbers_match):
+        Test parsing when three numbers match pattern.
+    test_invalid_format():
+        Test parsing when format is invalid.
+    test_empty_input():
+        Test parsing when input is an empty string.
+    test_extra_spaces():
+        Test parsing with extra spaces in the input.
+    """
+
     def test_nine_numbers_match(self):
         """
         Test parsing when nine numbers match pattern.
@@ -87,7 +105,7 @@ class TestParseCellFromComment(unittest.TestCase):
 
 class TestReadXYZTrajectory(unittest.TestCase):
     """
-    Test case for the read_xyz_trajectory() function.
+    Test case for the 'read_xyz_trajectory' function.
 
     Methods
     -------
@@ -95,7 +113,9 @@ class TestReadXYZTrajectory(unittest.TestCase):
         Test that the function returns the expected arrays for a single frame XYZ file.
     test_read_xyz_trajectory():
         Test that the function returns the expected arrays for a multi-frame XYZ file.
-    test_read_xyz_trajectory_variable():
+    test_read_xyz_trajectory_multi_frame_with_variable_cell_info():
+        Test that the function returns the expected arrays for a multi-frame XYZ file with variable cell info.
+    test_read_xyz_trajectory_non_integer_atoms():
         Test that the function raises a TypeError when the number of atoms is not an integer.
     test_read_xyz_trajectory_missing():
         Test that the function raises a FileNotFoundError when the input file is missing.
@@ -179,6 +199,9 @@ class TestReadXYZTrajectory(unittest.TestCase):
         self.tmp_dir.cleanup()
 
     def test_read_xyz_trajectory_oneframe(self):
+        """
+        Test that the function returns the expected arrays for a single frame XYZ file.
+        """
         num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(
             self.file_oneframe_path
         )
@@ -204,6 +227,9 @@ class TestReadXYZTrajectory(unittest.TestCase):
         self.assertFalse(cell_info[0])
 
     def test_read_xyz_trajectory(self):
+        """
+        Test that the function returns the expected arrays for a multi-frame XYZ file.
+        """
         num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(
             self.file_path
         )
@@ -238,7 +264,10 @@ class TestReadXYZTrajectory(unittest.TestCase):
         )
         self.assertFalse(cell_info[1])
 
-    def test_read_xyz_trajectory_abc(self):
+    def test_read_xyz_trajectory_multi_frame_with_variable_cell_info(self):
+        """
+        Test that the function returns the expected arrays for a multi-frame XYZ file with variable cell info.
+        """
         num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(
             self.file_abc_path
         )
@@ -282,27 +311,36 @@ class TestReadXYZTrajectory(unittest.TestCase):
             )
         )
 
-    def test_read_xyz_trajectory_variable(self):
+    def test_read_xyz_trajectory_non_integer_atoms(self):
+        """
+        Test that the function raises a TypeError when the number of atoms is not an integer.
+        """
         with self.assertRaises(TypeError) as cm:
             num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(
                 self.file_var_path
             )
         error_msg = str(cm.exception)
         expected_error_msg = (
-            f"Incorrect file format: number of atoms must be an integer."
+            f"Incorrect file format: number of atoms must be an '{type(1)}'."
         )
         self.assertEqual(error_msg, expected_error_msg)
 
     def test_read_xyz_trajectory_missing(self):
+        """
+        Test that the function raises a FileNotFoundError when the input file is missing.
+        """
         with self.assertRaises(FileNotFoundError) as cm:
             num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(
                 self.file_miss_path
             )
         error_msg = str(cm.exception)
-        expected_error_msg = f"File not found {self.file_miss_path.name} not in {self.file_miss_path.parent}"
+        expected_error_msg = f"File not found '{self.file_miss_path.name}' not in '{self.file_miss_path.parent}'."
         self.assertEqual(error_msg, expected_error_msg)
 
     def test_read_xyz_trajectory_incorrect(self):
+        """
+        Test that the function raises an IndexError when the input file has an incorrect format.
+        """
         with self.assertRaises(IndexError) as cm:
             num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(
                 self.file_inc_path
@@ -314,7 +352,7 @@ class TestReadXYZTrajectory(unittest.TestCase):
 
 class TestWriteXYZFrameToFile(unittest.TestCase):
     """
-    Test case for the write_xyz_frame() function.
+    Test case for the 'write_xyz_frame' function.
 
     Methods
     -------
@@ -332,6 +370,9 @@ class TestWriteXYZFrameToFile(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_write_xyz_frame(self):
+        """
+        Test writing the XYZ coordinates of a specific frame of a trajectory to a file.
+        """
         frame_idx = 0
         num_atoms = np.array([2, 2, 2])
         atom_coords = np.array(
@@ -356,6 +397,9 @@ class TestWriteXYZFrameToFile(unittest.TestCase):
         self.assertEqual(output, expected_output)
 
     def test_write_xyz_frame_frame_idx_out_of_range(self):
+        """
+        Test that an IndexError is raised when the frame index is out of range.
+        """
         frame_idx = 3
         num_atoms = np.array([2, 3, 2])
         atom_coords = np.array(
@@ -374,18 +418,18 @@ class TestWriteXYZFrameToFile(unittest.TestCase):
                 cell_info,
             )
         error_msg = str(cm.exception)
-        expected_error_msg = f"Frame index out of range: {frame_idx} (number of frames: {num_atoms.size})"
+        expected_error_msg = f"Frame index out of range: {frame_idx} (number of frames: {num_atoms.size})."
         self.assertEqual(error_msg, expected_error_msg)
 
 
 class TestReadWriteXYZTrajectory(unittest.TestCase):
     """
-    Test case for combined use of read_xyz_trajectory() and write_xyz_frame() functions.
+    Test case for combined use of 'read_xyz_trajectory' and 'write_xyz_frame' functions.
 
     Methods
     -------
     test_read_write_xyz_trajectory():
-        Test reading and writing a trajectory in xyz format
+        Test reading and writing a trajectory in xyz format.
     """
 
     def setUp(self):
@@ -410,6 +454,9 @@ class TestReadWriteXYZTrajectory(unittest.TestCase):
         self.tmp_dir.cleanup()
 
     def test_read_write_xyz_trajectory(self):
+        """
+        Test reading and writing a trajectory in xyz format.
+        """
         num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(
             self.file_path
         )

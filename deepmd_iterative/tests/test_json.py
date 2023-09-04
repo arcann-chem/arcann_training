@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/09/04
 
 Test cases for the json module.
 
@@ -175,7 +175,7 @@ class TestBackupAndOverwriteJsonFile(unittest.TestCase):
         with self.assertRaises(TypeError) as cm:
             backup_and_overwrite_json_file(initial_data, "invalid_path.json")
         error_msg = str(cm.exception)
-        expected_error_msg = f"file_path must be a Path object."
+        expected_error_msg = f"'invalid_path.json' must be a '{type(Path('.'))}'."
         self.assertEqual(error_msg, expected_error_msg)
 
 
@@ -228,7 +228,7 @@ class TestLoadDefaultJsonFile(unittest.TestCase):
         with self.assertRaises(TypeError) as cm:
             load_default_json_file("invalid_path.json")
         error_msg = str(cm.exception)
-        expected_error_msg = f"'file_path' must be a Path object."
+        expected_error_msg = f"'invalid_path.json' must be a '{type(Path('.'))}'."
         self.assertEqual(error_msg, expected_error_msg)
 
 
@@ -269,7 +269,7 @@ class TestLoadJsonFile(unittest.TestCase):
         with self.assertRaises(FileNotFoundError) as cm:
             load_json_file(file_path)
         error_msg = str(cm.exception)
-        expected_error_msg = f"File {file_path.name} not found in {file_path.parent}."
+        expected_error_msg = f"File '{file_path.name}' not found in '{file_path.parent}'."
         self.assertEqual(error_msg, expected_error_msg)
 
     def test_load_nonexistent_json_file_without_abort_on_error(self):
@@ -288,7 +288,7 @@ class TestLoadJsonFile(unittest.TestCase):
         with self.assertRaises(TypeError) as cm:
             load_json_file("invalid_path.json")
         error_msg = str(cm.exception)
-        expected_error_msg = f"'file_path' must be a Path object."
+        expected_error_msg = f"'invalid_path.json' must be a '{type(Path('.'))}'."
         self.assertEqual(error_msg, expected_error_msg)
 
 
@@ -334,7 +334,7 @@ class TestWriteJsonFile(unittest.TestCase):
         with self.assertRaises(TypeError) as cm:
             write_json_file(self.json_data, "invalid_path.json")
         error_msg = str(cm.exception)
-        expected_error_msg = f"file_path must be a Path object."
+        expected_error_msg = f"'invalid_path.json' must be a '{type(Path('.'))}'."
         self.assertEqual(error_msg, expected_error_msg)
 
     def test_write_json_file_with_ioerror(self):

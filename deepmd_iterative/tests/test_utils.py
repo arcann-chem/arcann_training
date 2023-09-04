@@ -6,25 +6,31 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/09/04
 
-Test cases for the utils module.
+Test case for the utils module.
 
-Class
------
-TestConvertSecondsToHhMmSs
-    Test case for the convert_seconds_to_hh_mm_ss() function.
+Classes
+-------
+TestConvertSecondsToHhMmSs():
+    Test case for the 'convert_seconds_to_hh_mm_ss' function.
+
+TestCatchErrorsDecorator():
+    Test case for the 'catch_errors_decorator' function.
 """
 # Standard library modules
 import unittest
 
 # Local imports
-from deepmd_iterative.common.utils import convert_seconds_to_hh_mm_ss
+from deepmd_iterative.common.utils import (
+    convert_seconds_to_hh_mm_ss,
+    catch_errors_decorator,
+)
 
 
 class TestConvertSecondsToHhMmSs(unittest.TestCase):
     """
-    Test case for the convert_seconds_to_hh_mm_ss() function.
+    Test case for the 'convert_seconds_to_hh_mm_ss' function.
 
     Methods
     -------
@@ -33,7 +39,7 @@ class TestConvertSecondsToHhMmSs(unittest.TestCase):
     """
 
     def test_convert_seconds_to_hh_mm_ss(self):
-        # Test conversion of various time durations in seconds to the HH:MM:SS format
+        """Test conversion of various time durations in seconds to the HH:MM:SS format."""
         test_cases = [
             (0, "0:00:00"),
             (1, "0:00:01"),
@@ -45,6 +51,42 @@ class TestConvertSecondsToHhMmSs(unittest.TestCase):
         for seconds, expected_output in test_cases:
             with self.subTest(seconds=seconds, expected_output=expected_output):
                 self.assertEqual(convert_seconds_to_hh_mm_ss(seconds), expected_output)
+
+
+class TestCatchErrorsDecorator(unittest.TestCase):
+    """
+    Test case for the 'catch_errors_decorator' function.
+
+    Methods
+    -------
+    test_no_exception():
+        Test the decorator behavior when the decorated function runs without exceptions.
+
+    test_exception_raised():
+        Test the decorator behavior when the decorated function raises an exception.
+    """
+
+    def test_no_exception(self):
+        """
+        Test the decorator behavior when the decorated function runs without exceptions.
+        """
+
+        @catch_errors_decorator
+        def func_no_exception():
+            return 42
+
+        result = func_no_exception()
+        self.assertEqual(result, 42)
+
+    def test_exception_raised(self):
+        """Test the decorator behavior when the decorated function raises an exception."""
+
+        @catch_errors_decorator
+        def func_with_exception():
+            raise ValueError("Test exception")
+
+        with self.assertRaises(ValueError):
+            func_with_exception()
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/22
+Last modified: 2023/09/04
 
 The xyz module provides functions to manipulate XYZ data (as np.ndarray).
 
@@ -120,7 +120,7 @@ def read_xyz_trajectory(
     # Check if the file exists
     if not file_path.is_file():
         # If the file does not exist, log an error message and abort
-        error_msg = f"File not found `{file_path.name}` not in `{file_path.parent}`"
+        error_msg = f"File not found '{file_path.name}' not in '{file_path.parent}'."
         raise FileNotFoundError(error_msg)
 
     # Initialize the output lists
@@ -139,7 +139,9 @@ def read_xyz_trajectory(
             # First line contains the total number of atoms in the molecule
             num_atoms_str = lines[i].strip()
             if not re.match(r"^\d+$", num_atoms_str):
-                error_msg = f"Incorrect file format: number of atoms must be an `{type(1)}`"
+                error_msg = (
+                    f"Incorrect file format: number of atoms must be an '{type(1)}'."
+                )
                 raise TypeError(error_msg)
             num_atoms = int(num_atoms_str)
             num_atoms_list.append(num_atoms)
@@ -159,21 +161,23 @@ def read_xyz_trajectory(
                 try:
                     fields = lines[i + j + 2].split()
                 except IndexError:
-                    error_msg = f"Incorrect file format: end of file reached prematurely"
+                    error_msg = (
+                        f"Incorrect file format: end of file reached prematurely."
+                    )
                     raise IndexError(error_msg)
 
                 if len(fields) != 4:
-                    error_msg = f"Incorrect file format: each line after the first two must contain an atomic symbol and three floating point numbers"
+                    error_msg = f"Incorrect file format: each line after the first two must contain an atomic symbol and three floating point numbers."
                     raise ValueError(error_msg)
 
                 symbol = fields[0]
                 if not re.match(r"^[A-Za-z]{1,2}$", symbol):
-                    error_msg = f"Incorrect file format: invalid atomic symbol `{symbol}` on line {i+j+2}"
+                    error_msg = f"Incorrect file format: invalid atomic symbol '{symbol}' on line {i+j+2}."
                     raise ValueError(error_msg)
                 try:
                     x, y, z = map(float, fields[1:4])
                 except ValueError:
-                    error_msg = f"Incorrect file format: could not parse coordinates on line {i+j+2}"
+                    error_msg = f"Incorrect file format: could not parse coordinates on line {i+j+2}."
                     raise ValueError(error_msg)
 
                 # Add the symbol and coordinates to the arrays
@@ -189,13 +193,13 @@ def read_xyz_trajectory(
 
     # Check if the number of atoms is constant throughout the trajectory file.
     if len(set(num_atoms_list)) > 1:
-        error_msg = f"Number of atoms is not constant throughout the trajectory file"
+        error_msg = f"Number of atoms is not constant throughout the trajectory file."
         raise ValueError(error_msg)
 
     valid_cell_types = {np.ndarray, bool}
     cell_types = {type(cell) for cell in cell_info_list}
     if len(cell_types) > 1 or not (cell_types <= valid_cell_types):
-        error_msg = f"The comment line format is inconsistent"
+        error_msg = f"The comment line format is inconsistent."
         raise TypeError(error_msg)
 
     # Convert the lists to numpy arrays.
@@ -248,7 +252,7 @@ def write_xyz_frame(
     """
     # Check that the specified frame index is within the range of available frames
     if frame_idx >= num_atoms.size:
-        error_msg = f"Frame index out of range: {frame_idx} (number of frames: {num_atoms.size})"
+        error_msg = f"Frame index out of range: {frame_idx} (number of frames: {num_atoms.size})."
         raise IndexError(error_msg)
     # Open the specified file in write mode
     with file_path.open("w") as xyz_file:

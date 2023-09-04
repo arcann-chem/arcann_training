@@ -6,23 +6,23 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/09/04
 
 Test cases for the xml module.
 
-Class
------
-TestStringListToXml
-    Test case for the string_list_to_xml() function.
+Classes
+-------
+TestStringListToXml():
+    Test case for the 'string_list_to_xml' function.
 
-TestXmlToStringList
-    Test case for the xml_to_string_list() function.
+TestXmlToStringList():
+    Test case for the 'xml_to_string_list' function.
 
-TestReadXmlFile
-    Test case for the read_xml_file() function.
+TestReadXmlFile():
+    Test case for the 'read_xml_file' function.
 
-TestWriteXmlFile
-    Test case for the write_xml_file() function.
+TestWriteXmlFile():
+    Test case for the 'write_xml_file' function.
 """
 # Standard library modules
 import unittest
@@ -42,7 +42,7 @@ from deepmd_iterative.common.xml import (
 
 class TestStringListToXml(unittest.TestCase):
     """
-    Test case for the string_list_to_xml() function.
+    Test case for the 'string_list_to_xml' function.
 
     Methods
     -------
@@ -69,6 +69,9 @@ class TestStringListToXml(unittest.TestCase):
         pass
 
     def test_string_list_to_xml(self):
+        """
+        Test that the function correctly converts a list of strings to a XML tree.
+        """
         lines = xml_to_string_list(self.xml_tree)
         tree = string_list_to_xml(lines)
         self.assertIsInstance(tree, ET.ElementTree)
@@ -77,12 +80,12 @@ class TestStringListToXml(unittest.TestCase):
 
 class TestXmlToStringList(unittest.TestCase):
     """
-    Test case for the xml_to_string_list() function.
+    Test case for the 'xml_to_string_list' function.
 
     Methods
     -------
     test_xml_to_string_list():
-        Test that the function correctly converts a XML tree to a list of strings.
+        Test that the function correctly converts an XML tree to a list of strings.
     """
 
     def setUp(self):
@@ -101,13 +104,16 @@ class TestXmlToStringList(unittest.TestCase):
         pass
 
     def test_xml_to_string_list(self):
+        """
+        Test that the 'xml_to_string_list' function correctly converts an XML tree to a list of strings.
+        """
         lines = xml_to_string_list(self.xml_tree)
         self.assertListEqual(lines, self.expected_lines_no_spaces)
 
 
 class TestReadXmlFile(unittest.TestCase):
     """
-    Test case for the read_xml_file() function.
+    Test case for the 'read_xml_file' function.
 
     Methods
     -------
@@ -126,17 +132,23 @@ class TestReadXmlFile(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_file_not_found(self):
+        """
+        Test that a FileNotFoundError is raised when trying to parse a non-existent file.
+        """
         xml_file_path = Path(self.temp_dir.name) / "nonexistent.xml"
 
         with self.assertRaises(FileNotFoundError) as cm:
             read_xml_file(xml_file_path)
         error_msg = str(cm.exception)
         expected_error_msg = (
-            f"File not found {xml_file_path.name} not in {xml_file_path.parent}"
+            f"File not found '{xml_file_path.name}' not in '{xml_file_path.parent}'."
         )
         self.assertEqual(error_msg, expected_error_msg)
 
     def test_parse_error(self):
+        """
+        Test that an ET.ParseError is raised when trying to parse a file with a syntax error.
+        """
         # Create a test XML string with a syntax error
         malformed_xml = """<?xml version="1.0" encoding="UTF-8"?>
             <root>
@@ -153,10 +165,13 @@ class TestReadXmlFile(unittest.TestCase):
         with self.assertRaises(ET.ParseError) as cm:
             read_xml_file(xml_file_path)
         error_msg = str(cm.exception)
-        expected_error_msg = f"Failed to parse XML file: {xml_file_path.name}"
+        expected_error_msg = f"Failed to parse XML file: '{xml_file_path.name}'."
         self.assertEqual(error_msg, expected_error_msg)
 
     def test_valid_file(self):
+        """
+        Test that a valid XML file is parsed correctly and has the expected structure.
+        """
         # Create a test XML string with a valid structure
         valid_xml = """<?xml version="1.0" encoding="UTF-8"?>
             <root>
@@ -187,7 +202,7 @@ class TestReadXmlFile(unittest.TestCase):
 
 class TestWriteXmlFile(unittest.TestCase):
     """
-    Test case for the write_xml_file() function.
+    Test case for the 'write_xml_file' function.
 
     Methods
     -------
@@ -209,6 +224,9 @@ class TestWriteXmlFile(unittest.TestCase):
         Path.unlink(self.tmp_file_path)
 
     def test_write_xml_file(self):
+        """
+        Test that a valid XML file is writtend correctly and has the expected structure.
+        """
         write_xml_file(self.xml_tree, self.tmp_file_path)
         with self.tmp_file_path.open("r") as f:
             file_contents = f.read()

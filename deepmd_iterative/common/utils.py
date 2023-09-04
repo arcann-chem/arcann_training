@@ -6,14 +6,14 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/22
+Last modified: 2023/09/04
 
 The utils module provides helper functions.
 
 Functions
 ---------
 catch_errors_decorator(func: Callable[..., Any]) -> Callable[..., Any]
-    A decorator to wrap a function and catche exceptions raised during its execution.
+    A decorator to wrap a function and catch exceptions raised during its execution.
 
 convert_seconds_to_hh_mm_ss(seconds: float) -> str
     A function to convert a time duration in seconds to the format of HH:MM:SS.
@@ -23,9 +23,10 @@ import logging
 from typing import Any, Callable
 
 
+# Unittested
 def catch_errors_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
     """
-    Wrap a function and catches exceptions raised during its execution.
+    A decorator to wrap a function and catch exceptions raised during its execution.
 
     Parameters
     ----------
@@ -48,7 +49,7 @@ def catch_errors_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             return func(*args, **kwargs)
         except Exception as e:
             logging.debug(
-                f"An error occurred while executing `{func.__name__}`: `{e.__class__.__name__}`"
+                f"An error occurred while executing '{func.__name__}': '{e.__class__.__name__}'"
             )
             logging.error(f"{e}")
             logging.error(f"Aborting...")
@@ -61,7 +62,7 @@ def catch_errors_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
 @catch_errors_decorator
 def convert_seconds_to_hh_mm_ss(seconds: float) -> str:
     """
-    Convert a time duration in seconds to the format of HH:MM:SS.
+    A function to convert a time duration in seconds to the format of HH:MM:SS.
 
     Parameters
     ----------

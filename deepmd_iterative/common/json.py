@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/22
+Last modified: 2023/09/04
 
 The json module provides functions to manipulate JSON data (as dict).
 
@@ -71,16 +71,16 @@ def add_key_value_to_dict(dictionary: Dict, key: str, value: Any) -> None:
         If key is an empty string.
     """
     if not isinstance(dictionary, dict):
-        error_msg = f"The dictionary argument must be a `{type({})}`"
+        error_msg = f"The dictionary argument must be a '{type({})}'."
         raise TypeError(error_msg)
     if not isinstance(key, str):
-        error_msg = f"The key argument must be a `{type('')}`"
+        error_msg = f"The key argument must be a '{type('')}'."
         raise TypeError(error_msg)
     if key == "":
-        error_msg = f"The key argument must not be an empty `{type('')}`"
+        error_msg = f"The key argument must not be an empty '{type('')}'."
         raise ValueError(error_msg)
     if value is None:
-        error_msg = f"The value argument cannot be `None`"
+        error_msg = f"The value argument cannot be 'None'."
         raise TypeError(error_msg)
 
     dictionary.setdefault(key, {})["value"] = value
@@ -122,13 +122,13 @@ def get_key_in_dict(
         value = default_json[key]
     else:
         # The key is not present in any of the JSON.
-        error_msg = f"`{key}` not found in any JSON."
+        error_msg = f"'{key}' not found in any JSON."
         raise KeyError(error_msg)
 
     # Check if the value is of the correct type.
     if not isinstance(value, type(default_json[key])):
         # The value is not of the correct type.
-        error_msg = f"Wrong type: `{key}` is `{type(value)}` and it should be a `{type(default_json[key])}`"
+        error_msg = f"Wrong type: '{key}' is '{type(value)}' and it should be a '{type(default_json[key])}'."
         raise TypeError(error_msg)
 
     return value
@@ -163,7 +163,7 @@ def backup_and_overwrite_json_file(
         If file_path is not a Path object.
     """
     if not isinstance(file_path, Path):
-        error_msg = f"`{file_path}` must be a `{type(Path('.'))}`"
+        error_msg = f"'{file_path}' must be a '{type(Path('.'))}'."
         raise TypeError(error_msg)
 
     backup_path = file_path.with_suffix(".json.bak")
@@ -202,7 +202,7 @@ def load_default_json_file(file_path: Path) -> Dict:
         If file_path is not a Path object.
     """
     if not isinstance(file_path, Path):
-        error_msg = f"`{file_path}` must be a `{type(Path('.'))}`"
+        error_msg = f"'{file_path}' must be a '{type(Path('.'))}'."
         raise TypeError(error_msg)
 
     # Check if the file exists and is a file
@@ -217,7 +217,7 @@ def load_default_json_file(file_path: Path) -> Dict:
     else:
         # If the file cannot be found, return an empty dictionary and log a warning
         logging.warning(
-            f"Default file `{file_path.name}` not found in `{file_path.parent}`"
+            f"Default file '{file_path.name}' not found in '{file_path.parent}'."
         )
         logging.warning(f"Check your installation")
         return {}
@@ -253,14 +253,14 @@ def load_json_file(
         If the file cannot be found and abort_on_error is True.
     """
     if not isinstance(file_path, Path):
-        error_msg = f"`{file_path}` must be a `{type(Path('.'))}`"
+        error_msg = f"'{file_path}' must be a '{type(Path('.'))}'."
         raise TypeError(error_msg)
 
     # Check if the file exists and is a file
     if file_path.is_file():
         # If logging is enabled, log information about the loading process
         if enable_logging:
-            logging.info(f"Loading `{file_path.name}` from `{file_path.parent}`")
+            logging.info(f"Loading '{file_path.name}' from '{file_path.parent}'.")
         # Open the file and load the contents as a dictionary
         with file_path.open(encoding="UTF-8") as json_file:
             # Check if the file is empty
@@ -271,14 +271,14 @@ def load_json_file(
     else:
         # If the file cannot be found and abort_on_error is True, log an error message and exit with an error code
         if abort_on_error:
-            error_msg = f"File `{file_path.name}` not found in `{file_path.parent}`"
+            error_msg = f"File '{file_path.name}' not found in '{file_path.parent}'."
             raise FileNotFoundError(error_msg)
         # If abort_on_error is False, return an empty dictionary
         else:
             # If logging is enabled, log information about the creation of the empty dictionary
             if enable_logging:
                 logging.info(
-                    f"Creating an empty dictionary: `{file_path.name}` in `{file_path.parent}`"
+                    f"Creating an empty dictionary: '{file_path.name}' in '{file_path.parent}'."
                 )
             return {}
 
@@ -315,7 +315,7 @@ def write_json_file(
         If the file cannot be written.
     """
     if not isinstance(file_path, Path):
-        error_msg = f"`{file_path}` must be a `{type(Path('.'))}`"
+        error_msg = f"'{file_path}' must be a '{type(Path('.'))}'."
         raise TypeError(error_msg)
 
     try:
@@ -325,8 +325,8 @@ def write_json_file(
             json.dump(json_dict, json_file, indent=kwargs.get("indent", 4))
             # If log_write is True, log a message indicating the file and path that the JSON data is being written to
             if enable_logging:
-                logging.info(f"JSON data written to `{file_path.absolute()}`")
+                logging.info(f"JSON data written to '{file_path.absolute()}'.")
     except (OSError, IOError) as e:
         # Raise an exception if the file path is not valid or the file cannot be written
-        error_msg = f"Error writing JSON data to file `{file_path}`: `{e}`"
+        error_msg = f"Error writing JSON data to file '{file_path}': '{e}'."
         raise Exception(error_msg)
