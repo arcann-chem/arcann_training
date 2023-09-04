@@ -452,19 +452,45 @@ def generate_input_exploration_disturbed_json(
         merged_input_json[key] = []
 
         # Default is used for the key
+        # Default is used for the key
         if default_used:
             merged_input_json[key] = [value[exploration_dep]] * system_count
         else:
-            # Check if previous or user provided a list
-            # if key == "disturbed_start_indexes" or key == "disturbed_candidate_indexes":
-            #     if isinstance(value, List):
-            #         for it_value in value:
-            #             if isinstance(it_value, List):
-            #                 for
-
-
-
-            if isinstance(value, List):
+            if key == "disturbed_start_indexes" or key == "disturbed_candidate_indexes":
+                is_list_of_list = False
+                if isinstance(value, List):
+                    # Search if it is a list of list
+                    for it_value in value:
+                        if isinstance(it_value, List):
+                            is_list_of_list = True
+                            break
+                    if not is_list_of_list:
+                        # If it is not a list of list, and empty, keep the empty list everywhere
+                        if not value:
+                            merged_input_json[key] = [value] * system_count
+                        else:
+                            for it_value in value:
+                                if not isinstance(it_value, int):
+                                    error_msg = f"Type mismatch: the type is '{type(it_value)}', but it should be '{type(1)}'."
+                                    raise TypeError(error_msg)
+                            merged_input_json[key] = [value] * system_count
+                    else:
+                        if len(value) != system_count:
+                            error_msg = f"Size mismatch: The length of the list should be '{system_count}' corresponding to the number of systems."
+                            raise ValueError(error_msg)
+                        for it_value in value:
+                            if not isinstance(it_value, List):
+                                error_msg = f"Type mismatch: the type is '{type(it_value)}', but it should be '{type([])}'."
+                                raise TypeError(error_msg)
+                            if not it_value:
+                                merged_input_json[key].append(it_value)
+                            else:
+                                for it_it_value in it_value:
+                                    if not isinstance(it_it_value, (int)):
+                                        error_msg = f"Type mismatch: the type is '{type(it_it_value)}', but it should be '{type(1)}'."
+                                        raise TypeError(error_msg)
+                                merged_input_json[key].append(it_value)
+            elif isinstance(value, List):
                 if len(value) == system_count:
                     for it_value in value:
                         if isinstance(it_value, (int, float)):

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/01
+Last modified: 2023/09/04
 """
 # Standard library modules
 import copy
@@ -251,20 +251,38 @@ def main(
                         # Atomsk XYZ ==> XYZ_disturbed
                         remove_file((starting_structures_path/f"{min_file_name}_{padded_min_index}_disturbed.xyz"))
                         (starting_structures_path/f"{min_file_name}_{padded_min_index}_disturbed.xyz").write_text((starting_structures_path/f"{min_file_name}_{padded_min_index}.xyz").read_text())
-                        subprocess.run(
-                            [
-                                atomsk_bin,
-                                "-ow",
-                                str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}_disturbed.xyz"),
-                                "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][0]), "H1",
-                                "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][1]), "H2",
-                                "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][2]), "H3",
-                                "-disturb", str(disturbed_start_value),
-                                "xyz"
-                            ],
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.STDOUT
-                        )
+
+                        if not disturbed_start_indexes :
+                            subprocess.run(
+                                [
+                                    atomsk_bin,
+                                    "-ow",
+                                    str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}_disturbed.xyz"),
+                                    "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][0]), "H1",
+                                    "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][1]), "H2",
+                                    "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][2]), "H3",
+                                    "-disturb", str(disturbed_start_value),
+                                    "xyz"
+                                ],
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.STDOUT
+                            )
+                        else:
+                            subprocess.run(
+                                [
+                                    atomsk_bin,
+                                    "-ow",
+                                    str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}_disturbed.xyz"),
+                                    "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][0]), "H1",
+                                    "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][1]), "H2",
+                                    "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][2]), "H3",
+                                    "-select", ",".join([str(idx) for idx in disturbed_start_indexes]),
+                                    "-disturb", str(disturbed_start_value),
+                                    "xyz"
+                                ],
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.STDOUT
+                            )
 
                         # Atomsk XYZ -> LMP
                         remove_file(starting_structures_path / f"{min_file_name}_{padded_min_index}_disturbed.lmp")
@@ -324,6 +342,9 @@ def main(
 
                     candidate_indexes_padded = [ _.zfill(5) for _ in candidate_indexes]
                     candidates_files.extend([str( Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / ("candidates_"+_+".xyz") ) for _ in candidate_indexes_padded])
+                    
+                    
+                    # Here disturbed:
 
         string_list_to_textfile((current_path / "gather.atomsk"), candidates_files)
         subprocess.run(
@@ -334,8 +355,8 @@ def main(
                 str(Path(".") / "gather.atomsk"),
                 str(Path(".") / system_auto / f"candidates_{padded_curr_iter}_{system_auto}.xyz")
             ],
-            #stdout=subprocess.DEVNULL,
-            #stderr=subprocess.STDOUT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
         )
         remove_file((current_path / "gather.atomsk"))
         for  _ in candidates_files:
