@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/31
+Last modified: 2023/09/04
 """
 # Standard library modules
 import copy
@@ -312,10 +312,11 @@ def main(
             system_init_exp_time_ps,
             system_init_job_walltime_h,
             system_print_mult,
+            system_previous_start,
             system_disturbed_start,
         ) = get_system_exploration(merged_input_json, system_auto_index)
         logging.debug(
-            f"{system_timestep_ps,system_temperature_K,system_exp_time_ps,system_max_exp_time_ps,system_job_walltime_h,system_init_exp_time_ps,system_init_job_walltime_h,system_print_mult,system_disturbed_start}"
+            f"{system_timestep_ps,system_temperature_K,system_exp_time_ps,system_max_exp_time_ps,system_job_walltime_h,system_init_exp_time_ps,system_init_job_walltime_h,system_print_mult,system_previous_start,system_disturbed_start}"
         )
 
         # Disturbed start ?
@@ -327,6 +328,7 @@ def main(
             (
                 starting_points,
                 starting_points_bckp,
+                system_previous_start,
                 system_disturbed_start,
             ) = generate_starting_points(
                 exploration_type,
@@ -335,6 +337,7 @@ def main(
                 padded_curr_iter,
                 previous_exploration_json,
                 user_input_json_present,
+                system_previous_start,
                 system_disturbed_start,
             )
 
@@ -847,6 +850,9 @@ def main(
         exploration_json["systems_auto"][system_auto][
             "timestep_ps"
         ] = system_timestep_ps
+        exploration_json["systems_auto"][system_auto][
+            "previous_start"
+        ] = system_previous_start
         exploration_json["systems_auto"][system_auto][
             "disturbed_start"
         ] = system_disturbed_start

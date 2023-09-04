@@ -33,6 +33,7 @@ set_input_explordevi_json(user_input_json: Dict, previous_json: Dict, default_in
 """
 # Standard library modules
 import subprocess
+from copy import deepcopy
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
@@ -103,6 +104,7 @@ def generate_input_exploration_json(
         "init_exp_time_ps",
         "init_job_walltime_h",
         "print_interval_mult",
+        "previous_start",
         "disturbed_start",
     ]:
         # Get the value
@@ -135,25 +137,25 @@ def generate_input_exploration_json(
                     for it_value in value:
                         if (
                             isinstance(it_value, (int, float))
-                            and key != "disturbed_start"
+                            and (key != "disturbed_start" and key != "previous_start")
                         ) or (
-                            isinstance(it_value, (bool)) and key == "disturbed_start"
+                            isinstance(it_value, (bool)) and (key == "disturbed_start" or key == "previous_start")
                         ):
                             merged_input_json[key].append(it_value)
                         else:
-                            error_msg = f"Type mismatch: the type is '{type(it_value)}', but it should be '{type(1)}' or '{type(1.0)}' or '{type(True)}' (for disturbed_start)"
+                            error_msg = f"Type mismatch: the type is '{type(it_value)}', but it should be '{type(1)}' or '{type(1.0)}' or '{type(True)}' (for previous_start or disturbed_start)"
                             raise TypeError(error_msg)
                 else:
                     error_msg = f"Size mismatch: The length of the list should be '{system_count}' corresponding to the number of systems."
                     raise ValueError(error_msg)
 
             # If it is not a List
-            elif (isinstance(value, (int, float)) and key != "disturbed_start") or (
-                isinstance(value, (bool)) and key == "disturbed_start"
+            elif (isinstance(value, (int, float)) and (key != "disturbed_start" and key != "previous_start")) or (
+                isinstance(value, (bool)) and (key == "disturbed_start" or key == "previous_start")
             ):
                 merged_input_json[key] = [value] * system_count
             else:
-                error_msg = f"Type mismatch: the type is '{type(it_value)}', but it should be '{type(1)}' or '{type(1.0)}' or '{type(True)}' (for disturbed_start)"
+                error_msg = f"Type mismatch: the type is '{type(it_value)}', but it should be '{type(1)}' or '{type(1.0)}' or '{type(True)}' (for previous_start or disturbed_start)"
                 raise TypeError(error_msg)
 
     return merged_input_json
@@ -171,6 +173,7 @@ def get_system_exploration(
     Union[float, int],
     Union[float, int],
     Union[float, int],
+    bool,
     bool,
 ]:
     """
@@ -203,6 +206,8 @@ def get_system_exploration(
             Initial job walltime in hours.
         - print_interval_mult : float
             Print interval multiplier.
+        - previous_start : bool
+            Whether to start exploration from a previous minimum.
         - disturbed_start : bool
             Whether to start exploration from a disturbed minimum.
     """
@@ -216,6 +221,7 @@ def get_system_exploration(
         "init_exp_time_ps",
         "init_job_walltime_h",
         "print_interval_mult",
+        "previous_start",
         "disturbed_start",
     ]:
         system_values.append(merged_input_json[key][system_auto_index])
@@ -454,10 +460,10 @@ def generate_input_exploration_disturbed_json(
             #     if isinstance(value, List):
             #         for it_value in value:
             #             if isinstance(it_value, List):
-            #                 for 
-                        
-                
-                
+            #                 for
+
+
+
             if isinstance(value, List):
                 if len(value) == system_count:
                     for it_value in value:
@@ -520,6 +526,7 @@ def generate_starting_points(
     padded_prev_iter: str,
     previous_json: Dict,
     input_present: bool,
+    previous_start: bool,
     disturbed_start: bool,
 ) -> Tuple[List[str], List[str], bool]:
     """
@@ -539,6 +546,8 @@ def generate_starting_points(
         A dictionary containing information about the previous exploration.
     input_present : bool
         A boolean indicating whether an input file is present.
+    previous_start : bool
+        A boolean indicating whether to start from a previous minimum.
     disturbed_start : bool
         A boolean indicating whether to start from a disturbed minimum.
 
@@ -546,7 +555,7 @@ def generate_starting_points(
     -------
     Tuple[List[str], List[str], bool]
         A tuple containing the starting point file names, the backup starting point file names,
-        and a boolean indicating whether to start from a disturbed minimum.
+        and a boolean indicating wehter to start from a previous minimum and a boolean indicating whether to start from a disturbed minimum.
     """
 
     # Determine file extension based on exploration type
@@ -561,36 +570,51 @@ def generate_starting_points(
             f"{padded_prev_iter}_{system_auto}_*.{file_extension}"
         )
     )
+    orginal_starting_points_path = list(
+        Path(training_path, "user_files").glob(
+            f"{system_auto}.{file_extension}"
+        )
+    )
     starting_points_all = [str(zzz).split("/")[-1] for zzz in starting_points_path]
     starting_points = [zzz for zzz in starting_points_all if "disturbed" not in zzz]
     starting_points_disturbed = [
         zzz for zzz in starting_points_all if zzz not in starting_points
     ]
-    starting_points_bckp = starting_points.copy()
-    starting_points_disturbed_bckp = starting_points_disturbed.copy()
+    starting_points_original = [str(_).split("/")[-1] for _ in orginal_starting_points_path]
+    starting_points_bckp = deepcopy(starting_points)
+    starting_points_disturbed_bckp = deepcopy(starting_points_disturbed)
+    starting_points_original_bckp = deepcopy(starting_points_original)
 
     # Check if system should start from a disturbed minimum
-    if input_present and disturbed_start:
+    if input_present and not previous_start:
+        starting_points = deepcopy(starting_points_original)
+        starting_points_bckp = deepcopy(starting_points_original_bckp)
+        return starting_points, starting_points_bckp, False, False
+    elif input_present and disturbed_start:
         # If input file is present and disturbed start is requested, use disturbed starting points
-        starting_points = starting_points_disturbed.copy()
-        starting_points_bckp = starting_points_disturbed_bckp.copy()
-        return starting_points, starting_points_bckp, True
+        starting_points = deepcopy(starting_points_disturbed)
+        starting_points_bckp = deepcopy(starting_points_disturbed_bckp)
+        return starting_points, starting_points_bckp, True, True
     elif not input_present:
+        if not (previous_json["systems_auto"][system_auto]["previous_start"]):
+            starting_points = deepcopy(starting_points_original)
+            starting_points_bckp = deepcopy(starting_points_original_bckp)
+            return starting_points, starting_points_bckp, False, False
         # If input file is not present, check if system started from disturbed minimum in previous iteration
-        if (
+        elif (
             previous_json["systems_auto"][system_auto]["disturbed_start"]
             and previous_json["systems_auto"][system_auto]["disturbed_start_value"]
         ):
             # If system started from disturbed minimum in previous iteration, use disturbed starting points
-            starting_points = starting_points_disturbed.copy()
-            starting_points_bckp = starting_points_disturbed_bckp.copy()
-            return starting_points, starting_points_bckp, True
+            starting_points = deepcopy(starting_points_disturbed)
+            starting_points_bckp = deepcopy(starting_points_disturbed_bckp)
+            return starting_points, starting_points_bckp, True, True
         else:
             # Otherwise, use regular starting points
-            return starting_points, starting_points_bckp, False
+            return starting_points, starting_points_bckp, True, False
     else:
         # If input file is present but disturbed start is not requested, use regular starting points
-        return starting_points, starting_points_bckp, False
+        return starting_points, starting_points_bckp, True, False
 
 
 # Unittested

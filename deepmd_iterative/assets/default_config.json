@@ -31,6 +31,7 @@
         "traj_count": 2,
         "temperature_K": [[298.15, -1]],
         "timestep_ps": [[0.0005, 0.00025]],
+        "previous_start": [[true, true]],
         "disturbed_start":[[false, false]],
         "print_interval_mult": [[0.01, 0.01]],
         "job_walltime_h": [[-1, -1]],
