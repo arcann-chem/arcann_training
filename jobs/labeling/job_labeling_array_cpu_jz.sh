@@ -43,8 +43,13 @@ CP2K_XYZ_F="labeling_${SLURM_ARRAY_TASK_ID_PADDED}.xyz"
 #----------------------------------------------
 ## Nothing needed to be changed past this point
 
-### Project Switch
-eval "$(idrenv -d _R_PROJECT_)"
+# Project Switch and update SCRATCH
+PROJECT_NAME=${SLURM_JOB_ACCOUNT:0:3}
+eval "$(idrenv -d "${PROJECT_NAME}")"
+# Compare PROJECT_NAME and IDRPROJ for inequality
+if [[ "${PROJECT_NAME}" != "${IDRPROJ}" ]]; then
+    SCRATCH=${SCRATCH/${IDRPROJ}/${PROJECT_NAME}}
+fi
 
 # Go where the job has been launched
 cd "${SLURM_SUBMIT_DIR}"/"${SLURM_ARRAY_TASK_ID_PADDED}" || exit 1
@@ -81,15 +86,23 @@ cp "${CP2K_INPUT_F2}".inp "${TEMPWORKDIR}" && echo "${CP2K_INPUT_F2}.inp copied 
 [ -f "${CP2K_WFRST_F}".wfn ] && cp "${CP2K_WFRST_F}".wfn "${TEMPWORKDIR}" && echo "${CP2K_WFRST_F}.wfn copied successfully"
 cd "${TEMPWORKDIR}" || exit 1
 
-# Run CP2K
+# MPI/OpenMP setup
 echo "# [$(date)] Started"
+export EXIT_CODE="0"
 echo "Running on node(s): ${SLURM_NODELIST}"
 echo "Running on ${SLURM_NNODES} node(s)."
-export TASKS_PER_NODE=$(( SLURM_NTASKS / SLURM_NNODES ))
-echo "Running ${SLURM_NTASKS} task(s), with ${TASKS_PER_NODE} task(s) per node."
+# Calculate missing values
+if [ -z "${SLURM_NTASKS}" ]; then
+    export SLURM_NTASKS=$(( SLURM_NTASKS_PER_NODE * SLURM_NNODES))
+fi
+if [ -z "${SLURM_NTASKS_PER_NODE}" ]; then
+    export SLURM_NTASKS_PER_NODE=$(( SLURM_NTASKS / SLURM_NNODES ))
+fi
+echo "Running ${SLURM_NTASKS} task(s), with ${SLURM_NTASKS_PER_NODE} task(s) per node."
 echo "Running with ${SLURM_CPUS_PER_TASK} thread(s) per task."
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
-SRUN_CP2K_EXE="srun --ntasks=${SLURM_NTASKS} --nodes=${SLURM_NNODES} --ntasks-per-node=${TASKS_PER_NODE} --cpus-per-task=${SLURM_CPUS_PER_TASK} ${CP2K_EXE}"
+
+SRUN_CP2K_EXE="srun --ntasks=${SLURM_NTASKS} --nodes=${SLURM_NNODES} --ntasks-per-node=${SLURM_NTASKS_PER_NODE} --cpus-per-task=${SLURM_CPUS_PER_TASK} ${CP2K_EXE}"
 
 # Launch command
 export EXIT_CODE="0"

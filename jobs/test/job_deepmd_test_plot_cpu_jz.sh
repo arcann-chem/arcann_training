@@ -31,8 +31,13 @@
 #----------------------------------------------
 ## Nothing needed to be changed past this point
 
-### Project Switch
-eval "$(idrenv -d _R_PROJECT_)"
+# Project Switch and update SCRATCH
+PROJECT_NAME=${SLURM_JOB_ACCOUNT:0:3}
+eval "$(idrenv -d "${PROJECT_NAME}")"
+# Compare PROJECT_NAME and IDRPROJ for inequality
+if [[ "${PROJECT_NAME}" != "${IDRPROJ}" ]]; then
+    SCRATCH=${SCRATCH/${IDRPROJ}/${PROJECT_NAME}}
+fi
 
 module purge
 module load anaconda-py3/2022.05
