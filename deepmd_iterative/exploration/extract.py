@@ -360,7 +360,7 @@ def main(
                                         "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][0]), "H1",
                                         "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][1]), "H2",
                                         "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][2]), "H3",
-                                        "-disturb", str(disturbed_start_value),
+                                        "-disturb", str(disturbed_candidate_value),
                                         "xyz"
                                     ],
                                     stdout=subprocess.DEVNULL,
@@ -376,13 +376,13 @@ def main(
                                         "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][1]), "H2",
                                         "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][2]), "H3",
                                         "-select", ",".join([str(idx) for idx in disturbed_candidate_indexes]),
-                                        "-disturb", str(disturbed_start_value),
+                                        "-disturb", str(disturbed_candidate_value),
                                         "xyz"
                                     ],
                                     stdout=subprocess.DEVNULL,
                                     stderr=subprocess.STDOUT
                                 )
-                        candidates_disturbed_files.extend([str( Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / ("candidates_"+_+".xyz") ) for _ in candidate_indexes_padded])
+                        candidates_disturbed_files.extend([str( Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / ("candidates_"+_+"_disturbed.xyz") ) for _ in candidate_indexes_padded])
 
         string_list_to_textfile((current_path / "gather.atomsk"), candidates_files)
         subprocess.run(
@@ -401,7 +401,7 @@ def main(
             remove_file((current_path / _ ))
 
         if candidates_disturbed_files:
-            string_list_to_textfile((current_path / "gather.atomsk"), candidates_files)
+            string_list_to_textfile((current_path / "gather.atomsk"), candidates_disturbed_files)
             subprocess.run(
                 [
                     atomsk_bin,
@@ -414,7 +414,7 @@ def main(
                 stderr=subprocess.STDOUT,
             )
             remove_file((current_path / "gather.atomsk"))
-            for  _ in candidates_files:
+            for  _ in candidates_disturbed_files:
                 remove_file((current_path / _ ))
 
         logging.info(f"Processed system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})")
