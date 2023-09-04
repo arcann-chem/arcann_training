@@ -10,18 +10,18 @@ Last modified: 2023/09/04
 
 Test cases for the list module.
 
-Classes:
---------
-TestExcludeSubstringFromStringList
+Classes
+-------
+TestExcludeSubstringFromStringList():
     Test case for the 'exclude_substring_from_string_list' function.
 
-TestReplaceSubstringInStringList
+TestReplaceSubstringInStringList():
     Test case for the 'replace_substring_in_string_list' function.
 
-TestStringListToTextfile
+TestStringListToTextfile():
     Test case for the 'string_list_to_textfile' function.
 
-TestTextfileToStringList
+TestTextfileToStringList():
     Test case for the 'textfile_to_string_list' function.
 """
 # Standard library modules
@@ -46,8 +46,8 @@ class TestExcludeSubstringFromStringList(unittest.TestCase):
     -------
     test_exclude_substring_from_string_list():
         Test the 'exclude_substring_from_string_list' function with valid input.
-    test_exclude_substring_from_string_list_empty_list():
-        Test the 'exclude_substring_from_string_list' function with an empty input list.
+    # test_exclude_substring_from_string_list_empty_list():
+    #     Test the 'exclude_substring_from_string_list' function with an empty input list.
     test_exclude_substring_from_string_list_invalid_input():
         Test the 'exclude_substring_from_string_list' function with invalid input types.
     """
@@ -77,13 +77,13 @@ class TestExcludeSubstringFromStringList(unittest.TestCase):
         output = exclude_substring_from_string_list(self.input_list, self.substring)
         self.assertEqual(output, expected_output)
 
-    def test_exclude_substring_from_string_list_empty_list(self):
-        """
-        Test the 'exclude_substring_from_string_list' function with an empty input list.
-        """
-        self.input_list = []
-        with self.assertRaises(ValueError):
-            exclude_substring_from_string_list(self.input_list, self.substring)
+    # def test_exclude_substring_from_string_list_empty_list(self):
+    #     """
+    #     Test the 'exclude_substring_from_string_list' function with an empty input list.
+    #     """
+    #     self.input_list = []
+    #     with self.assertRaises(ValueError):
+    #         exclude_substring_from_string_list(self.input_list, self.substring)
 
     def test_exclude_substring_from_string_list_invalid_input(self):
         """

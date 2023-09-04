@@ -86,6 +86,7 @@ def add_key_value_to_dict(dictionary: Dict, key: str, value: Any) -> None:
     dictionary.setdefault(key, {})["value"] = value
 
 
+# Unittested
 @catch_errors_decorator
 def get_key_in_dict(
     key: str, input_json: Dict, previous_json: Dict, default_json: Dict
@@ -132,6 +133,7 @@ def get_key_in_dict(
         raise TypeError(error_msg)
 
     return value
+
 
 # Unittested
 @catch_errors_decorator

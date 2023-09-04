@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/22
+Last modified: 2023/09/04
 
 The plumed module provides functions to manipulate PLUMED data (as list of strings).
 
@@ -61,7 +61,7 @@ def analyze_plumed_file_for_movres(
             last_step = int(step_matches[-1])
             return True, last_step
         else:
-            error_msg = f"STEP not found for MOVINGRESTRAINT"
+            error_msg = f"STEP not found for MOVINGRESTRAINT."
             raise ValueError(error_msg)
     else:
         return False, False

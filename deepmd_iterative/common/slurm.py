@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/29
+Last modified: 2023/09/04
 
 The slurm module provides functions to manipulate SLURM data (as list of strings).
 
@@ -31,6 +31,7 @@ from deepmd_iterative.common.list import (
 )
 
 
+# Unittested
 @catch_errors_decorator
 def replace_in_slurm_file_general(
     slurm_file_master: List[str],
@@ -94,16 +95,13 @@ def replace_in_slurm_file_general(
     )
 
     max_qos_time = 0
-    #max_qos = 0
+    print(walltime_approx_s)
     for it_qos in machine_spec["qos"]:
         if machine_spec["qos"][it_qos] >= walltime_approx_s:
             qos_ok = True
             break
         else:
             max_qos_time = machine_spec["qos"][it_qos]
-            # if machine_spec["qos"][it_qos] > max_qos_time:
-            #     #max_qos = it_qos
-            #     max_qos_time = machine_spec["qos"][it_qos]
             qos_ok = False
     slurm_file = replace_substring_in_string_list(slurm_file, "_R_QOS_", it_qos)
     del it_qos
@@ -112,7 +110,9 @@ def replace_in_slurm_file_general(
         logging.warning(
             "Approximate wall time superior than the maximun time allowed by the QoS"
         )
-        logging.warning(f"Settign the maximum QoS time as walltime: `{convert_seconds_to_hh_mm_ss(max_qos_time)}`")
+        logging.warning(
+            f"Settign the maximum QoS time as walltime: '{convert_seconds_to_hh_mm_ss(max_qos_time)}'"
+        )
         slurm_file = (
             replace_substring_in_string_list(
                 slurm_file, "_R_WALLTIME_", convert_seconds_to_hh_mm_ss(max_qos_time)
@@ -135,13 +135,13 @@ def replace_in_slurm_file_general(
             )
         )
 
-        if slurm_email != "":
-            slurm_file = replace_substring_in_string_list(
-                slurm_file, "_R_EMAIL_", slurm_email
-            )
-        else:
-            slurm_file = exclude_substring_from_string_list(slurm_file, "_R_EMAIL_")
-            slurm_file = exclude_substring_from_string_list(slurm_file, "mail")
-        del slurm_email
+    if slurm_email != "":
+        slurm_file = replace_substring_in_string_list(
+            slurm_file, "_R_EMAIL_", slurm_email
+        )
+    else:
+        slurm_file = exclude_substring_from_string_list(slurm_file, "_R_EMAIL_")
+        slurm_file = exclude_substring_from_string_list(slurm_file, "mail")
+    del slurm_email
 
     return slurm_file

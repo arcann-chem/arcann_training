@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/22
+Last modified: 2023/09/04
 
 The machine module provides functions for machine operations.
 
@@ -40,14 +40,15 @@ from deepmd_iterative.common.utils import catch_errors_decorator
 from deepmd_iterative.common.json import load_json_file
 
 
+# Unittested
 @catch_errors_decorator
 def get_host_name() -> str:
     """
     Return the fully-qualified hostname of the current machine.
 
-    This function first gets the hostname of the current machine using the `socket.gethostname()` function. If the hostname
+    This function first gets the hostname of the current machine using the 'socket.gethostname()' function. If the hostname
     contains a period, it is already fully-qualified and can be returned immediately. Otherwise, the function uses the
-    `socket.gethostbyaddr()` function to look up the fully-qualified hostname.
+    'socket.gethostbyaddr()' function to look up the fully-qualified hostname.
 
     Parameters
     ----------
@@ -73,6 +74,7 @@ def get_host_name() -> str:
             return hostname
 
 
+# Unittested
 @catch_errors_decorator
 def assert_same_machine(expected_machine: str, machine_config: Dict) -> None:
     """
@@ -98,10 +100,11 @@ def assert_same_machine(expected_machine: str, machine_config: Dict) -> None:
     # Check if the provided machine name matches the expected machine name
     if machine_config["machine"] != expected_machine:
         # If not, log an error message and abort the execution
-        error_msg = f"Provided machine `{machine_config['machine']}` does not match expected machine `{expected_machine}`"
+        error_msg = f"Provided machine '{machine_config['machine']}' does not match expected machine '{expected_machine}'"
         raise ValueError(error_msg)
 
 
+# Unittested
 @catch_errors_decorator
 def get_machine_keyword(
     input_json: Dict, previous_json: Dict, default_json: Dict
@@ -139,7 +142,7 @@ def get_machine_keyword(
         value = default_json[key]
     else:
         # The key is not present in any of the JSON.
-        error_msg = f"`{key}` not found in any JSON provided"
+        error_msg = f"'{key}' not found in any JSON provided"
         raise KeyError(error_msg)
 
     # Check if the value is of the correct type.
@@ -153,10 +156,10 @@ def get_machine_keyword(
     ):
         # The value is not of the correct type.
         error_msg = f"""
-            Wrong type: `{key}` is `{type(value)}`.\n
-            `{key}` should be a `{type(True)}`: False or True (Meaning it is deactivated)\n
-            `{key}` should be a `{type(str)}`: a keyword\n
-            `{key}` should be a {type([])} of {type("")} in the form: [\"project\", \"allocation\", \"arch_name\"]"""
+            Wrong type: '{key}' is '{type(value)}'.\n
+            '{key}' should be a '{type(True)}': False or True (Meaning it is deactivated)\n
+            '{key}' should be a '{type(str)}': a keyword\n
+            '{key}' should be a {type([])} of {type("")} in the form: [\"project\", \"allocation\", \"arch_name\"]"""
         raise TypeError(error_msg)
 
     return value
@@ -200,12 +203,13 @@ def get_machine_config_files(
 
     # If no 'machine.json' file is found, raise a FileNotFoundError.
     if not machine_configs:
-        error_msg = f"No `machine.json` file found. Please check the installation"
+        error_msg = f"No 'machine.json' file found. Please check the installation"
         raise FileNotFoundError(error_msg)
 
     return machine_configs
 
 
+# Unittested
 @catch_errors_decorator
 def get_machine_from_configs(
     machine_configs: List[Dict], machine_short_name: str = ""
@@ -242,7 +246,7 @@ def get_machine_from_configs(
             if machine_short_name in machine_config:
                 return machine_short_name
 
-    error_msg = f"No matching machine found for hostname `{get_host_name()}` and no input machine specified"
+    error_msg = f"No matching machine found for hostname '{get_host_name()}' and no input machine specified"
     raise ValueError(error_msg)
 
 
@@ -304,7 +308,12 @@ def get_machine_spec_for_step(
         # Iterate over all keys in the configuration for the selected machine
         for config_key, config_data in config.get(machine_shortname, {}).items():
             # Skip keys that are not relevant to the machine specification
-            if config_key not in ["hostname", "walltime_format", "job_scheduler", "launch_command"]:
+            if config_key not in [
+                "hostname",
+                "walltime_format",
+                "job_scheduler",
+                "launch_command",
+            ]:
                 # Check if the current keyword matches the user keyword
                 if (
                     user_machine_keyword is None
@@ -337,27 +346,27 @@ def get_machine_spec_for_step(
         isinstance(user_machine_keyword, str)
         or (isinstance(user_machine_keyword, list) and len(user_machine_keyword) == 3)
     ):
-        error_msg = f"Invalid `user_machine_keyword`. Please provide either a `{type('')}` or a `{type([])}` of 3 `{type('')}"
+        error_msg = f"Invalid 'user_machine_keyword'. Please provide either a '{type('')}' or a '{type([])}' of 3 '{type('')}"
     elif user_machine_keyword is not None and (
         isinstance(user_machine_keyword, list) and len(user_machine_keyword) == 3
     ):
-        error_msg = f"User keyword `{user_machine_keyword}` not found in any configuration files"
+        error_msg = f"User keyword '{user_machine_keyword}' not found in any configuration files"
     elif not machine_configs:
         error_msg = "No machine configuration files found"
     elif user_machine_keyword is not None and not any(
         user_machine_keyword in config for config in machine_configs
     ):
-        error_msg = f"User keyword `{user_machine_keyword}` not found in any configuration files"
+        error_msg = f"User keyword '{user_machine_keyword}' not found in any configuration files"
     elif input_machine_shortname is not None and machine_shortname not in [
         config.get("name") for config in machine_configs
     ]:
         error_msg = (
-            f"No configuration found for input machine `{input_machine_shortname}`"
+            f"No configuration found for input machine '{input_machine_shortname}'"
         )
     elif user_machine_keyword is not None and not any(
         user_machine_keyword in config for config in machine_configs
     ):
-        error_msg = f"User keyword `{user_machine_keyword}` not found in any configuration files"
+        error_msg = f"User keyword '{user_machine_keyword}' not found in any configuration files"
     else:
-        error_msg = f"No default configuration found for step `{step}` and machine `{machine_shortname}`"
+        error_msg = f"No default configuration found for step '{step}' and machine '{machine_shortname}'"
     raise ValueError(error_msg)

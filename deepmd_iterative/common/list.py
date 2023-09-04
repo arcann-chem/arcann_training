@@ -63,9 +63,9 @@ def exclude_substring_from_string_list(
         error_msg = f"Invalid input type. '{input_list}' must be a '{type([])}' of '{type('')}' and substring must be a '{type('')}'."
         raise TypeError(error_msg)
 
-    if len(input_list) == 0:
-        error_msg = f"'{input_list}' must not be empty."
-        raise ValueError(error_msg)
+    # if len(input_list) == 0:
+    #     error_msg = f"'{input_list}' must not be empty."
+    #     raise ValueError(error_msg)
 
     output_list = [string.strip() for string in input_list if substring not in string]
     return output_list
