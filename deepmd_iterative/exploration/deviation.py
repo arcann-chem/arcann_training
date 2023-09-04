@@ -305,7 +305,7 @@ def main(
                                 < sigma_high
                             )
                         ]
-                        ### Add the rest to rejected
+                        # Add the rest to rejected
                         rejected = np.vstack(
                             (rejected, model_deviation[end_row_number:, :])
                         )

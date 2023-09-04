@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/31
+Last modified: 2023/09/04
 
 Functions
 ---------
@@ -421,6 +421,7 @@ def generate_input_exploration_disturbed_json(
 
     for key in [
         "disturbed_start_value",
+        "disturbed_start_indexes",
         "disturbed_candidate_value",
         "disturbed_candidate_indexes",
     ]:
@@ -449,6 +450,14 @@ def generate_input_exploration_disturbed_json(
             merged_input_json[key] = [value[exploration_dep]] * system_count
         else:
             # Check if previous or user provided a list
+            # if key == "disturbed_start_indexes" or key == "disturbed_candidate_indexes":
+            #     if isinstance(value, List):
+            #         for it_value in value:
+            #             if isinstance(it_value, List):
+            #                 for 
+                        
+                
+                
             if isinstance(value, List):
                 if len(value) == system_count:
                     for it_value in value:
@@ -495,6 +504,7 @@ def get_system_disturb(
     system_values = []
     for key in [
         "disturbed_start_value",
+        "disturbed_start_indexes",
         "disturbed_candidate_value",
         "disturbed_candidate_indexes",
     ]:
