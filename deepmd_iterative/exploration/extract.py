@@ -28,7 +28,8 @@ from deepmd_iterative.common.json import (
 )
 from deepmd_iterative.common.filesystem import (
     check_file_existence,
-    remove_file
+    remove_file,
+    remove_files_matching_glob
 )
 from deepmd_iterative.common.list import (
     replace_substring_in_string_list,
@@ -137,6 +138,7 @@ def main(
     for system_auto_index, system_auto in enumerate(main_json["systems_auto"]):
         logging.info(f"Processing system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})")
         candidates_files = []
+        candidates_disturbed_files = []
 
         print_every_x_steps = exploration_json["systems_auto"][system_auto]["print_every_x_steps"]
         # Set the system params for disburbed selection
@@ -245,7 +247,7 @@ def main(
                     )
 
                     # If the a minium value was set by the user or previous, enable disturbed min structures
-                    if (disturbed_start_value != 0): \
+                    if (disturbed_start_value != 0):
                         # or (curr_iter > 1 and previous_exploration_json["systems_auto"][system_auto]["disturbed_start"]):
 
                         # Atomsk XYZ ==> XYZ_disturbed
@@ -342,9 +344,45 @@ def main(
 
                     candidate_indexes_padded = [ _.zfill(5) for _ in candidate_indexes]
                     candidates_files.extend([str( Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / ("candidates_"+_+".xyz") ) for _ in candidate_indexes_padded])
-                    
-                    
-                    # Here disturbed:
+
+
+                    # If the a minium value was set by the user or previous, enable disturbed min structures
+                    if (disturbed_candidate_value != 0):
+                        remove_files_matching_glob(local_path, "_disturbed.xyz")
+                        for candidate_index_padded in candidate_indexes_padded:
+                            (local_path / f"candidates_{candidate_index_padded}_disturbed.xyz").write_text((local_path / f"candidates_{candidate_index_padded}.xyz").read_text())
+                            if not disturbed_candidate_indexes :
+                                subprocess.run(
+                                    [
+                                        atomsk_bin,
+                                        "-ow",
+                                        str(Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / (f"candidates_{candidate_index_padded}_disturbed.xyz")),
+                                        "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][0]), "H1",
+                                        "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][1]), "H2",
+                                        "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][2]), "H3",
+                                        "-disturb", str(disturbed_start_value),
+                                        "xyz"
+                                    ],
+                                    stdout=subprocess.DEVNULL,
+                                    stderr=subprocess.STDOUT
+                                )
+                            else:
+                                subprocess.run(
+                                    [
+                                        atomsk_bin,
+                                        "-ow",
+                                        str(Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / (f"candidates_{candidate_index_padded}_disturbed.xyz")),
+                                        "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][0]), "H1",
+                                        "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][1]), "H2",
+                                        "-cell", "set", str(main_json["systems_auto"][system_auto]["cell"][2]), "H3",
+                                        "-select", ",".join([str(idx) for idx in disturbed_candidate_indexes]),
+                                        "-disturb", str(disturbed_start_value),
+                                        "xyz"
+                                    ],
+                                    stdout=subprocess.DEVNULL,
+                                    stderr=subprocess.STDOUT
+                                )
+                        candidates_disturbed_files.extend([str( Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / ("candidates_"+_+".xyz") ) for _ in candidate_indexes_padded])
 
         string_list_to_textfile((current_path / "gather.atomsk"), candidates_files)
         subprocess.run(
@@ -362,7 +400,51 @@ def main(
         for  _ in candidates_files:
             remove_file((current_path / _ ))
 
+        if candidates_disturbed_files:
+            string_list_to_textfile((current_path / "gather.atomsk"), candidates_files)
+            subprocess.run(
+                [
+                    atomsk_bin,
+                    "-ow",
+                    "--gather",
+                    str(Path(".") / "gather.atomsk"),
+                    str(Path(".") / system_auto / f"candidates_{padded_curr_iter}_{system_auto}_disturbed.xyz")
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.STDOUT,
+            )
+            remove_file((current_path / "gather.atomsk"))
+            for  _ in candidates_files:
+                remove_file((current_path / _ ))
+
         logging.info(f"Processed system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})")
+
+    del system_auto_index, system_auto
+
+    logging.info(f"-" * 88)
+    # Update the booleans in the exploration JSON
+    exploration_json["is_extracted"] = True
+
+    # Dump the JSON files (exploration and merged input)
+    write_json_file(
+        exploration_json, (control_path / f"exploration_{padded_curr_iter}.json")
+    )
+    backup_and_overwrite_json_file(
+        merged_input_json, (current_path / user_input_json_filename)
+    )
+
+    # End
+    logging.info(f"-" * 88)
+    logging.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
+    )
+
+    # Cleaning
+    del control_path
+    del main_json
+    del curr_iter, padded_curr_iter
+    del exploration_json
+    del training_path, current_path
 
     return 0
 
