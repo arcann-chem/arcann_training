@@ -54,7 +54,7 @@ def read_lammps_data(
     # Input validation
     if not lines or not isinstance(lines, list):
         raise ValueError("Input 'lines' must be a non-empty list of strings.")
-    
+
     # Initialize variables
     num_atoms = None
     num_atom_types = None
