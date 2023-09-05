@@ -6,20 +6,25 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/16
+Last modified: 2023/09/05
 
 Test cases for the (training) utils module.
 
 Class
 -----
-TestCalculateDecaySteps
-    Test case for the calculate_decay_steps() function.
-TestCalculateDecayRate
-    Test case for the calculate_decay_steps() function.
-TestCalculateLearningRate
-    Test case for the calculate_learning_rate() function.
-TestCheckInitialDatasets
-    Test case for the check_initial_datasets() function.
+TestCalculateDecaySteps():
+    Test case for the 'calculate_decay_steps' function.
+TestCalculateDecayRate():
+    Test case for the 'calculate_decay_steps' function.
+TestCalculateLearningRate():
+    Test case for the 'calculate_learning_rate' function.
+TestCheckInitialDatasets():
+    Test case for the 'check_initial_datasets' function.
+TestDeepMDConfigValidation():
+    Test case for the 'validate_deepmd_config' function.
+TestGenerateTrainingJson():
+    Test case for the 'generate_training_json' function.
+
 """
 # Standard library modules
 import tempfile
@@ -35,12 +40,14 @@ from deepmd_iterative.training.utils import (
     calculate_decay_rate,
     calculate_learning_rate,
     check_initial_datasets,
+    validate_deepmd_config,
+    generate_training_json,
 )
 
 
 class TestCalculateDecaySteps(unittest.TestCase):
     """
-    Test case for the calculate_decay_steps() function.
+    Test case for the 'calculate_decay_steps' function.
 
     Methods
     -------
@@ -69,19 +76,25 @@ class TestCalculateDecaySteps(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             calculate_decay_steps(0)
         error_msg = str(cm.exception)
-        expected_error_msg = f"'nb_structures' must be a positive integer"
+        expected_error_msg = (
+            f"The argument 'num_structures' must be a positive integer."
+        )
         self.assertEqual(error_msg, expected_error_msg)
 
         with self.assertRaises(ValueError) as cm:
             calculate_decay_steps(-100)
         error_msg = str(cm.exception)
-        expected_error_msg = f"'nb_structures' must be a positive integer"
+        expected_error_msg = (
+            f"The argument 'num_structures' must be a positive integer."
+        )
         self.assertEqual(error_msg, expected_error_msg)
 
         with self.assertRaises(ValueError) as cm:
             calculate_decay_steps(100, min_decay_steps=-500)
         error_msg = str(cm.exception)
-        expected_error_msg = f"'min_decay_steps' must be a positive integer"
+        expected_error_msg = (
+            f"The argument 'min_decay_steps' must be a positive integer."
+        )
         self.assertEqual(error_msg, expected_error_msg)
 
     def test_calculate_decay_steps_output_type(self):
@@ -90,7 +103,7 @@ class TestCalculateDecaySteps(unittest.TestCase):
 
 class TestCalculateDecayRate(unittest.TestCase):
     """
-    Test case for the calculate_decay_steps() function.
+    Test case for the 'calculate_decay_steps' function.
 
     Methods
     -------
@@ -125,22 +138,22 @@ class TestCalculateDecayRate(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             calculate_decay_rate(100, -0.01, 0.001, 5000)
         error_msg = str(cm.exception)
-        expected_error_msg = f"'start_lr' must be a positive number."
+        expected_error_msg = f"The argument 'start_lr' must be a positive number."
         self.assertEqual(error_msg, expected_error_msg)
         with self.assertRaises(ValueError) as cm:
             calculate_decay_rate(100, 0, 0.001, 5000)
         error_msg = str(cm.exception)
-        expected_error_msg = f"'start_lr' must be a positive number."
+        expected_error_msg = f"The argument 'start_lr' must be a positive number."
         self.assertEqual(error_msg, expected_error_msg)
         with self.assertRaises(ValueError) as cm:
             calculate_decay_rate(100, 0.01, 0.001, 0)
         error_msg = str(cm.exception)
-        expected_error_msg = f"'decay_steps' must be a positive integer."
+        expected_error_msg = f"The argument 'decay_steps' must be a positive integer."
         self.assertEqual(error_msg, expected_error_msg)
         with self.assertRaises(ValueError) as cm:
             calculate_decay_rate(100, 0.01, 0.001, 0.0003)
         error_msg = str(cm.exception)
-        expected_error_msg = f"'decay_steps' must be a positive integer."
+        expected_error_msg = f"The argument 'decay_steps' must be a positive integer."
         self.assertEqual(error_msg, expected_error_msg)
 
     def test_calculate_decay_rate_output_type(self):
@@ -149,7 +162,7 @@ class TestCalculateDecayRate(unittest.TestCase):
 
 class TestCalculateLearningRate(unittest.TestCase):
     """
-    Test case for the calculate_learning_rate() function.
+    Test case for the 'calculate_learning_rate' function.
 
     Methods
     -------
@@ -208,7 +221,7 @@ class TestCalculateLearningRate(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             calculate_learning_rate(100, 0.01, 0.1, 3213332.2)
         error_msg = str(cm.exception)
-        expected_error_msg = f"'decay_steps' must be a positive integer"
+        expected_error_msg = f"The argument 'decay_steps' must be a positive integer."
         self.assertEqual(error_msg, expected_error_msg)
 
     def test_calculate_learning_rate_output_type(self):
@@ -217,7 +230,7 @@ class TestCalculateLearningRate(unittest.TestCase):
 
 class TestCheckInitialDatasets(unittest.TestCase):
     """
-    Test case for the check_initial_datasets() function.
+    Test case for the 'check_initial_datasets' function.
 
     Methods
     -------
@@ -279,6 +292,202 @@ class TestCheckInitialDatasets(unittest.TestCase):
         (Path(self.temp_dir.name) / "data" / "dataset2").rmdir()
         with self.assertRaises(FileNotFoundError) as cm:
             check_initial_datasets(Path(self.temp_dir.name))
+
+
+class TestDeepMDConfigValidation(unittest.TestCase):
+    """
+    Test case for the 'validate_deepmd_config' function.
+
+    Methods
+    -------
+    test_valid_config():
+        Tests if the function correctly validates a valid configuration.
+    test_invalid_model_version():
+        Tests if the function raises a ValueError for an invalid model version.
+    test_invalid_model_type_descriptor():
+        Tests if the function raises a ValueError for an invalid model type descriptor.
+    test_invalid_arch_name_for_version_2_0():
+        Tests if the function raises a ValueError for an invalid arch_name with model version 2.0.
+    """
+
+    def test_valid_config(self):
+        """
+        Tests if the function correctly validates a valid configuration.
+        """
+        config = {
+            "deepmd_model_version": 2.1,
+            "deepmd_model_type_descriptor": "se_e2_a",
+            "arch_name": "a100",
+        }
+        self.assertIsNone(validate_deepmd_config(config))
+
+    def test_invalid_model_version(self):
+        """
+        Tests if the function raises a ValueError for an invalid model version.
+        """
+        config = {
+            "deepmd_model_version": 1.5,
+            "deepmd_model_type_descriptor": "se_e2_a",
+        }
+        with self.assertRaises(ValueError):
+            validate_deepmd_config(config)
+
+    def test_invalid_model_type_descriptor(self):
+        """
+        Tests if the function raises a ValueError for an invalid model type descriptor.
+        """
+        config = {
+            "deepmd_model_version": 2.0,
+            "deepmd_model_type_descriptor": "invalid_descriptor",
+        }
+        with self.assertRaises(ValueError):
+            validate_deepmd_config(config)
+
+    def test_invalid_arch_name_for_version_2_0(self):
+        """
+        Tests if the function raises a ValueError for an invalid arch_name with model version 2.0.
+        """
+        config = {
+            "deepmd_model_version": 2.0,
+            "deepmd_model_type_descriptor": "se_e2_a",
+            "arch_name": "a100",
+        }
+        with self.assertRaises(ValueError):
+            validate_deepmd_config(config)
+
+
+class TestGenerateTrainingJson(unittest.TestCase):
+    """
+    Test case for the 'generate_training_json' function.
+
+    Methods
+    -------
+    test_valid_user_input():
+        Tests if the function correctly validates a valid configuration.
+    test_invalid_key():
+        Tests if the function raises a ValueError for an invalid key in user input.
+    test_type_mismatch():
+        Tests if the function raises a TypeError for a type mismatch in user input.
+    test_use_previous_json():
+        Tests if the function correctly updates training JSON with previous JSON.
+    """
+
+    def setUp(self):
+        self.default_input_json = {
+            "user_machine_keyword": "default",
+            "job_email": "default@example.com",
+            "use_initial_datasets": True,
+            "use_extra_datasets": False,
+            "deepmd_model_version": "1.0",
+            "deepmd_model_type_descriptor": "type1",
+            "start_lr": 0.001,
+            "stop_lr": 0.0001,
+            "decay_rate": 0.9,
+            "decay_steps": 100,
+            "decay_steps_fixed": True,
+            "numb_steps": 1000,
+            "numb_test": 100,
+        }
+
+    def test_valid_user_input(self):
+        """
+        Tests if the function correctly validates a valid configuration.
+        """
+        user_input = {"user_machine_keyword": "custom", "job_email": "user@example.com"}
+        previous_json = {}
+        merged_input_json = {}
+        expected_training_json = {
+            "user_machine_keyword": "custom",
+            "job_email": "user@example.com",
+            "use_initial_datasets": True,
+            "use_extra_datasets": False,
+            "deepmd_model_version": "1.0",
+            "deepmd_model_type_descriptor": "type1",
+            "start_lr": 0.001,
+            "stop_lr": 0.0001,
+            "decay_rate": 0.9,
+            "decay_steps": 100,
+            "decay_steps_fixed": True,
+            "numb_steps": 1000,
+            "numb_test": 100,
+        }
+        expected_merged_json = {
+            "use_initial_datasets": True,
+            "use_extra_datasets": False,
+            "deepmd_model_version": "1.0",
+            "deepmd_model_type_descriptor": "type1",
+            "start_lr": 0.001,
+            "stop_lr": 0.0001,
+            "decay_rate": 0.9,
+            "decay_steps": 100,
+            "decay_steps_fixed": True,
+            "numb_steps": 1000,
+            "numb_test": 100,
+        }
+        training_json, updated_merged_json = generate_training_json(
+            user_input, previous_json, self.default_input_json, merged_input_json
+        )
+        self.assertDictEqual(training_json, expected_training_json)
+        self.assertDictEqual(updated_merged_json, expected_merged_json)
+
+    def test_invalid_key(self):
+        """
+        Tests if the function raises a ValueError for an invalid key in user input.
+        """
+        user_input = {}
+        previous_json = {}
+        merged_input_json = {}
+        default_input_json = {}
+        with self.assertRaises(ValueError):
+            generate_training_json(
+                user_input, previous_json, default_input_json, merged_input_json
+            )
+
+    def test_type_mismatch(self):
+        """
+        Tests if the function raises a TypeError for a type mismatch in user input.
+        """
+        user_input = {"numb_steps": "invalid_type"}
+        previous_json = {}
+        merged_input_json = {}
+
+        with self.assertRaises(TypeError):
+            generate_training_json(
+                user_input, previous_json, self.default_input_json, merged_input_json
+            )
+
+    def test_use_previous_json(self):
+        """
+        Tests if the function correctly updates training JSON with previous JSON.
+        """
+        user_input = {}
+        previous_json = {
+            "user_machine_keyword": "previous",
+            "job_email": "previous@example.com",
+        }
+        merged_input_json = {}
+
+        expected_training_json = {
+            "user_machine_keyword": "previous",
+            "job_email": "previous@example.com",
+            "use_initial_datasets": True,
+            "use_extra_datasets": False,
+            "deepmd_model_version": "1.0",
+            "deepmd_model_type_descriptor": "type1",
+            "start_lr": 0.001,
+            "stop_lr": 0.0001,
+            "decay_rate": 0.9,
+            "decay_steps": 100,
+            "decay_steps_fixed": True,
+            "numb_steps": 1000,
+            "numb_test": 100,
+        }
+
+        training_json, updated_merged_json = generate_training_json(
+            user_input, previous_json, self.default_input_json, merged_input_json
+        )
+        self.assertDictEqual(training_json, expected_training_json)
+        self.assertDictEqual(updated_merged_json, expected_training_json)
 
 
 if __name__ == "__main__":

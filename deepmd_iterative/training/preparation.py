@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/31
+Last modified: 2023/09/05
 """
 # Standard library modules
 import copy
@@ -449,7 +449,9 @@ def main(
     # Here calculate the parameters
     # decay_steps it auto-recalculated as funcion of trained_count
     logging.debug(f"training_json - decay_steps: {training_json['decay_steps']}")
-    logging.debug(f"merged_input_json - decay_steps: {merged_input_json['decay_steps']}")
+    logging.debug(
+        f"merged_input_json - decay_steps: {merged_input_json['decay_steps']}"
+    )
     if not training_json["decay_steps_fixed"]:
         decay_steps = calculate_decay_steps(
             training_json["trained_count"], training_json["decay_steps"]
@@ -462,7 +464,9 @@ def main(
         decay_steps = training_json["decay_steps"]
     logging.debug(f"decay_steps: {decay_steps}")
     logging.debug(f"training_json - decay_steps: {training_json['decay_steps']}")
-    logging.debug(f"merged_input_json - decay_steps: {merged_input_json['decay_steps']}")
+    logging.debug(
+        f"merged_input_json - decay_steps: {merged_input_json['decay_steps']}"
+    )
 
     # numb_steps and decay_rate
     logging.debug(
@@ -619,9 +623,7 @@ def main(
     # Dump the JSON files (main, training and merged input)
     logging.info(f"-" * 88)
     write_json_file(main_json, (control_path / "config.json"))
-    write_json_file(
-        training_json, (control_path / f"training_{padded_curr_iter}.json")
-    )
+    write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"))
     backup_and_overwrite_json_file(
         merged_input_json, (current_path / user_input_json_filename)
     )

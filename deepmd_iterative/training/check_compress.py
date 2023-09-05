@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/31
+Last modified: 2023/09/05
 """
 # Standard library modules
 import logging
@@ -51,9 +51,7 @@ def main(
     # Get control path, load the main JSON and the training JSON
     control_path = training_path / "control"
     main_json = load_json_file((control_path / "config.json"))
-    training_json = load_json_file(
-        (control_path / f"training_{padded_curr_iter}.json")
-    )
+    training_json = load_json_file((control_path / f"training_{padded_curr_iter}.json"))
 
     # Check if we can continue
     if not training_json["is_frozen"]:
@@ -78,9 +76,7 @@ def main(
         training_json["is_compressed"] = True
 
     # Dump the JSON files (training)
-    write_json_file(
-        training_json, (control_path / f"training_{padded_curr_iter}.json")
-    )
+    write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"))
 
     # End
     logging.info(f"-" * 88)

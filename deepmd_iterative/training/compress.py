@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/31
+Last modified: 2023/09/05
 """
 # Standard library modules
 import copy
@@ -89,9 +89,7 @@ def main(
     # Get control path, load the main JSON and the training JSON
     control_path = training_path / "control"
     main_json = load_json_file((control_path / "config.json"))
-    training_json = load_json_file(
-        (control_path / f"training_{padded_curr_iter}.json")
-    )
+    training_json = load_json_file((control_path / f"training_{padded_curr_iter}.json"))
 
     # Check if we can continue
     if not training_json["is_frozen"]:
@@ -222,9 +220,7 @@ def main(
     # Dump the JSON files (main, training and merged input)
     logging.info(f"-" * 88)
     write_json_file(main_json, (control_path / "config.json"))
-    write_json_file(
-        training_json, (control_path / f"training_{padded_curr_iter}.json")
-    )
+    write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"))
     backup_and_overwrite_json_file(
         merged_input_json, (current_path / user_input_json_filename)
     )

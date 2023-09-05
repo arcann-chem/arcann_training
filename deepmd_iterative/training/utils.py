@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/31
+Last modified: 2023/09/05
 
 The utils module provides functions for the training step.
 
@@ -42,7 +42,7 @@ import numpy as np
 # Local imports
 from deepmd_iterative.common.utils import catch_errors_decorator
 
-
+# Unittested
 @catch_errors_decorator
 def generate_training_json(
     user_input_json: Dict,
@@ -335,6 +335,7 @@ def check_initial_datasets(training_dir: Path) -> Dict[str, int]:
     return initial_datasets_info
 
 
+# Unittested
 @catch_errors_decorator
 def validate_deepmd_config(training_config) -> None:
     """
