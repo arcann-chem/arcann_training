@@ -38,8 +38,13 @@ DeepMD_DATA_DIR="../data"
 #----------------------------------------------
 ## Nothing needed to be changed past this point
 
-### Project Switch
-eval "$(idrenv -d _R_PROJECT_)"
+# Project Switch and update SCRATCH
+PROJECT_NAME=${SLURM_JOB_ACCOUNT:0:3}
+eval "$(idrenv -d "${PROJECT_NAME}")"
+# Compare PROJECT_NAME and IDRPROJ for inequality
+if [[ "${PROJECT_NAME}" != "${IDRPROJ}" ]]; then
+    SCRATCH=${SCRATCH/${IDRPROJ}/${PROJECT_NAME}}
+fi
 
 # Go where the job has been launched
 cd "${SLURM_SUBMIT_DIR}" || exit 1
@@ -56,7 +61,7 @@ if [ "${SLURM_JOB_QOS:4:3}" == "gpu" ]; then
         . /gpfswork/rech/nvs/commun/programs/apps/deepmd-kit/2.0.3-cuda10.1_plumed-2.7.4/etc/profile.d/conda.sh
         conda activate /gpfswork/rech/nvs/commun/programs/apps/deepmd-kit/2.0.3-cuda10.1_plumed-2.7.4
         log="--log-path ${DeepMD_INPUT}.log"
-     elif [ "${DeepMD_MODEL_VERSION}" = "1.3" ]; then
+    elif [ "${DeepMD_MODEL_VERSION}" = "1.3" ]; then
         module purge
         . /gpfswork/rech/nvs/commun/programs/apps/deepmd-kit/1.3.3-cuda10.1_plumed-2.6.2/etc/profile.d/conda.sh
         conda activate /gpfswork/rech/nvs/commun/programs/apps/deepmd-kit/1.3.3-cuda10.1_plumed-2.6.2
@@ -93,13 +98,20 @@ cd "${TEMPWORKDIR}" || exit 1
 # MPI/OpenMP setup
 echo "# [$(date)] Started"
 export EXIT_CODE="0"
-export TASKS_PER_NODE=$(( SLURM_NTASKS / SLURM_NNODES ))
 echo "Running on node(s): ${SLURM_NODELIST}"
 echo "Running on ${SLURM_NNODES} node(s)."
-echo "Running ${SLURM_NTASKS} task(s), with ${TASKS_PER_NODE} task(s) per node."
+# Calculate missing values
+if [ -z "${SLURM_NTASKS}" ]; then
+    export SLURM_NTASKS=$(( SLURM_NTASKS_PER_NODE * SLURM_NNODES))
+fi
+if [ -z "${SLURM_NTASKS_PER_NODE}" ]; then
+    export SLURM_NTASKS_PER_NODE=$(( SLURM_NTASKS / SLURM_NNODES ))
+fi
+echo "Running ${SLURM_NTASKS} task(s), with ${SLURM_NTASKS_PER_NODE} task(s) per node."
 echo "Running with ${SLURM_CPUS_PER_TASK} thread(s) per task."
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
-SRUN_DeepMD_EXE="srun --export=ALL --mpi=pmix --ntasks=${SLURM_NTASKS} --nodes=${SLURM_NNODES} --ntasks-per-node=${TASKS_PER_NODE} --cpus-per-task=${SLURM_CPUS_PER_TASK} ${DeepMD_EXE}"
+
+SRUN_DeepMD_EXE="srun --export=ALL --mpi=pmix --ntasks=${SLURM_NTASKS} --nodes=${SLURM_NNODES} --ntasks-per-node=${SLURM_NTASKS_PER_NODE} --cpus-per-task=${SLURM_CPUS_PER_TASK} ${DeepMD_EXE}"
 
 # Launch command
 if [ -f ${DeepMD_CHKPT}.index ]

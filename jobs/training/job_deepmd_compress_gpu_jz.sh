@@ -36,8 +36,13 @@ DeepMD_MODEL="_R_DEEPMD_MODEL_"
 #----------------------------------------------
 ## Nothing needed to be changed past this point
 
-### Project Switch
-eval "$(idrenv -d _R_PROJECT_)"
+# Project Switch and update SCRATCH
+PROJECT_NAME=${SLURM_JOB_ACCOUNT:0:3}
+eval "$(idrenv -d "${PROJECT_NAME}")"
+# Compare PROJECT_NAME and IDRPROJ for inequality
+if [[ "${PROJECT_NAME}" != "${IDRPROJ}" ]]; then
+    SCRATCH=${SCRATCH/${IDRPROJ}/${PROJECT_NAME}}
+fi
 
 # Go where the job has been launched
 cd "${SLURM_SUBMIT_DIR}" || exit 1
@@ -70,15 +75,21 @@ if [ ! -f ${DeepMD_MODEL}.pb ]; then echo "No pb file found. Aborting..."; exit 
 # MPI/OpenMP setup
 echo "# [$(date)] Started"
 export EXIT_CODE="0"
-export TASKS_PER_NODE=$(( SLURM_NTASKS / SLURM_NNODES ))
 echo "Running on node(s): ${SLURM_NODELIST}"
 echo "Running on ${SLURM_NNODES} node(s)."
-echo "Running ${SLURM_NTASKS} task(s), with ${TASKS_PER_NODE} task(s) per node."
+# Calculate missing values
+if [ -z "${SLURM_NTASKS}" ]; then
+    export SLURM_NTASKS=$(( SLURM_NTASKS_PER_NODE * SLURM_NNODES))
+fi
+if [ -z "${SLURM_NTASKS_PER_NODE}" ]; then
+    export SLURM_NTASKS_PER_NODE=$(( SLURM_NTASKS / SLURM_NNODES ))
+fi
+echo "Running ${SLURM_NTASKS} task(s), with ${SLURM_NTASKS_PER_NODE} task(s) per node."
 echo "Running with ${SLURM_CPUS_PER_TASK} thread(s) per task."
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 
 # Launch command
-SRUN_DeepMD_EXE="srun --export=ALL --mpi=pmix --ntasks=${SLURM_NTASKS} --nodes=${SLURM_NNODES} --ntasks-per-node=${TASKS_PER_NODE} --cpus-per-task=${SLURM_CPUS_PER_TASK} ${DeepMD_EXE}"
+SRUN_DeepMD_EXE="srun --export=ALL --mpi=pmix --ntasks=${SLURM_NTASKS} --nodes=${SLURM_NNODES} --ntasks-per-node=${SLURM_NTASKS_PER_NODE} --cpus-per-task=${SLURM_CPUS_PER_TASK} ${DeepMD_EXE}"
 LAUNCH_CMD="${SRUN_DeepMD_EXE} compress -i ${DeepMD_MODEL}.pb -o ${DeepMD_MODEL}_compressed.pb ${log}"
 
 ${LAUNCH_CMD} >"${DeepMD_MODEL}_compress".out 2>&1 || export EXIT_CODE="1"
