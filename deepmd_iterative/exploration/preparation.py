@@ -893,7 +893,7 @@ def main(
     backup_and_overwrite_json_file(
         merged_input_json, (current_path / user_input_json_filename)
     )
-    
+
     # End
     logging.info(f"-" * 88)
     logging.info(

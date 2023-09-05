@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/04
+Last modified: 2023/09/05
 
 Functions
 ---------
@@ -15,6 +15,18 @@ generate_input_exploration_json(user_input_json: Dict, previous_json: Dict, defa
 
 get_system_exploration(merged_input_json: Dict, system_auto_index: int) -> Tuple[Union[float, int],Union[float, int],Union[float, int],Union[float, int],Union[float, int],Union[float, int],Union[float, int],Union[float, int],bool]
     Returns a tuple of system exploration parameters based on the input JSON and system number.
+
+generate_input_exploration_deviation_json(user_input_json: Dict, previous_json: Dict, default_input_json: Dict, merged_input_json: Dict, main_json: Dict,) -> Dict
+    Update and complete input JSON by incorporating values from the user input JSON, the previous JSON, and the default JSON.
+
+get_system_deviation(merged_input_json: Dict, system_auto_index: int) -> Tuple[Union[float, int], Union[float, int], Union[float, int], Union[float, int], Union[float, int]]
+    Return a tuple of system exploration parameters based on the input JSON and system index.
+
+generate_input_exploration_disturbed_json(user_input_json: Dict, previous_json: Dict, default_input_json: Dict, merged_input_json: Dict, main_json: Dict,) -> Dict
+    Update and complete input JSON by incorporating values from the user input JSON, the previous JSON, and the default JSON.
+
+get_system_disturb(merged_input_json: Dict, system_auto_index: int) -> Tuple[Union[float, int], Union[float, int], List[int]]
+    Return a tuple of system exploration parameters based on the input JSON and system index.
 
 generate_starting_points(exploration_type: int, system_auto: int, training_path: str, padded_prev_iter: str, previous_json: Dict, input_present: bool, disturbed_start: bool) -> Tuple[List[str], List[str], bool]
     Generates a list of starting point file names.
@@ -27,9 +39,6 @@ get_last_frame_number(model_deviation: np.ndarray, sigma_high_limit: float, dist
 
 update_system_nb_steps_factor(previous_json: Dict, system_auto_index: int) -> int
     Calculates a ratio based on information from a dictionary and returns a multiplying factor for system_nb_steps.
-
-set_input_explordevi_json(user_input_json: Dict, previous_json: Dict, default_input_json: Dict, merged_input_json: Dict, main_json: Dict) -> Dict
-    Updates the training JSON with input JSON, previous JSON and default JSON.
 """
 # Standard library modules
 import subprocess
@@ -139,7 +148,8 @@ def generate_input_exploration_json(
                             isinstance(it_value, (int, float))
                             and (key != "disturbed_start" and key != "previous_start")
                         ) or (
-                            isinstance(it_value, (bool)) and (key == "disturbed_start" or key == "previous_start")
+                            isinstance(it_value, (bool))
+                            and (key == "disturbed_start" or key == "previous_start")
                         ):
                             merged_input_json[key].append(it_value)
                         else:
@@ -150,8 +160,12 @@ def generate_input_exploration_json(
                     raise ValueError(error_msg)
 
             # If it is not a List
-            elif (isinstance(value, (int, float)) and (key != "disturbed_start" and key != "previous_start")) or (
-                isinstance(value, (bool)) and (key == "disturbed_start" or key == "previous_start")
+            elif (
+                isinstance(value, (int, float))
+                and (key != "disturbed_start" and key != "previous_start")
+            ) or (
+                isinstance(value, (bool))
+                and (key == "disturbed_start" or key == "previous_start")
             ):
                 merged_input_json[key] = [value] * system_count
             else:
@@ -597,16 +611,16 @@ def generate_starting_points(
         )
     )
     orginal_starting_points_path = list(
-        Path(training_path, "user_files").glob(
-            f"{system_auto}.{file_extension}"
-        )
+        Path(training_path, "user_files").glob(f"{system_auto}.{file_extension}")
     )
     starting_points_all = [str(zzz).split("/")[-1] for zzz in starting_points_path]
     starting_points = [zzz for zzz in starting_points_all if "disturbed" not in zzz]
     starting_points_disturbed = [
         zzz for zzz in starting_points_all if zzz not in starting_points
     ]
-    starting_points_original = [str(_).split("/")[-1] for _ in orginal_starting_points_path]
+    starting_points_original = [
+        str(_).split("/")[-1] for _ in orginal_starting_points_path
+    ]
     starting_points_bckp = deepcopy(starting_points)
     starting_points_disturbed_bckp = deepcopy(starting_points_disturbed)
     starting_points_original_bckp = deepcopy(starting_points_original)
