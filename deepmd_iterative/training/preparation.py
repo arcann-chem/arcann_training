@@ -153,7 +153,7 @@ def main(
     if fake_machine is not None:
         logging.info(f"Pretending to be on: '{fake_machine}'.")
     else:
-        logging.info(f"We are on: '{machine}'.")
+        logging.info(f"Machine identified: '{machine}'.")
     del fake_machine
 
     # Check if we can continue

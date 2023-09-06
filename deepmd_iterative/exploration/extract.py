@@ -473,8 +473,8 @@ def main(
                     del min_index, padded_min_index, min_file_name
 
                 # Selection of labeling XYZ
-                if QbC_stats["kept_count"] > 0:
-                    candidate_indexes = np.array(QbC_indexes["candidate_indexes"])
+                if QbC_stats["selected_count"] > 0:
+                    candidate_indexes = np.array(QbC_indexes["selected_indexes"])
                     if exploration_json["exploration_type"] == "lammps":
                         traj_file = (
                             local_path

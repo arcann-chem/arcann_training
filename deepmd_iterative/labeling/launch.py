@@ -83,14 +83,23 @@ def main(
     # Get control path, load the main JSON and the exploration JSON
     control_path = training_path / "control"
     main_json = load_json_file((control_path / "config.json"))
-    exploration_json = load_json_file(
-        (control_path / f"exploration_{padded_curr_iter}.json")
-    )
+    labeling_json = load_json_file((control_path / f"labeling_{padded_curr_iter}.json"))
+
+    # Load the previous labeling JSON
+    if curr_iter > 1:
+        prev_iter = curr_iter - 1
+        padded_prev_iter = str(prev_iter).zfill(3)
+        previous_labeling_json = load_json_file(
+            (control_path / f"labeling_{padded_prev_iter}.json")
+        )
+        del prev_iter, padded_prev_iter
+    else:
+        previous_labeling_json = {}
 
     # Get the machine keyword (Priority: user > previous > default)
     # And update the merged input JSON
     user_machine_keyword = get_machine_keyword(
-        user_input_json, exploration_json, default_input_json
+        user_input_json, previous_labeling_json, default_input_json
     )
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
@@ -110,7 +119,7 @@ def main(
     ) = get_machine_spec_for_step(
         deepmd_iterative_path,
         training_path,
-        "exploration",
+        "labeling",
         fake_machine,
         user_machine_keyword,
     )
@@ -131,10 +140,10 @@ def main(
     del fake_machine
 
     # Check prep/launch
-    assert_same_machine(machine, exploration_json)
+    assert_same_machine(machine, labeling_json)
 
     # Check if we can continue
-    if exploration_json["is_launched"]:
+    if labeling_json["is_launched"]:
         logging.critical(f"Already launched...")
         continuing = input(
             f"Do you want to continue?\n['Y' for yes, anything else to abort]\n"
@@ -144,77 +153,56 @@ def main(
         else:
             logging.error(f"Aborting...")
             return 1
-    if not exploration_json["is_locked"]:
-        logging.error(f"Lock found. Execute first: exploration preparation.")
+    if not labeling_json["is_locked"]:
+        logging.error(f"Lock found. Execute first: labeling preparation.")
         logging.error(f"Aborting...")
         return 1
 
     # Launch the jobs
     completed_count = 0
-    for system_auto_index, system_auto in enumerate(main_json["systems_auto"]):
-        for nnp_index in range(1, main_json["nnp_count"] + 1):
-            for traj_index in range(1, exploration_json["traj_count"] + 1):
-                local_path = (
-                    Path(".").resolve()
-                    / str(system_auto)
-                    / str(nnp_index)
-                    / (str(traj_index).zfill(5))
-                )
 
-                if (
-                    local_path
-                    / f"job_deepmd_{exploration_json['exploration_type']}_{exploration_json['arch_type']}_{machine}.sh"
-                ).is_file():
-                    change_directory(local_path)
-                    try:
-                        subprocess.run(
-                            [
-                                exploration_json["launch_command"],
-                                f"./job_deepmd_{exploration_json['exploration_type']}_{exploration_json['arch_type']}_{machine}.sh",
-                            ]
-                        )
-                        logging.info(
-                            f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' launched."
-                        )
-                        completed_count += 1
-                    except FileNotFoundError:
-                        logging.critical(
-                            f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' NOT launched - '{exploration_json['launch_command']}' not found."
-                        )
-                    change_directory(local_path.parent.parent.parent)
-                else:
-                    logging.critical(
-                        f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' NOT launched - No job file."
-                    )
-                del local_path
-            del traj_index
-        del nnp_index
-    del system_auto_index, system_auto
+    for system_auto in labeling_json["systems_auto"]:
+        system_path = current_path / system_auto
+
+        if (
+            system_path
+            / f"job_labeling_array_{labeling_json['arch_type']}_{machine}.sh"
+        ).is_file():
+            change_directory(system_path)
+
+            try:
+                subprocess.run(
+                    [
+                        labeling_json["launch_command"],
+                        f"./job_labeling_array_{labeling_json['arch_type']}_{machine}.sh",
+                    ]
+                )
+                logging.info(f"Labeling - '{system_auto}' launched.")
+                completed_count += 1
+            except FileNotFoundError:
+                logging.critical(
+                    f"Labeling - '{system_auto}' NOT launched - '{labeling_json['launch_command']}' not found."
+                )
+            change_directory(system_path.parent)
+        else:
+            logging.critical(f"Labeling - '{system_auto}' NOT launched - No job file.")
+
+        del system_path
 
     logging.info(f"-" * 88)
     # Update the booleans in the exploration JSON
-    if completed_count == (
-        len(exploration_json["systems_auto"])
-        * exploration_json["nnp_count"]
-        * exploration_json["traj_count"]
-    ):
-        exploration_json["is_launched"] = True
+    if completed_count == len(labeling_json["systems_auto"]):
+        labeling_json["is_launched"] = True
 
     # Dump the JSON files (exploration JSON and merged input JSON)
-    write_json_file(
-        exploration_json, (control_path / f"exploration_{padded_curr_iter}.json")
-    )
+    write_json_file(labeling_json, (control_path / f"labeling_{padded_curr_iter}.json"))
     backup_and_overwrite_json_file(
         merged_input_json, (current_path / user_input_json_filename)
     )
 
     # End
     logging.info(f"-" * 88)
-    if completed_count == (
-        len(exploration_json["systems_auto"])
-        * exploration_json["nnp_count"]
-        * exploration_json["traj_count"]
-    ):
+    if completed_count == len(labeling_json["systems_auto"]):
         logging.info(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
         )
@@ -225,7 +213,7 @@ def main(
         logging.critical(f"Some jobs did not launch correctly.")
         logging.critical(f"Please launch manually before continuing to the next step.")
         logging.critical(
-            f"Replace the key 'is_launched' to 'True' in the 'exploration_{padded_curr_iter}.json'."
+            f"Replace the key 'is_launched' to 'True' in the 'labeling_{padded_curr_iter}.json'."
         )
     del completed_count
 
@@ -238,9 +226,16 @@ def main(
         user_input_json_present,
         user_input_json_filename,
     )
-    del main_json, merged_input_json
+    del main_json, merged_input_json, labeling_json, previous_labeling_json
     del curr_iter, padded_curr_iter
-    del machine, machine_spec, machine_walltime_format, machine_launch_command
+    del (
+        machine,
+        machine_walltime_format,
+        machine_job_scheduler,
+        machine_launch_command,
+        user_machine_keyword,
+        machine_spec,
+    )
 
     return 0
 
@@ -248,7 +243,7 @@ def main(
 if __name__ == "__main__":
     if len(sys.argv) == 4:
         main(
-            "exploration",
+            "labeling",
             "launch",
             Path(sys.argv[1]),
             fake_machine=sys.argv[2],

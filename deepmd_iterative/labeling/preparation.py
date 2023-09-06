@@ -105,6 +105,7 @@ def main(
         previous_labeling_json = load_json_file(
             (control_path / f"labeling_{padded_prev_iter}.json")
         )
+        del prev_iter, padded_prev_iter
     else:
         previous_labeling_json = {}
 
@@ -148,7 +149,7 @@ def main(
     if fake_machine is not None:
         logging.info(f"Pretending to be on: '{fake_machine}'.")
     else:
-        logging.info(f"We are on: '{machine}'.")
+        logging.info(f"Machine identified: '{machine}'.")
     del fake_machine
 
     # Check if we can continue
@@ -206,6 +207,7 @@ def main(
         logging.debug(
             f"master_job_file: {master_job_file[filename_idx][0:5]}, {master_job_file[filename_idx][-5:-1]}"
         )
+    del filename_idx, filename
 
     merged_input_json["job_email"] = get_key_in_dict(
         "job_email", user_input_json, previous_labeling_json, default_input_json
@@ -214,6 +216,7 @@ def main(
 
     labeling_json["systems_auto"] = {}
 
+    total_to_label = 0
     # Loop through each system and set its labeling
     for system_auto_index, system_auto in enumerate(main_json["systems_auto"]):
         logging.info(
@@ -221,7 +224,9 @@ def main(
         )
 
         labeling_json["systems_auto"][system_auto] = {}
-        candidates_count = exploration_json["systems_auto"][system_auto]["kept_count"]
+        candidates_count = exploration_json["systems_auto"][system_auto][
+            "selected_count"
+        ]
         if (
             exploration_json["systems_auto"][system_auto]["disturbed_candidate_value"]
             > 0
@@ -230,6 +235,8 @@ def main(
         else:
             disturbed_candidates_count = 0
         labeling_count = candidates_count + disturbed_candidates_count
+
+        total_to_label += labeling_count
 
         # TODO Set the individual system params for exploration
         (
@@ -505,6 +512,9 @@ def main(
         logging.info(
             f"Processed system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})"
         )
+    del system_auto_index, system_auto
+    logging.info(f"{total_to_label} structures will be labeled.")
+    del total_to_label
 
     # Set booleans in the exploration JSON
     labeling_json = {
@@ -545,7 +555,14 @@ def main(
         exploration_json,
     )
     del curr_iter, padded_curr_iter
-    del machine, machine_spec, machine_walltime_format, machine_launch_command
+    del (
+        machine,
+        machine_walltime_format,
+        machine_job_scheduler,
+        machine_launch_command,
+        user_machine_keyword,
+        machine_spec,
+    )
     del master_job_file
 
     return 0

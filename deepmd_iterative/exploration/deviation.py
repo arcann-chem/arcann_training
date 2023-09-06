@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/31
+Last modified: 2023/09/06
 """
 # Standard library modules
 import copy
@@ -471,6 +471,8 @@ def main(
 
     del system_auto_index, system_auto
 
+    total_candidates_selected = 0
+
     for system_auto_index, system_auto in enumerate(exploration_json["systems_auto"]):
         # Set the system params for deviation selection
         (
@@ -484,7 +486,7 @@ def main(
         # Initialize
         exploration_json["systems_auto"][system_auto] = {
             **exploration_json["systems_auto"][system_auto],
-            "kept_count": 0,
+            "selected_count": 0,
             "discarded_count": 0,
         }
 
@@ -528,8 +530,9 @@ def main(
                     # Get the local max_candidates
                     QbC_stats["selection_factor"] = selection_factor
                     max_candidates_local = int(
-                        np.floor(max_candidates * selection_factor)
+                        np.ceil(max_candidates * selection_factor)
                     )
+
                     if selection_factor == 1:
                         QbC_stats["max_candidates_local"] = -1
                     else:
@@ -539,24 +542,23 @@ def main(
 
                     # Selection of candidates (as linearly as possible, keeping the first and the last ones)
                     if len(candidate_indexes) > max_candidates_local:
-                        step_size = len(candidate_indexes) / (max_candidates_local - 1)
-                        kept_indexes = candidate_indexes[::step_size]
-                        kept_indexes = np.concatenate(
-                            (
-                                [candidate_indexes[0]],
-                                kept_indexes,
-                                [candidate_indexes[-1]],
-                            )
-                        )
-                        # kept_indexes = candidate_indexes[np.round(np.linspace(0, len(candidate_indexes)-1, max_candidates_local)).astype(int)]
+                        selected_indexes = candidate_indexes[
+                            np.round(
+                                np.linspace(
+                                    0, len(candidate_indexes) - 1, max_candidates_local
+                                )
+                            ).astype(int)
+                        ]
                     else:
-                        kept_indexes = candidate_indexes
-                    discarded_indexes = np.setdiff1d(candidate_indexes, kept_indexes)
+                        selected_indexes = candidate_indexes
+                    discarded_indexes = np.setdiff1d(
+                        candidate_indexes, selected_indexes
+                    )
 
                     QbC_indexes = {
                         **QbC_indexes,
-                        "kept_indexes": kept_indexes.astype(int).tolist()
-                        if kept_indexes.size > 0
+                        "selected_indexes": selected_indexes.astype(int).tolist()
+                        if selected_indexes.size > 0
                         else [],
                         "discarded_indexes": discarded_indexes.astype(int).tolist()
                         if discarded_indexes.size > 0
@@ -564,28 +566,32 @@ def main(
                     }
                     QbC_stats = {
                         **QbC_stats,
-                        "kept_count": len(kept_indexes.astype(int).tolist())
-                        if kept_indexes.size > 0
+                        "selected_count": len(selected_indexes.astype(int).tolist())
+                        if selected_indexes.size > 0
                         else 0,
                         "discarded_count": len(discarded_indexes.astype(int).tolist())
                         if discarded_indexes.size > 0
                         else 0,
                     }
 
-                    # Now we get the starting point (the min of kept, or the last good)
-                    # Min of kept
-                    if kept_indexes.shape[0] > 0:
+                    total_candidates_selected += len(
+                        selected_indexes.astype(int).tolist()
+                    )
+
+                    # Now we get the starting point (the min of selected, or the last good)
+                    # Min of selected
+                    if selected_indexes.shape[0] > 0:
                         model_deviation = np.genfromtxt(
                             str(local_path / model_deviation_filename)
                         )
                         min_val = 1e30
-                        for kept_idx in kept_indexes:
+                        for selected_idx in selected_indexes:
                             temp_min = model_deviation[:, 4][
-                                np.where(model_deviation[:, 0] == kept_idx)
+                                np.where(model_deviation[:, 0] == selected_idx)
                             ]
                             if temp_min < min_val:
                                 min_val = temp_min
-                                min_index = kept_idx
+                                min_index = selected_idx
                         QbC_stats["minimum_index"] = int(min_index)
                     # Last of good
                     elif len(QbC_indexes["good_indexes"]) > 0:
@@ -599,21 +605,21 @@ def main(
                 else:
                     QbC_indexes = {
                         **QbC_indexes,
-                        "kept_indexes": [],
+                        "selected_indexes": [],
                         "discarded_indexes": [],
                     }
                     QbC_stats = {
                         **QbC_stats,
                         "selection_factor": 0,
                         "max_candidates_local": 0,
-                        "kept_count": 0,
+                        "selected_count": 0,
                         "discarded_count": 0,
                         "minimum_index": -1,
                     }
 
-                exploration_json["systems_auto"][system_auto]["kept_count"] = (
-                    exploration_json["systems_auto"][system_auto]["kept_count"]
-                    + QbC_stats["kept_count"]
+                exploration_json["systems_auto"][system_auto]["selected_count"] = (
+                    exploration_json["systems_auto"][system_auto]["selected_count"]
+                    + QbC_stats["selected_count"]
                 )
                 exploration_json["systems_auto"][system_auto]["discarded_count"] = (
                     exploration_json["systems_auto"][system_auto]["discarded_count"]
@@ -630,6 +636,11 @@ def main(
 
         del max_candidates, sigma_low, sigma_high, sigma_high_limit, ignore_first_x_ps
     del system_auto_index, system_auto
+
+    logging.info(
+        f"A total of {total_candidates_selected} structures have been selected for labeling..."
+    )
+    del total_candidates_selected
 
     logging.info(f"-" * 88)
     # Update the booleans in the exploration JSON
