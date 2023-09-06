@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/05
+Last modified: 2023/09/06
 """
 # Standard library modules
 import copy
@@ -106,8 +106,6 @@ def main(
         user_input_json, training_json, default_input_json
     )
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
-    merged_input_json["user_machine_keyword"] = user_machine_keyword
-    logging.debug(f"merged_input_json: {merged_input_json}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
     user_machine_keyword = (
         None if isinstance(user_machine_keyword, bool) else user_machine_keyword
@@ -117,10 +115,11 @@ def main(
     # From the keyword (or default), get the machine spec (or for the fake one)
     (
         machine,
-        machine_spec,
         machine_walltime_format,
         machine_job_scheduler,
         machine_launch_command,
+        user_machine_keyword,
+        machine_spec,
     ) = get_machine_spec_for_step(
         deepmd_iterative_path,
         training_path,
@@ -129,10 +128,14 @@ def main(
         user_machine_keyword,
     )
     logging.debug(f"machine: {machine}")
-    logging.debug(f"machine_spec: {machine_spec}")
     logging.debug(f"machine_walltime_format: {machine_walltime_format}")
     logging.debug(f"machine_job_scheduler: {machine_job_scheduler}")
     logging.debug(f"machine_launch_command: {machine_launch_command}")
+    logging.debug(f"user_machine_keyword: {user_machine_keyword}")
+    logging.debug(f"machine_spec: {machine_spec}")
+
+    merged_input_json["user_machine_keyword"] = user_machine_keyword
+    logging.debug(f"merged_input_json: {merged_input_json}")
 
     if fake_machine is not None:
         logging.info(f"Pretending to be on: '{fake_machine}'.")
@@ -147,13 +150,12 @@ def main(
             current_path.parent / "user_files" / job_file_name
         )
     else:
-        check_file_existence(
-            jobs_path / job_file_name,
-            error_msg=f"No SLURM file present for '{current_step.capitalize()} / {current_phase.capitalize()}' on this machine.",
+        logging.error(
+            f"No JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine."
         )
-        master_job_file = textfile_to_string_list(
-            jobs_path / job_file_name,
-        )
+        logging.error(f"Aborting...")
+        return 1
+
     logging.debug(f"master_job_file: {master_job_file[0:5]}, {master_job_file[-5:-1]}")
     del jobs_path, job_file_name
 
@@ -235,7 +237,7 @@ def main(
         logging.critical(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!"
         )
-        logging.critical(f"Some SLURM jobs did not launch correctly.")
+        logging.critical(f"Some jobs did not launch correctly.")
         logging.critical(f"Please launch manually before continuing to the next step.")
     del completed_count
 

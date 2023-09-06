@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/04
+Last modified: 2023/09/06
 """
 # Standard library modules
 import copy
@@ -462,6 +462,14 @@ def main(
                             stderr=subprocess.STDOUT,
                         )
 
+                        exploration_json["systems_auto"][system_auto][
+                            "disturbed_start_value"
+                        ] = disturbed_start_value
+                    else:
+                        exploration_json["systems_auto"][system_auto][
+                            "disturbed_start_value"
+                        ] = 0
+
                     del min_index, padded_min_index, min_file_name
 
                 # Selection of labeling XYZ
@@ -655,6 +663,14 @@ def main(
                                 for _ in candidate_indexes_padded
                             ]
                         )
+                        exploration_json["systems_auto"][system_auto][
+                            "disturbed_candidate_value"
+                        ] = disturbed_candidate_value
+
+                    else:
+                        exploration_json["systems_auto"][system_auto][
+                            "disturbed_candidate_value"
+                        ] = 0
 
         string_list_to_textfile((current_path / "gather.atomsk"), candidates_files)
         subprocess.run(

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/31
+Last modified: 2023/09/06
 """
 # Standard library modules
 import logging
@@ -247,7 +247,7 @@ def main(
         logging.error(f"Aborting...")
         return 1
 
-    logging.info("Deleting SLURM out/error files...")
+    logging.info("Deleting job out/error files...")
     logging.info("Deleting NNP PB files...")
     logging.info("Removing extra log/error files...")
     for system_auto in exploration_json["systems_auto"]:

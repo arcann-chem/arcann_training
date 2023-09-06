@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/04
+Last modified: 2023/09/06
 
 The slurm module provides functions to manipulate SLURM data (as list of strings).
 
@@ -95,7 +95,7 @@ def replace_in_slurm_file_general(
     )
 
     max_qos_time = 0
-    print(walltime_approx_s)
+
     for it_qos in machine_spec["qos"]:
         if machine_spec["qos"][it_qos] >= walltime_approx_s:
             qos_ok = True

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/04
+Last modified: 2023/09/06
 
 The xyz module provides functions to manipulate XYZ data (as np.ndarray).
 
@@ -259,7 +259,9 @@ def write_xyz_frame(
         # Write the number of atoms in the specified frame to the file
         xyz_file.write(f"{num_atoms[frame_idx]}\n")
         # Write a line indicating the index of the frame or if the cell is defined
-        if type(cell_info[frame_idx]) is bool and not cell_info[frame_idx]:
+        if isinstance(cell_info[frame_idx], np.bool_) and not cell_info[frame_idx]:
+            xyz_file.write(f"Frame index: {frame_idx}\n")
+        elif isinstance(cell_info, bool):
             xyz_file.write(f"Frame index: {frame_idx}\n")
         else:
             print(cell_info[frame_idx])

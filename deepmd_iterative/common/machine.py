@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/04
+Last modified: 2023/09/06
 
 The machine module provides functions for machine operations.
 
@@ -258,7 +258,7 @@ def get_machine_spec_for_step(
     input_machine_shortname: str = None,
     user_machine_keyword: Union[str, List[str]] = None,
     check_only: bool = False,
-) -> Tuple[str, Dict[str, Any], str, str]:
+) -> Tuple[str, Dict[str, Any], str, str, str]:
     """
     Return the machine specification for a given step and machine.
 
@@ -282,9 +282,11 @@ def get_machine_spec_for_step(
     Tuple[str, Dict[str, Any], str, str]
         A tuple containing the following elements:
             - machine_shortname: The short name of the machine.
-            - machine_spec: The machine specification as a dictionary.
             - machine_walltime_format: The walltime format of the machine.
+            - machine_job_scheduler
             - machine_launch_command: The launch command to use on the machine.
+            - machine_keyword: The keyword (provided, or found) for the machine specification
+            - machine_spec: The machine specification as a dictionary.
 
     Raises
     ------
@@ -335,11 +337,13 @@ def get_machine_spec_for_step(
                         # Return the machine specification
                         return (
                             machine_shortname,
-                            config_data,
                             config[machine_shortname]["walltime_format"],
                             config[machine_shortname]["job_scheduler"],
                             config[machine_shortname]["launch_command"],
+                            config_key,
+                            config_data,
                         )
+                        # From the keyword (or default), get the machine spec (or for the fake one)
 
     # If no matching configuration was found, return an error
     if user_machine_keyword is not None and not (

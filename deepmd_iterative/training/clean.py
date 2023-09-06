@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/31
+Last modified: 2023/09/06
 """
 # Standard library modules
 import logging
@@ -76,7 +76,7 @@ def main(
     remove_files_matching_glob(current_path, "**/graph*compress.out")
     logging.info(f"Deleting DP-Train related error files...")
     remove_files_matching_glob(current_path, "**/training.out")
-    logging.info(f"Deleting SLURM launch files...")
+    logging.info(f"Deleting job files...")
     remove_files_matching_glob(current_path, "**/*.sh")
 
     # End

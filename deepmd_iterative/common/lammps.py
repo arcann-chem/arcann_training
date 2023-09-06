@@ -24,6 +24,7 @@ import numpy as np
 # Local imports
 from deepmd_iterative.common.utils import catch_errors_decorator
 
+
 # Unittested
 @catch_errors_decorator
 def read_lammps_data(

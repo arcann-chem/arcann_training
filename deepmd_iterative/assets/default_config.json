@@ -48,5 +48,15 @@
         "disturbed_start_indexes": [[]],
         "disturbed_candidate_value": [0.0],
         "disturbed_candidate_indexes": [[]]
+    },
+    "labeling":
+    {
+        "user_machine_keyword": false,
+        "job_email": "",
+        "walltime_first_job_h": [0.5],
+        "walltime_second_job_h": [1.0],
+        "nb_nodes": [1],
+        "nb_mpi_per_node": [10],
+        "nb_threads_per_mpi": [1]
     }
 }

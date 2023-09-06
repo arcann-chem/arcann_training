@@ -4,14 +4,13 @@ setup(
     name="deepmd_iterative",
     version="1.0.0",
     author="Rolf David",
-    author_email="rolf/github_c@slmail.me",
+    author_email="",
     description="",
     url="",
     license="GNU Affero General Public License v3",
     packages=find_packages(),
     package_data={
         "deepmd_iterative.assets": ["*.json"],
-        "deepmd_iterative.assets.jobs": ["training/*.sh"],
         "deepmd_iterative.assets.others": ["*.in", "*.tcl"],
     },
     classifiers=[
