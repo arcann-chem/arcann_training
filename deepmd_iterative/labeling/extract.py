@@ -23,7 +23,10 @@ from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
 )
-from deepmd_iterative.common.list import textfile_to_string_list, string_list_to_textfile
+from deepmd_iterative.common.list import (
+    textfile_to_string_list,
+    string_list_to_textfile,
+)
 from deepmd_iterative.common.filesystem import (
     check_file_existence,
     remove_file,
@@ -35,22 +38,28 @@ from deepmd_iterative.common.check import validate_step_folder
 try:
     importlib.import_module("scipy")
     from scipy import constants
+
     Ha_to_eV = constants.physical_constants["atomic unit of electric potential"][0]
     Bohr_to_A = constants.physical_constants["Bohr radius"][0] / constants.angstrom
     au_to_eV_per_A = np.float64(Ha_to_eV / Bohr_to_A)
-    eV_per_A3_to_GPa = np.float64(constants.eV / constants.angstrom**3 / constants.giga)
+    eV_per_A3_to_GPa = np.float64(
+        constants.eV / constants.angstrom**3 / constants.giga
+    )
 except ImportError:
     import numpy as np
+
     Ha_to_eV = np.float64(27.211386245988)
     Bohr_to_A = np.float64(0.529177210903)
     au_to_eV_per_A = np.float64(Ha_to_eV / Bohr_to_A)
     eV_per_A3_to_GPa = np.float64(160.21766208)
 except Exception:
     import numpy as np
+
     Ha_to_eV = np.float64(27.211386245988)
     Bohr_to_A = np.float64(0.529177210903)
     au_to_eV_per_A = np.float64(Ha_to_eV / Bohr_to_A)
     eV_per_A3_to_GPa = np.float64(160.21766208)
+
 
 def main(
     current_step: str,
@@ -82,9 +91,7 @@ def main(
     # Get control path, load the main JSON and the exploration JSON
     control_path = training_path / "control"
     main_json = load_json_file((control_path / "config.json"))
-    labeling_json = load_json_file(
-        (control_path / f"labeling_{padded_curr_iter}.json")
-    )
+    labeling_json = load_json_file((control_path / f"labeling_{padded_curr_iter}.json"))
 
     # Check if we can continue
     if not labeling_json["is_checked"]:
@@ -93,29 +100,50 @@ def main(
         return 1
 
     # Create if it doesn't exists the data path.
-    (training_path/"data").mkdir(exist_ok=True)
+    (training_path / "data").mkdir(exist_ok=True)
 
-    candidates_expected_count = 0 
+    candidates_expected_count = 0
     for system_auto_index, system_auto in enumerate(labeling_json["systems_auto"]):
-
         logging.info(
-                f"Processing system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})"
-            )
-        
-        system_candidates_count = labeling_json["systems_auto"][system_auto]["candidates_count"]
-        system_candidates_skipped_count = labeling_json["systems_auto"][system_auto]["candidates_skipped_count"]
+            f"Processing system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})"
+        )
+
+        system_candidates_count = labeling_json["systems_auto"][system_auto][
+            "candidates_count"
+        ]
+        system_candidates_skipped_count = labeling_json["systems_auto"][system_auto][
+            "candidates_skipped_count"
+        ]
         system_path = current_path / system_auto
 
-        data_path = training_path/"data"/(system_auto+"_"+padded_curr_iter)
+        data_path = training_path / "data" / (system_auto + "_" + padded_curr_iter)
         data_path.mkdir(exist_ok=True)
-        (data_path/"set.000").mkdir(exist_ok=True)
+        (data_path / "set.000").mkdir(exist_ok=True)
 
-        energy_array_raw = np.zeros((system_candidates_count-system_candidates_skipped_count))
-        coord_array_raw = np.zeros((system_candidates_count-system_candidates_skipped_count, main_json["systems_auto"][system_auto]["nb_atm"] * 3 ))
-        box_array_raw = np.zeros((system_candidates_count-system_candidates_skipped_count, 9))
-        volume_array_raw = np.zeros((system_candidates_count-system_candidates_skipped_count))
-        force_array_raw = np.zeros((system_candidates_count-system_candidates_skipped_count, main_json["systems_auto"][system_auto]["nb_atm"] * 3 ))
-        virial_array_raw = np.zeros((system_candidates_count-system_candidates_skipped_count, 9))
+        energy_array_raw = np.zeros(
+            (system_candidates_count - system_candidates_skipped_count)
+        )
+        coord_array_raw = np.zeros(
+            (
+                system_candidates_count - system_candidates_skipped_count,
+                main_json["systems_auto"][system_auto]["nb_atm"] * 3,
+            )
+        )
+        box_array_raw = np.zeros(
+            (system_candidates_count - system_candidates_skipped_count, 9)
+        )
+        volume_array_raw = np.zeros(
+            (system_candidates_count - system_candidates_skipped_count)
+        )
+        force_array_raw = np.zeros(
+            (
+                system_candidates_count - system_candidates_skipped_count,
+                main_json["systems_auto"][system_auto]["nb_atm"] * 3,
+            )
+        )
+        virial_array_raw = np.zeros(
+            (system_candidates_count - system_candidates_skipped_count, 9)
+        )
 
         # Options
         is_virial = False
@@ -131,15 +159,21 @@ def main(
             padded_labeling_step = str(labeling_step).zfill(5)
             labeling_step_path = system_path / padded_labeling_step
 
-            if not (labeling_step_path/"skip").is_file():
-
+            if not (labeling_step_path / "skip").is_file():
                 system_candidates_not_skipped_counter += 1
 
                 # With the first, we create a type.raw and get the CP2K version
                 if system_candidates_not_skipped_counter == 1:
-                    check_file_existence(training_path / "user_files" / f"{system_auto}.lmp", True, True, "Input data file (lmp) not present.")
+                    check_file_existence(
+                        training_path / "user_files" / f"{system_auto}.lmp",
+                        True,
+                        True,
+                        "Input data file (lmp) not present.",
+                    )
 
-                    lammps_data = textfile_to_string_list(training_path / "user_files" / f"{system_auto}.lmp")
+                    lammps_data = textfile_to_string_list(
+                        training_path / "user_files" / f"{system_auto}.lmp"
+                    )
                     indexes = [idx for idx, s in enumerate(lammps_data) if "Atoms" in s]
                     if len(indexes) > 1:
                         for index in [
@@ -169,60 +203,108 @@ def main(
                     lammps_data = [g.split(" ")[1:2] for g in lammps_data]
                     type_atom_array = np.asarray(lammps_data, dtype=np.int64).flatten()
                     type_atom_array = type_atom_array - 1
-                    np.savetxt(f"{system_path}/type.raw",type_atom_array,delimiter=" ",newline=" ",fmt="%d")
-                    np.savetxt(f"{data_path}/type.raw",type_atom_array,delimiter=" ",newline=" ",fmt="%d")
+                    np.savetxt(
+                        f"{system_path}/type.raw",
+                        type_atom_array,
+                        delimiter=" ",
+                        newline=" ",
+                        fmt="%d",
+                    )
+                    np.savetxt(
+                        f"{data_path}/type.raw",
+                        type_atom_array,
+                        delimiter=" ",
+                        newline=" ",
+                        fmt="%d",
+                    )
 
                     # Get the CP2K version
-                    output_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}.out")
-                    output_cp2k = [_ for _ in output_cp2k if "CP2K| version string:" in _]
-                    output_cp2k = [" ".join(_.replace("\n", "").split()) for _ in output_cp2k]
+                    output_cp2k = textfile_to_string_list(
+                        labeling_step_path / f"2_labeling_{padded_labeling_step}.out"
+                    )
+                    output_cp2k = [
+                        _ for _ in output_cp2k if "CP2K| version string:" in _
+                    ]
+                    output_cp2k = [
+                        " ".join(_.replace("\n", "").split()) for _ in output_cp2k
+                    ]
                     output_cp2k = [_.split(" ")[-1] for _ in output_cp2k]
                     cp2k_version = float(output_cp2k[0])
 
                 # TODO Patterns should be in parser
                 # Energy
-                energy_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}-Force_Eval.fe")
-                pattern = r'ENERGY\|.*?([-+]?\d*\.\d+(?:[eE][-+]?\d+)?)'
+                energy_cp2k = textfile_to_string_list(
+                    labeling_step_path
+                    / f"2_labeling_{padded_labeling_step}-Force_Eval.fe"
+                )
+                pattern = r"ENERGY\|.*?([-+]?\d*\.\d+(?:[eE][-+]?\d+)?)"
                 for line in energy_cp2k:
                     match = re.search(pattern, line)
                     if match:
                         energy_float = float(match.group(1))
                 del line, match, pattern
                 energy_array = np.asarray(energy_float, dtype=np.float64).flatten()
-                energy_array_raw[system_candidates_not_skipped_counter - 1] = energy_array[0] * Ha_to_eV
+                energy_array_raw[system_candidates_not_skipped_counter - 1] = (
+                    energy_array[0] * Ha_to_eV
+                )
                 del energy_cp2k, energy_array, energy_float
 
                 # Coordinates
-                coordinate_xyz = textfile_to_string_list(labeling_step_path / f"labeling_{padded_labeling_step}.xyz")
+                coordinate_xyz = textfile_to_string_list(
+                    labeling_step_path / f"labeling_{padded_labeling_step}.xyz"
+                )
                 del coordinate_xyz[0:2]
-                coordinate_xyz = [" ".join(_.replace("\n", "").split()) for _ in coordinate_xyz]
+                coordinate_xyz = [
+                    " ".join(_.replace("\n", "").split()) for _ in coordinate_xyz
+                ]
                 coordinate_xyz = [_.split(" ")[1:] for _ in coordinate_xyz]
                 coord_array = np.asarray(coordinate_xyz, dtype=np.float64).flatten()
-                coord_array_raw[system_candidates_not_skipped_counter - 1, :] = coord_array
+                coord_array_raw[
+                    system_candidates_not_skipped_counter - 1, :
+                ] = coord_array
                 del coord_array, coordinate_xyz
 
                 # Box / Volume
-                input_cp2k = textfile_to_string_list(labeling_step_path / f"1_labeling_{padded_labeling_step}.inp")
-                cell = [float(_) for _ in re.findall(r"\d+\.\d+", [_ for _ in input_cp2k if "ABC" in _][0])]
+                input_cp2k = textfile_to_string_list(
+                    labeling_step_path / f"1_labeling_{padded_labeling_step}.inp"
+                )
+                cell = [
+                    float(_)
+                    for _ in re.findall(
+                        r"\d+\.\d+", [_ for _ in input_cp2k if "ABC" in _][0]
+                    )
+                ]
                 box_array_raw[system_candidates_not_skipped_counter - 1, 0] = cell[0]
                 box_array_raw[system_candidates_not_skipped_counter - 1, 4] = cell[1]
                 box_array_raw[system_candidates_not_skipped_counter - 1, 8] = cell[2]
-                volume_array_raw[system_candidates_not_skipped_counter - 1] = cell[0] * cell[1] * cell[2]
+                volume_array_raw[system_candidates_not_skipped_counter - 1] = (
+                    cell[0] * cell[1] * cell[2]
+                )
                 del input_cp2k, cell
 
                 # Forces
-                force_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}-Forces.for")
+                force_cp2k = textfile_to_string_list(
+                    labeling_step_path / f"2_labeling_{padded_labeling_step}-Forces.for"
+                )
                 del force_cp2k[0:4]
                 del force_cp2k[-1]
                 force_cp2k = [" ".join(_.replace("\n", "").split()) for _ in force_cp2k]
                 force_cp2k = [_.split(" ")[3:] for _ in force_cp2k]
                 force_array = np.asarray(force_cp2k, dtype=np.float64).flatten()
-                force_array_raw[system_candidates_not_skipped_counter - 1, :] = force_array * au_to_eV_per_A
+                force_array_raw[system_candidates_not_skipped_counter - 1, :] = (
+                    force_array * au_to_eV_per_A
+                )
                 del force_array, force_cp2k
 
                 # Virial
-                if (labeling_step_path / f"2_labeling_{padded_labeling_step}-Stress_Tensor.st").is_file():
-                    stress_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}-Stress_Tensor.st")
+                if (
+                    labeling_step_path
+                    / f"2_labeling_{padded_labeling_step}-Stress_Tensor.st"
+                ).is_file():
+                    stress_cp2k = textfile_to_string_list(
+                        labeling_step_path
+                        / f"2_labeling_{padded_labeling_step}-Stress_Tensor.st"
+                    )
 
                     if cp2k_version < 8 and cp2k_version >= 6:
                         matching_index = None
@@ -253,9 +335,13 @@ def main(
 
                             # Flatten the array
                             stress_xyz_array = tensor_values.flatten()
-                            virial_array_raw[system_candidates_not_skipped_counter - 1, :] = (
+                            virial_array_raw[
+                                system_candidates_not_skipped_counter - 1, :
+                            ] = (
                                 stress_xyz_array
-                                * volume_array_raw[system_candidates_not_skipped_counter - 1]
+                                * volume_array_raw[
+                                    system_candidates_not_skipped_counter - 1
+                                ]
                                 / eV_per_A3_to_GPa
                             )
                             is_virial = True
@@ -299,9 +385,13 @@ def main(
 
                             # Flatten the array
                             stress_xyz_array = tensor_values.flatten()
-                            virial_array_raw[system_candidates_not_skipped_counter - 1, :] = (
+                            virial_array_raw[
+                                system_candidates_not_skipped_counter - 1, :
+                            ] = (
                                 stress_xyz_array
-                                * volume_array_raw[system_candidates_not_skipped_counter - 1]
+                                * volume_array_raw[
+                                    system_candidates_not_skipped_counter - 1
+                                ]
                                 / eV_per_A3_to_GPa
                             )
                             is_virial = True
@@ -322,30 +412,50 @@ def main(
                         )
 
                 # Wannier
-                if (labeling_step_path / f"2_labeling_{padded_labeling_step}-Wannier.xyz").is_file():
-                    stress_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}-Wannier.xyz")
+                if (
+                    labeling_step_path
+                    / f"2_labeling_{padded_labeling_step}-Wannier.xyz"
+                ).is_file():
+                    stress_cp2k = textfile_to_string_list(
+                        labeling_step_path
+                        / f"2_labeling_{padded_labeling_step}-Wannier.xyz"
+                    )
 
-                    del wannier_xyz[0 : 2 + main_json["system_auto"][system_auto]["nb_atm"]]
+                    del wannier_xyz[
+                        0 : 2 + main_json["system_auto"][system_auto]["nb_atm"]
+                    ]
                     wannier_xyz = [
                         " ".join(_.replace("\n", "").split()) for _ in wannier_xyz
                     ]
                     wannier_xyz = [_.split(" ")[1:] for _ in wannier_xyz]
                     wannier_array = np.asarray(wannier_xyz, dtype=np.float64).flatten()
                     if system_candidates_not_skipped_counter == 1:
-                        wannier_array_raw = np.zeros((system_candidates_count-system_candidates_skipped_count, len(wannier_xyz) * 3))
+                        wannier_array_raw = np.zeros(
+                            (
+                                system_candidates_count
+                                - system_candidates_skipped_count,
+                                len(wannier_xyz) * 3,
+                            )
+                        )
 
-                    wannier_array_raw[system_candidates_not_skipped_counter - 1, :] = wannier_array
+                    wannier_array_raw[
+                        system_candidates_not_skipped_counter - 1, :
+                    ] = wannier_array
                     is_wannier = True
                     del wannier_array, wannier_xyz
 
                     # Check if wannier centers are not converged
-                    output_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}.out")
+                    output_cp2k = textfile_to_string_list(
+                        labeling_step_path / f"2_labeling_{padded_labeling_step}.out"
+                    )
                     if any(
                         "LOCALIZATION! loop did not converge within the maximum number of iterations"
                         in _
                         for _ in output_cp2k
                     ):
-                        wannier_not_converged.append(f"{system_candidates_not_skipped_counter - 1}\n")
+                        wannier_not_converged.append(
+                            f"{system_candidates_not_skipped_counter - 1}\n"
+                        )
         del padded_labeling_step, labeling_step, labeling_step_path
 
         np.savetxt(system_path / "energy.raw", energy_array_raw, delimiter=" ")
@@ -373,25 +483,72 @@ def main(
             np.savetxt(system_path / "wannier.raw", wannier_array_raw, delimiter=" ")
             np.save(data_path / "set.000" / "wannier", wannier_array_raw)
             if len(wannier_not_converged) > 1:
-                string_list_to_textfile(data_path / "set.000" / "wannier_not-converged.txt", wannier_not_converged)
+                string_list_to_textfile(
+                    data_path / "set.000" / "wannier_not-converged.txt",
+                    wannier_not_converged,
+                )
             del wannier_not_converged, is_wannier
 
+        system_disturbed_candidates_count = labeling_json["systems_auto"][system_auto][
+            "disturbed_candidates_count"
+        ]
+        system_disturbed_candidates_skipped_count = labeling_json["systems_auto"][
+            system_auto
+        ]["disturbed_candidates_skipped_count"]
 
-        system_disturbed_candidates_count = labeling_json["systems_auto"][system_auto]["disturbed_candidates_count"]
-        system_disturbed_candidates_skipped_count = labeling_json["systems_auto"][system_auto]["disturbed_candidates_skipped_count"]
-        
-        if system_disturbed_candidates_count - system_disturbed_candidates_skipped_count > 0:
-
-            data_path = training_path/"data"/(system_auto+"-disturbed_"+padded_curr_iter)
+        if (
+            system_disturbed_candidates_count
+            - system_disturbed_candidates_skipped_count
+            > 0
+        ):
+            data_path = (
+                training_path
+                / "data"
+                / (system_auto + "-disturbed_" + padded_curr_iter)
+            )
             data_path.mkdir(exist_ok=True)
-            (data_path/"set.000").mkdir(exist_ok=True)
+            (data_path / "set.000").mkdir(exist_ok=True)
 
-            energy_array_raw = np.zeros((system_disturbed_candidates_count-system_disturbed_candidates_skipped_count))
-            coord_array_raw = np.zeros((system_disturbed_candidates_count-system_disturbed_candidates_skipped_count, main_json["systems_auto"][system_auto]["nb_atm"] * 3 ))
-            box_array_raw = np.zeros((system_disturbed_candidates_count-system_disturbed_candidates_skipped_count, 9))
-            volume_array_raw = np.zeros((system_disturbed_candidates_count-system_disturbed_candidates_skipped_count))
-            force_array_raw = np.zeros((system_disturbed_candidates_count-system_disturbed_candidates_skipped_count, main_json["systems_auto"][system_auto]["nb_atm"] * 3 ))
-            virial_array_raw = np.zeros((system_disturbed_candidates_count-system_disturbed_candidates_skipped_count, 9))
+            energy_array_raw = np.zeros(
+                (
+                    system_disturbed_candidates_count
+                    - system_disturbed_candidates_skipped_count
+                )
+            )
+            coord_array_raw = np.zeros(
+                (
+                    system_disturbed_candidates_count
+                    - system_disturbed_candidates_skipped_count,
+                    main_json["systems_auto"][system_auto]["nb_atm"] * 3,
+                )
+            )
+            box_array_raw = np.zeros(
+                (
+                    system_disturbed_candidates_count
+                    - system_disturbed_candidates_skipped_count,
+                    9,
+                )
+            )
+            volume_array_raw = np.zeros(
+                (
+                    system_disturbed_candidates_count
+                    - system_disturbed_candidates_skipped_count
+                )
+            )
+            force_array_raw = np.zeros(
+                (
+                    system_disturbed_candidates_count
+                    - system_disturbed_candidates_skipped_count,
+                    main_json["systems_auto"][system_auto]["nb_atm"] * 3,
+                )
+            )
+            virial_array_raw = np.zeros(
+                (
+                    system_disturbed_candidates_count
+                    - system_disturbed_candidates_skipped_count,
+                    9,
+                )
+            )
 
             # Options
             is_virial = False
@@ -403,21 +560,31 @@ def main(
             # counter for non skipped configurations
             system_disturbed_candidates_not_skipped_counter = 0
 
-            for labeling_step in range(system_candidates_count, system_candidates_count + system_disturbed_candidates_count):
-
+            for labeling_step in range(
+                system_candidates_count,
+                system_candidates_count + system_disturbed_candidates_count,
+            ):
                 padded_labeling_step = str(labeling_step).zfill(5)
                 labeling_step_path = system_path / padded_labeling_step
 
-                if not (labeling_step_path/"skip").is_file():
-
+                if not (labeling_step_path / "skip").is_file():
                     system_disturbed_candidates_not_skipped_counter += 1
 
                     # With the first, we create a type.raw and get the CP2K version
                     if system_disturbed_candidates_not_skipped_counter == 1:
-                        check_file_existence(training_path / "user_files" / f"{system_auto}.lmp", True, True, "Input data file (lmp) not present.")
+                        check_file_existence(
+                            training_path / "user_files" / f"{system_auto}.lmp",
+                            True,
+                            True,
+                            "Input data file (lmp) not present.",
+                        )
 
-                        lammps_data = textfile_to_string_list(training_path / "user_files" / f"{system_auto}.lmp")
-                        indexes = [idx for idx, s in enumerate(lammps_data) if "Atoms" in s]
+                        lammps_data = textfile_to_string_list(
+                            training_path / "user_files" / f"{system_auto}.lmp"
+                        )
+                        indexes = [
+                            idx for idx, s in enumerate(lammps_data) if "Atoms" in s
+                        ]
                         if len(indexes) > 1:
                             for index in [
                                 idx for idx, s in enumerate(lammps_data) if "Atoms" in s
@@ -444,62 +611,122 @@ def main(
                             " ".join(f.replace("\n", "").split()) for f in lammps_data
                         ]
                         lammps_data = [g.split(" ")[1:2] for g in lammps_data]
-                        type_atom_array = np.asarray(lammps_data, dtype=np.int64).flatten()
+                        type_atom_array = np.asarray(
+                            lammps_data, dtype=np.int64
+                        ).flatten()
                         type_atom_array = type_atom_array - 1
-                        np.savetxt(f"{system_path}/type.raw", type_atom_array, delimiter=" ", newline=" ", fmt="%d")
-                        np.savetxt(f"{data_path}/type.raw", type_atom_array, delimiter=" ", newline=" ", fmt="%d")
+                        np.savetxt(
+                            f"{system_path}/type.raw",
+                            type_atom_array,
+                            delimiter=" ",
+                            newline=" ",
+                            fmt="%d",
+                        )
+                        np.savetxt(
+                            f"{data_path}/type.raw",
+                            type_atom_array,
+                            delimiter=" ",
+                            newline=" ",
+                            fmt="%d",
+                        )
 
                         # Get the CP2K version
-                        output_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}.out")
-                        output_cp2k = [_ for _ in output_cp2k if "CP2K| version string:" in _]
-                        output_cp2k = [" ".join(_.replace("\n", "").split()) for _ in output_cp2k]
+                        output_cp2k = textfile_to_string_list(
+                            labeling_step_path
+                            / f"2_labeling_{padded_labeling_step}.out"
+                        )
+                        output_cp2k = [
+                            _ for _ in output_cp2k if "CP2K| version string:" in _
+                        ]
+                        output_cp2k = [
+                            " ".join(_.replace("\n", "").split()) for _ in output_cp2k
+                        ]
                         output_cp2k = [_.split(" ")[-1] for _ in output_cp2k]
                         cp2k_version = float(output_cp2k[0])
 
                     # TODO Patterns should be in parser
                     # Energy
-                    energy_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}-Force_Eval.fe")
-                    pattern = r'ENERGY\|.*?([-+]?\d*\.\d+(?:[eE][-+]?\d+)?)'
+                    energy_cp2k = textfile_to_string_list(
+                        labeling_step_path
+                        / f"2_labeling_{padded_labeling_step}-Force_Eval.fe"
+                    )
+                    pattern = r"ENERGY\|.*?([-+]?\d*\.\d+(?:[eE][-+]?\d+)?)"
                     for line in energy_cp2k:
                         match = re.search(pattern, line)
                         if match:
                             energy_float = float(match.group(1))
                     del line, match, pattern
                     energy_array = np.asarray(energy_float, dtype=np.float64).flatten()
-                    energy_array_raw[system_disturbed_candidates_not_skipped_counter - 1] = energy_array[0] * Ha_to_eV
+                    energy_array_raw[
+                        system_disturbed_candidates_not_skipped_counter - 1
+                    ] = (energy_array[0] * Ha_to_eV)
                     del energy_cp2k, energy_array, energy_float
 
                     # Coordinates
-                    coordinate_xyz = textfile_to_string_list(labeling_step_path / f"labeling_{padded_labeling_step}.xyz")
+                    coordinate_xyz = textfile_to_string_list(
+                        labeling_step_path / f"labeling_{padded_labeling_step}.xyz"
+                    )
                     del coordinate_xyz[0:2]
-                    coordinate_xyz = [" ".join(_.replace("\n", "").split()) for _ in coordinate_xyz]
+                    coordinate_xyz = [
+                        " ".join(_.replace("\n", "").split()) for _ in coordinate_xyz
+                    ]
                     coordinate_xyz = [_.split(" ")[1:] for _ in coordinate_xyz]
                     coord_array = np.asarray(coordinate_xyz, dtype=np.float64).flatten()
-                    coord_array_raw[system_disturbed_candidates_not_skipped_counter - 1, :] = coord_array
+                    coord_array_raw[
+                        system_disturbed_candidates_not_skipped_counter - 1, :
+                    ] = coord_array
                     del coord_array, coordinate_xyz
 
                     # Box / Volume
-                    input_cp2k = textfile_to_string_list(labeling_step_path / f"1_labeling_{padded_labeling_step}.inp")
-                    cell = [float(_) for _ in re.findall(r"\d+\.\d+", [_ for _ in input_cp2k if "ABC" in _][0])]
-                    box_array_raw[system_disturbed_candidates_not_skipped_counter - 1, 0] = cell[0]
-                    box_array_raw[system_disturbed_candidates_not_skipped_counter - 1, 4] = cell[1]
-                    box_array_raw[system_disturbed_candidates_not_skipped_counter - 1, 8] = cell[2]
-                    volume_array_raw[system_disturbed_candidates_not_skipped_counter - 1] = cell[0] * cell[1] * cell[2]
+                    input_cp2k = textfile_to_string_list(
+                        labeling_step_path / f"1_labeling_{padded_labeling_step}.inp"
+                    )
+                    cell = [
+                        float(_)
+                        for _ in re.findall(
+                            r"\d+\.\d+", [_ for _ in input_cp2k if "ABC" in _][0]
+                        )
+                    ]
+                    box_array_raw[
+                        system_disturbed_candidates_not_skipped_counter - 1, 0
+                    ] = cell[0]
+                    box_array_raw[
+                        system_disturbed_candidates_not_skipped_counter - 1, 4
+                    ] = cell[1]
+                    box_array_raw[
+                        system_disturbed_candidates_not_skipped_counter - 1, 8
+                    ] = cell[2]
+                    volume_array_raw[
+                        system_disturbed_candidates_not_skipped_counter - 1
+                    ] = (cell[0] * cell[1] * cell[2])
                     del input_cp2k, cell
 
                     # Forces
-                    force_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}-Forces.for")
+                    force_cp2k = textfile_to_string_list(
+                        labeling_step_path
+                        / f"2_labeling_{padded_labeling_step}-Forces.for"
+                    )
                     del force_cp2k[0:4]
                     del force_cp2k[-1]
-                    force_cp2k = [" ".join(_.replace("\n", "").split()) for _ in force_cp2k]
+                    force_cp2k = [
+                        " ".join(_.replace("\n", "").split()) for _ in force_cp2k
+                    ]
                     force_cp2k = [_.split(" ")[3:] for _ in force_cp2k]
                     force_array = np.asarray(force_cp2k, dtype=np.float64).flatten()
-                    force_array_raw[system_disturbed_candidates_not_skipped_counter - 1, :] = force_array * au_to_eV_per_A
+                    force_array_raw[
+                        system_disturbed_candidates_not_skipped_counter - 1, :
+                    ] = (force_array * au_to_eV_per_A)
                     del force_array, force_cp2k
 
                     # Virial
-                    if (labeling_step_path / f"2_labeling_{padded_labeling_step}-Stress_Tensor.st").is_file():
-                        stress_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}-Stress_Tensor.st")
+                    if (
+                        labeling_step_path
+                        / f"2_labeling_{padded_labeling_step}-Stress_Tensor.st"
+                    ).is_file():
+                        stress_cp2k = textfile_to_string_list(
+                            labeling_step_path
+                            / f"2_labeling_{padded_labeling_step}-Stress_Tensor.st"
+                        )
 
                         if cp2k_version < 8 and cp2k_version >= 6:
                             matching_index = None
@@ -530,9 +757,15 @@ def main(
 
                                 # Flatten the array
                                 stress_xyz_array = tensor_values.flatten()
-                                virial_array_raw[system_disturbed_candidates_not_skipped_counter - 1, :] = (
+                                virial_array_raw[
+                                    system_disturbed_candidates_not_skipped_counter - 1,
+                                    :,
+                                ] = (
                                     stress_xyz_array
-                                    * volume_array_raw[system_disturbed_candidates_not_skipped_counter - 1]
+                                    * volume_array_raw[
+                                        system_disturbed_candidates_not_skipped_counter
+                                        - 1
+                                    ]
                                     / eV_per_A3_to_GPa
                                 )
                                 is_virial = True
@@ -576,9 +809,15 @@ def main(
 
                                 # Flatten the array
                                 stress_xyz_array = tensor_values.flatten()
-                                virial_array_raw[system_disturbed_candidates_not_skipped_counter - 1, :] = (
+                                virial_array_raw[
+                                    system_disturbed_candidates_not_skipped_counter - 1,
+                                    :,
+                                ] = (
                                     stress_xyz_array
-                                    * volume_array_raw[system_disturbed_candidates_not_skipped_counter - 1]
+                                    * volume_array_raw[
+                                        system_disturbed_candidates_not_skipped_counter
+                                        - 1
+                                    ]
                                     / eV_per_A3_to_GPa
                                 )
                                 is_virial = True
@@ -599,34 +838,54 @@ def main(
                             )
 
                     # Wannier
-                    if (labeling_step_path / f"2_labeling_{padded_labeling_step}-Wannier.xyz").is_file():
-                        stress_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}-Wannier.xyz")
+                    if (
+                        labeling_step_path
+                        / f"2_labeling_{padded_labeling_step}-Wannier.xyz"
+                    ).is_file():
+                        stress_cp2k = textfile_to_string_list(
+                            labeling_step_path
+                            / f"2_labeling_{padded_labeling_step}-Wannier.xyz"
+                        )
 
-                        del wannier_xyz[0 : 2 + main_json["system_auto"][system_auto]["nb_atm"]]
+                        del wannier_xyz[
+                            0 : 2 + main_json["system_auto"][system_auto]["nb_atm"]
+                        ]
                         wannier_xyz = [
                             " ".join(_.replace("\n", "").split()) for _ in wannier_xyz
                         ]
                         wannier_xyz = [_.split(" ")[1:] for _ in wannier_xyz]
-                        wannier_array = np.asarray(wannier_xyz, dtype=np.float64).flatten()
+                        wannier_array = np.asarray(
+                            wannier_xyz, dtype=np.float64
+                        ).flatten()
                         if system_disturbed_candidates_not_skipped_counter == 1:
-                            wannier_array_raw = np.zeros((system_disturbed_candidates_count-system_candidates_disturbed_skipped, len(wannier_xyz) * 3))
+                            wannier_array_raw = np.zeros(
+                                (
+                                    system_disturbed_candidates_count
+                                    - system_candidates_disturbed_skipped,
+                                    len(wannier_xyz) * 3,
+                                )
+                            )
 
-                        wannier_array_raw[system_disturbed_candidates_not_skipped_counter - 1, :] = wannier_array
+                        wannier_array_raw[
+                            system_disturbed_candidates_not_skipped_counter - 1, :
+                        ] = wannier_array
                         is_wannier = True
                         del wannier_array, wannier_xyz
 
                         # Check if wannier centers are not converged
-                        output_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}.out")
+                        output_cp2k = textfile_to_string_list(
+                            labeling_step_path
+                            / f"2_labeling_{padded_labeling_step}.out"
+                        )
                         if any(
                             "LOCALIZATION! loop did not converge within the maximum number of iterations"
                             in _
                             for _ in output_cp2k
                         ):
-                            wannier_not_converged.append(f"{system_disturbed_candidates_not_skipped_counter - 1}\n")
-                            
-                            
-                            
-                            
+                            wannier_not_converged.append(
+                                f"{system_disturbed_candidates_not_skipped_counter - 1}\n"
+                            )
+
                 del padded_labeling_step, labeling_step, labeling_step_path
 
                 np.savetxt(system_path / "energy.raw", energy_array_raw, delimiter=" ")
@@ -646,30 +905,36 @@ def main(
                 del force_array_raw
 
                 if is_virial:
-                    np.savetxt(system_path / "virial.raw", virial_array_raw, delimiter=" ")
+                    np.savetxt(
+                        system_path / "virial.raw", virial_array_raw, delimiter=" "
+                    )
                     np.save(data_path / "set.000" / "virial", virial_array_raw)
                 del virial_array_raw
 
                 if is_wannier:
-                    np.savetxt(system_path / "wannier.raw", wannier_array_raw, delimiter=" ")
+                    np.savetxt(
+                        system_path / "wannier.raw", wannier_array_raw, delimiter=" "
+                    )
                     np.save(data_path / "set.000" / "wannier", wannier_array_raw)
                     if len(wannier_not_converged) > 1:
-                        string_list_to_textfile(data_path / "set.000" / "wannier_not-converged.txt", wannier_not_converged)
+                        string_list_to_textfile(
+                            data_path / "set.000" / "wannier_not-converged.txt",
+                            wannier_not_converged,
+                        )
                     del wannier_not_converged
 
         logging.info(
-                f"Processed system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})"
-            )
+            f"Processed system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})"
+        )
 
     logging.info(f"-" * 88)
     # Update the booleans in the exploration JSON
-    #if candidates_expected_count == (candidates_step_count[1] + candidates_skipped_count):
+    # if candidates_expected_count == (candidates_step_count[1] + candidates_skipped_count):
     labeling_json["is_extracted"] = True
-    #del candidates_expected_count, candidates_skipped_count, candidates_step_count
-    
+    # del candidates_expected_count, candidates_skipped_count, candidates_step_count
+
     # Dump the JSON files (exploration JSONN)
     write_json_file(labeling_json, (control_path / f"labeling_{padded_curr_iter}.json"))
-
 
     # End
     logging.info(f"-" * 88)
@@ -679,13 +944,12 @@ def main(
 
     # Cleaning
     del current_path, control_path, training_path
-    del (
-        user_input_json_filename,
-    )
+    del (user_input_json_filename,)
     del main_json, labeling_json
     del curr_iter, padded_curr_iter
 
     return 0
+
 
 if __name__ == "__main__":
     if len(sys.argv) == 4:

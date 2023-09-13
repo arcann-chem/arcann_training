@@ -292,7 +292,9 @@ def main(
             system_master_job_file[0], "_R_ARRAY_END_", f"{labeling_count-1}"
         )
         system_master_job_file[0] = replace_substring_in_string_list(
-            system_master_job_file[0], "_R_CP2K_JOBNAME_", f"CP2K_{system_auto}_{padded_curr_iter}"
+            system_master_job_file[0],
+            "_R_CP2K_JOBNAME_",
+            f"CP2K_{system_auto}_{padded_curr_iter}",
         )
 
         string_list_to_textfile(
