@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/06
+Last modified: 2023/09/13
 """
 # Standard library modules
 import copy
@@ -159,7 +159,7 @@ def main(
         return 1
 
     # Launch the jobs
-    completed_count = 0
+    launched_count = 0
 
     for system_auto in labeling_json["systems_auto"]:
         system_path = current_path / system_auto
@@ -178,7 +178,7 @@ def main(
                     ]
                 )
                 logging.info(f"Labeling - '{system_auto}' launched.")
-                completed_count += 1
+                launched_count += 1
             except FileNotFoundError:
                 logging.critical(
                     f"Labeling - '{system_auto}' NOT launched - '{labeling_json['launch_command']}' not found."
@@ -191,7 +191,7 @@ def main(
 
     logging.info(f"-" * 88)
     # Update the booleans in the exploration JSON
-    if completed_count == len(labeling_json["systems_auto"]):
+    if launched_count == len(labeling_json["systems_auto"]):
         labeling_json["is_launched"] = True
 
     # Dump the JSON files (exploration JSON and merged input JSON)
@@ -202,7 +202,7 @@ def main(
 
     # End
     logging.info(f"-" * 88)
-    if completed_count == len(labeling_json["systems_auto"]):
+    if launched_count == len(labeling_json["systems_auto"]):
         logging.info(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
         )
@@ -215,7 +215,7 @@ def main(
         logging.critical(
             f"Replace the key 'is_launched' to 'True' in the 'labeling_{padded_curr_iter}.json'."
         )
-    del completed_count
+    del launched_count
 
     # Cleaning
     del current_path, control_path, training_path

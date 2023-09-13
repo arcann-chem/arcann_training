@@ -6,13 +6,11 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/06
+Last modified: 2023/09/13
 """
 # Standard library modules
 import copy
 import logging
-import random
-import subprocess
 import sys
 from copy import deepcopy
 from pathlib import Path
@@ -293,6 +291,10 @@ def main(
         system_master_job_file[0] = replace_substring_in_string_list(
             system_master_job_file[0], "_R_ARRAY_END_", f"{labeling_count-1}"
         )
+        system_master_job_file[0] = replace_substring_in_string_list(
+            system_master_job_file[0], "_R_CP2K_JOBNAME_", f"CP2K_{system_auto}_{padded_curr_iter}"
+        )
+
         string_list_to_textfile(
             system_path
             / f"job_labeling_array_{machine_spec['arch_type']}_{machine}.sh",
@@ -485,18 +487,24 @@ def main(
 
         # Update labeling JSON
         labeling_json["systems_auto"][system_auto][
-            "system_walltime_first_job_h"
+            "walltime_first_job_h"
         ] = system_walltime_first_job_h
         labeling_json["systems_auto"][system_auto][
-            "system_walltime_second_job_h"
+            "walltime_second_job_h"
         ] = system_walltime_second_job_h
-        labeling_json["systems_auto"][system_auto]["system_nb_nodes"] = system_nb_nodes
+        labeling_json["systems_auto"][system_auto]["nb_nodes"] = system_nb_nodes
         labeling_json["systems_auto"][system_auto][
-            "system_nb_mpi_per_node"
+            "nb_mpi_per_node"
         ] = system_nb_mpi_per_node
         labeling_json["systems_auto"][system_auto][
-            "system_nb_threads_per_mpi"
+            "nb_threads_per_mpi"
         ] = system_nb_threads_per_mpi
+        labeling_json["systems_auto"][system_auto][
+            "candidates_count"
+        ] = candidates_count
+        labeling_json["systems_auto"][system_auto][
+            "disturbed_candidates_count"
+        ] = disturbed_candidates_count
 
         # System dependent cleaning
         del system_first_job_input, system_second_job_input, system_master_job_file

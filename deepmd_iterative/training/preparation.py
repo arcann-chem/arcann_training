@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/06
+Last modified: 2023/09/13
 """
 # Standard library modules
 import copy
@@ -207,7 +207,7 @@ def main(
     merged_input_json["job_email"] = get_key_in_dict(
         "job_email", user_input_json, previous_training_json, default_input_json
     )
-    del jobs_path, job_file_name
+    del job_file_name
 
     # Check DeePMD version
     validate_deepmd_config(training_json)
@@ -611,6 +611,11 @@ def main(
         job_file = replace_substring_in_string_list(
             job_file, "_R_DEEPMD_VERSION_", f"{training_json['deepmd_model_version']}"
         )
+        # TODO: This feature is not used. Write a way to if the training didn't finish, restart it and relaunch. (probably in check.py, and ask user for confirmation)
+        job_file = replace_substring_in_string_list(
+            job_file, "_R_CHECKPOINT_", f"model.ckpt"
+        )
+
         string_list_to_textfile(
             local_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh",
             job_file,
