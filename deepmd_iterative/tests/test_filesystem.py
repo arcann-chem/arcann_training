@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/04
+Last modified: 2023/09/13
 
 Test cases for the list module.
 
@@ -30,6 +30,8 @@ TestRemoveFilesMatchingGlob():
 TestRemoveTree():
     Unit test case for the 'remove_tree' function.
 
+TestRemoveAllSymlink():
+    Unit test case for the 'remove_all_symlink' function.
 """
 # Standard library modules
 import os
@@ -45,6 +47,7 @@ from deepmd_iterative.common.filesystem import (
     remove_file,
     remove_files_matching_glob,
     remove_tree,
+    remove_all_symlink,
 )
 
 
@@ -376,9 +379,6 @@ class TestRemoveTree(unittest.TestCase):
         with open(self.temp_file_3, "w") as f:
             f.write("This is a third temporary file for testing purposes.")
 
-    def tearDown(self):
-        self.temp_dir.cleanup()
-
     def test_remove_tree(self):
         """
         Test removing an existing directory tree and its contents.
@@ -409,6 +409,76 @@ class TestRemoveTree(unittest.TestCase):
         """
         with self.assertRaises(NotADirectoryError):
             remove_tree(self.temp_file_1)
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+
+class TestRemoveAllSymlink(unittest.TestCase):
+    """
+    Unit test case for the 'remove_all_symlink' function.
+
+    Methods
+    -------
+    test_remove_all_symlink():
+        Test removing symbolic links within a directory and its subdirectories.
+
+    test_remove_all_symlink_empty_directory()
+        Test removing symbolic links from an empty directory.
+
+    test_remove_all_symlink_no_symlinks()
+        Test removing symbolic links from a directory with no symbolic links.
+    """
+
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.temp_dir_path = Path(self.temp_dir.name)
+
+        (self.temp_dir_path / "file1").symlink_to("existing_file")
+        (self.temp_dir_path / "dir1").mkdir()
+        (self.temp_dir_path / "dir1" / "file2").symlink_to("existing_file")
+        (self.temp_dir_path / "dir2").symlink_to("dir1")
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def test_remove_all_symlink(self):
+        """
+        Test removing symbolic links within a directory and its subdirectories.
+        """
+        self.assertTrue((self.temp_dir_path / "file1").is_symlink())
+        self.assertTrue((self.temp_dir_path / "dir1" / "file2").is_symlink())
+        self.assertTrue((self.temp_dir_path / "dir2").is_symlink())
+
+        remove_all_symlink(self.temp_dir_path)
+
+        self.assertFalse((self.temp_dir_path / "file1").is_symlink())
+        self.assertFalse((self.temp_dir_path / "dir1" / "file2").is_symlink())
+        self.assertFalse((self.temp_dir_path / "dir2").is_symlink())
+
+    def test_remove_all_symlink_empty_directory(self):
+        """
+        Test removing symbolic links from an empty directory.
+        """
+        empty_dir = self.temp_dir_path / "empty_dir"
+        empty_dir.mkdir()
+        remove_all_symlink(empty_dir)
+
+        # Ensure the empty directory still exists
+        self.assertTrue(empty_dir.exists())
+
+    def test_remove_all_symlink_no_symlinks(self):
+        """
+        Test removing symbolic links from a directory with no symbolic links.
+        """
+        no_symlinks_dir = self.temp_dir_path / "no_symlinks_dir"
+        no_symlinks_dir.mkdir()
+        file_path = no_symlinks_dir / "file.txt"
+        file_path.write_text("Test content")
+        remove_all_symlink(no_symlinks_dir)
+
+        self.assertTrue(file_path.is_file())
+        self.assertTrue(no_symlinks_dir.is_dir())
 
 
 if __name__ == "__main__":

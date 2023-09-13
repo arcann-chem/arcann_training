@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/04
+Last modified: 2023/09/13
 
 The filesystem module provides functions to handle file and directory management
 
@@ -29,6 +29,9 @@ remove_files_matching_glob(directory_path: Path, file_glob: str) -> None
 
 remove_tree(directory_path: Path) -> None
     A function to recursively remove a directory tree and its contents.
+
+remove_all_symlink(directory_path: Path) -> None
+    A function to recursively removes symbolic links within a directory and its subdirectories.
 """
 # Standard library modules
 import logging
@@ -262,3 +265,30 @@ def remove_tree(directory_path: Path) -> None:
 
     # Remove the now-empty directory
     directory_path.rmdir()
+
+
+# Unittested
+@catch_errors_decorator
+def remove_all_symlink(directory_path: Path) -> None:
+    """
+    Recursively removes symbolic links within a directory and its subdirectories.
+
+    Parameters
+    ----------
+    directory_path : Path
+        The directory to remove symbolic links from.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    None
+    """
+
+    for child in directory_path.iterdir():
+        if child.is_symlink():
+            child.unlink()
+        elif child.is_dir():
+            remove_all_symlink(child)

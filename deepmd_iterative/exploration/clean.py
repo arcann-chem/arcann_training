@@ -52,20 +52,21 @@ def main(
     # Get control path and load the main config (JSON) and the training config (JSON)
     control_path = training_path / "control"
     main_config = load_json_file((control_path / "config.json"))
-    training_config = load_json_file(
-        (control_path / f"training_{padded_curr_iter}.json")
+    exploration_config = load_json_file(
+        (control_path / f"labeling_{padded_curr_iter}.json")
     )
 
-    # Check if we can continue
-    if not training_config["is_frozen"]:
-        logging.error(f"Lock found. Please execute 'training check_freeze' first.")
+    # Check if we can continue and ask the user
+    if not exploration_config["is_extracted"]:
+        logging.error(f"Lock found. Please execute 'exploration extract' first.")
         logging.error(f"Aborting...")
         return 1
-    logging.critical(f"This is the cleaning step for training step.")
-    logging.critical(f"It should be run after training update_iter phase.")
+    logging.critical(f"This is the cleaning step for exploration step.")
+    logging.critical(f"It should be run after exploration extract phase.")
     logging.critical(
-        f"This is will delete: symbolic links, 'job_*.sh', 'training.out', 'graph*freeze.out' and 'graph*compress.out' files in the folder '{current_path}' and all subdirectories."
+        f"This is will delete: symbolic links, 'job_*.sh', '*.in', '*.lmp' and 'plumed_*.dat' files in the folder '{current_path}' and all subdirectories."
     )
+    logging.critical(f"These are auto-generated or duplicates.")
 
     continuing = input(
         f"Do you want to continue? [Enter 'Y' for yes, or any other key to abort]: "
@@ -76,17 +77,18 @@ def main(
         logging.error(f"Aborting...")
         return 1
 
+    # TODO Check for i-pi what to delete
     # Delete
     logging.info("Deleting symbolic links...")
     remove_all_symlink(current_path)
     logging.info("Deleting job files...")
     remove_files_matching_glob(current_path, "**/job_*.sh")
-    logging.info(f"Deleting training unwanted output file..")
-    remove_files_matching_glob(current_path, "**/training.out")
-    logging.info(f"Deleting freezing unwanted output files...")
-    remove_files_matching_glob(current_path, "**/graph*freeze.out")
-    logging.info(f"Deleting compressing unwanted output file...")
-    remove_files_matching_glob(current_path, "**/graph*compress.out")
+    logging.info("Deleting exploration input files...")
+    remove_files_matching_glob(current_path, "**/*.in")
+    logging.info("Deleting exploration input structure files...")
+    remove_files_matching_glob(current_path, "**/*.lmp")
+    logging.info("Deleting exploration plumed input files...")
+    remove_files_matching_glob(current_path, "**/plumed*.dat")
     logging.info(f"Cleaning done!")
 
     # End
@@ -97,7 +99,7 @@ def main(
     # Cleaning
     del current_path, control_path, training_path
     del user_config_filename
-    del main_config, training_config
+    del main_config, exploration_config
     del curr_iter, padded_curr_iter
 
     return 0

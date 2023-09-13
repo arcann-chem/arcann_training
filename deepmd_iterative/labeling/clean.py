@@ -10,15 +10,13 @@ Last modified: 2023/09/13
 """
 # Standard library modules
 import logging
+import subprocess
 import sys
 from pathlib import Path
 
 # Local imports
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.filesystem import (
-    remove_files_matching_glob,
-    remove_all_symlink,
-)
+from deepmd_iterative.common.filesystem import remove_files_matching_glob, remove_all_symlink
 from deepmd_iterative.common.json import load_json_file
 
 
@@ -52,19 +50,23 @@ def main(
     # Get control path and load the main config (JSON) and the training config (JSON)
     control_path = training_path / "control"
     main_config = load_json_file((control_path / "config.json"))
-    training_config = load_json_file(
-        (control_path / f"training_{padded_curr_iter}.json")
+    labeling_config = load_json_file(
+        (control_path / f"labeling_{padded_curr_iter}.json")
     )
 
     # Check if we can continue
-    if not training_config["is_frozen"]:
-        logging.error(f"Lock found. Please execute 'training check_freeze' first.")
+    if not labeling_config["is_extracted"]:
+        logging.error(f"Lock found. Please execute 'labeling extract' first.")
         logging.error(f"Aborting...")
         return 1
-    logging.critical(f"This is the cleaning step for training step.")
-    logging.critical(f"It should be run after training update_iter phase.")
+    logging.critical(f"This is the cleaning step for labeling step.")
+    logging.critical(f"It should be run after labeling extract phase.")
     logging.critical(
-        f"This is will delete: symbolic links, 'job_*.sh', 'training.out', 'graph*freeze.out' and 'graph*compress.out' files in the folder '{current_path}' and all subdirectories."
+        f"This is will delete: symbolic links, 'job_*.sh', 'labeling_*.xyz', 'labeling_*-SCF.wfn' and '*labeling*.inp' files in the folder '{current_path}' and all subdirectories."
+    )
+    logging.critical(f"These are auto-generated or duplicates.")
+    logging.critical(
+        f"It will also create an tar.bz2 file with all important files (except the binary wavefunction files)."
     )
 
     continuing = input(
@@ -79,15 +81,44 @@ def main(
     # Delete
     logging.info("Deleting symbolic links...")
     remove_all_symlink(current_path)
-    logging.info("Deleting job files...")
-    remove_files_matching_glob(current_path, "**/job_*.sh")
-    logging.info(f"Deleting training unwanted output file..")
-    remove_files_matching_glob(current_path, "**/training.out")
-    logging.info(f"Deleting freezing unwanted output files...")
-    remove_files_matching_glob(current_path, "**/graph*freeze.out")
-    logging.info(f"Deleting compressing unwanted output file...")
-    remove_files_matching_glob(current_path, "**/graph*compress.out")
+    logging.info(f"Deleting job files...")
+    remove_files_matching_glob(current_path, "**/*.sh")
+    logging.info(f"Deleting XYZ input files...")
+    remove_files_matching_glob(current_path, "**/labeling_*.xyz")
+    logging.info(f"Deleting WFN temporary files...")
+    remove_files_matching_glob(current_path, "**/labeling_*-SCF.wfn")
+    logging.info(f"Deleting labeling input files...")
+    remove_files_matching_glob(current_path, "**/*labeling*.inp")
     logging.info(f"Cleaning done!")
+    logging.info(f"Compressing into a bzip2 tar archive...")
+    subprocess.run(
+        [
+            "tar",
+            "-I",
+            "bzip2",
+            "--exclude=*.wfn",
+            "--exclude=*.tar.bz2",
+            "-cf",
+            f"labeling_{padded_curr_iter}_noWFN.tar.bz2",
+            f"{current_path}",
+        ]
+    )
+    logging.info(f"Done!")
+    logging.info(
+        f"To keep only the wavefunction files form the 2nd step (your reference0 in a labeling_{padded_curr_iter}_WFN.tar, execute:"
+    )
+    logging.info(
+        f"\"find ./ -name '2_*.wfn' | tar -cf labeling_{padded_curr_iter}_WFN.tar --files-from -\" (without the double quotes)."
+    )
+    logging.info(
+        f"To keep all wavefunction files in a labeling_{padded_curr_iter}_WFN.tar, execute:"
+    )
+    logging.info(
+        f"\"find ./ -name '*.wfn' | tar -cf labeling_{padded_curr_iter}_WFN.tar --files-from -\" (without the double quotes)."
+    )
+    logging.info(
+        f"You can delete any subsys subfolders if labeling_{padded_curr_iter}_noWFN.tar.bz2 is okay, and you have saved or don't need the wavefunction files."
+    )
 
     # End
     logging.info(
@@ -97,7 +128,7 @@ def main(
     # Cleaning
     del current_path, control_path, training_path
     del user_config_filename
-    del main_config, training_config
+    del main_config, labeling_config
     del curr_iter, padded_curr_iter
 
     return 0
