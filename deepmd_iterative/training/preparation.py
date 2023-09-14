@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/13
+Last modified: 2023/09/15
 """
 # Standard library modules
 import copy
@@ -21,10 +21,7 @@ import numpy as np
 
 # Local imports
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.filesystem import (
-    check_directory,
-    check_file_existence,
-)
+from deepmd_iterative.common.filesystem import check_directory
 from deepmd_iterative.common.json import (
     backup_and_overwrite_json_file,
     get_key_in_dict,
@@ -116,7 +113,7 @@ def main(
     # Get the machine keyword (Priority: user > previous > default)
     # And update the merged input JSON
     user_machine_keyword = get_machine_keyword(
-        user_input_json, previous_training_json, default_input_json
+        user_input_json, previous_training_json, default_input_json, "train"
     )
     logging.debug(f"merged_input_json: {merged_input_json}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
@@ -147,7 +144,7 @@ def main(
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     logging.debug(f"machine_spec: {machine_spec}")
 
-    merged_input_json["user_machine_keyword"] = user_machine_keyword
+    merged_input_json["user_machine_keyword_train"] = user_machine_keyword
     logging.debug(f"merged_input_json: {merged_input_json}")
 
     if fake_machine is not None:
@@ -179,16 +176,17 @@ def main(
     logging.debug(f"training_json: {training_json}")
     logging.debug(f"merged_input_json: {merged_input_json}")
 
-    # Set additional machine-related parameters in the training JSON that are not needed in the merged input JSON
-    training_json = {
-        **training_json,
-        "machine": machine,
-        "project_name": machine_spec["project_name"],
-        "allocation_name": machine_spec["allocation_name"],
-        "arch_name": machine_spec["arch_name"],
-        "arch_type": machine_spec["arch_type"],
-        "launch_command": machine_launch_command,
-    }
+    # TODO Commented out. user_machine_keyword should be enough ?
+    # # Set additional machine-related parameters in the training JSON that are not needed in the merged input JSON
+    # training_json = {
+    #     **training_json,
+    #     "machine": machine,
+    #     "project_name": machine_spec["project_name"],
+    #     "allocation_name": machine_spec["allocation_name"],
+    #     "arch_name": machine_spec["arch_name"],
+    #     "arch_type": machine_spec["arch_type"],
+    #     "launch_command": machine_launch_command,
+    # }
 
     # Check if the job file exists
     job_file_name = f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh"
@@ -255,7 +253,7 @@ def main(
                     try:
                         if int(data_dir.name.rsplit("_", 1)[-1]) <= curr_iter:
                             systems.append(data_dir.name.rsplit("_", 1)[0])
-                    # TODO: Better except clause
+                    # TODO Better except clause
                     except:
                         pass
                 else:
@@ -265,6 +263,9 @@ def main(
                 extra_datasets.append(data_dir.name)
     del data_dir
 
+    # TODO Implement validation dataset
+    del validation_datasets
+    
     # Training sets list construction
     dp_train_input_datasets = []
     training_datasets = []
@@ -520,7 +521,7 @@ def main(
     }
 
     # Rsync data to local data
-    localdata_path = Path(".").resolve() / "data"
+    localdata_path = current_path / "data"
     localdata_path.mkdir(exist_ok=True)
     for dp_train_input_dataset in dp_train_input_datasets:
         subprocess.run(
@@ -546,32 +547,42 @@ def main(
     # Create the inputs/jobfiles for each NNP with random SEED
 
     # Walltime
-    if "s_per_step" in user_input_json and user_input_json["s_per_step"] > 0:
-        walltime_approx_s = int(
-            np.ceil((training_json["numb_steps"] * user_input_json["s_per_step"]))
-        )
-        logging.debug(f"s_per_step: {user_input_json['s_per_step']}")
-    elif "s_per_step" in previous_training_json:
-        walltime_approx_s = int(
-            np.ceil(
-                (
-                    training_json["numb_steps"]
-                    * (previous_training_json["s_per_step"] * 1.50)
-                )
-            )
-        )
-        logging.debug(f"s_per_step: {previous_training_json['s_per_step']}")
+    if curr_iter == 0:
+        if "init_job_walltime_train_h" in user_input_json and user_input_json["init_job_walltime_train_h"] > 0:
+            walltime_approx_s = int(user_input_json["init_job_walltime_train_h"] * 3600)
+            logging.debug(f"init_job_walltime_train_h: {user_input_json['init_job_walltime_train_h']}")
+        elif "job_walltime_train_h" in user_input_json and user_input_json["job_walltime_train_h"] > 0:
+            walltime_approx_s = int(user_input_json["job_walltime_train_h"] * 3600)
+            logging.debug(f"job_walltime_train_h: {user_input_json['job_walltime_train_h']}")
+        elif "avg_s_per_step" in user_input_json and user_input_json["avg_s_per_step"] > 0:
+            walltime_approx_s = int(np.ceil((training_json["numb_steps"] * user_input_json["avg_s_per_step"])))
+            logging.debug(f"avg_s_per_step: {user_input_json['avg_s_per_step']}")
+        else:
+            walltime_approx_s = int(max(
+                np.ceil(training_json["numb_steps"] * default_input_json["avg_s_per_step"]),
+                default_input_json["init_job_walltime_train_h"]*3600,
+                default_input_json["job_walltime_train_h"]*3600
+            ))
+            merged_input_json["init_job_walltime_train_h"] = -1
+            merged_input_json["job_walltime_train_h"] = -1
+            merged_input_json["avg_s_per_step"] = -1
     else:
-        walltime_approx_s = int(
-            np.ceil((training_json["numb_steps"] * default_input_json["s_per_step"]))
-        )
-        logging.debug(f"s_per_step: {default_input_json['s_per_step']}")
-    # Set it to the input as -1, so the user knows it can be used but use auto
-    merged_input_json["s_per_step"] = -1
+        if "job_walltime_train_h" in user_input_json and user_input_json["job_walltime_train_h"] > 0:
+            walltime_approx_s = int(user_input_json["job_walltime_train_h"] * 3600)
+            logging.debug(f"job_walltime_train_h: {user_input_json['job_walltime_train_h']}")
+        elif "avg_s_per_step" in user_input_json and user_input_json["avg_s_per_step"] > 0:
+            walltime_approx_s = int(np.ceil((training_json["numb_steps"] * user_input_json["avg_s_per_step"])))
+            logging.debug(f"avg_s_per_step: {user_input_json['avg_s_per_step']}")
+        else:
+            walltime_approx_s = int(np.ceil((training_json["numb_steps"] * (previous_training_json["avg_s_per_step"] * 1.50))))
+            logging.debug(f"avg_s_per_step: {previous_training_json['avg_s_per_step']}")
+            merged_input_json["job_walltime_train_h"] = -1
+            merged_input_json["avg_s_per_step"] = -1
+
     logging.debug(f"walltime_approx_s: {walltime_approx_s}")
 
     for nnp in range(1, main_json["nnp_count"] + 1):
-        local_path = Path(".").resolve() / f"{nnp}"
+        local_path = current_path / f"{nnp}"
         local_path.mkdir(exist_ok=True)
         check_directory(local_path)
 
@@ -611,7 +622,7 @@ def main(
         job_file = replace_substring_in_string_list(
             job_file, "_R_DEEPMD_VERSION_", f"{training_json['deepmd_model_version']}"
         )
-        # TODO: This feature is not used. Write a way to if the training didn't finish, restart it and relaunch. (probably in check.py, and ask user for confirmation)
+        # TODO This feature is not used. Write a way to if the training didn't finish, restart it and relaunch. (probably in check.py, and ask user for confirmation)
         job_file = replace_substring_in_string_list(
             job_file, "_R_CHECKPOINT_", f"model.ckpt"
         )
@@ -654,10 +665,13 @@ def main(
         previous_training_json,
         labeling_json,
     )
+    del user_machine_keyword
     del curr_iter, padded_curr_iter
-    del machine, machine_spec, machine_walltime_format, machine_launch_command
+    del machine, machine_spec, machine_walltime_format, machine_launch_command, machine_job_scheduler
     del master_job_file
 
+    logging.debug(f"LOCAL")
+    logging.debug(f"{locals()}")
     return 0
 
 

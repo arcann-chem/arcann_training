@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/04
+Last modified: 2023/09/14
 
 generate_main_json(user_input_json: Dict, default_input_json: Dict) -> Tuple[Dict, Dict, str]
     A function to generate the main JSON by combining values from the user input JSON and the default JSON.
@@ -49,8 +49,6 @@ def generate_main_json(
     ------
     TypeError
         If the type of a user-defined parameter differs from the type of the default parameter.
-    ValueError
-        If a mandatory parameter is missing or if the value of 'exploration_type' is not 'lammps' or 'i-PI'.
     """
     main_json = {}
     for key in default_input_json.keys():
@@ -66,16 +64,9 @@ def generate_main_json(
     logging.debug(f"Type check complete")
 
     merged_input_json = deepcopy(user_input_json)
-    for key in ["systems_auto", "nnp_count", "exploration_type"]:
+    for key in ["systems_auto", "nnp_count"]:
         if key == "systems_auto" and key not in user_input_json:
             error_msg = f"'systems_auto' not provided, it is mandatory. It should be a list of '{type(default_input_json['systems_auto'][0])}'."
-            raise ValueError(error_msg)
-        elif (
-            key in user_input_json
-            and key == "exploration_type"
-            and not (user_input_json[key] == "lammps" or user_input_json[key] == "i-PI")
-        ):
-            error_msg = f"'{key}' should be either 'lammps' or 'i-PI'."
             raise ValueError(error_msg)
         else:
             main_json[key] = (
@@ -93,7 +84,8 @@ def generate_main_json(
     padded_curr_iter = str(main_json["current_iteration"]).zfill(3)
 
     main_json["systems_auto"] = {}
-    for key in user_input_json["systems_auto"]:
+    for idx, key in enumerate(user_input_json["systems_auto"]):
         main_json["systems_auto"][key] = {}
+        main_json["systems_auto"][key]["index"] = idx
 
     return main_json, merged_input_json, padded_curr_iter

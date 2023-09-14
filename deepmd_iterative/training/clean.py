@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/13
+Last modified: 2023/09/15
 """
 # Standard library modules
 import logging
@@ -17,6 +17,7 @@ from pathlib import Path
 from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.filesystem import (
     remove_files_matching_glob,
+    remove_tree,
     remove_all_symlink,
 )
 from deepmd_iterative.common.json import load_json_file
@@ -51,7 +52,7 @@ def main(
 
     # Get control path and load the main config (JSON) and the training config (JSON)
     control_path = training_path / "control"
-    main_config = load_json_file((control_path / "config.json"))
+    main_json = load_json_file((control_path / "config.json"))
     training_config = load_json_file(
         (control_path / f"training_{padded_curr_iter}.json")
     )
@@ -87,6 +88,18 @@ def main(
     remove_files_matching_glob(current_path, "**/graph*freeze.out")
     logging.info(f"Deleting compressing unwanted output file...")
     remove_files_matching_glob(current_path, "**/graph*compress.out")
+    logging.info(f"Deleting extra model.ckpt...")
+    remove_files_matching_glob(current_path, "**/model.ckpt-*")
+    logging.info(f"Deleting extra training files...")
+    remove_files_matching_glob(current_path, "checkpoint.")
+    remove_files_matching_glob(current_path, "input_v2_compat.json")
+    logging.info(f"Deleting job error files...")
+    remove_files_matching_glob(current_path, "**/DeepMD_*")
+    for nnp in range(1, main_json["nnp_count"] + 1):
+        local_path = current_path/ f"{nnp}"
+        if (local_path / "model-compression").is_dir():
+            logging.info("Deleting the temp model-compression folder...")
+            remove_tree(local_path / "model-compression")
     logging.info(f"Cleaning done!")
 
     # End
@@ -97,7 +110,7 @@ def main(
     # Cleaning
     del current_path, control_path, training_path
     del user_config_filename
-    del main_config, training_config
+    del main_json, training_config
     del curr_iter, padded_curr_iter
 
     return 0

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/05
+Last modified: 2023/09/15
 """
 # Standard library modules
 import logging
@@ -61,7 +61,7 @@ def main(
 
     completed_count = 0
     for nnp in range(1, main_json["nnp_count"] + 1):
-        local_path = Path(".").resolve() / f"{nnp}"
+        local_path = current_path / f"{nnp}"
         if (local_path / f"graph_{nnp}_{padded_curr_iter}_compressed.pb").is_file():
             completed_count += 1
         else:
@@ -99,6 +99,8 @@ def main(
     del main_json, training_json
     del curr_iter, padded_curr_iter
 
+    logging.debug(f"LOCAL")
+    logging.debug(f"{locals()}")
     return 0
 
 

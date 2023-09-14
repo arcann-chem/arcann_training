@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/04
+Last modified: 2023/09/15
 
 The json module provides functions to manipulate JSON data (as dict).
 
@@ -29,6 +29,9 @@ load_json_file(file_path: Path, abort_on_error: bool = True, enable_logging: boo
 
 write_json_file(json_dict: Dict, file_path: Path, enable_logging: bool = True, **kwargs) -> None
     A function to write a dictionary to a JSON file.
+    
+convert_control_to_input(control_json: Dict, main_json: Dict) -> Dict:
+    A functin to convert control JSON data to a input JSON.
 """
 # Standard library modules
 import json
@@ -332,3 +335,40 @@ def write_json_file(
         # Raise an exception if the file path is not valid or the file cannot be written
         error_msg = f"Error writing JSON data to file '{file_path}': '{e}'."
         raise Exception(error_msg)
+
+
+@catch_errors_decorator
+def convert_control_to_input(control_json: Dict, main_json: Dict) -> Dict:
+    """
+    Convert control JSON data to a input JSON.
+
+    Parameters
+    ----------
+    control_json : dict
+        The control JSON data to be converted.
+    main_json : dict
+        The main JSON configuration used to structure the output.
+
+    Returns
+    -------
+    dict
+        The structured input JSON data.
+    """
+    input_json = {}
+
+    if not control_json or "systems_auto" not in control_json:
+        return input_json
+
+    # Get the first key (aka first system, all subkeys should be the same for all systems)
+    first_key = next(iter(control_json["systems_auto"]))
+
+    # Iterate over the subkeys in first_key
+    for key in control_json["systems_auto"][first_key]:
+        input_json[key] = []
+
+        # Iterate over keys in main_json["systems_auto"]
+        for system_auto in main_json.get("systems_auto", {}):
+            if system_auto in control_json.get("systems_auto", {}):
+                input_json[key].append(control_json["systems_auto"][system_auto].get(key, None))
+
+    return input_json

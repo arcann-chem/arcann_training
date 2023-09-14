@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/31
+Last modified: 2023/09/15
 """
 # Standard library modules
 import logging
@@ -122,7 +122,11 @@ def main(
         merged_input_json, (current_path / user_input_json_filename)
     )
 
-    # Delete
+    # End
+    logging.info(f"-" * 88)
+    logging.info(f"Step: {current_step.capitalize()} is a success!")
+
+    # Cleaning
     del current_path, control_path, training_path
     del (
         default_input_json,
@@ -131,11 +135,11 @@ def main(
         user_input_json_present,
         user_input_json_filename,
     )
+    del padded_curr_iter
     del main_json, initial_datasets_json, merged_input_json
 
-    logging.info(f"-" * 88)
-    logging.info(f"Step: {current_step.capitalize()} is a success!")
-
+    logging.debug(f"LOCAL")
+    logging.debug(f"{locals()}")
     return 0
 
 

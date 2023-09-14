@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/06
+Last modified: 2023/09/15
 """
 # Standard library modules
 import logging
@@ -75,16 +75,6 @@ def main(
             check_file_existence(
                 local_path / f"graph_{nnp}_{padded_curr_iter}_compressed.pb"
             )
-
-        remove_file(local_path / "checkpoint.")
-        remove_file(local_path / "input_v2_compat.json")
-        logging.info("Deleting SLURM out/error files...")
-        remove_files_matching_glob(local_path, "DeepMD_*")
-        logging.info("Deleting the previous model.ckpt...")
-        remove_files_matching_glob(local_path, "model.ckpt-*")
-        if (local_path / "model-compression").is_dir():
-            logging.info("Deleting the temp model-compression folder...")
-            remove_tree(local_path / "model-compression")
 
     # Prepare the test folder
     (training_path / f"{padded_curr_iter}-test").mkdir(exist_ok=True)
@@ -160,6 +150,8 @@ def main(
     del main_json, training_json
     del curr_iter, padded_curr_iter
 
+    logging.debug(f"LOCAL")
+    logging.debug(f"{locals()}")
     return 0
 
 

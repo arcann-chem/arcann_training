@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/05
+Last modified: 2023/09/15
 
 The utils module provides functions for the training step.
 
@@ -41,7 +41,6 @@ import numpy as np
 
 # Local imports
 from deepmd_iterative.common.utils import catch_errors_decorator
-
 
 # Unittested
 @catch_errors_decorator
@@ -86,7 +85,9 @@ def generate_training_json(
 
     # Update the training JSON with values from the user input JSON, the previous training JSON, and the default JSON.
     for key in [
-        "user_machine_keyword",
+        "user_machine_keyword_train",
+        "user_machine_keyword_freeze",
+        "user_machine_keyword_compress",
         "job_email",
         "use_initial_datasets",
         "use_extra_datasets",
@@ -110,6 +111,8 @@ def generate_training_json(
         elif key in previous_json:
             training_json[key] = previous_json[key]
             merged_input_json[key] = previous_json[key]
+        elif key in merged_input_json:
+            training_json[key] = merged_input_json[key]
         elif key in default_input_json:
             training_json[key] = default_input_json[key]
             merged_input_json[key] = default_input_json[key]
@@ -118,7 +121,7 @@ def generate_training_json(
             error_msg = f"'{key}' not found in any of the JSON dictionaries."
             raise ValueError(error_msg)
 
-        if key == "user_machine_keyword":
+        if "user_machine_keyword" in key:
             pass
             # This is already checked
             # if not isinstance(training_json[key], bool) and not isinstance(training_json[key], str) and not isinstance(training_json[key], list):

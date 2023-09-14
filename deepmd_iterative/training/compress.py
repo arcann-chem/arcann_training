@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/06
+Last modified: 2023/09/15
 """
 # Standard library modules
 import copy
@@ -68,7 +68,7 @@ def main(
 
     # Load the default input JSON
     default_input_json = load_default_json_file(
-        deepmd_iterative_path / "assets" / "default_input_json.json"
+        deepmd_iterative_path / "assets" / "default_config.json"
     )[current_step]
     default_input_json_present = bool(default_input_json)
     logging.debug(f"default_input_json: {default_input_json}")
@@ -97,13 +97,10 @@ def main(
         logging.error(f"Aborting...")
         return 1
 
-    # Get extra needed paths
-    jobs_path = deepmd_iterative_path / "assets" / "jobs" / "training"
-
     # Get the machine keyword (Priority: user > previous > default)
     # And update the current input JSON
     user_machine_keyword = get_machine_keyword(
-        user_input_json, training_json, default_input_json
+        user_input_json, training_json, default_input_json, "compress"
     )
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
@@ -134,7 +131,7 @@ def main(
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     logging.debug(f"machine_spec: {machine_spec}")
 
-    merged_input_json["user_machine_keyword"] = user_machine_keyword
+    merged_input_json["user_machine_keyword_compress"] = user_machine_keyword
     logging.debug(f"merged_input_json: {merged_input_json}")
 
     if fake_machine is not None:
@@ -142,6 +139,8 @@ def main(
     else:
         logging.info(f"Machine identified: '{machine}'.")
     del fake_machine
+
+    training_json["user_machine_keyword_compress"] = user_machine_keyword
 
     # Check if the job file exists
     job_file_name = f"job_deepmd_compress_{machine_spec['arch_type']}_{machine}.sh"
@@ -157,13 +156,13 @@ def main(
         return 1
 
     logging.debug(f"master_job_file: {master_job_file[0:5]}, {master_job_file[-5:-1]}")
-    del jobs_path, job_file_name
+    del job_file_name
 
     # Prep and launch DP Compress
     completed_count = 0
     walltime_approx_s = 7200
     for nnp in range(1, main_json["nnp_count"] + 1):
-        local_path = Path(".").resolve() / f"{nnp}"
+        local_path = current_path / f"{nnp}"
 
         check_file_existence(local_path / "model.ckpt.index")
 
@@ -200,12 +199,12 @@ def main(
         ).is_file():
             change_directory(local_path)
             try:
-                subprocess.run(
-                    [
-                        machine_launch_command,
-                        f"./job_deepmd_compress_{machine_spec['arch_type']}_{machine}.sh",
-                    ]
-                )
+                # subprocess.run(
+                #     [
+                #         machine_launch_command,
+                #         f"./job_deepmd_compress_{machine_spec['arch_type']}_{machine}.sh",
+                #     ]
+                # )
                 logging.info(f"DP Compress - '{nnp}' launched.")
                 completed_count += 1
             except FileNotFoundError:
@@ -250,10 +249,13 @@ def main(
         user_input_json_present,
         user_input_json_filename,
     )
+    del walltime_approx_s, user_machine_keyword
     del main_json, merged_input_json, training_json
     del curr_iter, padded_curr_iter
-    del machine, machine_spec, machine_walltime_format, machine_launch_command
+    del machine, machine_spec, machine_walltime_format, machine_launch_command, machine_job_scheduler
 
+    logging.debug(f"LOCAL")
+    logging.debug(f"{locals()}")
     return 0
 
 

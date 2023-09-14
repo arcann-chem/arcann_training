@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/06
+Last modified: 2023/09/15
 """
 # Standard library modules
 import copy
@@ -88,7 +88,7 @@ def main(
     # Get the machine keyword (Priority: user > previous > default)
     # And update the merged input JSON
     user_machine_keyword = get_machine_keyword(
-        user_input_json, training_json, default_input_json
+        user_input_json, training_json, default_input_json, "train"
     )
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
@@ -119,7 +119,7 @@ def main(
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     logging.debug(f"machine_spec: {machine_spec}")
 
-    merged_input_json["user_machine_keyword"] = user_machine_keyword
+    merged_input_json["user_machine_keyword_train"] = user_machine_keyword
     logging.debug(f"merged_input_json: {merged_input_json}")
 
     if fake_machine is not None:
@@ -129,7 +129,7 @@ def main(
     del fake_machine
 
     # Check prep/launch
-    assert_same_machine(machine, training_json)
+    assert_same_machine(user_machine_keyword, training_json, "train")
 
     # Check if we can continue
     if training_json["is_launched"]:
@@ -150,23 +150,23 @@ def main(
     # Launch the jobs
     completed_count = 0
     for nnp in range(1, main_json["nnp_count"] + 1):
-        local_path = Path(".").resolve() / f"{nnp}"
+        local_path = current_path / f"{nnp}"
         if (
-            local_path / f"job_deepmd_train_{training_json['arch_type']}_{machine}.sh"
+            local_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh"
         ).is_file():
             change_directory(local_path)
             try:
-                subprocess.run(
-                    [
-                        training_json["launch_command"],
-                        f"./job_deepmd_train_{training_json['arch_type']}_{machine}.sh",
-                    ]
-                )
+                # subprocess.run(
+                #     [
+                #         machine_spec["launch_command"],
+                #         f"./job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh",
+                #     ]
+                # )
                 logging.info(f"DP Train - '{nnp}' launched.")
                 completed_count += 1
             except FileNotFoundError:
                 logging.critical(
-                    f"DP Train - '{nnp}' NOT launched - '{training_json['launch_command']}' not found."
+                    f"DP Train - '{nnp}' NOT launched - '{machine_spec['launch_command']}' not found."
                 )
             change_directory(local_path.parent)
         else:
@@ -211,10 +211,13 @@ def main(
         user_input_json_present,
         user_input_json_filename,
     )
+    del user_machine_keyword
     del main_json, merged_input_json, training_json
     del curr_iter, padded_curr_iter
-    del machine, machine_spec, machine_walltime_format, machine_launch_command
+    del machine, machine_spec, machine_walltime_format, machine_launch_command, machine_job_scheduler
 
+    logging.debug(f"LOCAL")
+    logging.debug(f"{locals()}")
     return 0
 
 

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/06
+Last modified: 2023/09/15
 
 The machine module provides functions for machine operations.
 
@@ -74,19 +74,28 @@ def get_host_name() -> str:
             return hostname
 
 
+# TODO Test will fail
 # Unittested
 @catch_errors_decorator
-def assert_same_machine(expected_machine: str, machine_config: Dict) -> None:
+def assert_same_machine(user_machine_keyword: str, control_json: Dict, step: str) -> None:
     """
-    Check if the machine name in the provided dictionary matches the expected machine name. If the names do not match,
-    an error is logged and the execution is aborted.
+    Verify that the provided machine keyword matches the expected machine keyword in the control JSON.
+    
+    This function is used for preparation and launch processes. It checks if the provided machine keyword 
+    matches the one specified in the control JSON. If they do not match, a ValueError is raised with an
+    error message, and the execution is aborted.
 
     Parameters
     ----------
-    expected_machine : str
-        The name of the expected machine.
-    machine_config : Dict
-        A dictionary containing the machine information, with a "machine" key representing the machine name.
+    user_machine_keyword : str
+        The machine keyword to be checked.
+        
+    control_json : Dict
+        The control JSON dictionary containing the expected machine keyword.
+        
+    step : str
+        A string representing the step or stage identifier used to retrieve the expected machine keyword 
+        from the control JSON.
 
     Returns
     -------
@@ -95,19 +104,19 @@ def assert_same_machine(expected_machine: str, machine_config: Dict) -> None:
     Raises
     ------
     ValueError
-        If the machine name in the dictionary does not match the expected machine name.
+        If the provided machine keyword does not match the expected machine keyword specified in the control JSON.
     """
     # Check if the provided machine name matches the expected machine name
-    if machine_config["machine"] != expected_machine:
+    if control_json.get(f"user_machine_keyword_{step}") != user_machine_keyword:
         # If not, log an error message and abort the execution
-        error_msg = f"Provided machine '{machine_config['machine']}' does not match expected machine '{expected_machine}'"
+        error_msg = f"Provided machine '{user_machine_keyword}' does not match expected machine '{control_json.get(f'user_machine_keyword_{step}')}'"
         raise ValueError(error_msg)
 
 
 # Unittested
 @catch_errors_decorator
 def get_machine_keyword(
-    input_json: Dict, previous_json: Dict, default_json: Dict
+    input_json: Dict, previous_json: Dict, default_json: Dict, step: str
 ) -> Union[bool, str, List[str]]:
     """
     Get the value of the "user_machine_keyword" key from input JSON, previous JSON or default JSON, and validate its type.
@@ -128,7 +137,7 @@ def get_machine_keyword(
     """
 
     # The key to look up in the JSON.
-    key = "user_machine_keyword"
+    key = f"user_machine_keyword_{step}"
 
     # Check if the key is present in any of the JSON, and set the value accordingly.
     if key in input_json:

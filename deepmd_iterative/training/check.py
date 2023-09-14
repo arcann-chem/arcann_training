@@ -6,10 +6,11 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/06
+Last modified: 2023/09/15
 """
 # Standard library modules
 import logging
+import re
 import sys
 from pathlib import Path
 
@@ -67,46 +68,50 @@ def main(
 
     # Check the normal termination of the training phase
     # Counters
-    s_per_step_per_step_size = []
+    #s_per_step_per_step_size = []
+    training_times = []
+    step_sizes = []
     completed_count = 0
+
     for nnp in range(1, main_json["nnp_count"] + 1):
-        local_path = Path(".").resolve() / f"{nnp}"
+        local_path = current_path / f"{nnp}"
         if (local_path / "training.out").is_file():
             training_out = textfile_to_string_list((local_path / "training.out"))
+
+            # Finished correctly
             if any("finished training" in s for s in training_out):
+
                 training_out_time = [s for s in training_out if "training time" in s]
-                training_out_time_split = []
-                for n in range(0, len(training_out_time)):
-                    training_out_time_split.append(training_out_time[n].split(" "))
-                    training_out_time_split[n] = " ".join(
-                        training_out_time_split[n]
-                    ).split()
-                if (
-                    local_path / f"model.ckpt-{training_out_time_split[-1][3]}.index"
-                ).is_file():
-                    (
-                        local_path
-                        / f"model.ckpt-{training_out_time_split[-1][3]}.index"
-                    ).rename(local_path / "model.ckpt.index")
-                    (
-                        local_path / f"model.ckpt-{training_out_time_split[-1][3]}.meta"
-                    ).rename(local_path / "model.ckpt.meta")
-                    (
-                        local_path
-                        / f"model.ckpt-{training_out_time_split[-1][3]}.data-00000-of-00001"
-                    ).rename(local_path / "model.ckpt.data-00000-of-00001")
-                for n in range(0, len(training_out_time_split)):
-                    s_per_step_per_step_size.append(
-                        float(training_out_time_split[n][6])
-                    )
-                del n
-                step_size = float(training_out_time_split[-1][3]) - float(
-                    training_out_time_split[-2][3]
-                )
+
+                batch_pattern = r'batch\s*(\d+)\s'
+                time_pattern = r'training time (\d+\.\d+) s'
+                batch_numbers = []
+
+                for entry in training_out_time:
+                    batch_match = re.search(batch_pattern, entry)
+                    time_match = re.search(time_pattern, entry)
+
+                    if batch_match and time_match:
+                        batch_number = int(batch_match.group(1))
+                        training_time = float(time_match.group(1))
+
+                        batch_numbers.append(batch_number)
+                        training_times.append(training_time)
+
+                del entry, batch_match, time_match, batch_number, training_time
+                del time_pattern, batch_pattern
+
+                for suffix in ["index", "meta", "data-00000-of-00001"]:
+                    if (local_path / f"model.ckpt-{batch_numbers[-1]}.{suffix}").is_file():
+                        (local_path / f"model.ckpt-{batch_numbers[-1]}.{suffix}").rename(local_path / f"model.ckpt.{suffix}")
+                del suffix
+
+                step_sizes.extend(np.diff(batch_numbers))
+                del batch_numbers
                 completed_count += 1
             else:
                 logging.critical(f"DP Train - '{nnp}' not finished/failed.")
-            del training_out, training_out_time, training_out_time_split
+            del training_out, training_out_time
         else:
             logging.critical(f"DP Train - '{nnp}' still running/no outfile.")
         del local_path
@@ -118,10 +123,14 @@ def main(
     if completed_count == main_json["nnp_count"]:
         training_json["is_checked"] = True
 
-    if ("s_per_step_per_step_size" in locals()) and ("step_size" in locals()):
-        training_json["s_per_step"] = np.average(s_per_step_per_step_size) / step_size
-        del s_per_step_per_step_size, step_size
+    # If not empty
+    if training_times and step_sizes:
+        training_json["avg_s_per_step"] = np.average(training_times) / np.average(step_sizes)
+        training_json["dev_s_per_step"] = np.std(training_times) / np.average(step_sizes)
+    logging.debug(f"avg_s_per_step: {training_json['avg_s_per_step']}")
+    logging.debug(f"dev_s_per_step: {training_json['dev_s_per_step']}")
 
+    del training_times, step_sizes
     # Dump the JSON files (training)
     write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"))
 
@@ -147,6 +156,8 @@ def main(
     del main_json, training_json
     del curr_iter, padded_curr_iter
 
+    logging.debug(f"LOCAL")
+    logging.debug(f"{locals()}")
     return 0
 
 
