@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/15
+Last modified: 2023/09/18
 """
 # Standard library modules
 import logging
@@ -129,14 +129,19 @@ def main(
         check_directory(training_path / f"{padded_curr_iter}-{step}")
     del step
 
-    # Delete the temp data folder
-    if (local_path / "data").is_dir():
-        logging.info(f"Deleting the temp data folder...")
-        remove_tree(local_path / "data")
-        logging.info(f"Cleaning done!")
-    del local_path
+    # # Delete the temp data folder
+    # if (local_path / "data").is_dir():
+    #     logging.info(f"Deleting the temp data folder...")
+    #     remove_tree(local_path / "data")
+    #     logging.info(f"Cleaning done!")
+    # del local_path
 
-    # Dump the JSON files (main)
+    logging.info(f"-" * 88)
+    # Update the boolean in the training JSON
+    training_json["is_incremented"] = True
+
+    # Dump the JSON files (main, training)
+    write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"))
     write_json_file(main_json, (control_path / "config.json"))
 
     # End

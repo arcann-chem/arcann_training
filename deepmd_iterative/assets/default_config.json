@@ -16,7 +16,7 @@
         "deepmd_model_type_descriptor": "se_e2_a",
         "init_job_walltime_train_h": 10,
         "job_walltime_train_h": -1,
-        "avg_s_per_step": 0.10,
+        "mean_s_per_step": 0.10,
         "start_lr": 0.001,
         "stop_lr": 1e-06,
         "decay_rate": 0.90,

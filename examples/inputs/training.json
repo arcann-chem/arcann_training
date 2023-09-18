@@ -1,17 +1,21 @@
 {
     "step_name": "training",
-    "user_machine_keyword": { "value": null, "_comment": "null (use machine.json default), str (shortcut used in machine.json (ex: v100), list of str (project,allocation,arch, ex [nvs,v100,v100]) ", "_default": null},
+    "user_machine_keyword_train": { "value": null, "_comment": "null (use machine.json default), str (shortcut used in machine.json (ex: v100), list of str (project,allocation,arch, ex [nvs,v100,v100]) ", "_default": null},
+    "user_machine_keyword_freeze": { "value": null, "_comment": "null (use machine.json default), str (shortcut used in machine.json (ex: v100), list of str (project,allocation,arch, ex [nvs,v100,v100]) ", "_default": null},
+    "user_machine_keyword_compress": { "value": null, "_comment": "null (use machine.json default), str (shortcut used in machine.json (ex: v100), list of str (project,allocation,arch, ex [nvs,v100,v100]) ", "_default": null},
     "slurm_email": { "value": null, "_comment": "str", "_default": ""},
     "use_initial_datasets": { "value": null, "_comment": "boolean", "_default": true},
     "use_extra_datasets": { "value": null, "_comment": "boolean", "_default": false},
     "deepmd_model_version": { "value": null, "_comment": "float, values: 2.0 or 2.1", "_default": 2.1},
     "deepmd_model_type_descriptor": { "value": null, "_comment": "str, values: se_e2_a", "_default": "se_e2_a"},
+    "init_job_walltime_train_h": { "value": null, "_comment": "float or int", "_default": 10},
+    "job_walltime_train_h":{ "value": null, "_comment": "float or int, -1 means auto", "_default": -1},
+    "mean_s_per_step": { "value": null, "_comment": "int", "_default": 0.10},
     "start_lr": { "value": null, "_comment": "float", "_default": 0.001},
     "stop_lr": { "value": null, "_comment": "float", "_default": 1e-06},
     "decay_rate": { "value": null, "_comment": "float", "_default": 0.90},
     "decay_steps": { "value": null, "_comment": "int", "_default": 5000},
     "decay_steps_fixed": { "value": null, "_comment": "boolean", "_default": false},
     "numb_steps": { "value": null, "_comment": "int", "_default": 400000},
-    "numb_test": { "value": null, "_comment": "int", "_default": 0},
-    "s_per_step": { "value": null, "_comment": "int", "_default": 0.10}
+    "numb_test": { "value": null, "_comment": "int", "_default": 0}
 }

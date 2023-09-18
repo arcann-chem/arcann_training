@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/15
+Last modified: 2023/09/18
 """
 # Standard library modules
 import logging
@@ -125,10 +125,12 @@ def main(
 
     # If not empty
     if training_times and step_sizes:
-        training_json["avg_s_per_step"] = np.average(training_times) / np.average(step_sizes)
-        training_json["dev_s_per_step"] = np.std(training_times) / np.average(step_sizes)
-    logging.debug(f"avg_s_per_step: {training_json['avg_s_per_step']}")
-    logging.debug(f"dev_s_per_step: {training_json['dev_s_per_step']}")
+        training_json["mean_s_per_step"] = np.average(training_times) / np.average(step_sizes)
+        training_json["median_s_per_step"] = np.median(training_times) / np.average(step_sizes)
+        training_json["stdeviation_s_per_step"] = np.std(training_times) / np.average(step_sizes)
+    logging.debug(f"mean_s_per_step: {training_json['mean_s_per_step']}")
+    logging.debug(f"median_s_per_step: {training_json['median_s_per_step']}")
+    logging.debug(f"stdeviation_s_per_step: {training_json['stdeviation_s_per_step']}")
 
     del training_times, step_sizes
     # Dump the JSON files (training)

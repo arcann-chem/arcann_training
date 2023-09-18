@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/15
+Last modified: 2023/09/18
 """
 # Standard library modules
 import logging
@@ -58,16 +58,24 @@ def main(
     )
 
     # Check if we can continue
-    if not training_config["is_frozen"]:
-        logging.error(f"Lock found. Please execute 'training check_freeze' first.")
+    if not training_config["is_incremented"]:
+        logging.error(f"Lock found. Please execute 'training increment' first.")
         logging.error(f"Aborting...")
         return 1
     logging.critical(f"This is the cleaning step for training step.")
-    logging.critical(f"It should be run after training update_iter phase.")
+    logging.critical(f"It should be run after training increment phase.")
     logging.critical(
-        f"This is will delete: symbolic links, 'job_*.sh', 'training.out', 'graph*freeze.out' and 'graph*compress.out' files in the folder '{current_path}' and all subdirectories."
+        f"This is will delete: symbolic links, 'job_*.sh', 'training.out', 'graph*freeze.out', 'graph*compress.out', 'checkpoint.*', 'input_v2_compat.json', and 'DeepMD_*' files in the folder '{current_path}' and all subdirectories."
     )
-
+    logging.critical(
+        f"This is will delete: 'model-compression' folders in the folder '{current_path}' and all subdirectories."
+    )
+    logging.critical(
+        f"This is will delete: '*.pb' models files in the folder '{current_path}' and all subdirectories (they are saved in the '{current_path.parent / 'NNP'}' root folder)."
+    )
+    logging.critical(
+        f"This is will delete: 'data' folders in the folder '{current_path}' and all subdirectories (they are in the '{current_path.parent / 'data'}' root folder)."
+    )
     continuing = input(
         f"Do you want to continue? [Enter 'Y' for yes, or any other key to abort]: "
     )
@@ -90,11 +98,15 @@ def main(
     remove_files_matching_glob(current_path, "**/graph*compress.out")
     logging.info(f"Deleting extra model.ckpt...")
     remove_files_matching_glob(current_path, "**/model.ckpt-*")
+    logging.info(f"Deleting models files files...")
+    remove_files_matching_glob(current_path, "**/*.pb")
     logging.info(f"Deleting extra training files...")
-    remove_files_matching_glob(current_path, "checkpoint.")
+    remove_files_matching_glob(current_path, "checkpoint.*")
     remove_files_matching_glob(current_path, "input_v2_compat.json")
     logging.info(f"Deleting job error files...")
     remove_files_matching_glob(current_path, "**/DeepMD_*")
+    logging.info(f"Deleting the data folder ...")
+    remove_tree(local_path / "data")
     for nnp in range(1, main_json["nnp_count"] + 1):
         local_path = current_path/ f"{nnp}"
         if (local_path / "model-compression").is_dir():
