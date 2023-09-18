@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/13
+Last modified: 2023/09/18
 """
 # Standard library modules
 import logging
@@ -53,7 +53,7 @@ def main(
     control_path = training_path / "control"
     main_config = load_json_file((control_path / "config.json"))
     exploration_config = load_json_file(
-        (control_path / f"labeling_{padded_curr_iter}.json")
+        (control_path / f"exploration_{padded_curr_iter}.json")
     )
 
     # Check if we can continue and ask the user
@@ -63,19 +63,16 @@ def main(
         return 1
     logging.critical(f"This is the cleaning step for exploration step.")
     logging.critical(f"It should be run after exploration extract phase.")
-    logging.critical(
-        f"This is will delete: symbolic links, 'job_*.sh', '*.in', '*.lmp' and 'plumed_*.dat' files in the folder '{current_path}' and all subdirectories."
-    )
-    logging.critical(f"These are auto-generated or duplicates.")
-
-    continuing = input(
-        f"Do you want to continue? [Enter 'Y' for yes, or any other key to abort]: "
-    )
+    logging.critical(f"This is will delete:")
+    logging.critical(f"symbolic links, 'job_*.sh', '*.in', '*.lmp', 'plumed_*.dat'")
+    logging.critical(f"LAMMPS_*, 'i-PI_DeepMD*', '*.DP-i-PI.client_*.log', '*.DP-i-PI.client_*.err', 'plumed_*.dat'")
+    logging.critical(f"in the folder: '{current_path}' and all subdirectories.")
+    continuing = input(f"Do you want to continue? [Enter 'Y' for yes, or any other key to abort]: ")
     if continuing == "Y":
         del continuing
     else:
         logging.error(f"Aborting...")
-        return 1
+        return 0
 
     # TODO Check for i-pi what to delete
     # Delete
@@ -89,6 +86,13 @@ def main(
     remove_files_matching_glob(current_path, "**/*.lmp")
     logging.info("Deleting exploration plumed input files...")
     remove_files_matching_glob(current_path, "**/plumed*.dat")
+    logging.info("Deleting job error files...")
+    remove_files_matching_glob(current_path, "**/LAMMPS_*")
+    remove_files_matching_glob(current_path, "**/i-PI_DeepMD*")
+    logging.info("Deleting extra files...")
+    remove_files_matching_glob(current_path, "**/*.DP-i-PI.client_*.log")
+    remove_files_matching_glob(current_path, "**/*.DP-i-PI.client_*.err")
+
     logging.info(f"Cleaning done!")
 
     # End
@@ -102,6 +106,8 @@ def main(
     del main_config, exploration_config
     del curr_iter, padded_curr_iter
 
+    logging.debug(f"LOCAL")
+    logging.debug(f"{locals()}")
     return 0
 
 

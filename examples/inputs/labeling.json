@@ -1,6 +1,6 @@
 {
     "step_name": "exploration",
-    "user_machine_keyword": { "value": null, "_comment": "null (use machine.json default), str (shortcut used in machine.json (ex: v100), list of str (project,allocation,arch, ex [nvs,v100,v100]) ", "_default": null},
+    "user_machine_keyword_label": { "value": null, "_comment": "null (use machine.json default), str (shortcut used in machine.json (ex: v100), list of str (project,allocation,arch, ex [nvs,v100,v100]) ", "_default": null},
     "slurm_email": { "value": null, "_comment": "str", "_default": ""},
     "walltime_first_job_h" : { "value": null, "_comment": "float or list of float", "_default": [0.5]},
     "walltime_second_job_h" : { "value": null, "_comment": "float or list of float", "_default": [1.0]},

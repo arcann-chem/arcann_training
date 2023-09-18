@@ -64,26 +64,18 @@ def main(
         return 1
     logging.critical(f"This is the cleaning step for training step.")
     logging.critical(f"It should be run after training increment phase.")
-    logging.critical(
-        f"This is will delete: symbolic links, 'job_*.sh', 'training.out', 'graph*freeze.out', 'graph*compress.out', 'checkpoint.*', 'input_v2_compat.json', and 'DeepMD_*' files in the folder '{current_path}' and all subdirectories."
-    )
-    logging.critical(
-        f"This is will delete: 'model-compression' folders in the folder '{current_path}' and all subdirectories."
-    )
-    logging.critical(
-        f"This is will delete: '*.pb' models files in the folder '{current_path}' and all subdirectories (they are saved in the '{current_path.parent / 'NNP'}' root folder)."
-    )
-    logging.critical(
-        f"This is will delete: 'data' folders in the folder '{current_path}' and all subdirectories (they are in the '{current_path.parent / 'data'}' root folder)."
-    )
-    continuing = input(
-        f"Do you want to continue? [Enter 'Y' for yes, or any other key to abort]: "
-    )
+    logging.critical(f"This is will delete:")
+    logging.critical(f"symbolic links, 'job_*.sh', 'training.out', 'graph*freeze.out', 'graph*compress.out', 'checkpoint.*', 'input_v2_compat.json', 'DeepMD_*'")
+    logging.critical(f"'model-compression' folders")
+    logging.critical(f"'*.pb' models files (they are saved in the '{current_path.parent / 'NNP'}' root folder)")
+    logging.critical(f"'data' folder (it is saved in the '{current_path.parent / 'data'}' root folder)")
+    logging.critical(f"in the folder: '{current_path}' and all subdirectories.")
+    continuing = input(f"Do you want to continue? [Enter 'Y' for yes, or any other key to abort]: ")
     if continuing == "Y":
         del continuing
     else:
         logging.error(f"Aborting...")
-        return 1
+        return 0
 
     # Delete
     logging.info("Deleting symbolic links...")
@@ -106,7 +98,8 @@ def main(
     logging.info(f"Deleting job error files...")
     remove_files_matching_glob(current_path, "**/DeepMD_*")
     logging.info(f"Deleting the data folder ...")
-    remove_tree(local_path / "data")
+    if (current_path / "data").is_dir():
+        remove_tree(current_path / "data")
     for nnp in range(1, main_json["nnp_count"] + 1):
         local_path = current_path/ f"{nnp}"
         if (local_path / "model-compression").is_dir():
@@ -125,6 +118,8 @@ def main(
     del main_json, training_config
     del curr_iter, padded_curr_iter
 
+    logging.debug(f"LOCAL")
+    logging.debug(f"{locals()}")
     return 0
 
 

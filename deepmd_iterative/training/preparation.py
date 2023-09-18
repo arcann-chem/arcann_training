@@ -162,7 +162,11 @@ def main(
             logging.error(f"Lock found. Run/Check first: labeling extract.")
             logging.error(f"Aborting...")
             return 1
+        exploration_json = load_json_file(
+            (control_path / f"exploration_{padded_curr_iter}.json")
+        )
     else:
+        exploration_json = {}
         labeling_json = {}
 
     # Generate/update both the training JSON and the merged input JSON
@@ -175,18 +179,6 @@ def main(
     )
     logging.debug(f"training_json: {training_json}")
     logging.debug(f"merged_input_json: {merged_input_json}")
-
-    # TODO Commented out. user_machine_keyword should be enough ?
-    # # Set additional machine-related parameters in the training JSON that are not needed in the merged input JSON
-    # training_json = {
-    #     **training_json,
-    #     "machine": machine,
-    #     "project_name": machine_spec["project_name"],
-    #     "allocation_name": machine_spec["allocation_name"],
-    #     "arch_name": machine_spec["arch_name"],
-    #     "arch_type": machine_spec["arch_type"],
-    #     "launch_command": machine_launch_command,
-    # }
 
     # Check if the job file exists
     job_file_name = f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh"
@@ -310,7 +302,7 @@ def main(
         for iteration in np.arange(1, curr_iter + 1):
             padded_iteration = str(iteration).zfill(3)
             try:
-                for system_auto in main_json["systems_auto"]:
+                for system_auto in ["systems_auto"]:
                     if (data_path / f"{system_auto}_{padded_iteration}").is_dir():
                         dp_train_input_datasets.append(
                             f"{(Path(data_path.parts[-1]) / (system_auto+'_'+padded_iteration) / '_')}"[

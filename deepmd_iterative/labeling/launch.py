@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/13
+Last modified: 2023/09/18
 """
 # Standard library modules
 import copy
@@ -99,7 +99,7 @@ def main(
     # Get the machine keyword (Priority: user > previous > default)
     # And update the merged input JSON
     user_machine_keyword = get_machine_keyword(
-        user_input_json, previous_labeling_json, default_input_json
+        user_input_json, previous_labeling_json, default_input_json, "label"
     )
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
@@ -130,7 +130,7 @@ def main(
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     logging.debug(f"machine_spec: {machine_spec}")
 
-    merged_input_json["user_machine_keyword"] = user_machine_keyword
+    merged_input_json["user_machine_keyword_label"] = user_machine_keyword
     logging.debug(f"merged_input_json: {merged_input_json}")
 
     if fake_machine is not None:
@@ -140,7 +140,7 @@ def main(
     del fake_machine
 
     # Check prep/launch
-    assert_same_machine(machine, labeling_json)
+    assert_same_machine(user_machine_keyword, labeling_json, "label")
 
     # Check if we can continue
     if labeling_json["is_launched"]:
@@ -166,28 +166,29 @@ def main(
 
         if (
             system_path
-            / f"job_labeling_array_{labeling_json['arch_type']}_{machine}.sh"
+            / f"job_labeling_array_{machine_spec['arch_type']}_{machine}.sh"
         ).is_file():
             change_directory(system_path)
 
             try:
-                subprocess.run(
-                    [
-                        labeling_json["launch_command"],
-                        f"./job_labeling_array_{labeling_json['arch_type']}_{machine}.sh",
-                    ]
-                )
+                # subprocess.run(
+                #     [
+                #         machine_spec["launch_command"],
+                #         f"./job_labeling_array_{machine_spec['arch_type']}_{machine}.sh",
+                #     ]
+                # )
                 logging.info(f"Labeling - '{system_auto}' launched.")
                 launched_count += 1
             except FileNotFoundError:
                 logging.critical(
-                    f"Labeling - '{system_auto}' NOT launched - '{labeling_json['launch_command']}' not found."
+                    f"Labeling - '{system_auto}' NOT launched - '{machine_spec['launch_command']}' not found."
                 )
             change_directory(system_path.parent)
         else:
             logging.critical(f"Labeling - '{system_auto}' NOT launched - No job file.")
 
         del system_path
+    del system_auto
 
     logging.info(f"-" * 88)
     # Update the booleans in the exploration JSON
@@ -237,6 +238,8 @@ def main(
         machine_spec,
     )
 
+    logging.debug(f"LOCAL")
+    logging.debug(f"{locals()}")
     return 0
 
 

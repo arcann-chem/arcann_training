@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/06
+Last modified: 2023/09/18
 """
 # Standard library modules
 import copy
@@ -108,11 +108,8 @@ def main(
         logging.error(f"Lock found. Execute first: exploration check.")
         logging.error(f"Aborting...")
         return 1
-    if (
-        exploration_json["exploration_type"] == "i-PI"
-        and not exploration_json["is_rechecked"]
-    ):
-        logging.critical(f"Lock found. Execute first: first: exploration recheck.")
+    if "is_rechecked" in exploration_json and not exploration_json["is_rechecked"]:
+        logging.critical(f"Lock found. Execute first: exploration recheck.")
         logging.critical(f"Aborting...")
         return 1
 
@@ -145,7 +142,8 @@ def main(
             "sigma_high_limit": sigma_high_limit,
             "ignore_first_x_ps": ignore_first_x_ps,
             "mean_deviation_max_f": 0,
-            "std_deviation_max_f": 0,
+            "median_deviation_max_f": 0,
+            "stdeviation_deviation_max_f": 0,
             "total_count": 0,
             "candidates_count": 0,
             "rejected_count": 0,
@@ -165,7 +163,7 @@ def main(
         logging.debug(f"start_row_number: {start_row_number}")
 
         for it_nnp in range(1, main_json["nnp_count"] + 1):
-            for it_number in range(1, exploration_json["traj_count"] + 1):
+            for it_number in range(1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1):
                 logging.debug(f"{system_auto} / {it_nnp} / {it_number}")
 
                 # Get the local path and the name of model_deviation file
@@ -208,9 +206,9 @@ def main(
                     model_deviation = np.genfromtxt(
                         str(local_path / model_deviation_filename)
                     )
-                    if exploration_json["exploration_type"] == "lammps":
+                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps":
                         total_row_number = model_deviation.shape[0]
-                    elif exploration_json["exploration_type"] == "i-PI":
+                    elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
                         total_row_number = model_deviation.shape[0] + 1
 
                     if nb_steps_expected > (total_row_number - start_row_number):
@@ -251,7 +249,10 @@ def main(
                         mean_deviation_max_f = np.mean(
                             model_deviation[start_row_number:, 4]
                         )
-                        std_deviation_max_f = np.std(
+                        median_deviation_max_f = np.median(
+                            model_deviation[start_row_number:, 4]
+                        )
+                        stdeviation_deviation_max_f = np.std(
                             model_deviation[start_row_number:, 4]
                         )
                         good = model_deviation[start_row_number:, :][
@@ -268,9 +269,8 @@ def main(
                     # This part is when sigma_high_limit was crossed during ignore_first_x_ps (SKIP everything for stats)
                     elif end_row_number <= start_row_number:
                         mean_deviation_max_f = 999.0
-                        std_deviation_max_f = 999.0
-                        # mean_deviation_max_f = np.mean(model_deviation[start_row_number:, 4])
-                        # std_deviation_max_f = np.std(model_deviation[start_row_number:, 4])
+                        median_deviation_max_f = 999.0
+                        stdeviation_deviation_max_f = 999.0
                         good = np.array([])
                         rejected = model_deviation[start_row_number:, :]
                         candidates = np.array([])
@@ -282,7 +282,10 @@ def main(
                         mean_deviation_max_f = np.mean(
                             model_deviation[start_row_number:end_row_number, 4]
                         )
-                        std_deviation_max_f = np.std(
+                        median_deviation_max_f = np.median(
+                            model_deviation[start_row_number:end_row_number, 4]
+                        )
+                        stdeviation_deviation_max_f = np.std(
                             model_deviation[start_row_number:end_row_number, 4]
                         )
                         good = model_deviation[start_row_number:end_row_number, :][
@@ -327,7 +330,8 @@ def main(
                     QbC_stats = {
                         **QbC_stats,
                         "mean_deviation_max_f": mean_deviation_max_f,
-                        "std_deviation_max_f": std_deviation_max_f,
+                        "median_deviation_max_f": median_deviation_max_f,
+                        "stdeviation_deviation_max_f": stdeviation_deviation_max_f,
                         "good_count": len(good[:, 0].astype(int).tolist())
                         if good.size > 0
                         else 0,
@@ -366,12 +370,20 @@ def main(
                             + QbC_stats["mean_deviation_max_f"]
                         )
                         exploration_json["systems_auto"][system_auto][
-                            "std_deviation_max_f"
+                            "median_deviation_max_f"
                         ] = (
                             exploration_json["systems_auto"][system_auto][
-                                "std_deviation_max_f"
+                                "median_deviation_max_f"
                             ]
-                            + QbC_stats["std_deviation_max_f"]
+                            + QbC_stats["median_deviation_max_f"]
+                        )
+                        exploration_json["systems_auto"][system_auto][
+                            "stdeviation_deviation_max_f"
+                        ] = (
+                            exploration_json["systems_auto"][system_auto][
+                                "stdeviation_deviation_max_f"
+                            ]
+                            + QbC_stats["stdeviation_deviation_max_f"]
                         )
                     del end_row_number
 
@@ -390,7 +402,8 @@ def main(
                         **QbC_stats,
                         "total_count": nb_steps_expected,
                         "mean_deviation_max_f": 999.0,
-                        "std_deviation_max_f": 999.0,
+                        "median_deviation_max_f": 999.0,
+                        "stdeviation_deviation_max_f": 999.0,
                         "good_count": 0,
                         "rejected_count": nb_steps_expected,
                         "candidates_count": 0,
@@ -425,7 +438,7 @@ def main(
 
         # Average for the system (with adjustment, remove the skipped ones)
         exploitable_traj = (
-            exploration_json["nnp_count"] * exploration_json["traj_count"]
+            exploration_json["nnp_count"] * exploration_json["systems_auto"][system_auto]["traj_count"]
         ) - (skipped_traj_user + skipped_traj_stats)
         if exploitable_traj == 0:
             logging.critical(
@@ -443,7 +456,7 @@ def main(
             if (
                 exploitable_traj
                 / exploration_json["nnp_count"]
-                * exploration_json["traj_count"]
+                * exploration_json["systems_auto"][system_auto]["traj_count"]
                 < 0.25
             ):
                 logging.warning(
@@ -453,8 +466,12 @@ def main(
                 exploration_json["systems_auto"][system_auto]["mean_deviation_max_f"]
                 / exploitable_traj
             )
-            exploration_json["systems_auto"][system_auto]["std_deviation_max_f"] = (
-                exploration_json["systems_auto"][system_auto]["std_deviation_max_f"]
+            exploration_json["systems_auto"][system_auto]["median_deviation_max_f"] = (
+                exploration_json["systems_auto"][system_auto]["median_deviation_max_f"]
+                / exploitable_traj 
+            )
+            exploration_json["systems_auto"][system_auto]["stdeviation_deviation_max_f"] = (
+                exploration_json["systems_auto"][system_auto]["stdeviation_deviation_max_f"]
                 / exploitable_traj
             )
 
@@ -491,7 +508,7 @@ def main(
         }
 
         for it_nnp in range(1, main_json["nnp_count"] + 1):
-            for it_number in range(1, exploration_json["traj_count"] + 1):
+            for it_number in range(1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1):
                 # Get the local path and the name of model_deviation file
                 local_path = (
                     Path(".").resolve()
@@ -667,6 +684,8 @@ def main(
     del exploration_json
     del training_path, current_path
 
+    logging.debug(f"LOCAL")
+    logging.debug(f"{locals()}")
     return 0
 
 

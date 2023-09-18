@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/13
+Last modified: 2023/09/18
 """
 # Standard library modules
 import logging
@@ -75,7 +75,7 @@ def main(
 
     for system_auto_index, system_auto in enumerate(labeling_json["systems_auto"]):
         logging.info(
-            f"Processing system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})"
+            f"Processing system: {system_auto} ({system_auto_index + 1}/{len(labeling_json['systems_auto'])})"
         )
         system_path = current_path / system_auto
 
@@ -250,7 +250,7 @@ def main(
                 )
             else:
                 timings[step] = default_timing
-        del step
+        del step, default_timing
         del system_tinings_sum, system_candidates_converged_count, system_timings
 
         labeling_json["systems_auto"][system_auto]["timings_s"] = [
@@ -317,12 +317,14 @@ def main(
             )
             del system_candidates_skipped, system_disturbed_candidates_skipped
 
-        del system_candidates_count, system_disturbed_candidates_count
+        del system_candidates_count, system_disturbed_candidates_count, system_candidates_skipped_count, system_disturbed_candidates_skipped_count
+        del system_candidates_skipped, system_disturbed_candidates_skipped
         del system_path, labeling_step, labeling_step_path, padded_labeling_step
 
         logging.info(
-            f"Processed system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})"
+            f"Processed system: {system_auto} ({system_auto_index + 1}/{len(labeling_json['systems_auto'])})"
         )
+    del system_auto, system_auto_index
 
     if candidates_expected_count != (
         candidates_step_count[0] + candidates_skipped_count
@@ -349,13 +351,13 @@ def main(
         labeling_json["is_checked"] = True
     del candidates_expected_count, candidates_skipped_count, candidates_step_count
 
-    for system_auto_index, system_auto in enumerate(labeling_json["systems_auto"]):
-        system_path = current_path / system_auto
-        logging.info("Deleting SLURM out/error files...")
-        remove_files_matching_glob(system_path, "**/CP2K.*")
-        remove_files_matching_glob(system_path, "CP2K.*")
-        logging.info("Cleaning done!")
-    del system_auto, system_auto_index, system_path
+    # for system_auto_index, system_auto in enumerate(labeling_json["systems_auto"]):
+    #     system_path = current_path / system_auto
+    #     logging.info("Deleting SLURM out/error files...")
+    #     remove_files_matching_glob(system_path, "**/CP2K.*")
+    #     remove_files_matching_glob(system_path, "CP2K.*")
+    #     logging.info("Cleaning done!")
+    # del system_auto, system_auto_index, system_path
 
     # Dump the JSON files (exploration JSONN)
     write_json_file(labeling_json, (control_path / f"labeling_{padded_curr_iter}.json"))
@@ -372,6 +374,8 @@ def main(
     del main_json, labeling_json
     del curr_iter, padded_curr_iter
 
+    logging.debug(f"LOCAL")
+    logging.debug(f"{locals()}")
     return 0
 
 

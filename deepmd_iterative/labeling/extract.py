@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/13
+Last modified: 2023/09/18
 """
 # Standard library modules
 import importlib
@@ -102,7 +102,6 @@ def main(
     # Create if it doesn't exists the data path.
     (training_path / "data").mkdir(exist_ok=True)
 
-    candidates_expected_count = 0
     for system_auto_index, system_auto in enumerate(labeling_json["systems_auto"]):
         logging.info(
             f"Processing system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})"
@@ -926,12 +925,15 @@ def main(
         logging.info(
             f"Processed system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})"
         )
+    del system_auto, system_auto_index
+    del system_candidates_count,system_candidates_skipped_count, system_path, data_path
+    del is_wannier, wannier_not_converged, system_candidates_not_skipped_counter, lammps_data, type_atom_array
+    del output_cp2k, cp2k_version
+    del system_disturbed_candidates_count, system_disturbed_candidates_skipped_count
 
     logging.info(f"-" * 88)
     # Update the booleans in the exploration JSON
-    # if candidates_expected_count == (candidates_step_count[1] + candidates_skipped_count):
     labeling_json["is_extracted"] = True
-    # del candidates_expected_count, candidates_skipped_count, candidates_step_count
 
     # Dump the JSON files (exploration JSONN)
     write_json_file(labeling_json, (control_path / f"labeling_{padded_curr_iter}.json"))
@@ -944,10 +946,12 @@ def main(
 
     # Cleaning
     del current_path, control_path, training_path
-    del (user_input_json_filename,)
+    del user_input_json_filename
     del main_json, labeling_json
     del curr_iter, padded_curr_iter
 
+    logging.debug(f"LOCAL")
+    logging.debug(f"{locals()}")
     return 0
 
 

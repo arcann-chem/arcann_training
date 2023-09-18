@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/06
+Last modified: 2023/09/18
 """
 # Standard library modules
 import copy
@@ -128,6 +128,10 @@ def main(
         previous_training_json = {}
         previous_exploration_json = {}
 
+    logging.debug(f"previous_training_json: {previous_training_json}")
+    logging.debug(f"previous_exploration_json: {previous_exploration_json}")
+
+
     # Check if the atomsk package is installed
     atomsk_bin = check_atomsk(
         get_key_in_dict(
@@ -144,7 +148,7 @@ def main(
     # Get the machine keyword (Priority: user > previous > default)
     # And update the merged input JSON
     user_machine_keyword = get_machine_keyword(
-        user_input_json, previous_training_json, default_input_json
+        user_input_json, previous_exploration_json, default_input_json, "exp"
     )
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
@@ -175,7 +179,7 @@ def main(
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     logging.debug(f"machine_spec: {machine_spec}")
 
-    merged_input_json["user_machine_keyword"] = user_machine_keyword
+    merged_input_json["user_machine_keyword_exp"] = user_machine_keyword
     logging.debug(f"merged_input_json: {merged_input_json}")
 
     if fake_machine is not None:
@@ -200,39 +204,32 @@ def main(
     exploration_json = {}
     exploration_json = {
         **exploration_json,
+        "user_machine_keyword_exp": user_machine_keyword,
         "deepmd_model_version": previous_training_json["deepmd_model_version"],
         "nnp_count": main_json["nnp_count"],
-        "exploration_type": main_json["exploration_type"],
-        "traj_count": merged_input_json["traj_count"],
-    }
-    exploration_json = {
-        **exploration_json,
-        "machine": machine,
-        "project_name": machine_spec["project_name"],
-        "allocation_name": machine_spec["allocation_name"],
-        "arch_name": machine_spec["arch_name"],
-        "arch_type": machine_spec["arch_type"],
-        "launch_command": machine_launch_command,
     }
 
-    # Check if the job file exists
-    job_file_name = f"job_deepmd_{exploration_json['exploration_type']}_{exploration_json['arch_type']}_{machine}.sh"
-    if (current_path.parent / "user_files" / job_file_name).is_file():
-        master_job_file = textfile_to_string_list(
-            current_path.parent / "user_files" / job_file_name
-        )
-    else:
-        logging.error(
-            f"No JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine."
-        )
-        logging.error(f"Aborting...")
-        return 1
+    # Check if the job file exists (for each exploration requested)
+    exploration_types = list(set(merged_input_json['exploration_type']))
+    master_job_file = {}
+    for exploration_type in exploration_types:
+        job_file_name = f"job_deepmd_{exploration_type}_{machine_spec['arch_type']}_{machine}.sh"
+        if (current_path.parent / "user_files" / job_file_name).is_file():
+            master_job_file[exploration_type] = textfile_to_string_list(
+                current_path.parent / "user_files" / job_file_name
+            )
+        else:
+            logging.error(
+                f"No JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine."
+            )
+            logging.error(f"Aborting...")
+            return 1
 
-    logging.debug(f"master_job_file: {master_job_file[0:5]}, {master_job_file[-5:-1]}")
-    merged_input_json["job_email"] = get_key_in_dict(
-        "job_email", user_input_json, previous_exploration_json, default_input_json
-    )
-    del jobs_path, job_file_name
+        logging.debug(f"master_job_file: {master_job_file[exploration_type][0:5]}, {master_job_file[exploration_type][-5:-1]}")
+        merged_input_json["job_email"] = get_key_in_dict(
+            "job_email", user_input_json, previous_exploration_json, default_input_json
+        )
+        del jobs_path, job_file_name
 
     # Preparation of the exploration
     exploration_json["systems_auto"] = {}
@@ -242,22 +239,41 @@ def main(
         random.seed()
         exploration_json["systems_auto"][system_auto] = {}
 
+        # Set the individual system params for exploration
+        (
+            system_exploration_type,
+            system_traj_count,
+            system_timestep_ps,
+            system_temperature_K,
+            system_exp_time_ps,
+            system_max_exp_time_ps,
+            system_job_walltime_h,
+            system_init_exp_time_ps,
+            system_init_job_walltime_h,
+            system_print_mult,
+            system_previous_start,
+            system_disturbed_start,
+        ) = get_system_exploration(merged_input_json, system_auto_index)
+        logging.debug(
+            f"{system_exploration_type, system_traj_count, system_timestep_ps,system_temperature_K,system_exp_time_ps,system_max_exp_time_ps,system_job_walltime_h,system_init_exp_time_ps,system_init_job_walltime_h,system_print_mult,system_previous_start,system_disturbed_start}"
+        )
+
         plumed = [False, False, False]
-        exploration_type = -1
+        #exploration_type = -1
 
         input_replace_dict = {}
 
         # Get the input file (.in or .xml) for the current system and check if plumed is being used
-        if exploration_json["exploration_type"] == "lammps":
-            exploration_type = 0
+        if system_exploration_type == "lammps":
+            #exploration_type = 0
             master_system_lammps_in = textfile_to_string_list(
                 training_path / "user_files" / (system_auto + ".in")
             )
             # Check if the LAMMPS input file contains any "plumed" lines
             if any("plumed" in zzz for zzz in master_system_lammps_in):
                 plumed[0] = True
-        elif exploration_json["exploration_type"] == "i-PI":
-            exploration_type = 1
+        elif system_exploration_type == "i-PI":
+            #exploration_type = 1
             master_system_ipi_xml = read_xml_file(
                 training_path / "user_files" / (system_auto + ".xml")
             )
@@ -302,23 +318,6 @@ def main(
                 if plumed[1] and plumed[2] != 0:
                     break
 
-        # Set the individual system params for exploration
-        (
-            system_timestep_ps,
-            system_temperature_K,
-            system_exp_time_ps,
-            system_max_exp_time_ps,
-            system_job_walltime_h,
-            system_init_exp_time_ps,
-            system_init_job_walltime_h,
-            system_print_mult,
-            system_previous_start,
-            system_disturbed_start,
-        ) = get_system_exploration(merged_input_json, system_auto_index)
-        logging.debug(
-            f"{system_timestep_ps,system_temperature_K,system_exp_time_ps,system_max_exp_time_ps,system_job_walltime_h,system_init_exp_time_ps,system_init_job_walltime_h,system_print_mult,system_previous_start,system_disturbed_start}"
-        )
-
         # Disturbed start ?
         if curr_iter == 1:
             # No distrubed start
@@ -326,15 +325,15 @@ def main(
         else:
             # Get starting points
             (
-                starting_points,
-                starting_points_bckp,
+                starting_point_list,
+                starting_point_list_bckp,
                 system_previous_start,
                 system_disturbed_start,
             ) = generate_starting_points(
-                exploration_type,
+                system_exploration_type,
                 system_auto,
                 training_path,
-                padded_curr_iter,
+                padded_prev_iter,
                 previous_exploration_json,
                 user_input_json_present,
                 system_previous_start,
@@ -344,7 +343,7 @@ def main(
         # LAMMPS Input
         input_replace_dict["_R_TIMESTEP_"] = f"{system_timestep_ps}"
 
-        if exploration_type == 0:
+        if system_exploration_type == "lammps":
             input_replace_dict["_R_TEMPERATURE_"] = f"{system_temperature_K}"
 
             # First exploration
@@ -380,7 +379,7 @@ def main(
                     system_nb_steps = system_exp_time_ps / system_timestep_ps
                 # Auto value
                 else:
-                    system_nb_steps *= update_system_nb_steps_factor(
+                    system_nb_steps = update_system_nb_steps_factor(
                         previous_exploration_json, system_auto
                     )
                     # Update if over Max value
@@ -406,6 +405,8 @@ def main(
                         )
                         * 1.20
                     )
+                    if system_walltime_approx_s < 600:
+                        system_walltime_approx_s = 600
                 # Update the new input
                 merged_input_json["system_job_walltime_h"] = (
                     system_walltime_approx_s / 3600
@@ -416,7 +417,7 @@ def main(
             input_replace_dict["_R_PRINT_FREQ_"] = f"{int(system_print_every_x_steps)}"
 
         # i-PI // UNTESTED
-        elif exploration_type == 1:
+        elif system_exploration_type == "i-PI":
             system_temperature_K = float(
                 get_temperature_from_ipi_xml(master_system_ipi_xml)
             )
@@ -522,7 +523,7 @@ def main(
 
         # Now it is by NNP and by traj_count
         for nnp_index in range(1, main_json["nnp_count"] + 1):
-            for traj_index in range(1, exploration_json["traj_count"] + 1):
+            for traj_index in range(1, system_traj_count + 1):
                 local_path = (
                     Path(".").resolve()
                     / str(system_auto)
@@ -542,7 +543,7 @@ def main(
                 )
 
                 # LAMMPS
-                if exploration_type == 0:
+                if system_exploration_type == "lammps":
                     system_lammps_in = copy.deepcopy(master_system_lammps_in)
                     input_replace_dict[
                         "_R_SEED_VEL_"
@@ -562,8 +563,8 @@ def main(
                     ] = f"model_devi_{system_auto}_{nnp_index}_{padded_curr_iter}.out"
                     # Get data files (starting points) if iteration is > 1
                     if curr_iter > 1:
-                        if len(starting_points) == 0:
-                            starting_point_list = copy.deepcopy(starting_points_bckp)
+                        if len(starting_point_list) == 0:
+                            starting_point_list = copy.deepcopy(starting_point_list_bckp)
                         system_lammps_data_fn = starting_point_list[
                             random.randrange(0, len(starting_point_list))
                         ]
@@ -634,7 +635,7 @@ def main(
 
                     # Slurm file
                     job_file = replace_in_slurm_file_general(
-                        master_job_file,
+                        master_job_file[exploration_type],
                         machine_spec,
                         system_walltime_approx_s,
                         machine_walltime_format,
@@ -681,13 +682,13 @@ def main(
                         )
                     string_list_to_textfile(
                         local_path
-                        / f"job_deepmd_{exploration_json['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
+                        / f"job_deepmd_{system_exploration_type}_{machine_spec['arch_type']}_{machine}.sh",
                         job_file,
                     )
                     del system_lammps_in
                     del job_file
                 # i-PI
-                elif exploration_type == 1:
+                elif system_exploration_type == "i-PI":
                     system_ipi_json = copy.deepcopy(master_system_ipi_json)
                     system_ipi_xml_aslist = copy.deepcopy(master_system_ipi_xml_aslist)
                     input_replace_dict[
@@ -699,7 +700,7 @@ def main(
                     # Get data files (starting points) and number of steps
                     if curr_iter > 1:
                         if len(starting_points) == 0:
-                            starting_point_list = copy.deepcopy(starting_points_bckp)
+                            starting_point_list = copy.deepcopy(starting_point_list_bckp)
                         system_ipi_xyz_fn = starting_point_list[
                             random.randrange(0, len(starting_point_list))
                         ]
@@ -826,7 +827,7 @@ def main(
                         )
                     string_list_to_textfile(
                         local_path
-                        / f"job_deepmd_{exploration_json['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
+                        / f"job_deepmd_{system_exploration_type}_{machine_spec['arch_type']}_{machine}.sh",
                         job_file,
                     )
                     del (
@@ -845,6 +846,15 @@ def main(
         del nnp_index
 
         exploration_json["systems_auto"][system_auto][
+            "nb_atm"
+        ] = system_nb_atm
+        exploration_json["systems_auto"][system_auto][
+            "exploration_type"
+        ] = system_exploration_type
+        exploration_json["systems_auto"][system_auto][
+            "traj_count"
+        ] = system_traj_count
+        exploration_json["systems_auto"][system_auto][
             "temperature_K"
         ] = system_temperature_K
         exploration_json["systems_auto"][system_auto][
@@ -856,6 +866,9 @@ def main(
         exploration_json["systems_auto"][system_auto][
             "disturbed_start"
         ] = system_disturbed_start
+        exploration_json["systems_auto"][system_auto][
+            "print_interval_mult"
+        ] = system_print_mult
 
         main_json["systems_auto"][system_auto]["cell"] = system_cell
         main_json["systems_auto"][system_auto]["nb_atm"] = system_nb_atm
@@ -876,14 +889,14 @@ def main(
         "is_deviated": False,
         "is_extracted": False,
     }
-    if exploration_type == 1:
+    if "i-PI" in exploration_types:
         exploration_json = {
             **exploration_json,
             "is_unbeaded": False,
             "is_reruned": False,
             "is_rechecked": False,
         }
-    del exploration_type
+    del exploration_types
 
     # Dump the JSON files (main, exploration and merged input)
     write_json_file(main_json, (control_path / "config.json"))
@@ -900,6 +913,8 @@ def main(
         f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
     )
 
+    logging.debug(f"LOCAL")
+    logging.debug(f"{locals()}")
     return 0
 
 

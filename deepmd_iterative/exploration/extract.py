@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/06
+Last modified: 2023/09/18
 """
 # Standard library modules
 import copy
@@ -180,7 +180,7 @@ def main(
             disturbed_candidate_indexes,
         ) = get_system_disturb(merged_input_json, system_auto_index)
 
-        if exploration_json["exploration_type"] == "lammps":
+        if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps":
             check_file_existence(training_path / "user_files" / f"{system_auto}.lmp")
             subprocess.run(
                 [
@@ -194,7 +194,7 @@ def main(
                 stderr=subprocess.STDOUT,
             )
             topo_file = training_path / "user_files" / f"{system_auto}.pdb"
-        elif exploration_json["exploration_type"] == "i-PI":
+        elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
             check_file_existence(training_path / "user_files" / f"{system_auto}.lmp")
             subprocess.run(
                 [
@@ -210,7 +210,7 @@ def main(
             topo_file = training_path / "user_files" / f"{system_auto}.pdb"
 
         for it_nnp in range(1, main_json["nnp_count"] + 1):
-            for it_number in range(1, exploration_json["traj_count"] + 1):
+            for it_number in range(1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1):
                 logging.debug(f"{system_auto} / {it_nnp} / {it_number}")
                 # Get the local path
                 local_path = (
@@ -227,7 +227,7 @@ def main(
 
                 # Selection of the structure for the next iteration starting point
                 if QbC_stats["minimum_index"] != -1:
-                    if exploration_json["exploration_type"] == "lammps":
+                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps":
                         traj_file = (
                             local_path
                             / f"{system_auto}_{it_nnp}_{padded_curr_iter}.dcd"
@@ -235,7 +235,7 @@ def main(
                         min_index = int(
                             QbC_stats["minimum_index"] / print_every_x_steps
                         )
-                    elif exploration_json["exploration_type"] == "i-PI":
+                    elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
                         traj_file = (
                             local_path
                             / f"{system_auto}_{it_nnp}_{padded_curr_iter}.dcd"
@@ -465,23 +465,29 @@ def main(
                         exploration_json["systems_auto"][system_auto][
                             "disturbed_start_value"
                         ] = disturbed_start_value
+                        exploration_json["systems_auto"][system_auto][
+                            "disturbed_start_indexes"
+                        ] = disturbed_start_indexes
                     else:
                         exploration_json["systems_auto"][system_auto][
                             "disturbed_start_value"
                         ] = 0
+                        exploration_json["systems_auto"][system_auto][
+                            "disturbed_start_indexes"
+                        ] = []
 
                     del min_index, padded_min_index, min_file_name
 
                 # Selection of labeling XYZ
                 if QbC_stats["selected_count"] > 0:
                     candidate_indexes = np.array(QbC_indexes["selected_indexes"])
-                    if exploration_json["exploration_type"] == "lammps":
+                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps":
                         traj_file = (
                             local_path
                             / f"{system_auto}_{it_nnp}_{padded_curr_iter}.dcd"
                         )
                         candidate_indexes = candidate_indexes / print_every_x_steps
-                    elif exploration_json["exploration_type"] == "i-PI":
+                    elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
                         traj_file = (
                             local_path
                             / f"{system_auto}_{it_nnp}_{padded_curr_iter}.dcd"
@@ -666,11 +672,17 @@ def main(
                         exploration_json["systems_auto"][system_auto][
                             "disturbed_candidate_value"
                         ] = disturbed_candidate_value
+                        exploration_json["systems_auto"][system_auto][
+                            "disturbed_candidate_indexes"
+                        ] = disturbed_candidate_indexes
 
                     else:
                         exploration_json["systems_auto"][system_auto][
                             "disturbed_candidate_value"
                         ] = 0
+                        exploration_json["systems_auto"][system_auto][
+                            "disturbed_candidate_indexes"
+                        ] = []
 
         string_list_to_textfile((current_path / "gather.atomsk"), candidates_files)
         subprocess.run(
@@ -746,6 +758,8 @@ def main(
     del exploration_json
     del training_path, current_path
 
+    logging.debug(f"LOCAL")
+    logging.debug(f"{locals()}")
     return 0
 
 

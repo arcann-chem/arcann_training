@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/06
+Last modified: 2023/09/18
 """
 # Standard library modules
 import copy
@@ -90,7 +90,7 @@ def main(
     # Get the machine keyword (Priority: user > previous > default)
     # And update the merged input JSON
     user_machine_keyword = get_machine_keyword(
-        user_input_json, exploration_json, default_input_json
+        user_input_json, exploration_json, default_input_json, "exp"
     )
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
@@ -121,7 +121,7 @@ def main(
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     logging.debug(f"machine_spec: {machine_spec}")
 
-    merged_input_json["user_machine_keyword"] = user_machine_keyword
+    merged_input_json["user_machine_keyword_exp"] = user_machine_keyword
     logging.debug(f"merged_input_json: {merged_input_json}")
 
     if fake_machine is not None:
@@ -131,7 +131,7 @@ def main(
     del fake_machine
 
     # Check prep/launch
-    assert_same_machine(machine, exploration_json)
+    assert_same_machine(user_machine_keyword, exploration_json, "exp")
 
     # Check if we can continue
     if exploration_json["is_launched"]:
@@ -151,9 +151,9 @@ def main(
 
     # Launch the jobs
     completed_count = 0
-    for system_auto_index, system_auto in enumerate(main_json["systems_auto"]):
+    for system_auto_index, system_auto in enumerate(exploration_json["systems_auto"]):
         for nnp_index in range(1, main_json["nnp_count"] + 1):
-            for traj_index in range(1, exploration_json["traj_count"] + 1):
+            for traj_index in range(1, exploration_json['systems_auto'][system_auto]['traj_count'] + 1):
                 local_path = (
                     Path(".").resolve()
                     / str(system_auto)
@@ -163,23 +163,23 @@ def main(
 
                 if (
                     local_path
-                    / f"job_deepmd_{exploration_json['exploration_type']}_{exploration_json['arch_type']}_{machine}.sh"
+                    / f"job_deepmd_{exploration_json['systems_auto'][system_auto]['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh"
                 ).is_file():
                     change_directory(local_path)
                     try:
-                        subprocess.run(
-                            [
-                                exploration_json["launch_command"],
-                                f"./job_deepmd_{exploration_json['exploration_type']}_{exploration_json['arch_type']}_{machine}.sh",
-                            ]
-                        )
+                        # subprocess.run(
+                        #     [
+                        #         machine_spec["launch_command"],machine_spec
+                        #         f"./job_deepmd_{exploration_json['systems_auto'][system_auto]['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
+                        #     ]
+                        # )
                         logging.info(
                             f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' launched."
                         )
                         completed_count += 1
                     except FileNotFoundError:
                         logging.critical(
-                            f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' NOT launched - '{exploration_json['launch_command']}' not found."
+                            f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' NOT launched - '{machine_spec['launch_command']}' not found."
                         )
                     change_directory(local_path.parent.parent.parent)
                 else:
@@ -194,9 +194,8 @@ def main(
     logging.info(f"-" * 88)
     # Update the booleans in the exploration JSON
     if completed_count == (
-        len(exploration_json["systems_auto"])
-        * exploration_json["nnp_count"]
-        * exploration_json["traj_count"]
+        exploration_json["nnp_count"]
+        * sum([exploration_json['systems_auto'][_]['traj_count'] for _ in exploration_json['systems_auto']])
     ):
         exploration_json["is_launched"] = True
 
@@ -211,9 +210,8 @@ def main(
     # End
     logging.info(f"-" * 88)
     if completed_count == (
-        len(exploration_json["systems_auto"])
-        * exploration_json["nnp_count"]
-        * exploration_json["traj_count"]
+        exploration_json["nnp_count"]
+        * sum([exploration_json['systems_auto'][_]['traj_count'] for _ in exploration_json['systems_auto']])
     ):
         logging.info(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
@@ -242,6 +240,8 @@ def main(
     del curr_iter, padded_curr_iter
     del machine, machine_spec, machine_walltime_format, machine_launch_command
 
+    logging.debug(f"LOCAL")
+    logging.debug(f"{locals()}")
     return 0
 
 

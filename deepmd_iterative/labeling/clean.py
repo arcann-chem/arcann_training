@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/13
+Last modified: 2023/09/18
 """
 # Standard library modules
 import logging
@@ -61,10 +61,10 @@ def main(
         return 1
     logging.critical(f"This is the cleaning step for labeling step.")
     logging.critical(f"It should be run after labeling extract phase.")
-    logging.critical(
-        f"This is will delete: symbolic links, 'job_*.sh', 'labeling_*.xyz', 'labeling_*-SCF.wfn' and '*labeling*.inp' files in the folder '{current_path}' and all subdirectories."
-    )
-    logging.critical(f"These are auto-generated or duplicates.")
+    logging.critical(f"This is will delete:")
+    logging.critical(f"symbolic links, 'job_*.sh', 'labeling_*.xyz', 'labeling_*-SCF.wfn', '*labeling*.inp'")
+    logging.critical(f"CP2K_*")
+    logging.critical(f"in the folder: '{current_path}' and all subdirectories.")
     logging.critical(
         f"It will also create an tar.bz2 file with all important files (except the binary wavefunction files)."
     )
@@ -81,14 +81,16 @@ def main(
     # Delete
     logging.info("Deleting symbolic links...")
     remove_all_symlink(current_path)
-    logging.info(f"Deleting job files...")
-    remove_files_matching_glob(current_path, "**/*.sh")
+    logging.info("Deleting job files...")
+    remove_files_matching_glob(current_path, "**/job_*.sh")
     logging.info(f"Deleting XYZ input files...")
     remove_files_matching_glob(current_path, "**/labeling_*.xyz")
     logging.info(f"Deleting WFN temporary files...")
     remove_files_matching_glob(current_path, "**/labeling_*-SCF.wfn")
     logging.info(f"Deleting labeling input files...")
     remove_files_matching_glob(current_path, "**/*labeling*.inp")
+    logging.info("Deleting job error files...")
+    remove_files_matching_glob(current_path, "**/CP2K_*")
     logging.info(f"Cleaning done!")
     logging.info(f"Compressing into a bzip2 tar archive...")
     subprocess.run(
@@ -131,6 +133,8 @@ def main(
     del main_config, labeling_config
     del curr_iter, padded_curr_iter
 
+    logging.debug(f"LOCAL")
+    logging.debug(f"{locals()}")
     return 0
 
 

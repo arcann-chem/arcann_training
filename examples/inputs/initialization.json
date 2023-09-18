@@ -1,6 +1,5 @@
 {
     "step_name": "initialization",
     "systems_auto": { "value": null, "_comment": "list of str"},
-    "nnp_count": { "value": null, "_comment": "int", "_default": 3},
-    "exploration_type": { "value": null, "_comment": "str, lammps or i-PI", "_default": "lammps"}
+    "nnp_count": { "value": null, "_comment": "int", "_default": 3}
 }

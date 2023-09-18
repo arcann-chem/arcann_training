@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/05
+Last modified: 2023/09/18
 
 Functions
 ---------
@@ -51,6 +51,7 @@ import numpy as np
 
 # Local imports
 from deepmd_iterative.common.utils import catch_errors_decorator
+from deepmd_iterative.common.json import convert_control_to_input
 
 
 @catch_errors_decorator
@@ -94,17 +95,13 @@ def generate_input_exploration_json(
         If the length of the value list is not equal to the system count.
     """
 
-    if main_json["exploration_type"] == "lammps":
-        exploration_dep = 0
-    elif main_json["exploration_type"] == "i-PI":
-        exploration_dep = 1
-    else:
-        error_msg = f"'{main_json['exploration_type']}' is not recognized"
-        raise ValueError(error_msg)
-
     system_count = len(main_json.get("systems_auto", []))
 
+    previous_input_json = convert_control_to_input(previous_json, main_json)
+
     for key in [
+        "exploration_type",
+        "traj_count",
         "timestep_ps",
         "temperature_K",
         "exp_time_ps",
@@ -124,8 +121,8 @@ def generate_input_exploration_json(
                 default_used = True
             else:
                 value = user_input_json[key]
-        elif key in previous_json:
-            value = previous_json[key]
+        elif key in previous_input_json:
+            value = previous_input_json[key]
         elif key in default_input_json:
             value = default_input_json[key]
             default_used = True
@@ -133,52 +130,87 @@ def generate_input_exploration_json(
             error_msg = f"'{key}' not found in any of the JSON dictionaries"
             raise KeyError(error_msg)
 
-        # Everything is system dependent so a list
-        merged_input_json[key] = []
-
-        # Default is used for the key
-        if default_used:
-            merged_input_json[key] = [value[0][exploration_dep]] * system_count
-        else:
-            # Check if previous or user provided a list
-            if isinstance(value, List):
+        if key == "exploration_type":
+            merged_input_json[key] = []
+            if default_used:
+                merged_input_json[key] = [value[0]] * system_count
+                exploration_dep = 0
+            elif value == "lammps":
+                exploration_dep = 0
+            elif value == "i-PI":
+                exploration_dep = 1
+            elif isinstance(value, List):
+                exploration_dep = []
                 if len(value) == system_count:
                     for it_value in value:
-                        if (
-                            isinstance(it_value, (int, float))
-                            and (key != "disturbed_start" and key != "previous_start")
-                        ) or (
-                            isinstance(it_value, (bool))
-                            and (key == "disturbed_start" or key == "previous_start")
-                        ):
-                            merged_input_json[key].append(it_value)
+                        if it_value != "lammps" and it_value != "i-PI":
+                            error_msg = f"Exploration type {key} is not know: use ethier 'lammps' or 'i-PI' or in a list"
+                            raise ValueError(error_msg)
                         else:
-                            error_msg = f"Type mismatch: the type is '{type(it_value)}', but it should be '{type(1)}' or '{type(1.0)}' or '{type(True)}' (for previous_start or disturbed_start)"
-                            raise TypeError(error_msg)
+                            if it_value == "lammps":
+                                exploration_dep.append(0)
+                            elif it_value == "i-PI":
+                                exploration_dep.append(1)
+                            merged_input_json[key].append(it_value)
                 else:
-                    error_msg = f"Size mismatch: The length of the list should be '{system_count}' corresponding to the number of systems."
+                    error_msg = f"{key}: Size mismatch: The length of the list should be '{system_count}' corresponding to the number of systems."
                     raise ValueError(error_msg)
-
-            # If it is not a List
-            elif (
-                isinstance(value, (int, float))
-                and (key != "disturbed_start" and key != "previous_start")
-            ) or (
-                isinstance(value, (bool))
-                and (key == "disturbed_start" or key == "previous_start")
-            ):
-                merged_input_json[key] = [value] * system_count
             else:
-                error_msg = f"Type mismatch: the type is '{type(it_value)}', but it should be '{type(1)}' or '{type(1.0)}' or '{type(True)}' (for previous_start or disturbed_start)"
-                raise TypeError(error_msg)
+                error_msg = f"Exploration type {key} is not know: use ethier 'lammps' or 'i-PI' or in a list"
+                raise ValueError(error_msg)
+        else:
+            # Everything is system dependent so a list
+            merged_input_json[key] = []
+
+            # Default is used for the key
+            if default_used:
+                if isinstance(value[0], List):
+                    if isinstance(exploration_dep, List):
+                        merged_input_json[key] = [value[0][_] for _ in exploration_dep]
+                    else:
+                        merged_input_json[key] = [value[0][exploration_dep]] * system_count
+                else:
+                    merged_input_json[key] = [value[0]] * system_count
+            else:
+                # Check if previous or user provided a list
+                if isinstance(value, List):
+                    if len(value) == system_count:
+                        for it_value in value:
+                            if (
+                                isinstance(it_value, (int, float))
+                                and (key != "disturbed_start" and key != "previous_start")
+                            ) or (
+                                isinstance(it_value, (bool))
+                                and (key == "disturbed_start" or key == "previous_start")
+                            ):
+                                merged_input_json[key].append(it_value)
+                            else:
+                                error_msg = f"{key}: Type mismatch: the type is '{type(it_value)}', but it should be '{type(1)}' or '{type(1.0)}' or '{type(True)}' (for previous_start or disturbed_start)"
+                                raise TypeError(error_msg)
+                    else:
+                        error_msg = f"{key}: Size mismatch: The length of the list should be '{system_count}' corresponding to the number of systems."
+                        raise ValueError(error_msg)
+                # If it is not a List
+                elif (
+                    isinstance(value, (int, float))
+                    and (key != "disturbed_start" and key != "previous_start")
+                ) or (
+                    isinstance(value, (bool))
+                    and (key == "disturbed_start" or key == "previous_start")
+                ):
+                    merged_input_json[key] = [value] * system_count
+                else:
+                    error_msg = f"{key}: Type mismatch: the type is '{type(it_value)}', but it should be '{type(1)}' or '{type(1.0)}' or '{type(True)}' (for previous_start or disturbed_start)"
+                    raise TypeError(error_msg)
 
     return merged_input_json
-
 
 @catch_errors_decorator
 def get_system_exploration(
     merged_input_json: Dict, system_auto_index: int
 ) -> Tuple[
+    str,
+    Union[float, int],
     Union[float, int],
     Union[float, int],
     Union[float, int],
@@ -202,8 +234,12 @@ def get_system_exploration(
 
     Returns
     -------
-    Tuple[float, float, float, float, float, float, float, float, bool]
+    Tuple[str, float, float, float, float, float, float, float, float, float, bool]
         A tuple containing system exploration parameters:
+        - exploration_typ : str
+            Type of exploration
+        - traj_count : float
+            Number of trajectories per system/NNP
         - timestep_ps : float
             Simulation timestep in picoseconds.
         - temperature_K : float
@@ -227,6 +263,8 @@ def get_system_exploration(
     """
     system_values = []
     for key in [
+        "exploration_type",
+        "traj_count",
         "timestep_ps",
         "temperature_K",
         "exp_time_ps",
@@ -283,14 +321,6 @@ def generate_input_exploration_deviation_json(
         If the length of the value list is not equal to the system count.
     """
 
-    if main_json["exploration_type"] == "lammps":
-        exploration_dep = 0
-    elif main_json["exploration_type"] == "i-PI":
-        exploration_dep = 1
-    else:
-        error_msg = f"'{main_json['exploration_type']}' is not recognized"
-        raise ValueError(error_msg)
-
     system_count = len(main_json.get("systems_auto", []))
 
     for key in [
@@ -322,7 +352,7 @@ def generate_input_exploration_deviation_json(
 
         # Default is used for the key
         if default_used:
-            merged_input_json[key] = [value[exploration_dep]] * system_count
+            merged_input_json[key] = [value[0]] * system_count
         else:
             # Check if previous or user provided a list
             if isinstance(value, List):
@@ -429,14 +459,6 @@ def generate_input_exploration_disturbed_json(
         If the length of the value list is not equal to the system count.
     """
 
-    if main_json["exploration_type"] == "lammps":
-        exploration_dep = 0
-    elif main_json["exploration_type"] == "i-PI":
-        exploration_dep = 1
-    else:
-        error_msg = f"'{main_json['exploration_type']}' is not recognized"
-        raise ValueError(error_msg)
-
     system_count = len(main_json.get("systems_auto", []))
 
     for key in [
@@ -468,7 +490,7 @@ def generate_input_exploration_disturbed_json(
         # Default is used for the key
         # Default is used for the key
         if default_used:
-            merged_input_json[key] = [value[exploration_dep]] * system_count
+            merged_input_json[key] = [value[0]] * system_count
         else:
             if key == "disturbed_start_indexes" or key == "disturbed_candidate_indexes":
                 is_list_of_list = False
@@ -560,7 +582,7 @@ def get_system_disturb(
 
 @catch_errors_decorator
 def generate_starting_points(
-    exploration_type: int,
+    exploration_type: str,
     system_auto: str,
     training_path: str,
     padded_prev_iter: str,
@@ -574,8 +596,8 @@ def generate_starting_points(
 
     Parameters
     ----------
-    exploration_type : int
-        An integer representing the exploration type (1 for "lammps" or 2 for "i-PI").
+    exploration_type : str
+        An str representing the exploration type ("lammps" or "i-PI").
     system_auto : str
         The name of the system.
     training_path : str
@@ -599,19 +621,19 @@ def generate_starting_points(
     """
 
     # Determine file extension based on exploration type
-    if exploration_type == 1:
+    if exploration_type == "lammps":
         file_extension = "lmp"
-    elif exploration_type == 2:
+    elif exploration_type == "i-PI":
         file_extension = "xyz"
 
     # Get list of starting point file names for system and iteration
     starting_points_path = list(
-        Path(training_path, "starting_structures").glob(
+        Path(training_path / "starting_structures").glob(
             f"{padded_prev_iter}_{system_auto}_*.{file_extension}"
         )
     )
     orginal_starting_points_path = list(
-        Path(training_path, "user_files").glob(f"{system_auto}.{file_extension}")
+        Path(training_path / "user_files").glob(f"{system_auto}.{file_extension}")
     )
     starting_points_all = [str(zzz).split("/")[-1] for zzz in starting_points_path]
     starting_points = [zzz for zzz in starting_points_all if "disturbed" not in zzz]
@@ -624,7 +646,6 @@ def generate_starting_points(
     starting_points_bckp = deepcopy(starting_points)
     starting_points_disturbed_bckp = deepcopy(starting_points_disturbed)
     starting_points_original_bckp = deepcopy(starting_points_original)
-
     # Check if system should start from a disturbed minimum
     if input_present and not previous_start:
         starting_points = deepcopy(starting_points_original)
@@ -765,11 +786,12 @@ def get_last_frame_number(
     return last_frame
 
 
+# TODO Redo the unit tests, and docstrings
 # Unittested
 @catch_errors_decorator
 def update_system_nb_steps_factor(previous_json: Dict, system_auto_index: int) -> int:
     """
-    Calculates a ratio based on information from a dictionary and returns a multiplying factor for system_nb_steps.
+    Calculates a ratio based on information from a dictionary and returns the multiplied system_nb_steps.
 
     Parameters
     ----------
@@ -785,14 +807,14 @@ def update_system_nb_steps_factor(previous_json: Dict, system_auto_index: int) -
     """
     # Calculate the ratio of ill-described candidates to the total number of candidates
     ill_described_ratio = (
-        previous_json["systems_auto"][system_auto_index]["nb_candidates"]
-        + previous_json["systems_auto"][system_auto_index]["nb_rejected"]
-    ) / previous_json["systems_auto"][system_auto_index]["nb_total"]
+        previous_json["systems_auto"][system_auto_index]["candidates_count"]
+        + previous_json["systems_auto"][system_auto_index]["rejected_count"]
+    ) / previous_json["systems_auto"][system_auto_index]["total_count"]
 
     # Return a multiplying factor for system_nb_steps based on the ratio of ill-described candidates
     if ill_described_ratio < 0.10:
-        return 4
+        return 4 * previous_json["systems_auto"][system_auto_index]["nb_steps"]
     elif ill_described_ratio < 0.20:
-        return 2
+        return 2 * previous_json["systems_auto"][system_auto_index]["nb_steps"]
     else:
-        return 1
+        return 1 * previous_json["systems_auto"][system_auto_index]["nb_steps"]

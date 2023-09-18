@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/13
+Last modified: 2023/09/18
 """
 # Standard library modules
 import copy
@@ -110,7 +110,7 @@ def main(
     # Get the machine keyword (Priority: user > previous > default)
     # And update the merged input JSON
     user_machine_keyword = get_machine_keyword(
-        user_input_json, previous_labeling_json, default_input_json
+        user_input_json, previous_labeling_json, default_input_json, "label"
     )
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
@@ -141,7 +141,7 @@ def main(
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     logging.debug(f"machine_spec: {machine_spec}")
 
-    merged_input_json["user_machine_keyword"] = user_machine_keyword
+    merged_input_json["user_machine_keyword_label"] = user_machine_keyword
     logging.debug(f"merged_input_json: {merged_input_json}")
 
     if fake_machine is not None:
@@ -170,18 +170,11 @@ def main(
     )
     logging.debug(f"merged_input_json: {merged_input_json}")
 
-    # TODO to rewrite (generate_labeling_json ?)
     # Generate the labeling JSON
     labeling_json = {}
     labeling_json = {
         **labeling_json,
-        "machine": machine,
-        "machine_keyword": user_machine_keyword,
-        "project_name": machine_spec["project_name"],
-        "allocation_name": machine_spec["allocation_name"],
-        "arch_name": machine_spec["arch_name"],
-        "arch_type": machine_spec["arch_type"],
-        "launch_command": machine_launch_command,
+        "user_machine_keyword_label": user_machine_keyword,
     }
 
     # Check if the job file exists
@@ -216,9 +209,9 @@ def main(
 
     total_to_label = 0
     # Loop through each system and set its labeling
-    for system_auto_index, system_auto in enumerate(main_json["systems_auto"]):
+    for system_auto_index, system_auto in enumerate(exploration_json['systems_auto']):
         logging.info(
-            f"Processing system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})"
+            f"Processing system: {system_auto} ({system_auto_index + 1}/{len(exploration_json['systems_auto'])})"
         )
 
         labeling_json["systems_auto"][system_auto] = {}
@@ -575,6 +568,8 @@ def main(
     )
     del master_job_file
 
+    logging.debug(f"LOCAL")
+    logging.debug(f"{locals()}")
     return 0
 
 
