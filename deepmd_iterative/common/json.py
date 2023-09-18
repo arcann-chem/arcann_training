@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/15
+Last modified: 2023/09/18
 
 The json module provides functions to manipulate JSON data (as dict).
 
@@ -369,6 +369,8 @@ def convert_control_to_input(control_json: Dict, main_json: Dict) -> Dict:
         # Iterate over keys in main_json["systems_auto"]
         for system_auto in main_json.get("systems_auto", {}):
             if system_auto in control_json.get("systems_auto", {}):
-                input_json[key].append(control_json["systems_auto"][system_auto].get(key, None))
+                input_json[key].append(
+                    control_json["systems_auto"][system_auto].get(key, None)
+                )
 
     return input_json

@@ -317,7 +317,12 @@ def main(
             )
             del system_candidates_skipped, system_disturbed_candidates_skipped
 
-        del system_candidates_count, system_disturbed_candidates_count, system_candidates_skipped_count, system_disturbed_candidates_skipped_count
+        del (
+            system_candidates_count,
+            system_disturbed_candidates_count,
+            system_candidates_skipped_count,
+            system_disturbed_candidates_skipped_count,
+        )
         del system_candidates_skipped, system_disturbed_candidates_skipped
         del system_path, labeling_step, labeling_step_path, padded_labeling_step
 

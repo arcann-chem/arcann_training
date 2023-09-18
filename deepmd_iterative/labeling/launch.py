@@ -165,23 +165,22 @@ def main(
         system_path = current_path / system_auto
 
         if (
-            system_path
-            / f"job_labeling_array_{machine_spec['arch_type']}_{machine}.sh"
+            system_path / f"job_labeling_array_{machine_spec['arch_type']}_{machine}.sh"
         ).is_file():
             change_directory(system_path)
 
             try:
-                # subprocess.run(
-                #     [
-                #         machine_spec["launch_command"],
-                #         f"./job_labeling_array_{machine_spec['arch_type']}_{machine}.sh",
-                #     ]
-                # )
+                subprocess.run(
+                    [
+                        machine_launch_command,
+                        f"./job_labeling_array_{machine_spec['arch_type']}_{machine}.sh",
+                    ]
+                )
                 logging.info(f"Labeling - '{system_auto}' launched.")
                 launched_count += 1
             except FileNotFoundError:
                 logging.critical(
-                    f"Labeling - '{system_auto}' NOT launched - '{machine_spec['launch_command']}' not found."
+                    f"Labeling - '{system_auto}' NOT launched - '{machine_launch_command}' not found."
                 )
             change_directory(system_path.parent)
         else:

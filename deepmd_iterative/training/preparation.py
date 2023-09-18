@@ -257,7 +257,7 @@ def main(
 
     # TODO Implement validation dataset
     del validation_datasets
-    
+
     # Training sets list construction
     dp_train_input_datasets = []
     training_datasets = []
@@ -541,34 +541,77 @@ def main(
 
     # Walltime
     if curr_iter == 0:
-        if "init_job_walltime_train_h" in user_input_json and user_input_json["init_job_walltime_train_h"] > 0:
+        if (
+            "init_job_walltime_train_h" in user_input_json
+            and user_input_json["init_job_walltime_train_h"] > 0
+        ):
             walltime_approx_s = int(user_input_json["init_job_walltime_train_h"] * 3600)
-            logging.debug(f"init_job_walltime_train_h: {user_input_json['init_job_walltime_train_h']}")
-        elif "job_walltime_train_h" in user_input_json and user_input_json["job_walltime_train_h"] > 0:
+            logging.debug(
+                f"init_job_walltime_train_h: {user_input_json['init_job_walltime_train_h']}"
+            )
+        elif (
+            "job_walltime_train_h" in user_input_json
+            and user_input_json["job_walltime_train_h"] > 0
+        ):
             walltime_approx_s = int(user_input_json["job_walltime_train_h"] * 3600)
-            logging.debug(f"job_walltime_train_h: {user_input_json['job_walltime_train_h']}")
-        elif "mean_s_per_step" in user_input_json and user_input_json["mean_s_per_step"] > 0:
-            walltime_approx_s = int(np.ceil((training_json["numb_steps"] * user_input_json["mean_s_per_step"])))
+            logging.debug(
+                f"job_walltime_train_h: {user_input_json['job_walltime_train_h']}"
+            )
+        elif (
+            "mean_s_per_step" in user_input_json
+            and user_input_json["mean_s_per_step"] > 0
+        ):
+            walltime_approx_s = int(
+                np.ceil(
+                    (training_json["numb_steps"] * user_input_json["mean_s_per_step"])
+                )
+            )
             logging.debug(f"mean_s_per_step: {user_input_json['mean_s_per_step']}")
         else:
-            walltime_approx_s = int(max(
-                np.ceil(training_json["numb_steps"] * default_input_json["mean_s_per_step"]),
-                default_input_json["init_job_walltime_train_h"]*3600,
-                default_input_json["job_walltime_train_h"]*3600
-            ))
+            walltime_approx_s = int(
+                max(
+                    np.ceil(
+                        training_json["numb_steps"]
+                        * default_input_json["mean_s_per_step"]
+                    ),
+                    default_input_json["init_job_walltime_train_h"] * 3600,
+                    default_input_json["job_walltime_train_h"] * 3600,
+                )
+            )
             merged_input_json["init_job_walltime_train_h"] = -1
             merged_input_json["job_walltime_train_h"] = -1
             merged_input_json["mean_s_per_step"] = -1
     else:
-        if "job_walltime_train_h" in user_input_json and user_input_json["job_walltime_train_h"] > 0:
+        if (
+            "job_walltime_train_h" in user_input_json
+            and user_input_json["job_walltime_train_h"] > 0
+        ):
             walltime_approx_s = int(user_input_json["job_walltime_train_h"] * 3600)
-            logging.debug(f"job_walltime_train_h: {user_input_json['job_walltime_train_h']}")
-        elif "mean_s_per_step" in user_input_json and user_input_json["mean_s_per_step"] > 0:
-            walltime_approx_s = int(np.ceil((training_json["numb_steps"] * user_input_json["mean_s_per_step"])))
+            logging.debug(
+                f"job_walltime_train_h: {user_input_json['job_walltime_train_h']}"
+            )
+        elif (
+            "mean_s_per_step" in user_input_json
+            and user_input_json["mean_s_per_step"] > 0
+        ):
+            walltime_approx_s = int(
+                np.ceil(
+                    (training_json["numb_steps"] * user_input_json["mean_s_per_step"])
+                )
+            )
             logging.debug(f"mean_s_per_step: {user_input_json['mean_s_per_step']}")
         else:
-            walltime_approx_s = int(np.ceil((training_json["numb_steps"] * (previous_training_json["mean_s_per_step"] * 1.50))))
-            logging.debug(f"mean_s_per_step: {previous_training_json['mean_s_per_step']}")
+            walltime_approx_s = int(
+                np.ceil(
+                    (
+                        training_json["numb_steps"]
+                        * (previous_training_json["mean_s_per_step"] * 1.50)
+                    )
+                )
+            )
+            logging.debug(
+                f"mean_s_per_step: {previous_training_json['mean_s_per_step']}"
+            )
             merged_input_json["job_walltime_train_h"] = -1
             merged_input_json["mean_s_per_step"] = -1
 
@@ -660,7 +703,13 @@ def main(
     )
     del user_machine_keyword
     del curr_iter, padded_curr_iter
-    del machine, machine_spec, machine_walltime_format, machine_launch_command, machine_job_scheduler
+    del (
+        machine,
+        machine_spec,
+        machine_walltime_format,
+        machine_launch_command,
+        machine_job_scheduler,
+    )
     del master_job_file
 
     logging.debug(f"LOCAL")

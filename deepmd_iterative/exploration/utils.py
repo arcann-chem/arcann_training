@@ -168,7 +168,9 @@ def generate_input_exploration_json(
                     if isinstance(exploration_dep, List):
                         merged_input_json[key] = [value[0][_] for _ in exploration_dep]
                     else:
-                        merged_input_json[key] = [value[0][exploration_dep]] * system_count
+                        merged_input_json[key] = [
+                            value[0][exploration_dep]
+                        ] * system_count
                 else:
                     merged_input_json[key] = [value[0]] * system_count
             else:
@@ -178,10 +180,14 @@ def generate_input_exploration_json(
                         for it_value in value:
                             if (
                                 isinstance(it_value, (int, float))
-                                and (key != "disturbed_start" and key != "previous_start")
+                                and (
+                                    key != "disturbed_start" and key != "previous_start"
+                                )
                             ) or (
                                 isinstance(it_value, (bool))
-                                and (key == "disturbed_start" or key == "previous_start")
+                                and (
+                                    key == "disturbed_start" or key == "previous_start"
+                                )
                             ):
                                 merged_input_json[key].append(it_value)
                             else:
@@ -204,6 +210,7 @@ def generate_input_exploration_json(
                     raise TypeError(error_msg)
 
     return merged_input_json
+
 
 @catch_errors_decorator
 def get_system_exploration(

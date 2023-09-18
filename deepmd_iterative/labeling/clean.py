@@ -16,7 +16,10 @@ from pathlib import Path
 
 # Local imports
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.filesystem import remove_files_matching_glob, remove_all_symlink
+from deepmd_iterative.common.filesystem import (
+    remove_files_matching_glob,
+    remove_all_symlink,
+)
 from deepmd_iterative.common.json import load_json_file
 
 
@@ -62,7 +65,9 @@ def main(
     logging.critical(f"This is the cleaning step for labeling step.")
     logging.critical(f"It should be run after labeling extract phase.")
     logging.critical(f"This is will delete:")
-    logging.critical(f"symbolic links, 'job_*.sh', 'labeling_*.xyz', 'labeling_*-SCF.wfn', '*labeling*.inp'")
+    logging.critical(
+        f"symbolic links, 'job_*.sh', 'labeling_*.xyz', 'labeling_*-SCF.wfn', '*labeling*.inp'"
+    )
     logging.critical(f"CP2K_*")
     logging.critical(f"in the folder: '{current_path}' and all subdirectories.")
     logging.critical(

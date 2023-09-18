@@ -65,9 +65,13 @@ def main(
     logging.critical(f"It should be run after exploration extract phase.")
     logging.critical(f"This is will delete:")
     logging.critical(f"symbolic links, 'job_*.sh', '*.in', '*.lmp', 'plumed_*.dat'")
-    logging.critical(f"LAMMPS_*, 'i-PI_DeepMD*', '*.DP-i-PI.client_*.log', '*.DP-i-PI.client_*.err', 'plumed_*.dat'")
+    logging.critical(
+        f"LAMMPS_*, 'i-PI_DeepMD*', '*.DP-i-PI.client_*.log', '*.DP-i-PI.client_*.err', 'plumed_*.dat'"
+    )
     logging.critical(f"in the folder: '{current_path}' and all subdirectories.")
-    continuing = input(f"Do you want to continue? [Enter 'Y' for yes, or any other key to abort]: ")
+    continuing = input(
+        f"Do you want to continue? [Enter 'Y' for yes, or any other key to abort]: "
+    )
     if continuing == "Y":
         del continuing
     else:

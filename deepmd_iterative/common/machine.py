@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/15
+Last modified: 2023/09/18
 
 The machine module provides functions for machine operations.
 
@@ -77,11 +77,13 @@ def get_host_name() -> str:
 # TODO Test will fail
 # Unittested
 @catch_errors_decorator
-def assert_same_machine(user_machine_keyword: str, control_json: Dict, step: str) -> None:
+def assert_same_machine(
+    user_machine_keyword: str, control_json: Dict, step: str
+) -> None:
     """
     Verify that the provided machine keyword matches the expected machine keyword in the control JSON.
-    
-    This function is used for preparation and launch processes. It checks if the provided machine keyword 
+
+    This function is used for preparation and launch processes. It checks if the provided machine keyword
     matches the one specified in the control JSON. If they do not match, a ValueError is raised with an
     error message, and the execution is aborted.
 
@@ -89,12 +91,12 @@ def assert_same_machine(user_machine_keyword: str, control_json: Dict, step: str
     ----------
     user_machine_keyword : str
         The machine keyword to be checked.
-        
+
     control_json : Dict
         The control JSON dictionary containing the expected machine keyword.
-        
+
     step : str
-        A string representing the step or stage identifier used to retrieve the expected machine keyword 
+        A string representing the step or stage identifier used to retrieve the expected machine keyword
         from the control JSON.
 
     Returns

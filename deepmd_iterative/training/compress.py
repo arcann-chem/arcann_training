@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/15
+Last modified: 2023/09/18
 """
 # Standard library modules
 import copy
@@ -199,17 +199,17 @@ def main(
         ).is_file():
             change_directory(local_path)
             try:
-                # subprocess.run(
-                #     [
-                #         machine_launch_command,
-                #         f"./job_deepmd_compress_{machine_spec['arch_type']}_{machine}.sh",
-                #     ]
-                # )
+                subprocess.run(
+                    [
+                        machine_launch_command,
+                        f"./job_deepmd_compress_{machine_spec['arch_type']}_{machine}.sh",
+                    ]
+                )
                 logging.info(f"DP Compress - '{nnp}' launched.")
                 completed_count += 1
             except FileNotFoundError:
                 logging.critical(
-                    f"DP Compress - '{nnp}' NOT launched - '{training_json['launch_command']}' not found."
+                    f"DP Compress - '{nnp}' NOT launched - '{machine_launch_command}' not found."
                 )
             change_directory(local_path.parent)
         else:
@@ -252,7 +252,13 @@ def main(
     del walltime_approx_s, user_machine_keyword
     del main_json, merged_input_json, training_json
     del curr_iter, padded_curr_iter
-    del machine, machine_spec, machine_walltime_format, machine_launch_command, machine_job_scheduler
+    del (
+        machine,
+        machine_spec,
+        machine_walltime_format,
+        machine_launch_command,
+        machine_job_scheduler,
+    )
 
     logging.debug(f"LOCAL")
     logging.debug(f"{locals()}")

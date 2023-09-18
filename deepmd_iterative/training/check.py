@@ -68,7 +68,7 @@ def main(
 
     # Check the normal termination of the training phase
     # Counters
-    #s_per_step_per_step_size = []
+    # s_per_step_per_step_size = []
     training_times = []
     step_sizes = []
     completed_count = 0
@@ -80,11 +80,10 @@ def main(
 
             # Finished correctly
             if any("finished training" in s for s in training_out):
-
                 training_out_time = [s for s in training_out if "training time" in s]
 
-                batch_pattern = r'batch\s*(\d+)\s'
-                time_pattern = r'training time (\d+\.\d+) s'
+                batch_pattern = r"batch\s*(\d+)\s"
+                time_pattern = r"training time (\d+\.\d+) s"
                 batch_numbers = []
 
                 for entry in training_out_time:
@@ -102,8 +101,12 @@ def main(
                 del time_pattern, batch_pattern
 
                 for suffix in ["index", "meta", "data-00000-of-00001"]:
-                    if (local_path / f"model.ckpt-{batch_numbers[-1]}.{suffix}").is_file():
-                        (local_path / f"model.ckpt-{batch_numbers[-1]}.{suffix}").rename(local_path / f"model.ckpt.{suffix}")
+                    if (
+                        local_path / f"model.ckpt-{batch_numbers[-1]}.{suffix}"
+                    ).is_file():
+                        (
+                            local_path / f"model.ckpt-{batch_numbers[-1]}.{suffix}"
+                        ).rename(local_path / f"model.ckpt.{suffix}")
                 del suffix
 
                 step_sizes.extend(np.diff(batch_numbers))
@@ -125,9 +128,15 @@ def main(
 
     # If not empty
     if training_times and step_sizes:
-        training_json["mean_s_per_step"] = np.average(training_times) / np.average(step_sizes)
-        training_json["median_s_per_step"] = np.median(training_times) / np.average(step_sizes)
-        training_json["stdeviation_s_per_step"] = np.std(training_times) / np.average(step_sizes)
+        training_json["mean_s_per_step"] = np.average(training_times) / np.average(
+            step_sizes
+        )
+        training_json["median_s_per_step"] = np.median(training_times) / np.average(
+            step_sizes
+        )
+        training_json["stdeviation_s_per_step"] = np.std(training_times) / np.average(
+            step_sizes
+        )
     logging.debug(f"mean_s_per_step: {training_json['mean_s_per_step']}")
     logging.debug(f"median_s_per_step: {training_json['median_s_per_step']}")
     logging.debug(f"stdeviation_s_per_step: {training_json['stdeviation_s_per_step']}")

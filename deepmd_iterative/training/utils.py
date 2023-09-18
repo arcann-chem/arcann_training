@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/15
+Last modified: 2023/09/18
 
 The utils module provides functions for the training step.
 
@@ -41,6 +41,7 @@ import numpy as np
 
 # Local imports
 from deepmd_iterative.common.utils import catch_errors_decorator
+
 
 # Unittested
 @catch_errors_decorator

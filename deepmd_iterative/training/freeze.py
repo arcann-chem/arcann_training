@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/15
+Last modified: 2023/09/18
 """
 # Standard library modules
 import copy
@@ -198,17 +198,17 @@ def main(
         ).is_file():
             change_directory(local_path)
             try:
-                # subprocess.run(
-                #     [
-                #         machine_launch_command,
-                #         f"./job_deepmd_freeze_{machine_spec['arch_type']}_{machine}.sh",
-                #     ]
-                # )
+                subprocess.run(
+                    [
+                        machine_launch_command,
+                        f"./job_deepmd_freeze_{machine_spec['arch_type']}_{machine}.sh",
+                    ]
+                )
                 logging.info(f"DP Freeze - '{nnp}' launched.")
                 completed_count += 1
             except FileNotFoundError:
                 logging.critical(
-                    f"DP Freeze - '{nnp}' NOT launched - '{machine_spec['launch_command']}' not found."
+                    f"DP Freeze - '{nnp}' NOT launched - '{machine_launch_command}' not found."
                 )
             change_directory(local_path.parent)
         else:
@@ -251,7 +251,13 @@ def main(
     del user_machine_keyword, walltime_approx_s
     del main_json, merged_input_json, training_json
     del curr_iter, padded_curr_iter
-    del machine, machine_spec, machine_walltime_format, machine_launch_command, machine_job_scheduler
+    del (
+        machine,
+        machine_spec,
+        machine_walltime_format,
+        machine_launch_command,
+        machine_job_scheduler,
+    )
 
     logging.debug(f"LOCAL")
     logging.debug(f"{locals()}")

@@ -163,7 +163,9 @@ def main(
         logging.debug(f"start_row_number: {start_row_number}")
 
         for it_nnp in range(1, main_json["nnp_count"] + 1):
-            for it_number in range(1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1):
+            for it_number in range(
+                1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1
+            ):
                 logging.debug(f"{system_auto} / {it_nnp} / {it_number}")
 
                 # Get the local path and the name of model_deviation file
@@ -206,9 +208,19 @@ def main(
                     model_deviation = np.genfromtxt(
                         str(local_path / model_deviation_filename)
                     )
-                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps":
+                    if (
+                        exploration_json["systems_auto"][system_auto][
+                            "exploration_type"
+                        ]
+                        == "lammps"
+                    ):
                         total_row_number = model_deviation.shape[0]
-                    elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
+                    elif (
+                        exploration_json["systems_auto"][system_auto][
+                            "exploration_type"
+                        ]
+                        == "i-PI"
+                    ):
                         total_row_number = model_deviation.shape[0] + 1
 
                     if nb_steps_expected > (total_row_number - start_row_number):
@@ -438,7 +450,8 @@ def main(
 
         # Average for the system (with adjustment, remove the skipped ones)
         exploitable_traj = (
-            exploration_json["nnp_count"] * exploration_json["systems_auto"][system_auto]["traj_count"]
+            exploration_json["nnp_count"]
+            * exploration_json["systems_auto"][system_auto]["traj_count"]
         ) - (skipped_traj_user + skipped_traj_stats)
         if exploitable_traj == 0:
             logging.critical(
@@ -468,10 +481,14 @@ def main(
             )
             exploration_json["systems_auto"][system_auto]["median_deviation_max_f"] = (
                 exploration_json["systems_auto"][system_auto]["median_deviation_max_f"]
-                / exploitable_traj 
+                / exploitable_traj
             )
-            exploration_json["systems_auto"][system_auto]["stdeviation_deviation_max_f"] = (
-                exploration_json["systems_auto"][system_auto]["stdeviation_deviation_max_f"]
+            exploration_json["systems_auto"][system_auto][
+                "stdeviation_deviation_max_f"
+            ] = (
+                exploration_json["systems_auto"][system_auto][
+                    "stdeviation_deviation_max_f"
+                ]
                 / exploitable_traj
             )
 
@@ -508,7 +525,9 @@ def main(
         }
 
         for it_nnp in range(1, main_json["nnp_count"] + 1):
-            for it_number in range(1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1):
+            for it_number in range(
+                1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1
+            ):
                 # Get the local path and the name of model_deviation file
                 local_path = (
                     Path(".").resolve()

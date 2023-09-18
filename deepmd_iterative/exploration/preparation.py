@@ -131,7 +131,6 @@ def main(
     logging.debug(f"previous_training_json: {previous_training_json}")
     logging.debug(f"previous_exploration_json: {previous_exploration_json}")
 
-
     # Check if the atomsk package is installed
     atomsk_bin = check_atomsk(
         get_key_in_dict(
@@ -210,10 +209,12 @@ def main(
     }
 
     # Check if the job file exists (for each exploration requested)
-    exploration_types = list(set(merged_input_json['exploration_type']))
+    exploration_types = list(set(merged_input_json["exploration_type"]))
     master_job_file = {}
     for exploration_type in exploration_types:
-        job_file_name = f"job_deepmd_{exploration_type}_{machine_spec['arch_type']}_{machine}.sh"
+        job_file_name = (
+            f"job_deepmd_{exploration_type}_{machine_spec['arch_type']}_{machine}.sh"
+        )
         if (current_path.parent / "user_files" / job_file_name).is_file():
             master_job_file[exploration_type] = textfile_to_string_list(
                 current_path.parent / "user_files" / job_file_name
@@ -225,7 +226,9 @@ def main(
             logging.error(f"Aborting...")
             return 1
 
-        logging.debug(f"master_job_file: {master_job_file[exploration_type][0:5]}, {master_job_file[exploration_type][-5:-1]}")
+        logging.debug(
+            f"master_job_file: {master_job_file[exploration_type][0:5]}, {master_job_file[exploration_type][-5:-1]}"
+        )
         merged_input_json["job_email"] = get_key_in_dict(
             "job_email", user_input_json, previous_exploration_json, default_input_json
         )
@@ -259,13 +262,13 @@ def main(
         )
 
         plumed = [False, False, False]
-        #exploration_type = -1
+        # exploration_type = -1
 
         input_replace_dict = {}
 
         # Get the input file (.in or .xml) for the current system and check if plumed is being used
         if system_exploration_type == "lammps":
-            #exploration_type = 0
+            # exploration_type = 0
             master_system_lammps_in = textfile_to_string_list(
                 training_path / "user_files" / (system_auto + ".in")
             )
@@ -273,7 +276,7 @@ def main(
             if any("plumed" in zzz for zzz in master_system_lammps_in):
                 plumed[0] = True
         elif system_exploration_type == "i-PI":
-            #exploration_type = 1
+            # exploration_type = 1
             master_system_ipi_xml = read_xml_file(
                 training_path / "user_files" / (system_auto + ".xml")
             )
@@ -564,7 +567,9 @@ def main(
                     # Get data files (starting points) if iteration is > 1
                     if curr_iter > 1:
                         if len(starting_point_list) == 0:
-                            starting_point_list = copy.deepcopy(starting_point_list_bckp)
+                            starting_point_list = copy.deepcopy(
+                                starting_point_list_bckp
+                            )
                         system_lammps_data_fn = starting_point_list[
                             random.randrange(0, len(starting_point_list))
                         ]
@@ -700,7 +705,9 @@ def main(
                     # Get data files (starting points) and number of steps
                     if curr_iter > 1:
                         if len(starting_points) == 0:
-                            starting_point_list = copy.deepcopy(starting_point_list_bckp)
+                            starting_point_list = copy.deepcopy(
+                                starting_point_list_bckp
+                            )
                         system_ipi_xyz_fn = starting_point_list[
                             random.randrange(0, len(starting_point_list))
                         ]
@@ -845,15 +852,11 @@ def main(
 
         del nnp_index
 
-        exploration_json["systems_auto"][system_auto][
-            "nb_atm"
-        ] = system_nb_atm
+        exploration_json["systems_auto"][system_auto]["nb_atm"] = system_nb_atm
         exploration_json["systems_auto"][system_auto][
             "exploration_type"
         ] = system_exploration_type
-        exploration_json["systems_auto"][system_auto][
-            "traj_count"
-        ] = system_traj_count
+        exploration_json["systems_auto"][system_auto]["traj_count"] = system_traj_count
         exploration_json["systems_auto"][system_auto][
             "temperature_K"
         ] = system_temperature_K

@@ -209,7 +209,7 @@ def main(
 
     total_to_label = 0
     # Loop through each system and set its labeling
-    for system_auto_index, system_auto in enumerate(exploration_json['systems_auto']):
+    for system_auto_index, system_auto in enumerate(exploration_json["systems_auto"]):
         logging.info(
             f"Processing system: {system_auto} ({system_auto_index + 1}/{len(exploration_json['systems_auto'])})"
         )

@@ -153,7 +153,9 @@ def main(
     completed_count = 0
     for system_auto_index, system_auto in enumerate(exploration_json["systems_auto"]):
         for nnp_index in range(1, main_json["nnp_count"] + 1):
-            for traj_index in range(1, exploration_json['systems_auto'][system_auto]['traj_count'] + 1):
+            for traj_index in range(
+                1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1
+            ):
                 local_path = (
                     Path(".").resolve()
                     / str(system_auto)
@@ -167,19 +169,19 @@ def main(
                 ).is_file():
                     change_directory(local_path)
                     try:
-                        # subprocess.run(
-                        #     [
-                        #         machine_spec["launch_command"],machine_spec
-                        #         f"./job_deepmd_{exploration_json['systems_auto'][system_auto]['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
-                        #     ]
-                        # )
+                        subprocess.run(
+                            [
+                                machine_launch_command,
+                                f"./job_deepmd_{exploration_json['systems_auto'][system_auto]['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
+                            ]
+                        )
                         logging.info(
                             f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' launched."
                         )
                         completed_count += 1
                     except FileNotFoundError:
                         logging.critical(
-                            f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' NOT launched - '{machine_spec['launch_command']}' not found."
+                            f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' NOT launched - '{machine_launch_command}' not found."
                         )
                     change_directory(local_path.parent.parent.parent)
                 else:
@@ -195,7 +197,12 @@ def main(
     # Update the booleans in the exploration JSON
     if completed_count == (
         exploration_json["nnp_count"]
-        * sum([exploration_json['systems_auto'][_]['traj_count'] for _ in exploration_json['systems_auto']])
+        * sum(
+            [
+                exploration_json["systems_auto"][_]["traj_count"]
+                for _ in exploration_json["systems_auto"]
+            ]
+        )
     ):
         exploration_json["is_launched"] = True
 
@@ -211,7 +218,12 @@ def main(
     logging.info(f"-" * 88)
     if completed_count == (
         exploration_json["nnp_count"]
-        * sum([exploration_json['systems_auto'][_]['traj_count'] for _ in exploration_json['systems_auto']])
+        * sum(
+            [
+                exploration_json["systems_auto"][_]["traj_count"]
+                for _ in exploration_json["systems_auto"]
+            ]
+        )
     ):
         logging.info(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"

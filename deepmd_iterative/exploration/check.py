@@ -88,7 +88,9 @@ def main(
         }
 
         for it_nnp in range(1, main_json["nnp_count"] + 1):
-            for it_number in range(1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1):
+            for it_number in range(
+                1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1
+            ):
                 local_path = (
                     Path(".").resolve()
                     / str(system_auto)
@@ -97,7 +99,10 @@ def main(
                 )
 
                 # LAMMPS
-                if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps":
+                if (
+                    exploration_json["systems_auto"][system_auto]["exploration_type"]
+                    == "lammps"
+                ):
                     lammps_output_file = (
                         local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.log"
                     )
@@ -144,7 +149,10 @@ def main(
                     del lammps_output_file
 
                 # i-PI
-                elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
+                elif (
+                    exploration_json["systems_auto"][system_auto]["exploration_type"]
+                    == "i-PI"
+                ):
                     ipi_output_file = (
                         local_path
                         / f"{system_auto}_{it_nnp}_{padded_curr_iter}.i-PI.server.log"
@@ -166,7 +174,9 @@ def main(
                                 zzz[zzz.index("step:") + len("step:") : zzz.index("\n")]
                                 for zzz in ipi_time
                             ]
-                            timings.append(np.average(np.asarray(ipi_time2, dtype="float32")))
+                            timings.append(
+                                np.average(np.asarray(ipi_time2, dtype="float32"))
+                            )
                             del ipi_time, ipi_time2
                         elif (local_path / "skip").is_file():
                             skipped_count += 1
@@ -203,18 +213,30 @@ def main(
 
                 del local_path
 
-        #timings = timings_sum / system_count
+        # timings = timings_sum / system_count
 
-        if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps":
+        if (
+            exploration_json["systems_auto"][system_auto]["exploration_type"]
+            == "lammps"
+        ):
             average_per_step = (
-                np.array(timings) / exploration_json["systems_auto"][system_auto]["nb_steps"]
+                np.array(timings)
+                / exploration_json["systems_auto"][system_auto]["nb_steps"]
             )
-        elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
+        elif (
+            exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI"
+        ):
             average_per_step = np.array(timings)
 
-        exploration_json["systems_auto"][system_auto]["mean_s_per_step"] = np.average(average_per_step)
-        exploration_json["systems_auto"][system_auto]["median_s_per_step"] = np.median(average_per_step)
-        exploration_json["systems_auto"][system_auto]["stdeviation_s_per_step"] = np.std(average_per_step)
+        exploration_json["systems_auto"][system_auto]["mean_s_per_step"] = np.average(
+            average_per_step
+        )
+        exploration_json["systems_auto"][system_auto]["median_s_per_step"] = np.median(
+            average_per_step
+        )
+        exploration_json["systems_auto"][system_auto][
+            "stdeviation_s_per_step"
+        ] = np.std(average_per_step)
 
         del timings, average_per_step, system_count
 
@@ -224,7 +246,12 @@ def main(
     # Update the booleans in the exploration JSON
     if (completed_count + skipped_count + forced_count) == (
         exploration_json["nnp_count"]
-        * sum([exploration_json['systems_auto'][_]['traj_count'] for _ in exploration_json['systems_auto']])
+        * sum(
+            [
+                exploration_json["systems_auto"][_]["traj_count"]
+                for _ in exploration_json["systems_auto"]
+            ]
+        )
     ):
         exploration_json["is_checked"] = True
 
@@ -238,7 +265,12 @@ def main(
     logging.info(f"-" * 88)
     if (completed_count + skipped_count + forced_count) != (
         exploration_json["nnp_count"]
-        * sum([exploration_json['systems_auto'][_]['traj_count'] for _ in exploration_json['systems_auto']])
+        * sum(
+            [
+                exploration_json["systems_auto"][_]["traj_count"]
+                for _ in exploration_json["systems_auto"]
+            ]
+        )
     ):
         logging.error(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!"

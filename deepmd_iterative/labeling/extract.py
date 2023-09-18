@@ -926,8 +926,14 @@ def main(
             f"Processed system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})"
         )
     del system_auto, system_auto_index
-    del system_candidates_count,system_candidates_skipped_count, system_path, data_path
-    del is_wannier, wannier_not_converged, system_candidates_not_skipped_counter, lammps_data, type_atom_array
+    del system_candidates_count, system_candidates_skipped_count, system_path, data_path
+    del (
+        is_wannier,
+        wannier_not_converged,
+        system_candidates_not_skipped_counter,
+        lammps_data,
+        type_atom_array,
+    )
     del output_cp2k, cp2k_version
     del system_disturbed_candidates_count, system_disturbed_candidates_skipped_count
 
