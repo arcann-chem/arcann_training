@@ -73,27 +73,23 @@ pip install -e .
 
 ### Inputs
 
-Default value are located in __default_config.json__ located in __src/arcann/assets/__
+Default value are located in __default_config.json__ located in __src/deepmd_iterative/assets/__
 
 Initialization
 
 ```json
 {
     "step_name": "initialization",
-    "system": { "value": null },
-    "subsys_nr": { "value": null },
-    "nb_nnp": { "value": 3 },
-    "exploration_type": { "value": "lammps" }
+    "systems_auto": { "value": null },
+    "nnp_count": { "value": 3 },
 }
 ```
 
 Fields:
 
 * __step_name__: The name of the step, which is always "initialization".
-* __system__: An object that contains the system information, represented as a string. The value is initially set to null and must be provided by the user.
-* __subsys_nr__: An object that contains the subsystem name list, represented as a list of strings. The value is initially set to null and must be provided by the user.
+* __subsys_nr__: An object that contains the system name list, represented as a list of strings. The value is initially set to null and must be provided by the user.
 * __nb_nnp__: An object that contains the number of NNP trained, represented as an integer. The default value is __3__ if not provided by the user.
-* __exploration_type__: An object that contains the exploration type, represented as a string that can be either "lammps" or "i-PI". The default value is __"lammps"__ if not provided by the user.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
