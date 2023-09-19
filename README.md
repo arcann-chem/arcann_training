@@ -73,23 +73,19 @@ pip install -e .
 
 ### Inputs
 
-Default value are located in __default_config.json__ located in __src/deepmd_iterative/assets/__
+Default value are located in __default_config.json__ located in __deepmd_iterative/assets/__
 
 Initialization
 
 ```json
 {
-    "step_name": "initialization",
-    "systems_auto": { "value": null },
-    "nnp_count": { "value": 3 },
+    "systems_auto": ["SYSTEM1", "SYSTEM2"],
+    "nnp_count": 3,
 }
 ```
 
-Fields:
-
-* __step_name__: The name of the step, which is always "initialization".
-* __subsys_nr__: An object that contains the system name list, represented as a list of strings. The value is initially set to null and must be provided by the user.
-* __nb_nnp__: An object that contains the number of NNP trained, represented as an integer. The default value is __3__ if not provided by the user.
+* __systems_auto__: This key is associated with a list of system names provided by the user. The list contains two systems, "SYSTEM1" and "SYSTEM2" in this example. The value for this key is initially set to null, and the user must provide its value as a list of strings.
+* __nnp_count__: This key represents the number of NNP trained, specifically for the Query by Committee. It is an integer value and the default value is __3__.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
