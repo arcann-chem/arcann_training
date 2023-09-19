@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2023/09/19
 """
 # Standard library modules
 import logging
@@ -101,7 +101,7 @@ def main(
     logging.info(f"Deleting models files files...")
     remove_files_matching_glob(current_path, "**/*.pb")
     logging.info(f"Deleting extra training files...")
-    remove_files_matching_glob(current_path, "checkpoint.*")
+    remove_files_matching_glob(current_path, "checkpoint")
     remove_files_matching_glob(current_path, "input_v2_compat.json")
     logging.info(f"Deleting job error files...")
     remove_files_matching_glob(current_path, "**/DeepMD_*")

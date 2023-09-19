@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2023/09/19
 """
 # Standard library modules
 import copy
@@ -302,7 +302,7 @@ def main(
         for iteration in np.arange(1, curr_iter + 1):
             padded_iteration = str(iteration).zfill(3)
             try:
-                for system_auto in ["systems_auto"]:
+                for system_auto in main_json["systems_auto"]:
                     if (data_path / f"{system_auto}_{padded_iteration}").is_dir():
                         dp_train_input_datasets.append(
                             f"{(Path(data_path.parts[-1]) / (system_auto+'_'+padded_iteration) / '_')}"[
@@ -605,7 +605,7 @@ def main(
                 np.ceil(
                     (
                         training_json["numb_steps"]
-                        * (previous_training_json["mean_s_per_step"] * 1.50)
+                        * (previous_training_json["mean_s_per_step"] * 1.2)
                     )
                 )
             )

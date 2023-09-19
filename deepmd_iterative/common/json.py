@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2023/09/19
 
 The json module provides functions to manipulate JSON data (as dict).
 
@@ -36,6 +36,7 @@ convert_control_to_input(control_json: Dict, main_json: Dict) -> Dict:
 # Standard library modules
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Any, Dict
 
@@ -168,7 +169,7 @@ def backup_and_overwrite_json_file(
         If file_path is not a Path object.
     """
     if not isinstance(file_path, Path):
-        error_msg = f"'{file_path}' must be a '{type(Path('.'))}'."
+        error_msg = f"'{file_path}' must be an instance of 'pathlib.Path'."
         raise TypeError(error_msg)
 
     backup_path = file_path.with_suffix(".json.bak")
@@ -291,7 +292,7 @@ def load_json_file(
 # Unittested
 @catch_errors_decorator
 def write_json_file(
-    json_dict: Dict, file_path: Path, enable_logging: bool = True, **kwargs
+    json_dict: Dict, file_path: Path, enable_logging: bool = True
 ) -> None:
     """
     Write a dictionary to a JSON file.
@@ -305,8 +306,6 @@ def write_json_file(
         Must be a Path object, otherwise a TypeError will be raised.
     enable_logging : bool, optional
         If True, log a message indicating the file and path that the JSON data is being written to. Defaults to True.
-    **kwargs : optional
-        Optional arguments to be passed to the json.dump() function.
 
     Returns
     -------
@@ -320,14 +319,25 @@ def write_json_file(
         If the file cannot be written.
     """
     if not isinstance(file_path, Path):
-        error_msg = f"'{file_path}' must be a '{type(Path('.'))}'."
+        error_msg = f"'{file_path}' must be an instance of 'pathlib.Path'."
         raise TypeError(error_msg)
 
     try:
         # Open the file specified by the file_path argument in write mode
         with file_path.open("w", encoding="UTF-8") as json_file:
-            # Use the json.dump() method to write the JSON data to the file
-            json.dump(json_dict, json_file, indent=kwargs.get("indent", 4))
+            # Convert dictionary to formatted JSON string
+            json_str = json.dumps(json_dict, indent=4)
+
+            # Collapse arrays/lists in the JSON to a single line
+            pattern = r"(\[)(\s*([^\]]*)\s*)(\])"
+            replacement = (
+                lambda m: m.group(1)
+                + re.sub(r"\s+", " ", m.group(3)).rstrip()
+                + m.group(4)
+            )
+            json_str = re.sub(pattern, replacement, json_str)
+            json_file.write(json_str)
+
             # If log_write is True, log a message indicating the file and path that the JSON data is being written to
             if enable_logging:
                 logging.info(f"JSON data written to '{file_path.absolute()}'.")

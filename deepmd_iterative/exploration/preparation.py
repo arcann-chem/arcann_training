@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2023/09/19
 """
 # Standard library modules
 import copy
@@ -233,6 +233,7 @@ def main(
             "job_email", user_input_json, previous_exploration_json, default_input_json
         )
         del jobs_path, job_file_name
+    del exploration_type
 
     # Preparation of the exploration
     exploration_json["systems_auto"] = {}
@@ -262,13 +263,11 @@ def main(
         )
 
         plumed = [False, False, False]
-        # exploration_type = -1
 
         input_replace_dict = {}
 
         # Get the input file (.in or .xml) for the current system and check if plumed is being used
         if system_exploration_type == "lammps":
-            # exploration_type = 0
             master_system_lammps_in = textfile_to_string_list(
                 training_path / "user_files" / (system_auto + ".in")
             )
@@ -276,7 +275,6 @@ def main(
             if any("plumed" in zzz for zzz in master_system_lammps_in):
                 plumed[0] = True
         elif system_exploration_type == "i-PI":
-            # exploration_type = 1
             master_system_ipi_xml = read_xml_file(
                 training_path / "user_files" / (system_auto + ".xml")
             )
@@ -378,7 +376,10 @@ def main(
                 if plumed[1]:
                     system_nb_steps = plumed[2]
                 # User inputs
-                elif "system_exp_time_ps" in user_input_json:
+                elif (
+                    "exp_time_ps" in user_input_json
+                    and user_input_json["exp_time_ps"] != -1
+                ):
                     system_nb_steps = system_exp_time_ps / system_timestep_ps
                 # Auto value
                 else:
@@ -389,29 +390,31 @@ def main(
                     if system_nb_steps > system_max_exp_time_ps / system_timestep_ps:
                         system_nb_steps = system_max_exp_time_ps / system_timestep_ps
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(system_nb_steps)}"
-                # Update the new input
-                merged_input_json["system_exp_time_ps"] = (
+                # TODO Do we update or leave it as is (-1 if default, user value else)
+                merged_input_json["exp_time_ps"][system_auto_index] = (
                     system_nb_steps * system_timestep_ps
                 )
 
                 # Walltime
-                if "system_job_walltime_h" in user_input_json:
+                if "job_walltime_h" in user_input_json:
                     system_walltime_approx_s = int(system_job_walltime_h * 3600)
                 else:
                     # Abritary factor
-                    system_walltime_approx_s = int(
-                        (
-                            previous_exploration_json["systems_auto"][system_auto][
-                                "s_per_step"
-                            ]
-                            * system_nb_steps
-                        )
-                        * 1.20
+                    system_walltime_approx_s = max(
+                        int(
+                            (
+                                previous_exploration_json["systems_auto"][system_auto][
+                                    "mean_s_per_step"
+                                ]
+                                * system_nb_steps
+                            )
+                            * 1.50
+                        ),
+                        720,
                     )
-                    if system_walltime_approx_s < 600:
-                        system_walltime_approx_s = 600
-                # Update the new input
-                merged_input_json["system_job_walltime_h"] = (
+
+                # TODO Do we update or leave it as is (-1 if default, user value else)
+                merged_input_json["job_walltime_h"][system_auto_index] = (
                     system_walltime_approx_s / 3600
                 )
 
@@ -431,7 +434,7 @@ def main(
                 logging.error("Aborting...")
                 sys.exit(1)
 
-            # TODO: This should be read like temp
+            # TODO This should be read like temp
             input_replace_dict["_R_NB_BEADS_"] = str(8)
 
             # First exploration
@@ -493,7 +496,7 @@ def main(
                         previous_exploration_json, system_auto
                     )
                     # Update if over Max value
-                    if system_nb_steps > system_max_exp_time_ps / system_timestep_ps:
+                    if system_nb_steps > (system_max_exp_time_ps / system_timestep_ps):
                         system_nb_steps = system_max_exp_time_ps / system_timestep_ps
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(system_nb_steps)}"
                 # Update the new input
@@ -506,19 +509,20 @@ def main(
                     system_walltime_approx_s = int(system_job_walltime_h * 3600)
                 else:
                     # Abritary factor
-                    system_walltime_approx_s = int(
-                        (
-                            previous_exploration_json["systems_auto"][system_auto][
-                                "s_per_step"
-                            ]
-                            * system_nb_steps
-                        )
-                        * 1.20
+                    system_walltime_approx_s = max(
+                        int(
+                            (
+                                previous_exploration_json["systems_auto"][system_auto][
+                                    "mean_s_per_step"
+                                ]
+                                * system_nb_steps
+                            )
+                            * 1.50
+                        ),
+                        720,
                     )
                 # Update the new input
-                merged_input_json["system_job_walltime_h"] = (
-                    system_walltime_approx_s / 3600
-                )
+                merged_input_json["job_walltime_h"] = system_walltime_approx_s / 3600
 
             # Get print freq
             system_print_every_x_steps = system_nb_steps * system_print_mult
@@ -632,6 +636,7 @@ def main(
                         system_lammps_in = replace_substring_in_string_list(
                             system_lammps_in, key, value
                         )
+                    del key, value
                     string_list_to_textfile(
                         local_path
                         / (f"{system_auto}_{nnp_index}_{padded_curr_iter}.in"),
@@ -640,7 +645,7 @@ def main(
 
                     # Slurm file
                     job_file = replace_in_slurm_file_general(
-                        master_job_file[exploration_type],
+                        master_job_file[system_exploration_type],
                         machine_spec,
                         system_walltime_approx_s,
                         machine_walltime_format,
@@ -681,6 +686,7 @@ def main(
                                     prev_plumed + '" "' + it_plumed_input,
                                 )
                             prev_plumed = it_plumed_input
+                        del n, it_plumed_input, prev_plumed
                     else:
                         job_file = replace_substring_in_string_list(
                             job_file, ' "_R_PLUMED_FILES_LIST_"', ""
@@ -791,7 +797,7 @@ def main(
 
                     # Slurm file
                     job_file = replace_in_slurm_file_general(
-                        master_job_file,
+                        master_job_file[system_exploration_type],
                         machine_spec,
                         system_walltime_approx_s,
                         machine_walltime_format,
@@ -877,9 +883,38 @@ def main(
         main_json["systems_auto"][system_auto]["nb_atm"] = system_nb_atm
 
         if plumed[0] == 1:
-            del plumed_input, plumed
-        del system_temperature_K, system_cell, system_nb_atm, system_nb_steps
-        del system_lammps_data, system_timestep_ps, system_walltime_approx_s
+            del plumed_input, plumed, plumed_file, plumed_files
+        del input_replace_dict
+        if system_exploration_type == "lammps":
+            del (
+                master_system_lammps_in,
+                system_lammps_data_fn,
+                num_atom_types,
+                box,
+                coords,
+                masses,
+            )
+        del starting_point_list, starting_point_list_bckp
+        del (
+            system_temperature_K,
+            system_cell,
+            system_exp_time_ps,
+            system_nb_atm,
+            system_nb_steps,
+            system_lammps_data,
+            system_timestep_ps,
+            system_walltime_approx_s,
+            system_exploration_type,
+            system_traj_count,
+            system_print_mult,
+            system_previous_start,
+            system_disturbed_start,
+            system_max_exp_time_ps,
+            system_job_walltime_h,
+            system_init_exp_time_ps,
+            system_init_job_walltime_h,
+            system_print_every_x_steps,
+        )
 
     del system_auto_index, system_auto, master_job_file
 
@@ -914,6 +949,32 @@ def main(
     logging.info(f"-" * 88)
     logging.info(
         f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
+    )
+
+    # Cleaning
+    del current_path, control_path, training_path
+    del (
+        default_input_json,
+        default_input_json_present,
+        user_input_json,
+        user_input_json_present,
+        user_input_json_filename,
+    )
+    del (
+        main_json,
+        merged_input_json,
+        exploration_json,
+        previous_training_json,
+        previous_exploration_json,
+    )
+    del user_machine_keyword
+    del curr_iter, padded_curr_iter, prev_iter, padded_prev_iter
+    del (
+        machine,
+        machine_spec,
+        machine_walltime_format,
+        machine_launch_command,
+        machine_job_scheduler,
     )
 
     logging.debug(f"LOCAL")

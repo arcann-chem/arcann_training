@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/06
+Last modified: 2023/09/19
 
 Functions
 ---------
@@ -21,6 +21,7 @@ from typing import Dict, List, Tuple
 
 # Local imports
 from deepmd_iterative.common.utils import catch_errors_decorator
+from deepmd_iterative.common.json import convert_control_to_input
 
 
 @catch_errors_decorator
@@ -66,6 +67,8 @@ def generate_input_labeling_json(
 
     system_count = len(main_json.get("systems_auto", []))
 
+    previous_input_json = convert_control_to_input(previous_json, main_json)
+
     for key in [
         "walltime_first_job_h",
         "walltime_second_job_h",
@@ -81,8 +84,8 @@ def generate_input_labeling_json(
                 default_used = True
             else:
                 value = user_input_json[key]
-        elif key in previous_json:
-            value = previous_json[key]
+        elif key in previous_input_json:
+            value = previous_input_json[key]
         elif key in default_input_json:
             value = default_input_json[key]
             default_used = True

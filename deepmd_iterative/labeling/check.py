@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2023/09/19
 """
 # Standard library modules
 import logging
@@ -103,7 +103,7 @@ def main(
         system_candidates_not_converged = {0: [], 1: []}
         system_candidates_failed = {0: [], 1: []}
 
-        # TODO: Use a function to parse CP2K output
+        # TODO Use a function to parse CP2K output
         for labeling_step in range(system_candidates_count):
             padded_labeling_step = str(labeling_step).zfill(5)
             labeling_step_path = system_path / padded_labeling_step
@@ -306,7 +306,7 @@ def main(
             )
             string_list_to_textfile(skipped_file, system_candidates_skipped_total)
             logging.info(
-                f"{system_auto}: {system_candidates_skipped_total_count} jobs did not converge ({system_candidates_skipped_count}|{system_disturbed_candidates_skipped_count}). List in '{skipped_file}'."
+                f"{system_auto}: {system_candidates_skipped_total_count} jobs skipped ({system_candidates_skipped_count}|{system_disturbed_candidates_skipped_count}). List in '{skipped_file}'."
             )
 
             del system_candidates_skipped_total, system_candidates_skipped_total_count
@@ -320,10 +320,7 @@ def main(
         del (
             system_candidates_count,
             system_disturbed_candidates_count,
-            system_candidates_skipped_count,
-            system_disturbed_candidates_skipped_count,
         )
-        del system_candidates_skipped, system_disturbed_candidates_skipped
         del system_path, labeling_step, labeling_step_path, padded_labeling_step
 
         logging.info(

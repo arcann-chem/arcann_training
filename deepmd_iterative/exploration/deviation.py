@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2023/09/19
 """
 # Standard library modules
 import copy
@@ -435,9 +435,7 @@ def main(
                 )
 
                 write_json_file(QbC_stats, local_path / "QbC_stats.json", False)
-                write_json_file(
-                    QbC_indexes, local_path / "QbC_indexes.json", False, indent=None
-                )
+                write_json_file(QbC_indexes, local_path / "QbC_indexes.json", False)
                 del (
                     local_path,
                     model_deviation_filename,
@@ -663,9 +661,7 @@ def main(
                 )
 
                 write_json_file(QbC_stats, local_path / "QbC_stats.json", False)
-                write_json_file(
-                    QbC_indexes, local_path / "QbC_indexes.json", False, indent=None
-                )
+                write_json_file(QbC_indexes, local_path / "QbC_indexes.json", False)
                 del local_path, model_deviation_filename, QbC_stats, QbC_indexes
             del it_number
         del it_nnp

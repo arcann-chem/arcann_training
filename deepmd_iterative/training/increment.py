@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2023/09/19
 """
 # Standard library modules
 import logging
@@ -120,21 +120,14 @@ def main(
     del nnp
 
     # Next iteration
-    curr_iter = curr_iter + 1
-    main_json["curr_iter"] = curr_iter
-    padded_curr_iter = str(curr_iter).zfill(3)
+    next_iter = curr_iter + 1
+    main_json["curr_iter"] = next_iter
+    padded_next_iter = str(next_iter).zfill(3)
 
     for step in ["exploration", "adhoc", "labeling", "training"]:
-        (training_path / f"{padded_curr_iter}-{step}").mkdir(exist_ok=True)
-        check_directory(training_path / f"{padded_curr_iter}-{step}")
+        (training_path / f"{padded_next_iter}-{step}").mkdir(exist_ok=True)
+        check_directory(training_path / f"{padded_next_iter}-{step}")
     del step
-
-    # # Delete the temp data folder
-    # if (local_path / "data").is_dir():
-    #     logging.info(f"Deleting the temp data folder...")
-    #     remove_tree(local_path / "data")
-    #     logging.info(f"Cleaning done!")
-    # del local_path
 
     logging.info(f"-" * 88)
     # Update the boolean in the training JSON
@@ -153,7 +146,7 @@ def main(
     del current_path, control_path, training_path
     del user_input_json_filename
     del main_json, training_json
-    del curr_iter, padded_curr_iter
+    del curr_iter, padded_curr_iter, next_iter, padded_next_iter
 
     logging.debug(f"LOCAL")
     logging.debug(f"{locals()}")

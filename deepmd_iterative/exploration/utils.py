@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2023/09/19
 
 Functions
 ---------
@@ -284,6 +284,7 @@ def get_system_exploration(
         "disturbed_start",
     ]:
         system_values.append(merged_input_json[key][system_auto_index])
+
     return tuple(system_values)
 
 
@@ -330,6 +331,8 @@ def generate_input_exploration_deviation_json(
 
     system_count = len(main_json.get("systems_auto", []))
 
+    previous_input_json = convert_control_to_input(previous_json, main_json)
+
     for key in [
         "max_candidates",
         "sigma_low",
@@ -345,8 +348,8 @@ def generate_input_exploration_deviation_json(
                 default_used = True
             else:
                 value = user_input_json[key]
-        elif key in previous_json:
-            value = previous_json[key]
+        elif key in previous_input_json:
+            value = previous_input_json[key]
         elif key in default_input_json:
             value = default_input_json[key]
             default_used = True
@@ -468,6 +471,8 @@ def generate_input_exploration_disturbed_json(
 
     system_count = len(main_json.get("systems_auto", []))
 
+    previous_input_json = convert_control_to_input(previous_json, main_json)
+
     for key in [
         "disturbed_start_value",
         "disturbed_start_indexes",
@@ -482,8 +487,8 @@ def generate_input_exploration_disturbed_json(
                 default_used = True
             else:
                 value = user_input_json[key]
-        elif key in previous_json:
-            value = previous_json[key]
+        elif key in previous_input_json:
+            value = previous_input_json[key]
         elif key in default_input_json:
             value = default_input_json[key]
             default_used = True

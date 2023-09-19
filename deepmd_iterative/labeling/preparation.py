@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2023/09/19
 """
 # Standard library modules
 import copy
@@ -241,13 +241,43 @@ def main(
             f"{system_walltime_first_job_h,system_walltime_second_job_h,system_nb_nodes,system_nb_mpi_per_node,system_nb_threads_per_mpi}"
         )
 
+        if curr_iter > 1 and (
+            "walltime_first_job_h" not in user_input_json
+            or user_input_json["walltime_first_job_h"][system_auto_index] == -1
+        ):
+            system_walltime_first_job_h = max(
+                previous_labeling_json["systems_auto"][system_auto]["timings_s"][0]
+                / 3600
+                * 1.5,
+                1 / 5,
+            )
+        if curr_iter > 1 and (
+            "walltime_second_job_h" not in user_input_json
+            or user_input_json["walltime_second_job_h"][system_auto_index] == -1
+        ):
+            system_walltime_second_job_h = max(
+                previous_labeling_json["systems_auto"][system_auto]["timings_s"][0]
+                / 3600
+                * 1.5,
+                1 / 5,
+            )
+
+        # TODO Do we update or leave it as is (-1 if default, user value else)
+        merged_input_json["walltime_first_job_h"][
+            system_auto_index
+        ] = system_walltime_first_job_h
+        merged_input_json["walltime_second_job_h"][
+            system_auto_index
+        ] = system_walltime_second_job_h
+
         system_path = current_path / system_auto
         system_path.mkdir(exist_ok=True)
 
         # Replace slurm
         walltime_approx_s = int(
-            (system_walltime_first_job_h + system_walltime_second_job_h) * 1.2 * 3600
+            (system_walltime_first_job_h + system_walltime_second_job_h) * 3600
         )
+
         system_master_job_file = deepcopy(master_job_file)
         for _ in system_master_job_file:
             system_master_job_file[_] = replace_substring_in_string_list(
