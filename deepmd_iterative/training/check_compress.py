@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/15
+Last modified: 2023/09/20
 """
 # Standard library modules
 import logging
@@ -54,8 +54,8 @@ def main(
     training_json = load_json_file((control_path / f"training_{padded_curr_iter}.json"))
 
     # Check if we can continue
-    if not training_json["is_frozen"]:
-        logging.error(f"Lock found. Execute first: training check_freeze.")
+    if not training_json["is_compress_launched"]:
+        logging.error(f"Lock found. Please execute 'training compress' first.")
         logging.error(f"Aborting...")
         return 1
 

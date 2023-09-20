@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/14
+Last modified: 2023/09/20
 
 generate_main_json(user_input_json: Dict, default_input_json: Dict) -> Tuple[Dict, Dict, str]
     A function to generate the main JSON by combining values from the user input JSON and the default JSON.
@@ -81,11 +81,10 @@ def generate_main_json(
             )
 
     main_json["current_iteration"] = 0
-    padded_curr_iter = str(main_json["current_iteration"]).zfill(3)
 
     main_json["systems_auto"] = {}
     for idx, key in enumerate(user_input_json["systems_auto"]):
         main_json["systems_auto"][key] = {}
         main_json["systems_auto"][key]["index"] = idx
 
-    return main_json, merged_input_json, padded_curr_iter
+    return main_json, merged_input_json

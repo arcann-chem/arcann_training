@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/19
+Last modified: 2023/09/20
 """
 # Standard library modules
 import logging
@@ -62,7 +62,7 @@ def main(
 
     # Check if we can continue
     if not training_json["is_launched"]:
-        logging.error(f"Lock found. Execute first: training launch.")
+        logging.error(f"Lock found. Please execute 'training launch' first.")
         logging.error(f"Aborting...")
         return 1
 

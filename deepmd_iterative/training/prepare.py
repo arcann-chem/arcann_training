@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/19
+Last modified: 2023/09/20
 """
 # Standard library modules
 import copy
@@ -159,7 +159,7 @@ def main(
             (control_path / f"labeling_{padded_curr_iter}.json")
         )
         if not labeling_json["is_extracted"]:
-            logging.error(f"Lock found. Run/Check first: labeling extract.")
+            logging.error(f"Lock found. Please execute 'labeling extract' first.")
             logging.error(f"Aborting...")
             return 1
         exploration_json = load_json_file(
@@ -505,10 +505,12 @@ def main(
     # Set booleans in the training JSON
     training_json = {
         **training_json,
-        "is_locked": True,
+        "is_prepared": True,
         "is_launched": False,
         "is_checked": False,
+        "is_freeze_launched": False,
         "is_frozen": False,
+        "is_compress_launched": False,
         "is_compressed": False,
         "is_incremented": False,
     }
@@ -721,7 +723,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 4:
         main(
             "training",
-            "preparation",
+            "prepare",
             Path(sys.argv[1]),
             fake_machine=sys.argv[2],
             user_input_json_filename=sys.argv[3],

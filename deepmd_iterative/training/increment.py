@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/19
+Last modified: 2023/09/20
 """
 # Standard library modules
 import logging
@@ -63,7 +63,7 @@ def main(
 
     # Check if we can continue
     if not training_json["is_frozen"]:
-        logging.error(f"Lock found. Execute first: training check_freeze.")
+        logging.error(f"Lock found. Please execute 'training check_freeze' first.")
         logging.error(f"Aborting...")
         return 1
 
@@ -121,7 +121,7 @@ def main(
 
     # Next iteration
     next_iter = curr_iter + 1
-    main_json["curr_iter"] = next_iter
+    main_json["current_iteration"] = next_iter
     padded_next_iter = str(next_iter).zfill(3)
 
     for step in ["exploration", "adhoc", "labeling", "training"]:
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 4:
         main(
             "training",
-            "update_iter",
+            "increment",
             Path(sys.argv[1]),
             fake_machine=sys.argv[2],
             user_input_json_filename=sys.argv[3],

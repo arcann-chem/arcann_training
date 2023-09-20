@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2023/09/20
 """
 # Standard library modules
 import copy
@@ -141,9 +141,9 @@ def main(
             del continuing
         else:
             logging.error(f"Aborting...")
-            return 1
-    if not training_json["is_locked"]:
-        logging.error(f"Lock found. Execute first: training preparation.")
+            return 0
+    if not training_json["is_prepared"]:
+        logging.error(f"Lock found. Please execute 'training prepare' first.")
         logging.error(f"Aborting...")
         return 1
 

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2023/09/20
 """
 # Standard library modules
 import copy
@@ -92,8 +92,18 @@ def main(
     training_json = load_json_file((control_path / f"training_{padded_curr_iter}.json"))
 
     # Check if we can continue
+    if training_json["is_freeze_launched"]:
+        logging.critical(f"Already launched...")
+        continuing = input(
+            f"Do you want to continue?\n['Y' for yes, anything else to abort]\n"
+        )
+        if continuing == "Y":
+            del continuing
+        else:
+            logging.error(f"Aborting...")
+            return 0
     if not training_json["is_checked"]:
-        logging.error(f"Lock found. Execute first: training check.")
+        logging.error(f"Lock found. Please execute 'training check' first.")
         logging.error(f"Aborting...")
         return 1
 
@@ -217,8 +227,12 @@ def main(
 
     del nnp, master_job_file
 
-    # Dump the JSON files (main, training and merged input)
     logging.info(f"-" * 88)
+    # Update the boolean in the training JSON
+    if completed_count == main_json["nnp_count"]:
+        training_json["is_frozen_launched"] = True
+    
+    # Dump the JSON files (main, training and merged input)
     write_json_file(main_json, (control_path / "config.json"))
     write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"))
     backup_and_overwrite_json_file(
