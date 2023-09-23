@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/04
+Last modified: 2023/09/19
 
 Test cases for the utils/initialization module.
 
@@ -58,19 +58,16 @@ class TestGenerateMainJson(unittest.TestCase):
         input_json = {
             "systems_auto": ["subsys1", "subsys2"],
             "nnp_count": 5,
-            "exploration_type": "lammps",
         }
 
         expected_config_json = {
-            "systems_auto": {"subsys1": {}, "subsys2": {}},
+            'systems_auto': {'subsys1': {'index': 0}, 'subsys2': {'index': 1}},
             "nnp_count": 5,
-            "exploration_type": "lammps",
             "current_iteration": 0,
         }
         expected_merged_input_json = {
             "systems_auto": ["subsys1", "subsys2"],
             "nnp_count": 5,
-            "exploration_type": "lammps",
         }
         expected_padded_curr_iter = "000"
 
@@ -91,15 +88,13 @@ class TestGenerateMainJson(unittest.TestCase):
         }
 
         expected_config_json = {
-            "systems_auto": {"subsys1": {}, "subsys2": {}},
+            'systems_auto': {'subsys1': {'index': 0}, 'subsys2': {'index': 1}},
             "nnp_count": 3,
-            "exploration_type": "lammps",
             "current_iteration": 0,
         }
         expected_merged_input_json = {
             "systems_auto": ["subsys1", "subsys2"],
             "nnp_count": 3,
-            "exploration_type": "lammps",
         }
         expected_padded_curr_iter = "000"
 
@@ -118,7 +113,6 @@ class TestGenerateMainJson(unittest.TestCase):
         input_json = {
             "systems_auto": ["subsys1", 2],
             "nnp_count": "not a number",
-            "exploration_type": "invalid",
         }
 
         with self.assertRaises(TypeError):
@@ -130,7 +124,6 @@ class TestGenerateMainJson(unittest.TestCase):
         """
         input_json = {
             "nnp_count": 4,
-            "exploration_type": "lammps",
         }
 
         with self.assertRaises(ValueError):

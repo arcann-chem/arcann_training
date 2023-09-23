@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/19
+Last modified: 2023/09/23
 """
 # Standard library modules
 import logging
@@ -61,6 +61,17 @@ def main(
     main_json = load_json_file((control_path / "config.json"))
     labeling_json = load_json_file((control_path / f"labeling_{padded_curr_iter}.json"))
 
+    # Load the previous labeling JSON
+    if curr_iter > 1:
+        prev_iter = curr_iter - 1
+        padded_prev_iter = str(prev_iter).zfill(3)
+        previous_labeling_json = load_json_file(
+            (control_path / f"labeling_{padded_prev_iter}.json")
+        )
+        del prev_iter, padded_prev_iter
+    else:
+        previous_labeling_json = {}
+
     # Check if we can continue
     if not labeling_json["is_launched"]:
         logging.error(f"Lock found. Execute first: labeling launch.")
@@ -102,6 +113,14 @@ def main(
         system_candidates_converged_count = {0: 0, 1: 0}
         system_candidates_not_converged = {0: [], 1: []}
         system_candidates_failed = {0: [], 1: []}
+
+        logging.debug(f"system_candidates_count + system_disturbed_candidates_count: {system_candidates_count + system_disturbed_candidates_count}")
+        if system_candidates_count + system_disturbed_candidates_count == 0:
+            # TODO Because no candidates, we "fake-fill" with previous labeling values for the timings
+            labeling_json["systems_auto"][system_auto]["timings_s"] = previous_labeling_json["systems_auto"][system_auto]["timings_s"]
+            labeling_json["systems_auto"][system_auto]["candidates_skipped_count"] = 0
+            labeling_json["systems_auto"][system_auto]["disturbed_candidates_skipped_count"] = 0
+            continue
 
         # TODO Use a function to parse CP2K output
         for labeling_step in range(system_candidates_count):

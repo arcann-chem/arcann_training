@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/19
+Last modified: 2023/09/20
 
 The json module provides functions to manipulate JSON data (as dict).
 
@@ -169,7 +169,7 @@ def backup_and_overwrite_json_file(
         If file_path is not a Path object.
     """
     if not isinstance(file_path, Path):
-        error_msg = f"'{file_path}' must be an instance of 'pathlib.Path'."
+        error_msg = f"'{file_path}' must be a '{type(Path('.'))}'."
         raise TypeError(error_msg)
 
     backup_path = file_path.with_suffix(".json.bak")
@@ -319,7 +319,7 @@ def write_json_file(
         If the file cannot be written.
     """
     if not isinstance(file_path, Path):
-        error_msg = f"'{file_path}' must be an instance of 'pathlib.Path'."
+        error_msg = f"'{file_path}' must be a '{type(Path('.'))}'."
         raise TypeError(error_msg)
 
     try:
@@ -336,6 +336,8 @@ def write_json_file(
                 + m.group(4)
             )
             json_str = re.sub(pattern, replacement, json_str)
+            json_str = re.sub(r'\],\s+\[', '], [', json_str)
+            json_str = re.sub(r'\]\s+\]', ']]', json_str)
             json_file.write(json_str)
 
             # If log_write is True, log a message indicating the file and path that the JSON data is being written to

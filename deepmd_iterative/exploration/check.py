@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/19
+Last modified: 2023/09/22
 """
 # Standard library modules
 import logging
@@ -22,9 +22,6 @@ from deepmd_iterative.common.json import (
     write_json_file,
 )
 from deepmd_iterative.common.list import textfile_to_string_list
-from deepmd_iterative.common.filesystem import (
-    remove_files_matching_glob,
-)
 from deepmd_iterative.common.check import validate_step_folder
 
 

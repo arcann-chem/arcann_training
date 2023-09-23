@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2023/09/23
 """
 # Standard library modules
 import copy
@@ -139,6 +139,11 @@ def main(
     merged_input_json["atomsk_path"] = atomsk_bin
     merged_input_json["vmd_path"] = vmd_bin
     logging.debug(f"merged_input_json: {merged_input_json}")
+
+    # Update the current exploration JSON
+    exploration_json["atomsk_path"] =atomsk_bin
+    exploration_json["vmd_path"] = vmd_bin
+    logging.debug(f"exploration_json: {exploration_json}")
 
     # Generate/update the merged input JSON
     # Priority: user > previous > default
@@ -710,26 +715,33 @@ def main(
                         exploration_json["systems_auto"][system_auto][
                             "disturbed_candidate_indexes"
                         ] = []
-
-        string_list_to_textfile((current_path / "gather.atomsk"), candidates_files)
-        subprocess.run(
-            [
-                atomsk_bin,
-                "-ow",
-                "--gather",
-                str(Path(".") / "gather.atomsk"),
-                str(
-                    Path(".")
-                    / system_auto
-                    / f"candidates_{padded_curr_iter}_{system_auto}.xyz"
-                ),
-            ],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT,
-        )
-        remove_file((current_path / "gather.atomsk"))
-        for _ in candidates_files:
-            remove_file((current_path / _))
+                else:
+                    exploration_json["systems_auto"][system_auto][
+                        "disturbed_candidate_value"
+                    ] = 0
+                    exploration_json["systems_auto"][system_auto][
+                        "disturbed_candidate_indexes"
+                    ] = []
+        if candidates_files :
+            string_list_to_textfile((current_path / "gather.atomsk"), candidates_files)
+            subprocess.run(
+                [
+                    atomsk_bin,
+                    "-ow",
+                    "--gather",
+                    str(Path(".") / "gather.atomsk"),
+                    str(
+                        Path(".")
+                        / system_auto
+                        / f"candidates_{padded_curr_iter}_{system_auto}.xyz"
+                    ),
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.STDOUT,
+            )
+            remove_file((current_path / "gather.atomsk"))
+            for _ in candidates_files:
+                remove_file((current_path / _))
 
         if candidates_disturbed_files:
             string_list_to_textfile(

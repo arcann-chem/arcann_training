@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2023/09/23
 """
 # Standard library modules
 import importlib
@@ -103,9 +103,7 @@ def main(
     (training_path / "data").mkdir(exist_ok=True)
 
     for system_auto_index, system_auto in enumerate(labeling_json["systems_auto"]):
-        logging.info(
-            f"Processing system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})"
-        )
+        logging.info(f"Processing system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})")
 
         system_candidates_count = labeling_json["systems_auto"][system_auto][
             "candidates_count"
@@ -113,6 +111,11 @@ def main(
         system_candidates_skipped_count = labeling_json["systems_auto"][system_auto][
             "candidates_skipped_count"
         ]
+
+        if system_candidates_count - system_candidates_skipped_count == 0:
+            logging.debug(f"No label for this system {system_auto}, skipping")
+            continue
+
         system_path = current_path / system_auto
 
         data_path = training_path / "data" / (system_auto + "_" + padded_curr_iter)
@@ -154,6 +157,7 @@ def main(
         # counter for non skipped configurations
         system_candidates_not_skipped_counter = 0
 
+        logging.debug("Starting extraction...")
         for labeling_step in range(system_candidates_count):
             padded_labeling_step = str(labeling_step).zfill(5)
             labeling_step_path = system_path / padded_labeling_step
@@ -455,7 +459,7 @@ def main(
                         wannier_not_converged.append(
                             f"{system_candidates_not_skipped_counter - 1}\n"
                         )
-        del padded_labeling_step, labeling_step, labeling_step_path
+        del padded_labeling_step, labeling_step, labeling_step_path, system_candidates_not_skipped_counter
 
         np.savetxt(system_path / "energy.raw", energy_array_raw, delimiter=" ")
         np.save(data_path / "set.000" / "energy", energy_array_raw)
@@ -486,7 +490,9 @@ def main(
                     data_path / "set.000" / "wannier_not-converged.txt",
                     wannier_not_converged,
                 )
-            del wannier_not_converged, is_wannier
+            del wannier_not_converged
+
+        logging.debug("Extraction done.")
 
         system_disturbed_candidates_count = labeling_json["systems_auto"][system_auto][
             "disturbed_candidates_count"
@@ -500,6 +506,7 @@ def main(
             - system_disturbed_candidates_skipped_count
             > 0
         ):
+            logging.debug("Starting extraction for disturbed...")
             data_path = (
                 training_path
                 / "data"
@@ -559,10 +566,7 @@ def main(
             # counter for non skipped configurations
             system_disturbed_candidates_not_skipped_counter = 0
 
-            for labeling_step in range(
-                system_candidates_count,
-                system_candidates_count + system_disturbed_candidates_count,
-            ):
+            for labeling_step in range(system_candidates_count, system_candidates_count + system_disturbed_candidates_count):
                 padded_labeling_step = str(labeling_step).zfill(5)
                 labeling_step_path = system_path / padded_labeling_step
 
@@ -860,7 +864,7 @@ def main(
                             wannier_array_raw = np.zeros(
                                 (
                                     system_disturbed_candidates_count
-                                    - system_candidates_disturbed_skipped,
+                                    - system_disturbed_candidates_skipped_count,
                                     len(wannier_xyz) * 3,
                                 )
                             )
@@ -884,43 +888,43 @@ def main(
                             wannier_not_converged.append(
                                 f"{system_disturbed_candidates_not_skipped_counter - 1}\n"
                             )
+            del padded_labeling_step, labeling_step, labeling_step_path, system_disturbed_candidates_not_skipped_counter
 
-                del padded_labeling_step, labeling_step, labeling_step_path
+            np.savetxt(system_path / "energy.raw", energy_array_raw, delimiter=" ")
+            np.save(data_path / "set.000" / "energy", energy_array_raw)
+            del energy_array_raw
 
-                np.savetxt(system_path / "energy.raw", energy_array_raw, delimiter=" ")
-                np.save(data_path / "set.000" / "energy", energy_array_raw)
-                del energy_array_raw
+            np.savetxt(system_path / "coord.raw", coord_array_raw, delimiter=" ")
+            np.save(data_path / "set.000" / "coord", coord_array_raw)
+            del coord_array_raw
 
-                np.savetxt(system_path / "coord.raw", coord_array_raw, delimiter=" ")
-                np.save(data_path / "set.000" / "coord", coord_array_raw)
-                del coord_array_raw
+            np.savetxt(system_path / "box.raw", box_array_raw, delimiter=" ")
+            np.save(data_path / "set.000" / "box", box_array_raw)
+            del box_array_raw, volume_array_raw
 
-                np.savetxt(system_path / "box.raw", box_array_raw, delimiter=" ")
-                np.save(data_path / "set.000" / "box", box_array_raw)
-                del box_array_raw, volume_array_raw
+            np.savetxt(system_path / "force.raw", force_array_raw, delimiter=" ")
+            np.save(data_path / "set.000" / "force", force_array_raw)
+            del force_array_raw
 
-                np.savetxt(system_path / "force.raw", force_array_raw, delimiter=" ")
-                np.save(data_path / "set.000" / "force", force_array_raw)
-                del force_array_raw
+            if is_virial:
+                np.savetxt(
+                    system_path / "virial.raw", virial_array_raw, delimiter=" "
+                )
+                np.save(data_path / "set.000" / "virial", virial_array_raw)
+            del virial_array_raw, is_virial
 
-                if is_virial:
-                    np.savetxt(
-                        system_path / "virial.raw", virial_array_raw, delimiter=" "
+            if is_wannier:
+                np.savetxt(
+                    system_path / "wannier.raw", wannier_array_raw, delimiter=" "
+                )
+                np.save(data_path / "set.000" / "wannier", wannier_array_raw)
+                if len(wannier_not_converged) > 1:
+                    string_list_to_textfile(
+                        data_path / "set.000" / "wannier_not-converged.txt",
+                        wannier_not_converged,
                     )
-                    np.save(data_path / "set.000" / "virial", virial_array_raw)
-                del virial_array_raw
-
-                if is_wannier:
-                    np.savetxt(
-                        system_path / "wannier.raw", wannier_array_raw, delimiter=" "
-                    )
-                    np.save(data_path / "set.000" / "wannier", wannier_array_raw)
-                    if len(wannier_not_converged) > 1:
-                        string_list_to_textfile(
-                            data_path / "set.000" / "wannier_not-converged.txt",
-                            wannier_not_converged,
-                        )
-                    del wannier_not_converged
+                del wannier_not_converged
+            logging.debug("Extraction for disturbed done.")
 
         logging.info(
             f"Processed system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})"
@@ -928,9 +932,9 @@ def main(
     del system_auto, system_auto_index
     del system_candidates_count, system_candidates_skipped_count, system_path, data_path
     del (
+        indexes, idx,
         is_wannier,
         wannier_not_converged,
-        system_candidates_not_skipped_counter,
         lammps_data,
         type_atom_array,
     )

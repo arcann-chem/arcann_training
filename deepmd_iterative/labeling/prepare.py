@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/19
+Last modified: 2023/09/23
 """
 # Standard library modules
 import copy
@@ -218,6 +218,7 @@ def main(
         candidates_count = exploration_json["systems_auto"][system_auto][
             "selected_count"
         ]
+
         if (
             exploration_json["systems_auto"][system_auto]["disturbed_candidate_value"]
             > 0
@@ -229,7 +230,6 @@ def main(
 
         total_to_label += labeling_count
 
-        # TODO Set the individual system params for exploration
         (
             system_walltime_first_job_h,
             system_walltime_second_job_h,
@@ -240,6 +240,28 @@ def main(
         logging.debug(
             f"{system_walltime_first_job_h,system_walltime_second_job_h,system_nb_nodes,system_nb_mpi_per_node,system_nb_threads_per_mpi}"
         )
+
+        if labeling_count == 0:
+            labeling_json["systems_auto"][system_auto][
+                "walltime_first_job_h"
+            ] = system_walltime_first_job_h
+            labeling_json["systems_auto"][system_auto][
+                "walltime_second_job_h"
+            ] = system_walltime_second_job_h
+            labeling_json["systems_auto"][system_auto]["nb_nodes"] = system_nb_nodes
+            labeling_json["systems_auto"][system_auto][
+                "nb_mpi_per_node"
+            ] = system_nb_mpi_per_node
+            labeling_json["systems_auto"][system_auto][
+                "nb_threads_per_mpi"
+            ] = system_nb_threads_per_mpi
+            labeling_json["systems_auto"][system_auto][
+                "candidates_count"
+            ] = candidates_count
+            labeling_json["systems_auto"][system_auto][
+                "disturbed_candidates_count"
+            ] = disturbed_candidates_count
+            continue
 
         if curr_iter > 1 and (
             "walltime_first_job_h" not in user_input_json

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/19
+Last modified: 2023/09/20
 """
 # Standard library modules
 import copy
@@ -708,7 +708,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 4:
         main(
             "exploration",
-            "deviation",
+            "deviate",
             Path(sys.argv[1]),
             fake_machine=sys.argv[2],
             user_input_json_filename=sys.argv[3],

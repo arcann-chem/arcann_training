@@ -6,9 +6,10 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2023/09/21
 """
 # Standard library modules
+import subprocess
 import logging
 import sys
 from pathlib import Path
@@ -16,6 +17,7 @@ from pathlib import Path
 # Local imports
 from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.filesystem import (
+    change_directory,
     remove_files_matching_glob,
     remove_all_symlink,
 )
@@ -49,6 +51,10 @@ def main(
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
 
+    # Get the previous
+    prev_iter = curr_iter - 1
+    padded_prev_iter = str(prev_iter).zfill(3)
+
     # Get control path and load the main config (JSON) and the training config (JSON)
     control_path = training_path / "control"
     main_config = load_json_file((control_path / "config.json"))
@@ -69,6 +75,7 @@ def main(
         f"LAMMPS_*, 'i-PI_DeepMD*', '*.DP-i-PI.client_*.log', '*.DP-i-PI.client_*.err', 'plumed_*.dat'"
     )
     logging.critical(f"in the folder: '{current_path}' and all subdirectories.")
+    logging.critical(f"It will also create a tar.bz2 file with all starting structures from the previous exploration")
     continuing = input(
         f"Do you want to continue? [Enter 'Y' for yes, or any other key to abort]: "
     )
@@ -96,6 +103,27 @@ def main(
     logging.info("Deleting extra files...")
     remove_files_matching_glob(current_path, "**/*.DP-i-PI.client_*.log")
     remove_files_matching_glob(current_path, "**/*.DP-i-PI.client_*.err")
+
+    if prev_iter > 1:
+        logging.info(f"Compressing into a bzip2 tar archive...")
+        change_directory(training_path / "starting_structures")
+        starting_structures = list(Path(".").glob(f"{padded_prev_iter}_*"))
+        print(starting_structures)
+        cmd = [
+                "tar",
+                "-I",
+                "bzip2",
+                "--exclude=*.tar.bz2",
+                "-cf",
+                f"{padded_prev_iter}_starting_structures.tar.bz2"
+            ]
+
+        # Convert Path objects to string and append to cmd list
+        cmd.extend(map(str, starting_structures))
+        subprocess.run(cmd)
+        del starting_structures
+        logging.info(f"If the tar.bz2 is good, you can remove all files starting with {padded_prev_iter}_ in {training_path / 'starting_structures'}")
+        change_directory(current_path)
 
     logging.info(f"Cleaning done!")
 

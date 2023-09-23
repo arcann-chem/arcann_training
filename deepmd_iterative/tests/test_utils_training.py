@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/05
+Last modified: 2023/09/19
 
 Test cases for the (training) utils module.
 
@@ -374,7 +374,9 @@ class TestGenerateTrainingJson(unittest.TestCase):
 
     def setUp(self):
         self.default_input_json = {
-            "user_machine_keyword": "default",
+            "user_machine_keyword_train": "default",
+            "user_machine_keyword_freeze": "default",
+            "user_machine_keyword_compress": "default",
             "job_email": "default@example.com",
             "use_initial_datasets": True,
             "use_extra_datasets": False,
@@ -393,11 +395,13 @@ class TestGenerateTrainingJson(unittest.TestCase):
         """
         Tests if the function correctly validates a valid configuration.
         """
-        user_input = {"user_machine_keyword": "custom", "job_email": "user@example.com"}
+        user_input = {"user_machine_keyword_train": "custom", "job_email": "user@example.com"}
         previous_json = {}
         merged_input_json = {}
         expected_training_json = {
-            "user_machine_keyword": "custom",
+            "user_machine_keyword_train": "custom",
+            "user_machine_keyword_freeze": "default",
+            "user_machine_keyword_compress": "default",
             "job_email": "user@example.com",
             "use_initial_datasets": True,
             "use_extra_datasets": False,
@@ -412,6 +416,10 @@ class TestGenerateTrainingJson(unittest.TestCase):
             "numb_test": 100,
         }
         expected_merged_json = {
+            "user_machine_keyword_train": "custom",
+            "user_machine_keyword_freeze": "default",
+            "user_machine_keyword_compress": "default",
+            "job_email": "user@example.com",
             "use_initial_datasets": True,
             "use_extra_datasets": False,
             "deepmd_model_version": "1.0",
@@ -462,13 +470,17 @@ class TestGenerateTrainingJson(unittest.TestCase):
         """
         user_input = {}
         previous_json = {
-            "user_machine_keyword": "previous",
+            "user_machine_keyword_train": "previous",
+            "user_machine_keyword_freeze": "previous",
+            "user_machine_keyword_compress": "previous",
             "job_email": "previous@example.com",
         }
         merged_input_json = {}
 
         expected_training_json = {
-            "user_machine_keyword": "previous",
+            "user_machine_keyword_train": "previous",
+            "user_machine_keyword_freeze": "previous",
+            "user_machine_keyword_compress": "previous",
             "job_email": "previous@example.com",
             "use_initial_datasets": True,
             "use_extra_datasets": False,

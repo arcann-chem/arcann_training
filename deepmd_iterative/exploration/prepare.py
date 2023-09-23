@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/19
+Last modified: 2023/09/22
 """
 # Standard library modules
 import copy
@@ -24,9 +24,6 @@ from deepmd_iterative.exploration.utils import (
     update_system_nb_steps_factor,
     get_system_exploration,
     generate_input_exploration_json,
-)
-from deepmd_iterative.common.filesystem import (
-    check_file_existence,
 )
 from deepmd_iterative.common.ipi import get_temperature_from_ipi_xml
 from deepmd_iterative.common.json import (
@@ -203,6 +200,7 @@ def main(
     exploration_json = {}
     exploration_json = {
         **exploration_json,
+        "atomsk_path": atomsk_bin,
         "user_machine_keyword_exp": user_machine_keyword,
         "deepmd_model_version": previous_training_json["deepmd_model_version"],
         "nnp_count": main_json["nnp_count"],
@@ -894,7 +892,8 @@ def main(
                 coords,
                 masses,
             )
-        del starting_point_list, starting_point_list_bckp
+        if curr_iter > 1:
+            del starting_point_list, starting_point_list_bckp
         del (
             system_temperature_K,
             system_cell,
@@ -986,7 +985,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 4:
         main(
             "exploration",
-            "preparation",
+            "prepare",
             Path(sys.argv[1]),
             fake_machine=sys.argv[2],
             user_input_json_filename=sys.argv[3],

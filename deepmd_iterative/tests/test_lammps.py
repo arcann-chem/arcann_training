@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2023/09/04
-Last modified: 2023/09/05
+Last modified: 2023/09/19
 
 Test cases for the lammps module.
 
@@ -301,3 +301,6 @@ class TestReadLammpsData(unittest.TestCase):
         ]
         with self.assertRaises(ValueError):
             read_lammps_data(data)
+
+if __name__ == "__main__":
+    unittest.main()

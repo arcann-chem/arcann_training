@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2023/09/20
 """
 # Standard library modules
 import logging
@@ -95,7 +95,7 @@ def main(
     logging.info(f"Deleting labeling input files...")
     remove_files_matching_glob(current_path, "**/*labeling*.inp")
     logging.info("Deleting job error files...")
-    remove_files_matching_glob(current_path, "**/CP2K_*")
+    remove_files_matching_glob(current_path, "**/CP2K.*")
     logging.info(f"Cleaning done!")
     logging.info(f"Compressing into a bzip2 tar archive...")
     subprocess.run(
@@ -107,7 +107,7 @@ def main(
             "--exclude=*.tar.bz2",
             "-cf",
             f"labeling_{padded_curr_iter}_noWFN.tar.bz2",
-            f"{current_path}",
+            f"{Path('.')}",
         ]
     )
     logging.info(f"Done!")

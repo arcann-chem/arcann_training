@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2023/09/23
 """
 # Standard library modules
 import copy
@@ -184,7 +184,11 @@ def main(
                 )
             change_directory(system_path.parent)
         else:
-            logging.critical(f"Labeling - '{system_auto}' NOT launched - No job file.")
+            if labeling_json["systems_auto"][system_auto]["candidates_count"] == 0:
+                logging.info(f"Labeling - '{system_auto}' skipped (no candidates to label).")
+                launched_count += 1
+            else:
+                logging.critical(f"Labeling - '{system_auto}' NOT launched - No job file.")
 
         del system_path
     del system_auto
