@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/20
+Last modified: 2023/09/25
 """
 # Standard library modules
 import logging
@@ -67,9 +67,10 @@ def main(
     )
 
     # Generate the main JSON, the merged input JSON and the padded current iteration
-    main_json, merged_input_json, padded_curr_iter = generate_main_json(
+    main_json, merged_input_json = generate_main_json(
         user_input_json, default_input_json
     )
+    padded_curr_iter = str(main_json["current_iteration"]).zfill(3)
     logging.debug(f"main_json: {main_json}")
     logging.debug(f"merged_input_json : {merged_input_json }")
     logging.debug(f"padded_curr_iter : {padded_curr_iter}")

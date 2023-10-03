@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/20
+Last modified: 2023/09/25
 """
 # Standard library modules
 import logging
@@ -128,7 +128,6 @@ def main(
 
     # If not empty
     if training_times and step_sizes:
-        print("Ylo")
         training_json["mean_s_per_step"] = np.average(training_times) / np.average(
             step_sizes
         )

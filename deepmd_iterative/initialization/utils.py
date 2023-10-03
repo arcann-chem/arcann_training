@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/20
+Last modified: 2023/09/25
 
 generate_main_json(user_input_json: Dict, default_input_json: Dict) -> Tuple[Dict, Dict, str]
     A function to generate the main JSON by combining values from the user input JSON and the default JSON.
