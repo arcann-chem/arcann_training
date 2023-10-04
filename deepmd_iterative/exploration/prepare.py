@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/22
+Last modified: 2023/10/04
 """
 # Standard library modules
 import copy
@@ -15,6 +15,9 @@ import random
 import subprocess
 import sys
 from pathlib import Path
+
+# Non-standard library imports
+import numpy as np
 
 # Local imports
 from deepmd_iterative.common.check import validate_step_folder, check_atomsk
@@ -209,10 +212,18 @@ def main(
     # Check if the job file exists (for each exploration requested)
     exploration_types = list(set(merged_input_json["exploration_type"]))
     master_job_file = {}
+    master_job_array_file = {}
+    walltime_approx_s = {}
+
     for exploration_type in exploration_types:
+        walltime_approx_s[exploration_type] = []
         job_file_name = (
             f"job_deepmd_{exploration_type}_{machine_spec['arch_type']}_{machine}.sh"
         )
+        job_array_file_name =(
+            f"job_deepmd_array_{exploration_type}_{machine_spec['arch_type']}_{machine}.sh"
+        )
+
         if (current_path.parent / "user_files" / job_file_name).is_file():
             master_job_file[exploration_type] = textfile_to_string_list(
                 current_path.parent / "user_files" / job_file_name
@@ -223,6 +234,15 @@ def main(
             )
             logging.error(f"Aborting...")
             return 1
+
+        if (current_path.parent / "user_files" / job_array_file_name).is_file():
+            master_job_array_file[exploration_type] = textfile_to_string_list(
+                current_path.parent / "user_files" / job_array_file_name
+            )
+        else:
+            logging.warning(
+                f"No ARRAY JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine."
+            )
 
         logging.debug(
             f"master_job_file: {master_job_file[exploration_type][0:5]}, {master_job_file[exploration_type][-5:-1]}"
@@ -235,6 +255,11 @@ def main(
 
     # Preparation of the exploration
     exploration_json["systems_auto"] = {}
+    nb_simulations = 0
+
+    job_array_params_file = {}
+    job_array_params_file["lammps"] = ["PATH/_R_DEEPMD_VERSION_/_R_MODEL_FILES_LIST_/_R_INPUT_FILE_/_R_DATA_FILE_/_R_RERUN_FILE_/_R_PLUMED_FILES_LIST_/"]
+    job_array_params_file["i-PI"] = ["PATH/_R_DEEPMD_VERSION_/_R_MODEL_FILES_LIST_/_R_INPUT_FILE_/_R_DATA_FILE_/_R_RERUN_FILE_/_R_PLUMED_FILES_LIST_/"]
 
     # Loop through each system and set its exploration
     for system_auto_index, system_auto in enumerate(main_json["systems_auto"]):
@@ -362,6 +387,12 @@ def main(
 
                 system_walltime_approx_s = system_init_job_walltime_h * 3600
 
+                # TODO Do we update or leave it as is (-1 if default, user value else)
+                merged_input_json["job_walltime_h"][system_auto_index] = (
+                    system_walltime_approx_s / 3600
+                )
+                walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
+
                 # Get the cell and nb of atoms: It can be done now because the starting point is the same by NNP and by traj
                 system_nb_atm, num_atom_types, box, masses, coords = read_lammps_data(
                     system_lammps_data
@@ -408,13 +439,16 @@ def main(
                             )
                             * 1.50
                         ),
-                        720,
+                        1800,
                     )
+                    # Round up to the next 30min
+                    system_walltime_approx_s = int(np.ceil(system_walltime_approx_s / 1800) * 1800)
 
                 # TODO Do we update or leave it as is (-1 if default, user value else)
                 merged_input_json["job_walltime_h"][system_auto_index] = (
                     system_walltime_approx_s / 3600
                 )
+                walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
 
             # Get print freq
             system_print_every_x_steps = system_nb_steps * system_print_mult
@@ -470,6 +504,12 @@ def main(
 
                 system_walltime_approx_s = system_init_job_walltime_h * 3600
 
+                # TODO Do we update or leave it as is (-1 if default, user value else)
+                merged_input_json["job_walltime_h"][system_auto_index] = (
+                    system_walltime_approx_s / 3600
+                )
+                walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
+
                 # Get the cell and nb of atoms: It can be done now because the starting point is the same by NNP and by traj
                 system_nb_atm, num_atom_types, box, masses, coords = read_lammps_data(
                     system_lammps_data
@@ -517,10 +557,14 @@ def main(
                             )
                             * 1.50
                         ),
-                        720,
+                        1800,
                     )
-                # Update the new input
+                    # Round up to the next 30min
+                    system_walltime_approx_s = int(np.ceil(system_walltime_approx_s / 1800) * 1800)
+
+                # TODO Do we update or leave it as is (-1 if default, user value else)
                 merged_input_json["job_walltime_h"] = system_walltime_approx_s / 3600
+                walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
 
             # Get print freq
             system_print_every_x_steps = system_nb_steps * system_print_mult
@@ -529,6 +573,8 @@ def main(
         # Now it is by NNP and by traj_count
         for nnp_index in range(1, main_json["nnp_count"] + 1):
             for traj_index in range(1, system_traj_count + 1):
+                nb_simulations += 1
+
                 local_path = (
                     Path(".").resolve()
                     / str(system_auto)
@@ -641,7 +687,14 @@ def main(
                         system_lammps_in,
                     )
 
-                    # Slurm file
+                    job_array_params_line = str(system_auto)+ "_" + str(nnp_index) + "_" + str(traj_index).zfill(5) + "/"
+                    job_array_params_line += f"{exploration_json['deepmd_model_version']}" + "/"
+                    job_array_params_line += str(models_string.replace(" ", '" "')) + "/"
+                    job_array_params_line += f"{system_auto}_{nnp_index}_{padded_curr_iter}" + "/"
+                    job_array_params_line += f"{system_lammps_data_fn}" + "/"
+                    job_array_params_line += "" + "/"
+
+                    # INDIVIDUAL JOB FILE
                     job_file = replace_in_slurm_file_general(
                         master_job_file[system_exploration_type],
                         machine_spec,
@@ -677,25 +730,34 @@ def main(
                                 job_file = replace_substring_in_string_list(
                                     job_file, "_R_PLUMED_FILES_LIST_", it_plumed_input
                                 )
+                                job_array_params_line += it_plumed_input
                             else:
                                 job_file = replace_substring_in_string_list(
                                     job_file,
                                     prev_plumed,
                                     prev_plumed + '" "' + it_plumed_input,
                                 )
+                                job_array_params_line = job_array_params_line.replace(prev_plumed, prev_plumed + '" "' + it_plumed_input)
                             prev_plumed = it_plumed_input
                         del n, it_plumed_input, prev_plumed
                     else:
                         job_file = replace_substring_in_string_list(
                             job_file, ' "_R_PLUMED_FILES_LIST_"', ""
                         )
+                        job_array_params_line += ""
+
+                    job_array_params_line += "/"
+                    job_array_params_file[system_exploration_type].append(job_array_params_line)
+
                     string_list_to_textfile(
                         local_path
                         / f"job_deepmd_{system_exploration_type}_{machine_spec['arch_type']}_{machine}.sh",
                         job_file,
                     )
+
                     del system_lammps_in
                     del job_file
+                    # END OF INDIVIDUAL JOB FILE
                 # i-PI
                 elif system_exploration_type == "i-PI":
                     system_ipi_json = copy.deepcopy(master_system_ipi_json)
@@ -793,7 +855,7 @@ def main(
                         / (f"{system_auto}_{nnp_index}_{padded_curr_iter}.json"),
                     )
 
-                    # Slurm file
+                    # INDIVIDUAL JOB FILE
                     job_file = replace_in_slurm_file_general(
                         master_job_file[system_exploration_type],
                         machine_spec,
@@ -847,6 +909,7 @@ def main(
                         system_ipi_json,
                     )
                     del job_file
+                    # END OF INDIVIDUAL JOB FILE
                 else:
                     logging.error(f"Exploration is unknown/not set.")
                     logging.error(f"Aborting...")
@@ -933,7 +996,24 @@ def main(
             "is_reruned": False,
             "is_rechecked": False,
         }
-    del exploration_types
+
+    for exploration_type in exploration_types:
+        if len(job_array_params_file[exploration_type]) > 1:
+            job_array_file = replace_in_slurm_file_general(
+                master_job_array_file[exploration_type],
+                machine_spec,
+                max(walltime_approx_s[exploration_type]),
+                machine_walltime_format,
+                merged_input_json["job_email"],
+            )
+
+            job_array_file = replace_substring_in_string_list(job_array_file, "_R_ARRAY_START_", "0")
+            job_array_file = replace_substring_in_string_list(job_array_file, "_R_ARRAY_END_", f"{nb_simulations - 1}")
+
+            string_list_to_textfile(current_path / f"job_deepmd_array_{exploration_type}_{machine_spec['arch_type']}_{machine}.sh", job_array_file)
+            string_list_to_textfile(current_path / f"job_array_params_{exploration_type}.lst", job_array_params_file[exploration_type])
+
+        del exploration_types
 
     # Dump the JSON files (main, exploration and merged input)
     write_json_file(main_json, (control_path / "config.json"))
