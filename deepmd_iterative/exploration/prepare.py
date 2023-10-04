@@ -171,6 +171,7 @@ def main(
         fake_machine,
         user_machine_keyword,
     )
+    arch_type = machine_spec['arch_type']
     logging.debug(f"machine: {machine}")
     logging.debug(f"machine_walltime_format: {machine_walltime_format}")
     logging.debug(f"machine_job_scheduler: {machine_job_scheduler}")
@@ -216,46 +217,37 @@ def main(
     walltime_approx_s = {}
 
     for exploration_type in exploration_types:
+
         walltime_approx_s[exploration_type] = []
-        job_file_name = (
-            f"job_deepmd_{exploration_type}_{machine_spec['arch_type']}_{machine}.sh"
-        )
-        job_array_file_name =(
-            f"job_deepmd_array_{exploration_type}_{machine_spec['arch_type']}_{machine}.sh"
-        )
+
+        job_file_name = f"job_{exploration_type}-deepmd_{arch_type}_{machine}.sh"
+        job_array_file_name =f"job-array_{exploration_type}-deepmd_{arch_type}_{machine}.sh"
 
         if (current_path.parent / "user_files" / job_file_name).is_file():
-            master_job_file[exploration_type] = textfile_to_string_list(
-                current_path.parent / "user_files" / job_file_name
-            )
+            master_job_file[exploration_type] = textfile_to_string_list(current_path.parent / "user_files" / job_file_name)
         else:
-            logging.error(
-                f"No JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine."
-            )
+            logging.error(f"No JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine.")
             logging.error(f"Aborting...")
             return 1
 
         if (current_path.parent / "user_files" / job_array_file_name).is_file():
-            master_job_array_file[exploration_type] = textfile_to_string_list(
-                current_path.parent / "user_files" / job_array_file_name
-            )
+            master_job_array_file[exploration_type] = textfile_to_string_list(current_path.parent / "user_files" / job_array_file_name)
         else:
-            logging.warning(
-                f"No ARRAY JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine."
-            )
+            logging.warning(f"No ARRAY JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine.")
+            logging.error(f"Aborting...")
+            return 1
 
-        logging.debug(
-            f"master_job_file: {master_job_file[exploration_type][0:5]}, {master_job_file[exploration_type][-5:-1]}"
-        )
-        merged_input_json["job_email"] = get_key_in_dict(
-            "job_email", user_input_json, previous_exploration_json, default_input_json
-        )
+        logging.debug(f"master_job_file: {master_job_file[exploration_type][0:5]}, {master_job_file[exploration_type][-5:-1]}")
+        logging.debug(f"master_job_array_file: {master_job_array_file[exploration_type][0:5]}, {master_job_array_file[exploration_type][-5:-1]}")
+
+        merged_input_json["job_email"] = get_key_in_dict("job_email", user_input_json, previous_exploration_json, default_input_json)
+
         del jobs_path, job_file_name
     del exploration_type
 
     # Preparation of the exploration
     exploration_json["systems_auto"] = {}
-    nb_simulations = 0
+    nb_sim = 0
 
     job_array_params_file = {}
     job_array_params_file["lammps"] = ["PATH/_R_DEEPMD_VERSION_/_R_MODEL_FILES_LIST_/_R_INPUT_FILE_/_R_DATA_FILE_/_R_RERUN_FILE_/_R_PLUMED_FILES_LIST_/"]
@@ -419,6 +411,7 @@ def main(
                     if system_nb_steps > system_max_exp_time_ps / system_timestep_ps:
                         system_nb_steps = system_max_exp_time_ps / system_timestep_ps
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(system_nb_steps)}"
+
                 # TODO Do we update or leave it as is (-1 if default, user value else)
                 merged_input_json["exp_time_ps"][system_auto_index] = (
                     system_nb_steps * system_timestep_ps
@@ -573,7 +566,7 @@ def main(
         # Now it is by NNP and by traj_count
         for nnp_index in range(1, main_json["nnp_count"] + 1):
             for traj_index in range(1, system_traj_count + 1):
-                nb_simulations += 1
+                nb_sim += 1
 
                 local_path = (
                     Path(".").resolve()
@@ -749,11 +742,7 @@ def main(
                     job_array_params_line += "/"
                     job_array_params_file[system_exploration_type].append(job_array_params_line)
 
-                    string_list_to_textfile(
-                        local_path
-                        / f"job_deepmd_{system_exploration_type}_{machine_spec['arch_type']}_{machine}.sh",
-                        job_file,
-                    )
+                    string_list_to_textfile(local_path / f"job_{system_exploration_type}-deepmd_{arch_type}_{machine}.sh", job_file)
 
                     del system_lammps_in
                     del job_file
@@ -898,11 +887,8 @@ def main(
                         job_file = replace_substring_in_string_list(
                             job_file, ' "_R_PLUMED_FILES_LIST_"', ""
                         )
-                    string_list_to_textfile(
-                        local_path
-                        / f"job_deepmd_{system_exploration_type}_{machine_spec['arch_type']}_{machine}.sh",
-                        job_file,
-                    )
+                    string_list_to_textfile(local_path / f"job_{system_exploration_type}-deepmd_{arch_type}_{machine}.sh", job_file)
+                    
                     del (
                         system_ipi_xml_aslist,
                         system_ipi_xml,
@@ -1008,12 +994,14 @@ def main(
             )
 
             job_array_file = replace_substring_in_string_list(job_array_file, "_R_ARRAY_START_", "0")
-            job_array_file = replace_substring_in_string_list(job_array_file, "_R_ARRAY_END_", f"{nb_simulations - 1}")
+            job_array_file = replace_substring_in_string_list(job_array_file, "_R_ARRAY_END_", f"{nb_sim - 1}")
 
-            string_list_to_textfile(current_path / f"job_deepmd_array_{exploration_type}_{machine_spec['arch_type']}_{machine}.sh", job_array_file)
-            string_list_to_textfile(current_path / f"job_array_params_{exploration_type}.lst", job_array_params_file[exploration_type])
+            string_list_to_textfile(current_path / f"job-array_{exploration_type}-deepmd_{arch_type}_{machine}.sh", job_array_file)
+            string_list_to_textfile(current_path / f"job-array-params_{exploration_type}-deepmd_{arch_type}_{machine}.lst", job_array_params_file[exploration_type])
 
         del exploration_types
+
+    exploration_json["nb_sim"] = nb_sim
 
     # Dump the JSON files (main, exploration and merged input)
     write_json_file(main_json, (control_path / "config.json"))

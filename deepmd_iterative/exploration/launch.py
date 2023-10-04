@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2023/10/04
 """
 # Standard library modules
 import copy
@@ -114,6 +114,7 @@ def main(
         fake_machine,
         user_machine_keyword,
     )
+    arch_type = machine_spec['arch_type']
     logging.debug(f"machine: {machine}")
     logging.debug(f"machine_walltime_format: {machine_walltime_format}")
     logging.debug(f"machine_job_scheduler: {machine_job_scheduler}")
@@ -150,60 +151,73 @@ def main(
         return 1
 
     # Launch the jobs
-    completed_count = 0
-    for system_auto_index, system_auto in enumerate(exploration_json["systems_auto"]):
-        for nnp_index in range(1, main_json["nnp_count"] + 1):
-            for traj_index in range(
-                1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1
-            ):
-                local_path = (
-                    Path(".").resolve()
-                    / str(system_auto)
-                    / str(nnp_index)
-                    / (str(traj_index).zfill(5))
-                )
+    exploration_types = []
+    for system_auto in exploration_json["systems_auto"]:
+        exploration_types.append(exploration_json['systems_auto'][system_auto]['exploration_type'])
+    exploration_types = list(set(exploration_types))
 
-                if (
-                    local_path
-                    / f"job_deepmd_{exploration_json['systems_auto'][system_auto]['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh"
-                ).is_file():
-                    change_directory(local_path)
-                    try:
-                        subprocess.run(
-                            [
-                                machine_launch_command,
-                                f"./job_deepmd_{exploration_json['systems_auto'][system_auto]['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
-                            ]
-                        )
-                        logging.info(
-                            f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' launched."
-                        )
-                        completed_count += 1
-                    except FileNotFoundError:
-                        logging.critical(
-                            f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' NOT launched - '{machine_launch_command}' not found."
-                        )
-                    change_directory(local_path.parent.parent.parent)
-                else:
-                    logging.critical(
-                        f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' NOT launched - No job file."
-                    )
-                del local_path
-            del traj_index
-        del nnp_index
-    del system_auto_index, system_auto
+    completed_count = 0
+    for exploration_type in exploration_types:
+        job_name = f"job-array_{exploration_type}-deepmd_{arch_type}_{machine}.sh"
+        if job_name.is_file():
+            subprocess.run([machine_launch_command, f"./job-array_{exploration_type}-deepmd_{arch_type}_{machine}.sh"])
+            logging.info(f"Exploration - Array LAMMPS launched.")
+            completed_count += 1
+
+    # for system_auto_index, system_auto in enumerate(exploration_json["systems_auto"]):
+    #     for nnp_index in range(1, main_json["nnp_count"] + 1):
+    #         for traj_index in range(
+    #             1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1
+    #         ):
+    #             local_path = (
+    #                 Path(".").resolve()
+    #                 / str(system_auto)
+    #                 / str(nnp_index)
+    #                 / (str(traj_index).zfill(5))
+    #             )
+
+    #             if (
+    #                 local_path
+    #                 / f"job_deepmd_{exploration_json['systems_auto'][system_auto]['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh"
+    #             ).is_file():
+    #                 change_directory(local_path)
+    #                 try:
+    #                     subprocess.run(
+    #                         [
+    #                             machine_launch_command,
+    #                             f"./job_deepmd_{exploration_json['systems_auto'][system_auto]['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
+    #                         ]
+    #                     )
+    #                     logging.info(
+    #                         f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' launched."
+    #                     )
+    #                     completed_count += 1
+    #                 except FileNotFoundError:
+    #                     logging.critical(
+    #                         f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' NOT launched - '{machine_launch_command}' not found."
+    #                     )
+    #                 change_directory(local_path.parent.parent.parent)
+    #             else:
+    #                 logging.critical(
+    #                     f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' NOT launched - No job file."
+    #                 )
+    #             del local_path
+    #         del traj_index
+    #     del nnp_index
+    # del system_auto_index, system_auto
 
     logging.info(f"-" * 88)
     # Update the booleans in the exploration JSON
-    if completed_count == (
-        exploration_json["nnp_count"]
-        * sum(
-            [
-                exploration_json["systems_auto"][_]["traj_count"]
-                for _ in exploration_json["systems_auto"]
-            ]
-        )
-    ):
+    # if completed_count == (
+    #     exploration_json["nnp_count"]
+    #     * sum(
+    #         [
+    #             exploration_json["systems_auto"][_]["traj_count"]
+    #             for _ in exploration_json["systems_auto"]
+    #         ]
+    #     )
+    # ):
+    if completed_count == len(exploration_types):
         exploration_json["is_launched"] = True
 
     # Dump the JSON files (exploration JSON and merged input JSON)
@@ -216,15 +230,16 @@ def main(
 
     # End
     logging.info(f"-" * 88)
-    if completed_count == (
-        exploration_json["nnp_count"]
-        * sum(
-            [
-                exploration_json["systems_auto"][_]["traj_count"]
-                for _ in exploration_json["systems_auto"]
-            ]
-        )
-    ):
+    # if completed_count == (
+    #     exploration_json["nnp_count"]
+    #     * sum(
+    #         [
+    #             exploration_json["systems_auto"][_]["traj_count"]
+    #             for _ in exploration_json["systems_auto"]
+    #         ]
+    #     )
+    # ):
+    if completed_count == len(exploration_types):
         logging.info(
             f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
         )
