@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/19
+Last modified: 2023/10/13
 
 Test cases for the utils/initialization module.
 
@@ -61,7 +61,7 @@ class TestGenerateMainJson(unittest.TestCase):
         }
 
         expected_config_json = {
-            'systems_auto': {'subsys1': {'index': 0}, 'subsys2': {'index': 1}},
+            "systems_auto": {"subsys1": {"index": 0}, "subsys2": {"index": 1}},
             "nnp_count": 5,
             "current_iteration": 0,
         }
@@ -88,7 +88,7 @@ class TestGenerateMainJson(unittest.TestCase):
         }
 
         expected_config_json = {
-            'systems_auto': {'subsys1': {'index': 0}, 'subsys2': {'index': 1}},
+            "systems_auto": {"subsys1": {"index": 0}, "subsys2": {"index": 1}},
             "nnp_count": 3,
             "current_iteration": 0,
         }

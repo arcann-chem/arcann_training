@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/20
+Last modified: 2023/10/13
 
 The json module provides functions to manipulate JSON data (as dict).
 
@@ -336,8 +336,8 @@ def write_json_file(
                 + m.group(4)
             )
             json_str = re.sub(pattern, replacement, json_str)
-            json_str = re.sub(r'\],\s+\[', '], [', json_str)
-            json_str = re.sub(r'\]\s+\]', ']]', json_str)
+            json_str = re.sub(r"\],\s+\[", "], [", json_str)
+            json_str = re.sub(r"\]\s+\]", "]]", json_str)
             json_file.write(json_str)
 
             # If log_write is True, log a message indicating the file and path that the JSON data is being written to

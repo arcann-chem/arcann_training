@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/23
+Last modified: 2023/10/13
 """
 # Standard library modules
 import importlib
@@ -103,7 +103,9 @@ def main(
     (training_path / "data").mkdir(exist_ok=True)
 
     for system_auto_index, system_auto in enumerate(labeling_json["systems_auto"]):
-        logging.info(f"Processing system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})")
+        logging.info(
+            f"Processing system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})"
+        )
 
         system_candidates_count = labeling_json["systems_auto"][system_auto][
             "candidates_count"
@@ -459,7 +461,12 @@ def main(
                         wannier_not_converged.append(
                             f"{system_candidates_not_skipped_counter - 1}\n"
                         )
-        del padded_labeling_step, labeling_step, labeling_step_path, system_candidates_not_skipped_counter
+        del (
+            padded_labeling_step,
+            labeling_step,
+            labeling_step_path,
+            system_candidates_not_skipped_counter,
+        )
 
         np.savetxt(system_path / "energy.raw", energy_array_raw, delimiter=" ")
         np.save(data_path / "set.000" / "energy", energy_array_raw)
@@ -566,7 +573,10 @@ def main(
             # counter for non skipped configurations
             system_disturbed_candidates_not_skipped_counter = 0
 
-            for labeling_step in range(system_candidates_count, system_candidates_count + system_disturbed_candidates_count):
+            for labeling_step in range(
+                system_candidates_count,
+                system_candidates_count + system_disturbed_candidates_count,
+            ):
                 padded_labeling_step = str(labeling_step).zfill(5)
                 labeling_step_path = system_path / padded_labeling_step
 
@@ -888,7 +898,12 @@ def main(
                             wannier_not_converged.append(
                                 f"{system_disturbed_candidates_not_skipped_counter - 1}\n"
                             )
-            del padded_labeling_step, labeling_step, labeling_step_path, system_disturbed_candidates_not_skipped_counter
+            del (
+                padded_labeling_step,
+                labeling_step,
+                labeling_step_path,
+                system_disturbed_candidates_not_skipped_counter,
+            )
 
             np.savetxt(system_path / "energy.raw", energy_array_raw, delimiter=" ")
             np.save(data_path / "set.000" / "energy", energy_array_raw)
@@ -907,9 +922,7 @@ def main(
             del force_array_raw
 
             if is_virial:
-                np.savetxt(
-                    system_path / "virial.raw", virial_array_raw, delimiter=" "
-                )
+                np.savetxt(system_path / "virial.raw", virial_array_raw, delimiter=" ")
                 np.save(data_path / "set.000" / "virial", virial_array_raw)
             del virial_array_raw, is_virial
 
@@ -932,7 +945,8 @@ def main(
     del system_auto, system_auto_index
     del system_candidates_count, system_candidates_skipped_count, system_path, data_path
     del (
-        indexes, idx,
+        indexes,
+        idx,
         is_wannier,
         wannier_not_converged,
         lammps_data,

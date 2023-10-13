@@ -105,8 +105,14 @@ def main(
 
     archive_name = f"labeling_{padded_curr_iter}_noWFN.tar.bz2"
 
-    all_files = Path('.').glob('**/*')
-    files = [str(file) for file in all_files if (file.is_file() and (not (file.name.endswith('.wfn') or '.tar' in file.name)))]
+    all_files = Path(".").glob("**/*")
+    files = [
+        str(file)
+        for file in all_files
+        if (
+            file.is_file() and (not (file.name.endswith(".wfn") or ".tar" in file.name))
+        )
+    ]
     if files:
         if (Path(".") / archive_name).is_file():
             logging.info(f"{archive_name} already present, adding .bak extension")
@@ -114,8 +120,19 @@ def main(
                 (Path(".") / archive_name).read_bytes()
             )
 
-        string_list_to_textfile(current_path / archive_name.replace(".tar.bz2", ".lst"), files)
-        cmd = ["tar", "-I", "bzip2", "--exclude=*.tar.bz2", "-cf", archive_name, "-T", archive_name.replace(".tar.bz2", ".lst")]
+        string_list_to_textfile(
+            current_path / archive_name.replace(".tar.bz2", ".lst"), files
+        )
+        cmd = [
+            "tar",
+            "-I",
+            "bzip2",
+            "--exclude=*.tar.bz2",
+            "-cf",
+            archive_name,
+            "-T",
+            archive_name.replace(".tar.bz2", ".lst"),
+        ]
         subprocess.run(cmd)
         remove_file(current_path / archive_name.replace(".tar.bz2", ".lst"))
 

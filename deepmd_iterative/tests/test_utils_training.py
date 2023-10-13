@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/19
+Last modified: 2023/10/13
 
 Test cases for the (training) utils module.
 
@@ -395,7 +395,10 @@ class TestGenerateTrainingJson(unittest.TestCase):
         """
         Tests if the function correctly validates a valid configuration.
         """
-        user_input = {"user_machine_keyword_train": "custom", "job_email": "user@example.com"}
+        user_input = {
+            "user_machine_keyword_train": "custom",
+            "job_email": "user@example.com",
+        }
         previous_json = {}
         merged_input_json = {}
         expected_training_json = {

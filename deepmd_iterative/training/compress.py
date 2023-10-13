@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/20
+Last modified: 2023/10/13
 """
 # Standard library modules
 import copy
@@ -232,7 +232,7 @@ def main(
     # Update the boolean in the training JSON
     if completed_count == main_json["nnp_count"]:
         training_json["is_compress_launched"] = True
-    
+
     # Dump the JSON files (main, training and merged input)
     write_json_file(main_json, (control_path / "config.json"))
     write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"))

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/23
+Last modified: 2023/10/13
 """
 # Standard library modules
 import copy
@@ -141,7 +141,7 @@ def main(
     logging.debug(f"merged_input_json: {merged_input_json}")
 
     # Update the current exploration JSON
-    exploration_json["atomsk_path"] =atomsk_bin
+    exploration_json["atomsk_path"] = atomsk_bin
     exploration_json["vmd_path"] = vmd_bin
     logging.debug(f"exploration_json: {exploration_json}")
 
@@ -722,7 +722,7 @@ def main(
                     exploration_json["systems_auto"][system_auto][
                         "disturbed_candidate_indexes"
                     ] = []
-        if candidates_files :
+        if candidates_files:
             string_list_to_textfile((current_path / "gather.atomsk"), candidates_files)
             subprocess.run(
                 [

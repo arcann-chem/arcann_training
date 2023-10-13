@@ -134,7 +134,7 @@ def main(
         fake_machine,
         user_machine_keyword,
     )
-    arch_type = machine_spec['arch_type']
+    arch_type = machine_spec["arch_type"]
     logging.debug(f"machine: {machine}")
     logging.debug(f"machine_walltime_format: {machine_walltime_format}")
     logging.debug(f"machine_job_scheduler: {machine_job_scheduler}")
@@ -209,9 +209,11 @@ def main(
     labeling_json["systems_auto"] = {}
 
     total_to_label = 0
-    
+
     job_array_params_file = {}
-    job_array_params_file["cp2k"] = ["PATH/CP2K_INPUT_F1/CP2K_INPUT_F2/CP2K_WFRST_F/CP2K_XYZ_F/"]
+    job_array_params_file["cp2k"] = [
+        "PATH/CP2K_INPUT_F1/CP2K_INPUT_F2/CP2K_WFRST_F/CP2K_XYZ_F/"
+    ]
 
     # Loop through each system and set its labeling
     for system_auto_index, system_auto in enumerate(exploration_json["systems_auto"]):
@@ -348,8 +350,7 @@ def main(
         )
 
         string_list_to_textfile(
-            system_path
-            / f"job-array_CP2K_label_{arch_type}_{machine}.sh",
+            system_path / f"job-array_CP2K_label_{arch_type}_{machine}.sh",
             system_master_job_file[0],
         )
 
@@ -454,8 +455,10 @@ def main(
                 atom_symbols,
                 atom_coords,
                 cell_info,
-            )               
-            job_array_params_line = str(system_auto)+ "_" + str(padded_labeling_step) + "/"
+            )
+            job_array_params_line = (
+                str(system_auto) + "_" + str(padded_labeling_step) + "/"
+            )
             job_array_params_line += f"1_labeling_{padded_labeling_step}" + "/"
             job_array_params_line += f"2_labeling_{padded_labeling_step}" + "/"
             job_array_params_line += f"labeling_{padded_labeling_step}-SCF.wfn" + "/"
@@ -538,14 +541,18 @@ def main(
                     atom_coords,
                     cell_info,
                 )
-                job_array_params_line = str(system_auto)+ "_" + str(padded_labeling_step) + "/"
+                job_array_params_line = (
+                    str(system_auto) + "_" + str(padded_labeling_step) + "/"
+                )
                 job_array_params_line += f"1_labeling_{padded_labeling_step}" + "/"
                 job_array_params_line += f"2_labeling_{padded_labeling_step}" + "/"
-                job_array_params_line += f"labeling_{padded_labeling_step}-SCF.wfn" + "/"
+                job_array_params_line += (
+                    f"labeling_{padded_labeling_step}-SCF.wfn" + "/"
+                )
                 job_array_params_line += f"labeling_{padded_labeling_step}.xyz" + "/"
                 job_array_params_line += "" + "/"
                 job_array_params_file["cp2k"].append(job_array_params_line)
-                    
+
                 del padded_labeling_step, labeling_step_path
 
             del labeling_step
@@ -590,7 +597,10 @@ def main(
     logging.info(f"{total_to_label} structures will be labeled.")
     del total_to_label
 
-    string_list_to_textfile(current_path / f"job-array-params_CP2K_label_{arch_type}_{machine}.lst", job_array_params_file["cp2k"])
+    string_list_to_textfile(
+        current_path / f"job-array-params_CP2K_label_{arch_type}_{machine}.lst",
+        job_array_params_file["cp2k"],
+    )
 
     # Set booleans in the exploration JSON
     labeling_json = {

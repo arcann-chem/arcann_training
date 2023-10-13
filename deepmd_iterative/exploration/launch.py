@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/10/11
+Last modified: 2023/10/13
 """
 # Standard library modules
 import copy
@@ -114,7 +114,7 @@ def main(
         fake_machine,
         user_machine_keyword,
     )
-    arch_type = machine_spec['arch_type']
+    arch_type = machine_spec["arch_type"]
     logging.debug(f"machine: {machine}")
     logging.debug(f"machine_walltime_format: {machine_walltime_format}")
     logging.debug(f"machine_job_scheduler: {machine_job_scheduler}")
@@ -153,12 +153,16 @@ def main(
     # Launch the jobs
     exploration_types = []
     for system_auto in exploration_json["systems_auto"]:
-        exploration_types.append(exploration_json['systems_auto'][system_auto]['exploration_type'])
+        exploration_types.append(
+            exploration_json["systems_auto"][system_auto]["exploration_type"]
+        )
     exploration_types = list(set(exploration_types))
 
     completed_count = 0
     for exploration_type in exploration_types:
-        job_name = f"job-array_{exploration_type}-deepmd_explore_{arch_type}_{machine}.sh"
+        job_name = (
+            f"job-array_{exploration_type}-deepmd_explore_{arch_type}_{machine}.sh"
+        )
         if (Path(".") / job_name).is_file():
             subprocess.run([machine_launch_command, f"./{job_name}"])
             logging.info(f"Exploration - Array LAMMPS launched.")

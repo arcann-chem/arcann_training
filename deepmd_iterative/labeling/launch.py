@@ -165,7 +165,8 @@ def main(
         system_path = current_path / system_auto
 
         if (
-            system_path / f"job-array_CP2K_label_{machine_spec['arch_type']}_{machine}.sh"
+            system_path
+            / f"job-array_CP2K_label_{machine_spec['arch_type']}_{machine}.sh"
         ).is_file():
             change_directory(system_path)
 
@@ -185,10 +186,14 @@ def main(
             change_directory(system_path.parent)
         else:
             if labeling_json["systems_auto"][system_auto]["candidates_count"] == 0:
-                logging.info(f"Labeling - '{system_auto}' skipped (no candidates to label).")
+                logging.info(
+                    f"Labeling - '{system_auto}' skipped (no candidates to label)."
+                )
                 launched_count += 1
             else:
-                logging.critical(f"Labeling - '{system_auto}' NOT launched - No job file.")
+                logging.critical(
+                    f"Labeling - '{system_auto}' NOT launched - No job file."
+                )
 
         del system_path
     del system_auto

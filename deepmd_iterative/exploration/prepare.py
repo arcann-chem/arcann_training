@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/10/11
+Last modified: 2023/10/13
 """
 # Standard library modules
 import copy
@@ -171,7 +171,7 @@ def main(
         fake_machine,
         user_machine_keyword,
     )
-    arch_type = machine_spec['arch_type']
+    arch_type = machine_spec["arch_type"]
     logging.debug(f"machine: {machine}")
     logging.debug(f"machine_walltime_format: {machine_walltime_format}")
     logging.debug(f"machine_job_scheduler: {machine_job_scheduler}")
@@ -217,30 +217,47 @@ def main(
     walltime_approx_s = {}
 
     for exploration_type in exploration_types:
-
         walltime_approx_s[exploration_type] = []
 
-        job_file_name = f"job_{exploration_type}-deepmd_explore_{arch_type}_{machine}.sh"
-        job_array_file_name =f"job-array_{exploration_type}-deepmd_explore_{arch_type}_{machine}.sh"
+        job_file_name = (
+            f"job_{exploration_type}-deepmd_explore_{arch_type}_{machine}.sh"
+        )
+        job_array_file_name = (
+            f"job-array_{exploration_type}-deepmd_explore_{arch_type}_{machine}.sh"
+        )
 
         if (current_path.parent / "user_files" / job_file_name).is_file():
-            master_job_file[exploration_type] = textfile_to_string_list(current_path.parent / "user_files" / job_file_name)
+            master_job_file[exploration_type] = textfile_to_string_list(
+                current_path.parent / "user_files" / job_file_name
+            )
         else:
-            logging.error(f"No JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine.")
+            logging.error(
+                f"No JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine."
+            )
             logging.error(f"Aborting...")
             return 1
 
         if (current_path.parent / "user_files" / job_array_file_name).is_file():
-            master_job_array_file[exploration_type] = textfile_to_string_list(current_path.parent / "user_files" / job_array_file_name)
+            master_job_array_file[exploration_type] = textfile_to_string_list(
+                current_path.parent / "user_files" / job_array_file_name
+            )
         else:
-            logging.warning(f"No ARRAY JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine.")
+            logging.warning(
+                f"No ARRAY JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine."
+            )
             logging.error(f"Aborting...")
             return 1
 
-        logging.debug(f"master_job_file: {master_job_file[exploration_type][0:5]}, {master_job_file[exploration_type][-5:-1]}")
-        logging.debug(f"master_job_array_file: {master_job_array_file[exploration_type][0:5]}, {master_job_array_file[exploration_type][-5:-1]}")
+        logging.debug(
+            f"master_job_file: {master_job_file[exploration_type][0:5]}, {master_job_file[exploration_type][-5:-1]}"
+        )
+        logging.debug(
+            f"master_job_array_file: {master_job_array_file[exploration_type][0:5]}, {master_job_array_file[exploration_type][-5:-1]}"
+        )
 
-        merged_input_json["job_email"] = get_key_in_dict("job_email", user_input_json, previous_exploration_json, default_input_json)
+        merged_input_json["job_email"] = get_key_in_dict(
+            "job_email", user_input_json, previous_exploration_json, default_input_json
+        )
 
         del jobs_path, job_file_name
     del exploration_type
@@ -250,8 +267,12 @@ def main(
     nb_sim = 0
 
     job_array_params_file = {}
-    job_array_params_file["lammps"] = ["PATH/_R_DEEPMD_VERSION_/_R_MODEL_FILES_LIST_/_R_INPUT_FILE_/_R_DATA_FILE_/_R_RERUN_FILE_/_R_PLUMED_FILES_LIST_/"]
-    job_array_params_file["i-PI"] = ["PATH/_R_DEEPMD_VERSION_/_R_MODEL_FILES_LIST_/_R_INPUT_FILE_/_R_DATA_FILE_/_R_RERUN_FILE_/_R_PLUMED_FILES_LIST_/"]
+    job_array_params_file["lammps"] = [
+        "PATH/_R_DEEPMD_VERSION_/_R_MODEL_FILES_LIST_/_R_INPUT_FILE_/_R_DATA_FILE_/_R_RERUN_FILE_/_R_PLUMED_FILES_LIST_/"
+    ]
+    job_array_params_file["i-PI"] = [
+        "PATH/_R_DEEPMD_VERSION_/_R_MODEL_FILES_LIST_/_R_INPUT_FILE_/_R_DATA_FILE_/_R_RERUN_FILE_/_R_PLUMED_FILES_LIST_/"
+    ]
 
     # Loop through each system and set its exploration
     for system_auto_index, system_auto in enumerate(main_json["systems_auto"]):
@@ -383,7 +404,9 @@ def main(
                 merged_input_json["job_walltime_h"][system_auto_index] = (
                     system_walltime_approx_s / 3600
                 )
-                walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
+                walltime_approx_s[system_exploration_type].append(
+                    system_walltime_approx_s
+                )
 
                 # Get the cell and nb of atoms: It can be done now because the starting point is the same by NNP and by traj
                 system_nb_atm, num_atom_types, box, masses, coords = read_lammps_data(
@@ -435,13 +458,17 @@ def main(
                         1800,
                     )
                     # Round up to the next 30min
-                    system_walltime_approx_s = int(np.ceil(system_walltime_approx_s / 1800) * 1800)
+                    system_walltime_approx_s = int(
+                        np.ceil(system_walltime_approx_s / 1800) * 1800
+                    )
 
                 # TODO Do we update or leave it as is (-1 if default, user value else)
                 merged_input_json["job_walltime_h"][system_auto_index] = (
                     system_walltime_approx_s / 3600
                 )
-                walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
+                walltime_approx_s[system_exploration_type].append(
+                    system_walltime_approx_s
+                )
 
             # Get print freq
             system_print_every_x_steps = system_nb_steps * system_print_mult
@@ -501,7 +528,9 @@ def main(
                 merged_input_json["job_walltime_h"][system_auto_index] = (
                     system_walltime_approx_s / 3600
                 )
-                walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
+                walltime_approx_s[system_exploration_type].append(
+                    system_walltime_approx_s
+                )
 
                 # Get the cell and nb of atoms: It can be done now because the starting point is the same by NNP and by traj
                 system_nb_atm, num_atom_types, box, masses, coords = read_lammps_data(
@@ -553,11 +582,15 @@ def main(
                         1800,
                     )
                     # Round up to the next 30min
-                    system_walltime_approx_s = int(np.ceil(system_walltime_approx_s / 1800) * 1800)
+                    system_walltime_approx_s = int(
+                        np.ceil(system_walltime_approx_s / 1800) * 1800
+                    )
 
                 # TODO Do we update or leave it as is (-1 if default, user value else)
                 merged_input_json["job_walltime_h"] = system_walltime_approx_s / 3600
-                walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
+                walltime_approx_s[system_exploration_type].append(
+                    system_walltime_approx_s
+                )
 
             # Get print freq
             system_print_every_x_steps = system_nb_steps * system_print_mult
@@ -680,10 +713,23 @@ def main(
                         system_lammps_in,
                     )
 
-                    job_array_params_line = str(system_auto)+ "_" + str(nnp_index) + "_" + str(traj_index).zfill(5) + "/"
-                    job_array_params_line += f"{exploration_json['deepmd_model_version']}" + "/"
-                    job_array_params_line += str(models_string.replace(" ", '" "')) + "/"
-                    job_array_params_line += f"{system_auto}_{nnp_index}_{padded_curr_iter}" + "/"
+                    job_array_params_line = (
+                        str(system_auto)
+                        + "_"
+                        + str(nnp_index)
+                        + "_"
+                        + str(traj_index).zfill(5)
+                        + "/"
+                    )
+                    job_array_params_line += (
+                        f"{exploration_json['deepmd_model_version']}" + "/"
+                    )
+                    job_array_params_line += (
+                        str(models_string.replace(" ", '" "')) + "/"
+                    )
+                    job_array_params_line += (
+                        f"{system_auto}_{nnp_index}_{padded_curr_iter}" + "/"
+                    )
                     job_array_params_line += f"{system_lammps_data_fn}" + "/"
                     job_array_params_line += "" + "/"
 
@@ -730,7 +776,9 @@ def main(
                                     prev_plumed,
                                     prev_plumed + '" "' + it_plumed_input,
                                 )
-                                job_array_params_line = job_array_params_line.replace(prev_plumed, prev_plumed + '" "' + it_plumed_input)
+                                job_array_params_line = job_array_params_line.replace(
+                                    prev_plumed, prev_plumed + '" "' + it_plumed_input
+                                )
                             prev_plumed = it_plumed_input
                         del n, it_plumed_input, prev_plumed
                     else:
@@ -740,9 +788,15 @@ def main(
                         job_array_params_line += ""
 
                     job_array_params_line += "/"
-                    job_array_params_file[system_exploration_type].append(job_array_params_line)
+                    job_array_params_file[system_exploration_type].append(
+                        job_array_params_line
+                    )
 
-                    string_list_to_textfile(local_path / f"job_{system_exploration_type}-deepmd_explore_{arch_type}_{machine}.sh", job_file)
+                    string_list_to_textfile(
+                        local_path
+                        / f"job_{system_exploration_type}-deepmd_explore_{arch_type}_{machine}.sh",
+                        job_file,
+                    )
 
                     del system_lammps_in
                     del job_file
@@ -887,8 +941,12 @@ def main(
                         job_file = replace_substring_in_string_list(
                             job_file, ' "_R_PLUMED_FILES_LIST_"', ""
                         )
-                    string_list_to_textfile(local_path / f"job_{system_exploration_type}-deepmd_explore_{arch_type}_{machine}.sh", job_file)
-                    
+                    string_list_to_textfile(
+                        local_path
+                        / f"job_{system_exploration_type}-deepmd_explore_{arch_type}_{machine}.sh",
+                        job_file,
+                    )
+
                     del (
                         system_ipi_xml_aslist,
                         system_ipi_xml,
@@ -993,11 +1051,23 @@ def main(
                 merged_input_json["job_email"],
             )
 
-            job_array_file = replace_substring_in_string_list(job_array_file, "_R_ARRAY_START_", "0")
-            job_array_file = replace_substring_in_string_list(job_array_file, "_R_ARRAY_END_", f"{nb_sim - 1}")
+            job_array_file = replace_substring_in_string_list(
+                job_array_file, "_R_ARRAY_START_", "0"
+            )
+            job_array_file = replace_substring_in_string_list(
+                job_array_file, "_R_ARRAY_END_", f"{nb_sim - 1}"
+            )
 
-            string_list_to_textfile(current_path / f"job-array_{exploration_type}-deepmd_explore_{arch_type}_{machine}.sh", job_array_file)
-            string_list_to_textfile(current_path / f"job-array-params_{exploration_type}-deepmd_explore_{arch_type}_{machine}.lst", job_array_params_file[exploration_type])
+            string_list_to_textfile(
+                current_path
+                / f"job-array_{exploration_type}-deepmd_explore_{arch_type}_{machine}.sh",
+                job_array_file,
+            )
+            string_list_to_textfile(
+                current_path
+                / f"job-array-params_{exploration_type}-deepmd_explore_{arch_type}_{machine}.lst",
+                job_array_params_file[exploration_type],
+            )
 
         del exploration_types
 

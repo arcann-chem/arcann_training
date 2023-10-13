@@ -72,7 +72,9 @@ def main(
     logging.warning(f"This is the cleaning step for exploration step.")
     logging.warning(f"It should be run after exploration extract phase.")
     logging.warning(f"This is will delete:")
-    logging.warning(f"symbolic links, 'job_*.sh', 'job-array_*.sh', 'job-array-params*.lst', '*.in', '*.lmp', 'plumed_*.dat'")
+    logging.warning(
+        f"symbolic links, 'job_*.sh', 'job-array_*.sh', 'job-array-params*.lst', '*.in', '*.lmp', 'plumed_*.dat'"
+    )
     logging.warning(
         f"LAMMPS_*, 'i-PI_DeepMD*', '*.DP-i-PI.client_*.log', '*.DP-i-PI.client_*.err', 'plumed_*.dat'"
     )
@@ -124,8 +126,20 @@ def main(
                     (Path(".") / archive_name).read_bytes()
                 )
 
-            string_list_to_textfile(current_path / archive_name.replace(".tar.bz2", ".lst"), starting_structures)
-            cmd = ["tar", "-I", "bzip2", "--exclude=*.tar.bz2", "-cf", archive_name, "-T", archive_name.replace(".tar.bz2", ".lst")]
+            string_list_to_textfile(
+                current_path / archive_name.replace(".tar.bz2", ".lst"),
+                starting_structures,
+            )
+            cmd = [
+                "tar",
+                "-I",
+                "bzip2",
+                "--exclude=*.tar.bz2",
+                "-cf",
+                archive_name,
+                "-T",
+                archive_name.replace(".tar.bz2", ".lst"),
+            ]
             subprocess.run(cmd)
             remove_file(current_path / archive_name.replace(".tar.bz2", ".lst"))
 

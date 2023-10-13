@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/23
+Last modified: 2023/10/13
 """
 # Standard library modules
 import logging
@@ -114,12 +114,18 @@ def main(
         system_candidates_not_converged = {0: [], 1: []}
         system_candidates_failed = {0: [], 1: []}
 
-        logging.debug(f"system_candidates_count + system_disturbed_candidates_count: {system_candidates_count + system_disturbed_candidates_count}")
+        logging.debug(
+            f"system_candidates_count + system_disturbed_candidates_count: {system_candidates_count + system_disturbed_candidates_count}"
+        )
         if system_candidates_count + system_disturbed_candidates_count == 0:
             # TODO Because no candidates, we "fake-fill" with previous labeling values for the timings
-            labeling_json["systems_auto"][system_auto]["timings_s"] = previous_labeling_json["systems_auto"][system_auto]["timings_s"]
+            labeling_json["systems_auto"][system_auto][
+                "timings_s"
+            ] = previous_labeling_json["systems_auto"][system_auto]["timings_s"]
             labeling_json["systems_auto"][system_auto]["candidates_skipped_count"] = 0
-            labeling_json["systems_auto"][system_auto]["disturbed_candidates_skipped_count"] = 0
+            labeling_json["systems_auto"][system_auto][
+                "disturbed_candidates_skipped_count"
+            ] = 0
             continue
 
         # TODO Use a function to parse CP2K output
