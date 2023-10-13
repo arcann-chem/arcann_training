@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/10/04
+Last modified: 2023/10/11
 """
 # Standard library modules
 import copy
@@ -220,8 +220,8 @@ def main(
 
         walltime_approx_s[exploration_type] = []
 
-        job_file_name = f"job_{exploration_type}-deepmd_{arch_type}_{machine}.sh"
-        job_array_file_name =f"job-array_{exploration_type}-deepmd_{arch_type}_{machine}.sh"
+        job_file_name = f"job_{exploration_type}-deepmd_explore_{arch_type}_{machine}.sh"
+        job_array_file_name =f"job-array_{exploration_type}-deepmd_explore_{arch_type}_{machine}.sh"
 
         if (current_path.parent / "user_files" / job_file_name).is_file():
             master_job_file[exploration_type] = textfile_to_string_list(current_path.parent / "user_files" / job_file_name)
@@ -742,7 +742,7 @@ def main(
                     job_array_params_line += "/"
                     job_array_params_file[system_exploration_type].append(job_array_params_line)
 
-                    string_list_to_textfile(local_path / f"job_{system_exploration_type}-deepmd_{arch_type}_{machine}.sh", job_file)
+                    string_list_to_textfile(local_path / f"job_{system_exploration_type}-deepmd_explore_{arch_type}_{machine}.sh", job_file)
 
                     del system_lammps_in
                     del job_file
@@ -887,7 +887,7 @@ def main(
                         job_file = replace_substring_in_string_list(
                             job_file, ' "_R_PLUMED_FILES_LIST_"', ""
                         )
-                    string_list_to_textfile(local_path / f"job_{system_exploration_type}-deepmd_{arch_type}_{machine}.sh", job_file)
+                    string_list_to_textfile(local_path / f"job_{system_exploration_type}-deepmd_explore_{arch_type}_{machine}.sh", job_file)
                     
                     del (
                         system_ipi_xml_aslist,
@@ -996,8 +996,8 @@ def main(
             job_array_file = replace_substring_in_string_list(job_array_file, "_R_ARRAY_START_", "0")
             job_array_file = replace_substring_in_string_list(job_array_file, "_R_ARRAY_END_", f"{nb_sim - 1}")
 
-            string_list_to_textfile(current_path / f"job-array_{exploration_type}-deepmd_{arch_type}_{machine}.sh", job_array_file)
-            string_list_to_textfile(current_path / f"job-array-params_{exploration_type}-deepmd_{arch_type}_{machine}.lst", job_array_params_file[exploration_type])
+            string_list_to_textfile(current_path / f"job-array_{exploration_type}-deepmd_explore_{arch_type}_{machine}.sh", job_array_file)
+            string_list_to_textfile(current_path / f"job-array-params_{exploration_type}-deepmd_explore_{arch_type}_{machine}.lst", job_array_params_file[exploration_type])
 
         del exploration_types
 

@@ -6,46 +6,58 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 # Created: 2022/01/01
-# Last modified: 2023/09/06
+# Last modified: 2023/10/09
 # Project/Account
-#MSUB -A _R_PROJECT_
-#MSUB -q _R_ALLOC_
+#SBATCH --account=_R_PROJECT_@_R_ALLOC_
 # QoS/Partition/SubPartition
-#MSUB -Q _R_QOS_
-#MSUB -m scratch,work,store
+#SBATCH --qos=_R_QOS_
+#SBATCH --partition=_R_PARTITION_
+#SBATCH -C _R_SUBPARTITION_
 # Number of Nodes/MPIperNodes/OpenMPperMPI/GPU
-#MSUB -N _R_nb_NODES_
-#MSUB -n _R_nb_MPI_
-#MSUB -c _R_nb_THREADSPERMPI_
+#SBATCH --nodes _R_nb_NODES_
+#SBATCH --ntasks-per-node _R_nb_MPIPERNODE_
+#SBATCH --cpus-per-task _R_nb_THREADSPERMPI_
+#SBATCH --hint=nomultithread
 # Walltime
-#MSUB -T _R_WALLTIME_
+#SBATCH -t _R_WALLTIME_
 # Merge Output/Error
-#MSUB -o CP2K.%j
-#MSUB -e CP2K.%j
+#SBATCH -o CP2K.%A_%a
+#SBATCH -e CP2K.%A_%a
 # Name of job
-#MSUB -r _R_CP2K_JOBNAME_
+#SBATCH -J _R_CP2K_JOBNAME_
 # Email
-#MSUB -@ _R_EMAIL_:begin,end
+#SBATCH --mail-type FAIL,BEGIN,END,ALL
+#SBATCH --mail-user _R_EMAIL_
+# Array
+#SBATCH --array=_R_ARRAY_START_-_R_ARRAY_END_%300
 #
 
+# Array specifics
+SLURM_ARRAY_TASK_ID_PADDED=$(printf "%05d\n" "${SLURM_ARRAY_TASK_ID}")
+
 # Input file (extension is automatically added as .inp for INPUT, wfn for WFRST, restart for MDRST)
-CP2K_INPUT_F1="1_labeling_XXXXX"
-CP2K_INPUT_F2="2_labeling_XXXXX"
-CP2K_WFRST_F="labeling_XXXXX-SCF"
-CP2K_XYZ_F="labeling_XXXXX.xyz"
+CP2K_INPUT_F1="1_labeling_${SLURM_ARRAY_TASK_ID_PADDED}"
+CP2K_INPUT_F2="2_labeling_${SLURM_ARRAY_TASK_ID_PADDED}"
+CP2K_WFRST_F="labeling_${SLURM_ARRAY_TASK_ID_PADDED}-SCF"
+CP2K_XYZ_F="labeling_${SLURM_ARRAY_TASK_ID_PADDED}.xyz"
 
 #----------------------------------------------
 # Nothing needed to be changed past this point
 
-# Project Switch
-module purge
-module switch dfldatadir/_R_PROJECT_
+# Project Switch and update SCRATCH
+PROJECT_NAME=${SLURM_JOB_ACCOUNT:0:3}
+eval "$(idrenv -d "${PROJECT_NAME}")"
+# Compare PROJECT_NAME and IDRPROJ for inequality
+if [[ "${PROJECT_NAME}" != "${IDRPROJ}" ]]; then
+    SCRATCH=${SCRATCH/${IDRPROJ}/${PROJECT_NAME}}
+fi
 
 # Go where the job has been launched
-cd "${SLURM_SUBMIT_DIR}" || exit 1
+cd "${SLURM_SUBMIT_DIR}"/"${SLURM_ARRAY_TASK_ID_PADDED}" || exit 1
 
 # Load the environment depending on the version
-module load intel/20 mpi/openmpi/4 flavor/cp2k/xc cp2k/8.2
+module purge
+module load cp2k/6.1-mpi-popt
 
 if [ "$(command -v cp2k.psmp)" ]; then
     CP2K_EXE=$(command -v cp2k.psmp)
@@ -64,9 +76,9 @@ if [ ! -f "${CP2K_INPUT_F1}".inp ]; then echo "No input file found. Aborting..."
 if [ ! -f "${CP2K_INPUT_F2}".inp ]; then echo "No input file found. Aborting..."; exit 1; fi
 
 # Set the temporary work directory
-export TEMPWORKDIR=${CCCSCRATCHDIR}/JOB-${SLURM_JOBID}
+export TEMPWORKDIR=${SCRATCH}/JOB-${SLURM_JOBID}
 mkdir -p "${TEMPWORKDIR}"
-ln -s "${TEMPWORKDIR}" "${SLURM_SUBMIT_DIR}"/JOB-"${SLURM_JOBID}"
+ln -s "${TEMPWORKDIR}" "${SLURM_SUBMIT_DIR}"/"${SLURM_ARRAY_TASK_ID_PADDED}"/JOB-"${SLURM_JOBID}"
 
 # Copy files to the temporary work directory
 cp "${CP2K_INPUT_F1}".inp "${TEMPWORKDIR}" && echo "${CP2K_INPUT_F1}.inp copied successfully"
@@ -91,19 +103,19 @@ echo "Running ${SLURM_NTASKS} task(s), with ${SLURM_NTASKS_PER_NODE} task(s) per
 echo "Running with ${SLURM_CPUS_PER_TASK} thread(s) per task."
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 
-CCC_MPRUN_CP2K_EXE="ccc_mprun ${CP2K_EXE}"
+SRUN_CP2K_EXE="srun --ntasks=${SLURM_NTASKS} --nodes=${SLURM_NNODES} --ntasks-per-node=${SLURM_NTASKS_PER_NODE} --cpus-per-task=${SLURM_CPUS_PER_TASK} ${CP2K_EXE}"
 
 # Launch command
 export EXIT_CODE="0"
-${CCC_MPRUN_CP2K_EXE} -i "${CP2K_INPUT_F1}".inp > "${CP2K_INPUT_F1}".out || export EXIT_CODE="1"
+${SRUN_CP2K_EXE} -i "${CP2K_INPUT_F1}".inp > "${CP2K_INPUT_F1}".out || export EXIT_CODE="1"
 cp "${CP2K_WFRST_F}.wfn" "1_${CP2K_WFRST_F}.wfn"
-${CCC_MPRUN_CP2K_EXE} -i "${CP2K_INPUT_F2}".inp > "${CP2K_INPUT_F2}".out || export EXIT_CODE="1"
+${SRUN_CP2K_EXE} -i "${CP2K_INPUT_F2}".inp > "${CP2K_INPUT_F2}".out || export EXIT_CODE="1"
 cp "${CP2K_WFRST_F}.wfn" "2_${CP2K_WFRST_F}.wfn"
 echo "# [$(date)] Ended"
 
 # Move back data from the temporary work directory and scratch, and clean-up
-mv ./* "${SLURM_SUBMIT_DIR}"
-cd "${SLURM_SUBMIT_DIR}" || exit 1
+mv ./* "${SLURM_SUBMIT_DIR}"/"${SLURM_ARRAY_TASK_ID_PADDED}"
+cd "${SLURM_SUBMIT_DIR}"/"${SLURM_ARRAY_TASK_ID_PADDED}" || exit 1
 rmdir "${TEMPWORKDIR}" 2> /dev/null || echo "Leftover files on ${TEMPWORKDIR}"
 [ ! -d "${TEMPWORKDIR}" ] && { [ -h JOB-"${SLURM_JOBID}" ] && rm JOB-"${SLURM_JOBID}"; }
 

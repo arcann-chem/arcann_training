@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/10/03
+Last modified: 2023/10/13
 """
 # Standard library modules
 import subprocess
@@ -18,9 +18,11 @@ from pathlib import Path
 from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.filesystem import (
     change_directory,
+    remove_file,
     remove_files_matching_glob,
     remove_all_symlink,
 )
+from deepmd_iterative.common.list import string_list_to_textfile
 from deepmd_iterative.common.json import load_json_file
 
 
@@ -67,15 +69,15 @@ def main(
         logging.error(f"Lock found. Please execute 'exploration extract' first.")
         logging.error(f"Aborting...")
         return 1
-    logging.critical(f"This is the cleaning step for exploration step.")
-    logging.critical(f"It should be run after exploration extract phase.")
-    logging.critical(f"This is will delete:")
-    logging.critical(f"symbolic links, 'job_*.sh', '*.in', '*.lmp', 'plumed_*.dat'")
-    logging.critical(
+    logging.warning(f"This is the cleaning step for exploration step.")
+    logging.warning(f"It should be run after exploration extract phase.")
+    logging.warning(f"This is will delete:")
+    logging.warning(f"symbolic links, 'job_*.sh', 'job-array_*.sh', 'job-array-params*.lst', '*.in', '*.lmp', 'plumed_*.dat'")
+    logging.warning(
         f"LAMMPS_*, 'i-PI_DeepMD*', '*.DP-i-PI.client_*.log', '*.DP-i-PI.client_*.err', 'plumed_*.dat'"
     )
-    logging.critical(f"in the folder: '{current_path}' and all subdirectories.")
-    logging.critical(
+    logging.warning(f"in the folder: '{current_path}' and all subdirectories.")
+    logging.warning(
         f"It will also create a tar.bz2 file with all starting structures from the previous exploration"
     )
     continuing = input(
@@ -93,6 +95,8 @@ def main(
     remove_all_symlink(current_path)
     logging.info("Deleting job files...")
     remove_files_matching_glob(current_path, "**/job_*.sh")
+    remove_files_matching_glob(current_path, "**/job-array_*.sh")
+    remove_files_matching_glob(current_path, "**/job-array-params*.lst")
     logging.info("Deleting exploration input files...")
     remove_files_matching_glob(current_path, "**/*.in")
     logging.info("Deleting exploration input structure files...")
@@ -119,11 +123,12 @@ def main(
                 (Path(".") / f"{archive_name}.bak").write_bytes(
                     (Path(".") / archive_name).read_bytes()
                 )
-            cmd = ["tar", "-I", "bzip2", "--exclude=*.tar.bz2", "-cf", archive_name]
 
-            # Convert Path objects to string and append to cmd list
-            cmd.extend(map(str, starting_structures))
+            string_list_to_textfile(current_path / archive_name.replace(".tar.bz2", ".lst"), starting_structures)
+            cmd = ["tar", "-I", "bzip2", "--exclude=*.tar.bz2", "-cf", archive_name, "-T", archive_name.replace(".tar.bz2", ".lst")]
             subprocess.run(cmd)
+            remove_file(current_path / archive_name.replace(".tar.bz2", ".lst"))
+
             del starting_structures, starting_structures_xyz, starting_structures_lmp
             logging.info(
                 f"If the tar.bz2 is good, you can remove all files starting with {padded_prev_iter}_ in {training_path / 'starting_structures'}"

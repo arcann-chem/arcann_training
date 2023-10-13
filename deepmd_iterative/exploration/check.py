@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/22
+Last modified: 2023/10/13
 """
 # Standard library modules
 import logging
@@ -278,7 +278,6 @@ def main(
         return 1
 
     del completed_count
-    logging.info("Cleaning done!")
 
     if (skipped_count + forced_count) != 0:
         logging.warning(f"'{skipped_count}' systems were skipped.")

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/10/04
+Last modified: 2023/10/11
 """
 # Standard library modules
 import copy
@@ -158,9 +158,9 @@ def main(
 
     completed_count = 0
     for exploration_type in exploration_types:
-        job_name = f"job-array_{exploration_type}-deepmd_{arch_type}_{machine}.sh"
-        if job_name.is_file():
-            subprocess.run([machine_launch_command, f"./job-array_{exploration_type}-deepmd_{arch_type}_{machine}.sh"])
+        job_name = f"job-array_{exploration_type}-deepmd_explore_{arch_type}_{machine}.sh"
+        if (Path(".") / job_name).is_file():
+            subprocess.run([machine_launch_command, f"./{job_name}"])
             logging.info(f"Exploration - Array LAMMPS launched.")
             completed_count += 1
 

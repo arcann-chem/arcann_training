@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/23
+Last modified: 2023/10/13
 """
 # Standard library modules
 import copy
@@ -134,6 +134,7 @@ def main(
         fake_machine,
         user_machine_keyword,
     )
+    arch_type = machine_spec['arch_type']
     logging.debug(f"machine: {machine}")
     logging.debug(f"machine_walltime_format: {machine_walltime_format}")
     logging.debug(f"machine_job_scheduler: {machine_job_scheduler}")
@@ -178,8 +179,8 @@ def main(
     }
 
     # Check if the job file exists
-    job_file_array_name = f"job_labeling_array_{machine_spec['arch_type']}_{machine}.sh"
-    job_file_name = f"job_labeling_XXXXX_{machine_spec['arch_type']}_{machine}.sh"
+    job_file_array_name = f"job-array_CP2K_label_{arch_type}_{machine}.sh"
+    job_file_name = f"job_CP2K_label_{arch_type}_{machine}.sh"
 
     # 0 is array, 1 is individual
     master_job_file = {}
@@ -208,6 +209,10 @@ def main(
     labeling_json["systems_auto"] = {}
 
     total_to_label = 0
+    
+    job_array_params_file = {}
+    job_array_params_file["cp2k"] = ["PATH/CP2K_INPUT_F1/CP2K_INPUT_F2/CP2K_WFRST_F/CP2K_XYZ_F/"]
+
     # Loop through each system and set its labeling
     for system_auto_index, system_auto in enumerate(exploration_json["systems_auto"]):
         logging.info(
@@ -271,7 +276,7 @@ def main(
                 previous_labeling_json["systems_auto"][system_auto]["timings_s"][0]
                 / 3600
                 * 1.5,
-                1 / 5,
+                1 / 2,
             )
         if curr_iter > 1 and (
             "walltime_second_job_h" not in user_input_json
@@ -281,7 +286,7 @@ def main(
                 previous_labeling_json["systems_auto"][system_auto]["timings_s"][0]
                 / 3600
                 * 1.5,
-                1 / 5,
+                1 / 2,
             )
 
         # TODO Do we update or leave it as is (-1 if default, user value else)
@@ -344,7 +349,7 @@ def main(
 
         string_list_to_textfile(
             system_path
-            / f"job_labeling_array_{machine_spec['arch_type']}_{machine}.sh",
+            / f"job-array_CP2K_label_{arch_type}_{machine}.sh",
             system_master_job_file[0],
         )
 
@@ -437,7 +442,7 @@ def main(
             )
             string_list_to_textfile(
                 labeling_step_path
-                / f"job_labeling_{padded_labeling_step}_{machine_spec['arch_type']}_{machine}.sh",
+                / f"job_CP2K_label_{padded_labeling_step}_{arch_type}_{machine}.sh",
                 job_file_t,
             )
             del job_file_t
@@ -449,7 +454,14 @@ def main(
                 atom_symbols,
                 atom_coords,
                 cell_info,
-            )
+            )               
+            job_array_params_line = str(system_auto)+ "_" + str(padded_labeling_step) + "/"
+            job_array_params_line += f"1_labeling_{padded_labeling_step}" + "/"
+            job_array_params_line += f"2_labeling_{padded_labeling_step}" + "/"
+            job_array_params_line += f"labeling_{padded_labeling_step}-SCF.wfn" + "/"
+            job_array_params_line += f"labeling_{padded_labeling_step}.xyz" + "/"
+            job_array_params_line += "" + "/"
+            job_array_params_file["cp2k"].append(job_array_params_line)
             del padded_labeling_step, labeling_step_path
 
         del labeling_step
@@ -513,7 +525,7 @@ def main(
                 )
                 string_list_to_textfile(
                     labeling_step_path
-                    / f"job_labeling_{padded_labeling_step}_{machine_spec['arch_type']}_{machine}.sh",
+                    / f"job_CP2K_label_{padded_labeling_step}_{arch_type}_{machine}.sh",
                     job_file_t,
                 )
                 del job_file_t
@@ -526,7 +538,14 @@ def main(
                     atom_coords,
                     cell_info,
                 )
-
+                job_array_params_line = str(system_auto)+ "_" + str(padded_labeling_step) + "/"
+                job_array_params_line += f"1_labeling_{padded_labeling_step}" + "/"
+                job_array_params_line += f"2_labeling_{padded_labeling_step}" + "/"
+                job_array_params_line += f"labeling_{padded_labeling_step}-SCF.wfn" + "/"
+                job_array_params_line += f"labeling_{padded_labeling_step}.xyz" + "/"
+                job_array_params_line += "" + "/"
+                job_array_params_file["cp2k"].append(job_array_params_line)
+                    
                 del padded_labeling_step, labeling_step_path
 
             del labeling_step
@@ -570,6 +589,8 @@ def main(
     del system_auto_index, system_auto
     logging.info(f"{total_to_label} structures will be labeled.")
     del total_to_label
+
+    string_list_to_textfile(current_path / f"job-array-params_CP2K_label_{arch_type}_{machine}.lst", job_array_params_file["cp2k"])
 
     # Set booleans in the exploration JSON
     labeling_json = {
