@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/10/13
+Last modified: 2023/10/15
 """
 # Standard library modules
 import subprocess
@@ -118,6 +118,7 @@ def main(
         starting_structures_xyz = list(Path(".").glob(f"{padded_prev_iter}_*.xyz"))
         starting_structures_lmp = list(Path(".").glob(f"{padded_prev_iter}_*.lmp"))
         starting_structures = starting_structures_xyz + starting_structures_lmp
+        starting_structures = [str(_) for _ in starting_structures]
         archive_name = f"starting_structures_{padded_prev_iter}.tar.bz2"
         if starting_structures:
             if (Path(".") / archive_name).is_file():
@@ -125,11 +126,11 @@ def main(
                 (Path(".") / f"{archive_name}.bak").write_bytes(
                     (Path(".") / archive_name).read_bytes()
                 )
-
             string_list_to_textfile(
-                current_path / archive_name.replace(".tar.bz2", ".lst"),
+                training_path / "starting_structures" / archive_name.replace(".tar.bz2", ".lst"),
                 starting_structures,
             )
+            
             cmd = [
                 "tar",
                 "-I",
@@ -141,7 +142,7 @@ def main(
                 archive_name.replace(".tar.bz2", ".lst"),
             ]
             subprocess.run(cmd)
-            remove_file(current_path / archive_name.replace(".tar.bz2", ".lst"))
+            remove_file(training_path / "starting_structures" / archive_name.replace(".tar.bz2", ".lst"))
 
             del starting_structures, starting_structures_xyz, starting_structures_lmp
             logging.info(

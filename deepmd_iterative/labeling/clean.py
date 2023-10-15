@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/10/13
+Last modified: 2023/10/15
 """
 # Standard library modules
 import logging
@@ -70,7 +70,7 @@ def main(
     logging.warning(
         f"symbolic links, 'job_*.sh', 'job-array_*.sh', 'labeling_*.xyz', 'labeling_*-SCF.wfn', '*labeling*.inp'"
     )
-    logging.warning(f"CP2K_*")
+    logging.warning(f"CP2K.*")
     logging.warning(f"in the folder: '{current_path}' and all subdirectories.")
     logging.warning(
         f"It will also create an tar.bz2 file with all important files (except the binary wavefunction files)."
@@ -99,7 +99,7 @@ def main(
     logging.info(f"Deleting labeling input files...")
     remove_files_matching_glob(current_path, "**/*labeling*.inp")
     logging.info("Deleting job error files...")
-    remove_files_matching_glob(current_path, "**/CP2K.  *")
+    remove_files_matching_glob(current_path, "**/CP2K.*")
     logging.info(f"Cleaning done!")
     logging.info(f"Compressing into a bzip2 tar archive...")
 
