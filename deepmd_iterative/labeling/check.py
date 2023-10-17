@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/10/13
+Last modified: 2023/10/17
 """
 # Standard library modules
 import logging
@@ -119,9 +119,12 @@ def main(
         )
         if system_candidates_count + system_disturbed_candidates_count == 0:
             # TODO Because no candidates, we "fake-fill" with previous labeling values for the timings
-            labeling_json["systems_auto"][system_auto][
-                "timings_s"
-            ] = previous_labeling_json["systems_auto"][system_auto]["timings_s"]
+            if curr_iter > 1:
+                labeling_json["systems_auto"][system_auto][
+                    "timings_s"
+                ] = previous_labeling_json["systems_auto"][system_auto]["timings_s"]
+            else:
+                labeling_json["systems_auto"][system_auto]["timings_s"] = [1800,3600]
             labeling_json["systems_auto"][system_auto]["candidates_skipped_count"] = 0
             labeling_json["systems_auto"][system_auto][
                 "disturbed_candidates_skipped_count"
