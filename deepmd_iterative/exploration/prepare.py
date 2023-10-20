@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/10/13
+Last modified: 2023/10/20
 """
 # Standard library modules
 import copy
@@ -648,11 +648,18 @@ def main(
                             random.randrange(0, len(starting_point_list))
                         ]
                         starting_point_list.remove(system_lammps_data_fn)
-                        system_lammps_data = textfile_to_string_list(
-                            training_path
-                            / "starting_structures"
-                            / system_lammps_data_fn
-                        )
+                        if system_previous_start:
+                            system_lammps_data = textfile_to_string_list(
+                                training_path
+                                / "starting_structures"
+                                / system_lammps_data_fn
+                            )
+                        else:
+                            system_lammps_data = textfile_to_string_list(
+                                training_path
+                                / "user_files"
+                                / system_lammps_data_fn
+                            )
                         input_replace_dict["_R_DATA_FILE_"] = system_lammps_data_fn
                         # Get again the system_cell and nb_atom
                         (
@@ -983,6 +990,9 @@ def main(
         exploration_json["systems_auto"][system_auto][
             "print_interval_mult"
         ] = system_print_mult
+        exploration_json["systems_auto"][system_auto][
+            "max_exp_time_ps"
+        ] = system_max_exp_time_ps
 
         main_json["systems_auto"][system_auto]["cell"] = system_cell
         main_json["systems_auto"][system_auto]["nb_atm"] = system_nb_atm
