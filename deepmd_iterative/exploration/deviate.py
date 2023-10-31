@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/20
+Last modified: 2023/10/31
 """
 # Standard library modules
 import copy
@@ -255,6 +255,8 @@ def main(
                     logging.debug(
                         f"end_row_number: {end_row_number}, start_row_number: {start_row_number}"
                     )
+                    if (local_path / "force").is_file():
+                        end_row_number = end_row_number - 1
 
                     # This part is when sigma_high_limit was never crossed
                     if end_row_number == -1:
