@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2023/12/12
 
 The utils module provides functions for the training step.
 
@@ -362,8 +362,8 @@ def validate_deepmd_config(training_config) -> None:
         If the configuration is not valid with respect to machine/arch_name/arch and DeePMD.
     """
     # Check DeePMD version
-    if training_config["deepmd_model_version"] not in [2.0, 2.1]:
-        error_msg = f"Invalid deepmd model version (2.0 or 2.1): '{training_config['deepmd_model_version']}'."
+    if training_config["deepmd_model_version"] not in [2.0, 2.1, 2.2]:
+        error_msg = f"Invalid deepmd model version (2.0 or 2.1 or 2.2): '{training_config['deepmd_model_version']}'."
         raise ValueError(error_msg)
 
     # Check DeePMD descriptor type
