@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/10/13
+Last modified: 2023/12/12
 """
 # Standard library modules
 import importlib
@@ -421,7 +421,7 @@ def main(
                     labeling_step_path
                     / f"2_labeling_{padded_labeling_step}-Wannier.xyz"
                 ).is_file():
-                    stress_cp2k = textfile_to_string_list(
+                    wannier_xyz = textfile_to_string_list(
                         labeling_step_path
                         / f"2_labeling_{padded_labeling_step}-Wannier.xyz"
                     )
@@ -855,7 +855,7 @@ def main(
                         labeling_step_path
                         / f"2_labeling_{padded_labeling_step}-Wannier.xyz"
                     ).is_file():
-                        stress_cp2k = textfile_to_string_list(
+                        wannier_xyz = textfile_to_string_list(
                             labeling_step_path
                             / f"2_labeling_{padded_labeling_step}-Wannier.xyz"
                         )

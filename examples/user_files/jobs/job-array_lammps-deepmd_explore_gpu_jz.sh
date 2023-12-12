@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 # Created: 2022/01/01
-# Last modified: 2023/10/04
+# Last modified: 2023/12/12
 # Project/Account
 #SBATCH --account=_R_PROJECT_@_R_ALLOC_
 # QoS/Partition/SubPartition
@@ -36,7 +36,7 @@
 # Array specifics
 SLURM_ARRAY_TASK_ID_LINE=$((SLURM_ARRAY_TASK_ID + 2))
 
-array_line=$(sed -n "${SLURM_ARRAY_TASK_ID_LINE}p" "job_array_params_lammps.lst")
+array_line=$(sed -n "${SLURM_ARRAY_TASK_ID_LINE}p" "job-array-params_lammps-deepmd_explore_gpu_jz.lst")
 IFS='/' read -ra array_param <<< "${array_line}"
 
 JOB_PATH=${array_param[0]}
