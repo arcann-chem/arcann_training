@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/12/12
+Last modified: 2023/12/13
 """
 # Standard library modules
 import importlib
@@ -427,7 +427,7 @@ def main(
                     )
 
                     del wannier_xyz[
-                        0 : 2 + main_json["system_auto"][system_auto]["nb_atm"]
+                        0 : 2 + main_json["systems_auto"][system_auto]["nb_atm"]
                     ]
                     wannier_xyz = [
                         " ".join(_.replace("\n", "").split()) for _ in wannier_xyz
@@ -861,7 +861,7 @@ def main(
                         )
 
                         del wannier_xyz[
-                            0 : 2 + main_json["system_auto"][system_auto]["nb_atm"]
+                            0 : 2 + main_json["systems_auto"][system_auto]["nb_atm"]
                         ]
                         wannier_xyz = [
                             " ".join(_.replace("\n", "").split()) for _ in wannier_xyz
@@ -948,7 +948,6 @@ def main(
         indexes,
         idx,
         is_wannier,
-        wannier_not_converged,
         lammps_data,
         type_atom_array,
     )
