@@ -94,6 +94,12 @@ python -m deepmd_iterative --help
 ```
 which should print the basic usage message of the code.
 
+**Note:** you can also install the program with:
+```bash
+pip install -e .
+```
+so that any modifications of the source files will be immediately effective on the execution of the program.
+
 <div id="machine"></div>
 
 ## Cluster setup
@@ -153,11 +159,41 @@ When training a neural network potential (NNP) for a chemical system (or several
 
 Finally, you also need to prepare at least one initial training dataset which will be used for your neural networks training. This follows DeePMD-kit standards and should contain a `type.raw` file and `set.000/` folder with `box.npy`, `coord.npy`, `energy.npy` and `force.npy` (see [DeePMD-kit documentation](https://docs.deepmodeling.com/projects/deepmd/en/master/)) You can prepare as many initial sets as you wish and they should all be stored in the `$WORK_DIR/data/` folder with a folder name starting with `init_`.
 
+
+<div id="usage-steps"></div>
+
+## Steps and Phases of the Iterative Procedure
+
+As will be described in more detail below, for every step of the iterative procedure, the usage of `deepmd_iterative` will follow the same workflow. For all the "phases" (see below) available in a given "step" (see below) you will execute a command of the type: 
+```
+python -m deepmd_iterative STEP_NAME PHASE_NAME 
+```
+where `STEP_NAME` is the name of the step that you are currently undergoing (`initialization`, `exploration`, `labeling` and `training`) and `PHASE_NAME` is an action that needs to be performed during this step. In the following tables we briefly describe the phases available in each step in the order in which they must be performed:
+
+### Exploration
+
+| Phase | Description |
+| --- | --- |
+| `prepare` | Prepare the folders for running the exploration MDs of every systems (it will automatically prepare all the input files for all the simulations that must be run for each system) | 
+| `launch` | Submit the MD simulation to the specified partition of the cluster. This is usually done with a slurm array |
+| `check` | Verify whether the exploration simulations have run and ended correctly. If some simulations finished abruptly for some reason it indicates which ones. The user can then `skip` or `force` those simulations (see [Exploration](#exploration)) |
+| `deviate` | Read the model deviation (maximal deviation between the atomic forces predicted by the committee of NN) along the trajectories of each system and identify which configurations are **candidates** (deviations within the user specified boundaries, see [Exploration](#exploration)) |
+| `extract` | Extract a user-defined number of candidate configurations per system (which will be written to a `SYSNAME/candidates_SYSNAME.xyz` file) to be labeled and added to the training set of the NNP |
+| `clean` | Remove files that will no longer be necessary (optional) |
+
+### Labeling
+
+
+
+
 <div id="usage-initialization"></div>
 
 ## Initialization
 
-Now that you have decided the subsystems that you want to train your NNP on and prepared all the files and DeePMD systems required you can initialize the `deepmd_iterative_py` procedure. For this go to `$WORK_DIR` and create to folders `inputs/` and `data/`. Copy your initial data sets (folders containing `type.raw` and `set.000/` folder) to the `data/` folder and add the prefix `init_` to their names. Copy all the input files and configurations that you prepared to the `inputs/` folder (respect the naming convention!). All you need to do now is copy the initialization script to your working directory (we assume that you installed or linked the github repo in your home directory):
+Now that you have decided the subsystems that you want to train your NNP on and prepared all the files and DeePMD systems required you can initialize the `deepmd_iterative_py` procedure. For this go to `$WORK_DIR`.
+
+
+All you need to do now is copy the initialization script to your working directory (we assume that you installed or linked the github repo in your home directory):
 ```
 cp ~/deepmd_iterative_py/scripts/initialization.py $WORK_DIR/.
 ```
