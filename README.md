@@ -28,9 +28,18 @@
 <!-- ABOUT THE PROJECT -->
 <div id="about"></div>
 
-## About The Project
+# About The Project
 
-Very fancy DeepMD-based semi-automatic highly-customizable iterative training procedure.
+"Very fancy DeePMD-based semi-automatic highly-customizable iterative training procedure" 
+would definitely be the best definition of this repository. It aims at simplifying and automatizing the iterative training process of a [DeePMD-kit](https://doi.org/10.1016/j.cpc.2018.03.016) neural network potential for a user-chosen system. The main advantages of this code are its modularity, the ability to finely tune the training process to adapt to your system and workflow and a great traceability as the code records every parameter set during the procedure. During the iterative training process, you will successively train neural network potentials, use them as reactive force-fields for molecular dynamics simulations (explore the phase space), select and label some configurations based on a *query by committee* approach, and train again neural network potentials with an improved training set, etc. This workflow, sometimes referred to as *active* or *concurrent* learning was heavily inspired by the [DP-GEN scheme](https://doi.org/10.1016/j.cpc.2020.107206) and we use their naming scheme for the "steps" of the iterative procedure. Namely, each iteration will consist of "training", "exploration", "labeling" and (optionally) "testing" phases. Make sure that you understand the meaning of each phase before using the code.
+
+This repository contains several folders:
+- `examples/` contains:
+  - an `inputs/` folder with 3 json files. These files contain all the keywords that can be given to each of the "steps" followed in an iteration (namely **exploration**, **labeling** and **training**), as well as their type and the default values taken by the code in case the keyword is not provided by the user. If the default is a list containing a single value it means that this value will be used for every **system** (see below). For the exploration step some keywords have 2 defau
+lt values, the first one will be used if the exploration is conducted with LAMMPS and the second one will be used with i-PI.  
+  - a `user_files/` folder with a `machine.json` file containing all the information about your cluster that the code will need (see [Cluster setup](#cluster-setup) below) and a `jobs/` folder with example `Slurm` submission files that will be used by the code to perform the different steps. You **must** to adapt these files so that they work in your machine, but careful not to modify the **replaceable** keywords (every word starting by `_R_`) that the different codes will replace by the user defined values (ex: wall time of labeling calculation, cluster partition to be used, etc.). This can be used as a starting point when using this semi-automatic procedure (see [Initialization](#initialization) below).
+- `tools/` contains different scripts needed by the code. We recommend that you do not modify its contents.
+- `deepmd_iterative/`: contains all the scripts that make the `deepmd_iterative` code. We recommend that you do not modify its contents.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
