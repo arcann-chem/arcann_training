@@ -53,12 +53,20 @@ lt values, the first one will be used if the exploration is conducted with LAMMP
 ### Prerequisites
 
 <!-- TODO: Prerequisites  -->
+For installation:
+* python >= 3.6 (all steps)
+* numpy>=1.17.3
+* setuptools>=40.8.0
+* wheel>=0.33.1
+* pip>=19.0.3
 
-* python >= 3.7.3
-* numpy >= 1.17.3
-* setuptools >= 40.8.0
-* atomsk >= beta-0.12.1 <!-- TODO: List of steps  -->
-* VMD >= 1.9.4 <!-- TODO: List of steps  -->
+External requirements for usage:
+* DeePMD-kit 2.0 (at least)
+* CP2K 7.1 (at least)
+* Slurm >= ? (cluster requirement)
+* VMD >= 1.9.3 (exploration5_extract)
+* Atomsk >= beta-0.11.2 (exploration5_extract)
+
 
 <div id="installation"></div>
 
