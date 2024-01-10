@@ -70,12 +70,57 @@ External requirements for usage:
 
 <div id="installation"></div>
 
-### Installation
+## Installation
 
-<!-- TODO: Installation  -->
+To use `deepmd_iterative_py` you first need to clone or download this repository using the `Code` green button on top right corner of the main page of this repository. We recommend that you keep a local copy of this repository on each computer that will be used to prepare, run or analyze any part of the iterative training process. This repository contains important files that are required at different stages of the process and should remain available at all time.
+
+After the download is complete, go to the main folder of the repository. Create a `python` environment (version 3.7.3 at least) containing `pip` with the following command:
 ```bash
-pip install -e .
+conda create -n ENVNAME python=3.7.3 pip
 ```
+Load this environment with `conda activate ENVNAME` and run:
+```bash
+pip install .
+```
+That's it, `deepmd_iterative` has now been installed as a module of your `ENVNAME` python environment ! To verify the installation you can run:
+```bash
+python -m deepmd_iterative --help
+```
+which should print the basic usage message of the code.
+
+<div id="machine"></div>
+
+## Cluster setup
+
+This repository was designed for use on Jean Zay (mainly) and Irene Rome, two national French calculators. For a different computer/supercomputer, only some changes need to be made as long as it runs on `Slurm` (if it does not, good luck...):
+- generate a `machine_file.json` for your cluster with the various parameters required to submit a `Slurm` job. This file will be placed in your iterative training working directory within the `user_files/` folder (NOT IN THE REPO's `user_files/` FOLDER ! see [Usage](#Usage)). To create this `machine_file.json` file you can copy the one installed with the github repo in your working directory. Let's have a look at a typical machine entry of a `machine_file.json` file:
+```json
+    "ir":
+    {
+        "hostname": "irene",
+        "walltime_format": "seconds",
+        "launch_command": "ccc_msub",
+        "cpu_gen7156": {
+            "project_name": "gen7156",
+            "allocation_name": "rome",
+            "arch_name": "cpu",
+            "arch_type": "cpu",
+            "partition": null,
+            "subpartition": null,
+            "qos": {"normal": 86400, "long": 259200},
+            "valid_for": ["labeling"],
+            "default": ["labeling"]
+        }
+    },
+```
+Each entry of the `.json` file is a short string designating the name of the machine (here "ir" for Irene-Rome). The associated entry contains several keywords:
+  - `"hostname"` is a substring contained in the output of the following command `python -c "import socket ; print(socket.gethostname())"` which should be indicative of your machine's name.
+  - `"walltime_format"` is the time unit in which the wall time must be indicated to the cluster.
+  - `"launch_command"` is the `bash` command used for submitting jobs to your cluster (typically `sbatch` in normal `Slurm` setups, but as you see in the example you can adapt it to match your cluster requirements)
+  - The next keyword is the key name of a partition, it should contain all the information needed to run a job in that partition of your cluster (the names of the keywords are quite self explanatory). The keyword `"valid_for"` indicates the steps of the procedures that can be performed in this partition (possible options are: `["training","freezing","compressing","exploration","test","test_graph","labeling"]`). The `"default"` keyword indicates that this partition of the machine is the default to be used (if not indicated by the user) for the indicated steps. You can add as many partition keywords as you want.
+
+Finally, in order to use your cluster you will need to provide example submission files adequate for your machine (in the same style as those provided in `examples/user_files/jobs/` and **keeping the replaceable strings**) in the `user_files/` folder that you will need to create to use `deepmd_iterative` for a given system (see [Usage](#Usage).) 
+
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
