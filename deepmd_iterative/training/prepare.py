@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/20
+Last modified: 2024/01/12
 """
 # Standard library modules
 import copy
@@ -81,6 +81,8 @@ def main(
         deepmd_iterative_path / "assets" / "default_config.json"
     )[current_step]
     default_input_json_present = bool(default_input_json)
+    if default_input_json_present and not (current_path / "default_input.json").is_file():
+        write_json_file(default_input_json, (current_path / "default_input.json"))
     logging.debug(f"default_input_json: {default_input_json}")
     logging.debug(f"default_input_json_present: {default_input_json_present}")
 
@@ -210,6 +212,7 @@ def main(
             f"dptrain_{training_json['deepmd_model_version']}_{training_json['deepmd_model_type_descriptor']}.json"
         )
     ).resolve()
+
     dp_train_input = load_json_file(dp_train_input_path)
     main_json["type_map"] = {}
     main_json["type_map"] = dp_train_input["model"]["type_map"]
