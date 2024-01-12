@@ -387,7 +387,7 @@ where the reactive water calculations use full nodes and have a higher wall time
 
 ## Test (optional)
 
-<!-- TODO test-->
+It is possible to perform tests at every iteration of the learning procedure (the code will create `XXX-test/` folders at every `increment` phase of a `training` step). However, doing this at every iteration is rather time consuming and is not really necessary (although you should obviously test your converged NNP thoroughly). Therefore, documentation on how to test at every iteration within the `deepmd_iterative` procedure is still not ready, sorry!
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
