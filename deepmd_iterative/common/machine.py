@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2024/02/15
 
 The machine module provides functions for machine operations.
 
@@ -208,9 +208,9 @@ def get_machine_config_files(
         machine_configs.append(load_json_file(training_config_path))
 
     # Check for 'machine.json' file in the deepmd_iterative directory.
-    default_config_path = deepmd_iterative_path / "assets" / "machine.json"
-    if default_config_path.is_file():
-        machine_configs.append(load_json_file(default_config_path))
+    # default_config_path = deepmd_iterative_path / "assets" / "machine.json"
+    # if default_config_path.is_file():
+    #     machine_configs.append(load_json_file(default_config_path))
 
     # If no 'machine.json' file is found, raise a FileNotFoundError.
     if not machine_configs:

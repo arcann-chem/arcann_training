@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2023/09/04
-Last modified: 2023/09/04
+Last modified: 2024/02/15
 
 Test cases for the machine module.
 
@@ -247,10 +247,6 @@ class TestGetMachineFromConfigs(unittest.TestCase):
         ]
         with self.assertRaises(ValueError):
             get_machine_from_configs(machine_configs)
-
-
-if __name__ == "__main__":
-    unittest.main()
 
 
 if __name__ == "__main__":
