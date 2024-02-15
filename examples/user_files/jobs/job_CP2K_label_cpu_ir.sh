@@ -8,26 +8,24 @@
 # Created: 2022/01/01
 # Last modified: 2024/02/15
 # Project/Account
-#SBATCH --account=_R_PROJECT_@_R_ALLOC_
+#MSUB -A _R_PROJECT_
+#MSUB -q _R_ALLOC_
 # QoS/Partition/SubPartition
-#SBATCH --qos=_R_QOS_
-#SBATCH --partition=_R_PARTITION_
-#SBATCH -C _R_SUBPARTITION_
+#MSUB -Q _R_QOS_
+#MSUB -m scratch,work,store
 # Number of Nodes/MPIperNodes/OpenMPperMPI/GPU
-#SBATCH --nodes _R_nb_NODES_
-#SBATCH --ntasks-per-node _R_nb_MPIPERNODE_
-#SBATCH --cpus-per-task _R_nb_THREADSPERMPI_
-#SBATCH --hint=nomultithread
+#MSUB -N _R_nb_NODES_
+#MSUB -n _R_nb_MPI_
+#MSUB -c _R_nb_THREADSPERMPI_
 # Walltime
-#SBATCH -t _R_WALLTIME_
+#MSUB -T _R_WALLTIME_
 # Merge Output/Error
-#SBATCH -o CP2K.%j
-#SBATCH -e CP2K.%j
+#MSUB -o CP2K.%j
+#MSUB -e CP2K.%j
 # Name of job
-#SBATCH -J _R_CP2K_JOBNAME_
+#MSUB -r _R_CP2K_JOBNAME_
 # Email
-#SBATCH --mail-type FAIL,BEGIN,END,ALL
-#SBATCH --mail-user _R_EMAIL_
+#MSUB -@ _R_EMAIL_:begin,end
 #
 
 # Input file (extension is automatically added as .inp for INPUT, wfn for WFRST, restart for MDRST)
@@ -39,20 +37,15 @@ CP2K_XYZ_F="labeling_XXXXX.xyz"
 #----------------------------------------------
 ## Nothing needed to be changed past this point
 
-# Project Switch and update SCRATCH
-PROJECT_NAME=${SLURM_JOB_ACCOUNT:0:3}
-eval "$(idrenv -d "${PROJECT_NAME}")"
-# Compare PROJECT_NAME and IDRPROJ for inequality
-if [[ "${PROJECT_NAME}" != "${IDRPROJ}" ]]; then
-    SCRATCH=${SCRATCH/${IDRPROJ}/${PROJECT_NAME}}
-fi
+# Project Switch
+module purge
+module switch dfldatadir/_R_PROJECT_
 
 # Go where the job has been launched
 cd "${SLURM_SUBMIT_DIR}" || exit 1
 
 # Load the environment depending on the version
-module purge
-module load cp2k/6.1-mpi-popt
+module load intel/20 mpi/openmpi/4 flavor/cp2k/xc cp2k/8.2
 
 if [ "$(command -v cp2k.psmp)" ]; then
     CP2K_EXE=$(command -v cp2k.psmp)
@@ -71,7 +64,7 @@ if [ ! -f "${CP2K_INPUT_F1}".inp ]; then echo "No input file found. Aborting..."
 if [ ! -f "${CP2K_INPUT_F2}".inp ]; then echo "No input file found. Aborting..."; exit 1; fi
 
 # Set the temporary work directory
-export TEMPWORKDIR=${SCRATCH}/JOB-${SLURM_JOBID}
+export TEMPWORKDIR=${CCCSCRATCHDIR}/JOB-${SLURM_JOBID}
 mkdir -p "${TEMPWORKDIR}"
 ln -s "${TEMPWORKDIR}" "${SLURM_SUBMIT_DIR}"/JOB-"${SLURM_JOBID}"
 
@@ -98,13 +91,13 @@ echo "Running ${SLURM_NTASKS} task(s), with ${SLURM_NTASKS_PER_NODE} task(s) per
 echo "Running with ${SLURM_CPUS_PER_TASK} thread(s) per task."
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 
-SRUN_CP2K_EXE="srun --ntasks=${SLURM_NTASKS} --nodes=${SLURM_NNODES} --ntasks-per-node=${SLURM_NTASKS_PER_NODE} --cpus-per-task=${SLURM_CPUS_PER_TASK} ${CP2K_EXE}"
+CCC_MPRUN_CP2K_EXE="ccc_mprun ${CP2K_EXE}"
 
 # Launch command
 export EXIT_CODE="0"
-${SRUN_CP2K_EXE} -i "${CP2K_INPUT_F1}".inp > "${CP2K_INPUT_F1}".out || export EXIT_CODE="1"
+${CCC_MPRUN_CP2K_EXE} -i "${CP2K_INPUT_F1}".inp > "${CP2K_INPUT_F1}".out || export EXIT_CODE="1"
 cp "${CP2K_WFRST_F}.wfn" "1_${CP2K_WFRST_F}.wfn"
-${SRUN_CP2K_EXE} -i "${CP2K_INPUT_F2}".inp > "${CP2K_INPUT_F2}".out || export EXIT_CODE="1"
+${CCC_MPRUN_CP2K_EXE} -i "${CP2K_INPUT_F2}".inp > "${CP2K_INPUT_F2}".out || export EXIT_CODE="1"
 cp "${CP2K_WFRST_F}.wfn" "2_${CP2K_WFRST_F}.wfn"
 echo "# [$(date)] Ended"
 

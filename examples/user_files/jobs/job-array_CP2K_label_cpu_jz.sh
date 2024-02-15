@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 # Created: 2022/01/01
-# Last modified: 2023/10/09
+# Last modified: 2024/02/15
 # Project/Account
 #SBATCH --account=_R_PROJECT_@_R_ALLOC_
 # QoS/Partition/SubPartition
@@ -33,7 +33,8 @@
 #
 
 # Array specifics
-SLURM_ARRAY_TASK_ID_PADDED=$(printf "%05d\n" "${SLURM_ARRAY_TASK_ID}")
+SLURM_ARRAY_TASK_ID_LARGE=$((SLURM_ARRAY_TASK_ID + _R_NEW_START_))
+SLURM_ARRAY_TASK_ID_PADDED=$(printf "%05d\n" "${SLURM_ARRAY_TASK_ID_LARGE}")
 
 # Input file (extension is automatically added as .inp for INPUT, wfn for WFRST, restart for MDRST)
 CP2K_INPUT_F1="1_labeling_${SLURM_ARRAY_TASK_ID_PADDED}"
@@ -121,6 +122,15 @@ rmdir "${TEMPWORKDIR}" 2> /dev/null || echo "Leftover files on ${TEMPWORKDIR}"
 
 # Done
 echo "Have a nice day !"
+
+# Logic to launch the next job
+
+if [ "${SLURM_ARRAY_TASK_ID}" == "_R_ARRAY_END_" ]; then
+    if [ "_R_LAUNCHNEXT_" == "1" ]; then
+        cd "_R_CD_WHERE_" || exit 1
+        sbatch job_labeling_array_cpu_jz__R_NEXT_JOB_FILE_.sh
+    fi
+fi
 
 # A small pause before SLURM savage clean-up
 sleep 5

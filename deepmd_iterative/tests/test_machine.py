@@ -17,7 +17,7 @@ TestGetHostName():
 
 TestAssertSameMachine():
     Test cases for the 'assert_same_machine' function.
-    
+
 TestGetMachineKeyword():
     Test cases for the 'get_machine_keyword' function.
 
@@ -93,32 +93,33 @@ class TestAssertSameMachine(unittest.TestCase):
 
     Methods
     -------
-    test_matching_machine_names():
-        Test case with matching machine names.
-    test_non_matching_machine_names():
-        Test case with non-matching machine names.
+    test_matching_machine_keyword():
+        Test case with matching machine keyword.
+    test_non_matching_machine_keyword():
+        Test case with non-matching machine keyword.
     """
 
-    def test_matching_machine_names(self):
+    def test_matching_machine_keyword(self):
         """
-        Test case with matching machine names.
+        Test case with matching machine keyword.
         """
-        expected_machine = "expected_machine"
-        machine_config = {"machine": "expected_machine"}
-
-        assert_same_machine(expected_machine, machine_config)
+        user_machine_keyword = "machine1"
+        control_json = {"user_machine_keyword_step1": "machine1"}
+        step = "step1"
 
         # No assertions needed since the function should not raise an exception
+        assert_same_machine(user_machine_keyword, control_json, step)
 
-    def test_non_matching_machine_names(self):
+    def test_non_matching_machine_keyword(self):
         """
-        Test case with non-matching machine names.
+        Test case with non-matching machine keyword.
         """
-        expected_machine = "expected_machine"
-        machine_config = {"machine": "different_machine"}
+        user_machine_keyword = "machine1"
+        control_json = {"user_machine_keyword_step1": "machine2"}
+        step = "step1"
 
         with self.assertRaises(ValueError):
-            assert_same_machine(expected_machine, machine_config)
+            assert_same_machine(user_machine_keyword, control_json, step)
 
 
 class TestGetMachineKeyword(unittest.TestCase):
