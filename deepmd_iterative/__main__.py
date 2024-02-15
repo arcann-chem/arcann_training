@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/08/21
+Last modified: 2024/02/15
 """
 # Standard library modules
 import argparse
@@ -77,6 +77,19 @@ if __name__ == "__main__":
     logging.info(f"Launching: {step_name.capitalize()} - {phase_name.capitalize()}")
     logging.info(f"-" * 88)
     logging.info(f"-" * 88)
+
+    steps = ['initialization', 'training', 'exploration', 'labeling']
+    valid_phases = {}
+    for step in steps:
+        step_path = deepmd_iterative_path / step
+        files = [f.stem for f in step_path.iterdir() if f.is_file() and f.suffix == '.py' and f.stem not in ['__init__', 'utils']]
+        valid_phases[step] = files
+
+    if step_name not in steps:
+        parser.error(f'Invalid step. Valid steps are: {steps}')
+
+    if phase_name not in valid_phases.get(step_name, []):
+        parser.error(f'Invalid phase for step {step_name}. Valid phases are: {valid_phases[step_name]}')
 
     # Launch the module
     try:
