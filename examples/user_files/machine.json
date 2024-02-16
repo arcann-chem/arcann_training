@@ -6,7 +6,7 @@
         "job_scheduler": "slurm",
         "launch_command": "sbatch",
         "max_jobs" : -1,
-        "max_array_size" : 20000,
+        "max_array_size" : 10000,
         "a100_kro": {
             "project_name": "kro",
             "allocation_name": "a100",

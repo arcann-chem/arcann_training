@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 # Created: 2022/01/01
-# Last modified: 2024/02/15
+# Last modified: 2024/02/16
 # Project/Account
 #SBATCH --account=_R_PROJECT_@_R_ALLOC_
 # QoS/Partition/SubPartition
@@ -124,7 +124,6 @@ rmdir "${TEMPWORKDIR}" 2> /dev/null || echo "Leftover files on ${TEMPWORKDIR}"
 echo "Have a nice day !"
 
 # Logic to launch the next job
-
 if [ "${SLURM_ARRAY_TASK_ID}" == "_R_ARRAY_END_" ]; then
     if [ "_R_LAUNCHNEXT_" == "1" ]; then
         cd "_R_CD_WHERE_" || exit 1

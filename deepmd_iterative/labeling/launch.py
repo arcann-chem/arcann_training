@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/15
+Last modified: 2024/02/16
 """
 # Standard library modules
 import copy
@@ -164,40 +164,32 @@ def main(
 
     # Launch the jobs
     launched_count = 0
+    stop_launch_flag = False
 
     for system_auto in labeling_json["systems_auto"]:
         system_path = current_path / system_auto
+        if stop_launch_flag :
+            logging.info(f"Labeling - '{system_auto}' skipped (launch_all_jobs = False).")
+            launched_count += 1
+            continue
 
-        if (
-            system_path
-            / f"job-array_CP2K_label_{machine_spec['arch_type']}_{machine}.sh"
-        ).is_file():
+        if (system_path/ f"job-array_CP2K_label_{machine_spec['arch_type']}_{machine}_0.sh").is_file():
             change_directory(system_path)
-
             try:
-                subprocess.run(
-                    [
-                        machine_launch_command,
-                        f"./job-array_CP2K_label_{machine_spec['arch_type']}_{machine}.sh",
-                    ]
-                )
+                #subprocess.run([machine_launch_command, f"./job-array_CP2K_label_{machine_spec['arch_type']}_{machine}_0.sh"])
                 logging.info(f"Labeling - '{system_auto}' launched.")
                 launched_count += 1
-            except FileNotFoundError:
-                logging.critical(
-                    f"Labeling - '{system_auto}' NOT launched - '{machine_launch_command}' not found."
-                )
+                if not labeling_json["launch_all_jobs"]:
+                    stop_launch_flag = True
+            except:
+                logging.critical(f"Labeling - '{system_auto}' NOT launched - EXCEPTION.")
             change_directory(system_path.parent)
         else:
             if labeling_json["systems_auto"][system_auto]["candidates_count"] == 0:
-                logging.info(
-                    f"Labeling - '{system_auto}' skipped (no candidates to label)."
-                )
+                logging.info(f"Labeling - '{system_auto}' skipped (no candidates to label).")
                 launched_count += 1
             else:
-                logging.critical(
-                    f"Labeling - '{system_auto}' NOT launched - No job file."
-                )
+                logging.critical(f"Labeling - '{system_auto}' NOT launched - No job file.")
 
         del system_path
     del system_auto
