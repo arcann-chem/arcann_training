@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/15
+Last modified: 2024/02/16
 """
 # Standard library modules
 import copy
@@ -112,7 +112,7 @@ def main(
     ) = get_machine_spec_for_step(
         deepmd_iterative_path,
         training_path,
-        current_step,
+        "exploration",
         fake_machine,
         user_machine_keyword,
     )
