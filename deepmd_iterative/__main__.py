@@ -6,8 +6,9 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/15
+Last modified: 2024/02/16
 """
+
 # Standard library modules
 import argparse
 import importlib
@@ -68,7 +69,7 @@ if __name__ == "__main__":
     else:
         fake_cluster = None
 
-    del args, parser
+    del args
 
     # Start
     logging.info(f"-" * 88)
@@ -78,36 +79,42 @@ if __name__ == "__main__":
     logging.info(f"-" * 88)
     logging.info(f"-" * 88)
 
-    steps = ['initialization', 'training', 'exploration', 'labeling']
+    steps = ["initialization", "training", "exploration", "labeling"]
     valid_phases = {}
     for step in steps:
         step_path = deepmd_iterative_path / step
-        files = [f.stem for f in step_path.iterdir() if f.is_file() and f.suffix == '.py' and f.stem not in ['__init__', 'utils']]
+        files = [
+            f.stem
+            for f in step_path.iterdir()
+            if f.is_file() and f.suffix == ".py" and f.stem not in ["__init__", "utils"]
+        ]
         valid_phases[step] = files
 
     if step_name not in steps:
-        parser.error(f'Invalid step. Valid steps are: {steps}')
-
-    if phase_name not in valid_phases.get(step_name, []):
-        parser.error(f'Invalid phase for step {step_name}. Valid phases are: {valid_phases[step_name]}')
-
-    # Launch the module
-    try:
-        submodule = importlib.import_module(submodule_name)
-        exit_code = submodule.main(
-            step_name, phase_name, deepmd_iterative_path, fake_cluster, input_fn
-        )
-        del submodule, submodule_name
-    except ModuleNotFoundError as e:
+        logging.error(f"Invalid step. Valid steps are: {steps}")
+        logging.error(f"Aborting...")
         exit_code = 1
+        exit(exit_code)
+
+    elif phase_name not in valid_phases.get(step_name, []):
         logging.error(
-            f"Step/Phase: '{submodule_name.split('.')[-2]} / {submodule_name.split('.')[-1]}' are not a valid combination."
+            f"Invalid phase for step {step_name}. Valid phases are: {valid_phases[step_name]}"
         )
         logging.error(f"Aborting...")
-        logging.error(f"{e}")
-    except Exception as e:
-        logging.error(f"{e}")
         exit_code = 1
+        exit(exit_code)
+
+    # Launch the module
+    else:
+        try:
+            submodule = importlib.import_module(submodule_name)
+            exit_code = submodule.main(
+                step_name, phase_name, deepmd_iterative_path, fake_cluster, input_fn
+            )
+            del submodule, submodule_name
+        except Exception as e:
+            logging.error(f"{e}")
+            exit_code = 1
 
     del deepmd_iterative_path, fake_cluster, input_fn
 
