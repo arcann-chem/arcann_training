@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/15
+Last modified: 2024/02/16
 """
 # Standard library modules
 import copy
@@ -15,14 +15,14 @@ import sys
 from copy import deepcopy
 from pathlib import Path
 
+# Non-standard library imports
+import numpy as np
+
 # Local imports
 from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.labeling.utils import (
     generate_input_labeling_json,
     get_system_labeling,
-)
-from deepmd_iterative.common.filesystem import (
-    check_file_existence,
 )
 from deepmd_iterative.common.json import (
     backup_and_overwrite_json_file,
@@ -138,7 +138,6 @@ def main(
         fake_machine,
         user_machine_keyword,
     )
-    arch_type = machine_spec["arch_type"]
     logging.debug(f"machine: {machine}")
     logging.debug(f"machine_walltime_format: {machine_walltime_format}")
     logging.debug(f"machine_job_scheduler: {machine_job_scheduler}")
@@ -185,8 +184,8 @@ def main(
     }
 
     # Check if the job file exists
-    job_file_array_name = f"job-array_CP2K_label_{arch_type}_{machine}.sh"
-    job_file_name = f"job_CP2K_label_{arch_type}_{machine}.sh"
+    job_file_array_name = f"job-array_CP2K_label_{machine_spec['arch_type']}_{machine}.sh"
+    job_file_name = f"job_CP2K_label_{machine_spec['arch_type']}_{machine}.sh"
 
     # 0 is array, 1 is individual
     master_job_file = {}
@@ -343,72 +342,77 @@ def main(
         del walltime_approx_s
 
         # TODO Logic to put the array slurm HERE
-        if total_to_label <= machine_spec["machine_max_array_size"]:
+        if machine_spec["machine_max_jobs"] <= 0:
+            machine_spec["machine_max_jobs"] = np.inf
+
+        system_master_job_file[0] = replace_substring_in_string_list(system_master_job_file[0], "_R_CP2K_JOBNAME_", f"CP2K_{system_auto}_{padded_curr_iter}")
+
+        if labeling_count <= machine_spec["machine_max_array_size"]:
             system_master_job_file[0] = replace_substring_in_string_list(system_master_job_file[0], "_R_NEW_START_", "0")
-            if total_to_label <= machine_spec["machine_max_jobs"]:
-                system_master_job_file[0] = replace_substring_in_string_list(system_master_job_file[0], "_R_ARRAY_START_", "1")
-                system_master_job_file[0] = replace_substring_in_string_list(system_master_job_file[0], "_R_ARRAY_END_", str(total_to_label))
+
+            if labeling_count <= machine_spec["machine_max_jobs"]:
+                system_master_job_file[0] = replace_substring_in_string_list(system_master_job_file[0], "_R_ARRAY_START_", "0")
+                system_master_job_file[0] = replace_substring_in_string_list(system_master_job_file[0], "_R_ARRAY_END_", f"{labeling_count}")
                 if system_auto_index != len(exploration_json["systems_auto"]) - 1:
                     system_master_job_file[0] = replace_substring_in_string_list(system_master_job_file[0], "_R_LAUNCHNEXT_", "1")
                     system_master_job_file[0] = replace_substring_in_string_list(system_master_job_file[0], "_R_NEXT_JOB_FILE_", "0")
                     system_master_job_file[0] = replace_substring_in_string_list(system_master_job_file[0], "_R_CD_WHERE_", "${SLURM_SUBMIT_DIR}/../"+exploration_json["systems_auto"][system_auto_index+1])
                 else:
                     True
-                string_list_to_textfile(system_path / f"job-array_CP2K_label_{arch_type}_{machine}.sh", system_master_job_file[0])
-
+                string_list_to_textfile(system_path / f"job-array_CP2K_label_{machine_spec['arch_type']}_{machine}_0.sh", system_master_job_file[0])
             else:
                 slurm_file_array_subsys_dict={}
-                quotient = total_to_label // machine_spec["machine_max_jobs"]
-                remainder = total_to_label % machine_spec["machine_max_jobs"]
-
-                for i in range(0,quotient+1):
+                quotient = labeling_count // machine_spec["machine_max_jobs"]
+                remainder = labeling_count % machine_spec["machine_max_jobs"]
+                for i in range(0, quotient+1):
                     if i < quotient:
-                        slurm_file_array_subsys_dict[i] = replace_substring_in_string_list(system_master_job_file[0], "_R_ARRAY_START_", str(machine_spec["machine_max_jobs"]*i + 1))
-                        slurm_file_array_subsys_dict[i] = replace_substring_in_string_list(slurm_file_array_subsys_dict[i], "_R_ARRAY_END_", str(machine_spec["machine_max_jobs"]*(i+1)))
+                        slurm_file_array_subsys_dict[i] = replace_substring_in_string_list(system_master_job_file[0], "_R_ARRAY_START_", f"{machine_spec['machine_max_jobs'] * i + 1}")
+                        slurm_file_array_subsys_dict[i] = replace_substring_in_string_list(slurm_file_array_subsys_dict[i], "_R_ARRAY_END_", f"{machine_spec['machine_max_jobs'] * (i + 1)}")
                         slurm_file_array_subsys_dict[i] = replace_substring_in_string_list(slurm_file_array_subsys_dict[i], "_R_LAUNCHNEXT_", "1")
-                        slurm_file_array_subsys_dict[i] = replace_substring_in_string_list(slurm_file_array_subsys_dict[i], "_R_NEXT_JOB_FILE_", "0")
+                        slurm_file_array_subsys_dict[i] = replace_substring_in_string_list(slurm_file_array_subsys_dict[i], "_R_NEXT_JOB_FILE_", f"{i + 1}")
                         slurm_file_array_subsys_dict[i] = replace_substring_in_string_list(slurm_file_array_subsys_dict[i], "_R_CD_WHERE_", "${SLURM_SUBMIT_DIR}")
-                        string_list_to_textfile(system_path / f"job-array_CP2K_label_{arch_type}_{machine}_{i}.sh", slurm_file_array_subsys_dict[i])
+                        string_list_to_textfile(system_path / f"job-array_CP2K_label_{machine_spec['arch_type']}_{machine}_{i}.sh", slurm_file_array_subsys_dict[i])
                     else:
-                        slurm_file_array_subsys_dict[i] = replace_substring_in_string_list(system_master_job_file[0], "_R_ARRAY_START_", str(machine_spec["machine_max_jobs"]*i + 1))
-                        slurm_file_array_subsys_dict[i] = replace_substring_in_string_list(slurm_file_array_subsys_dict[i], "_R_ARRAY_END_", str(machine_spec["machine_max_jobs"]*i + remainder))
+                        slurm_file_array_subsys_dict[i] = replace_substring_in_string_list(system_master_job_file[0], "_R_ARRAY_START_", f"{machine_spec['machine_max_jobs'] * i + 1}")
+                        slurm_file_array_subsys_dict[i] = replace_substring_in_string_list(slurm_file_array_subsys_dict[i], "_R_ARRAY_END_", f"{machine_spec['machine_max_jobs'] * (i + remainder)}")
                         if system_auto_index != len(exploration_json["systems_auto"]) - 1:
                             slurm_file_array_subsys_dict[i] = replace_substring_in_string_list(slurm_file_array_subsys_dict[i], "_R_LAUNCHNEXT_", "1")
                             slurm_file_array_subsys_dict[i] = replace_substring_in_string_list(slurm_file_array_subsys_dict[i], "_R_NEXT_JOB_FILE_", "0")
                             slurm_file_array_subsys_dict[i] = replace_substring_in_string_list(slurm_file_array_subsys_dict[i], "_R_CD_WHERE_", "${SLURM_SUBMIT_DIR}/../"+exploration_json["systems_auto"][system_auto_index+1])
                         else:
                             True
-                        string_list_to_textfile(system_path / f"job-array_CP2K_label_{arch_type}_{machine}_{i}.sh", slurm_file_array_subsys_dict[i])
+                        string_list_to_textfile(system_path / f"job-array_CP2K_label_{machine_spec['arch_type']}_{machine}_{i}.sh", slurm_file_array_subsys_dict[i])
                 del quotient, remainder, i
                 del slurm_file_array_subsys_dict
+
         else:
             slurm_file_array_subsys_dict={}
-            quotient = total_to_label // machine_spec["machine_max_array_size"]
-            remainder = total_to_label % machine_spec["machine_max_array_size"]
+            quotient = labeling_count // machine_spec["machine_max_array_size"]
+            remainder = labeling_count % machine_spec["machine_max_array_size"]
             m = 0
             for i in range(0,quotient+1):
                 if i < quotient:
                     for j in range(0,machine_spec["machine_max_array_size"] // machine_spec["machine_max_jobs"]):
-                        slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(system_master_job_file[0], "_R_NEW_START", str(machine_spec["machine_max_array_size"]*i))
-                        slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(slurm_file_array_subsys_dict[m], "_R_ARRAY_START_", str(machine_spec["machine_max_jobs"]*j + 1))
-                        slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(slurm_file_array_subsys_dict[m], "_R_ARRAY_END_", str(machine_spec["machine_max_jobs"]*(j+1)))
+                        slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(system_master_job_file[0], "_R_NEW_START", f"{machine_spec['machine_max_jobs'] * i}")
+                        slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(slurm_file_array_subsys_dict[m], "_R_ARRAY_START_", f"{machine_spec['machine_max_jobs'] * j + 1}")
+                        slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(slurm_file_array_subsys_dict[m], "_R_ARRAY_END_", f"{machine_spec['machine_max_jobs'] * (j + 1)}")
                         slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(slurm_file_array_subsys_dict[m], "_R_LAUNCHNEXT_", "1")
-                        slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(slurm_file_array_subsys_dict[m], "_R_NEXT_JOB_FILE_", "0")
+                        slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(slurm_file_array_subsys_dict[m], "_R_NEXT_JOB_FILE_", f"{m + 1}")
                         slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(slurm_file_array_subsys_dict[m], "_R_CD_WHERE_", "${SLURM_SUBMIT_DIR}")
-                        string_list_to_textfile(system_path / f"job-array_CP2K_label_{arch_type}_{machine}_{m}.sh", slurm_file_array_subsys_dict[m])
+                        string_list_to_textfile(system_path / f"job-array_CP2K_label_{machine_spec['arch_type']}_{machine}_{m}.sh", slurm_file_array_subsys_dict[m])
                         m += 1
                 else:
                     quotient2 = remainder // machine_spec["machine_max_jobs"]
                     remainder2 = remainder % machine_spec["machine_max_jobs"]
                     for j in range(0,quotient2+1):
                         if j < quotient2:
-                            slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(system_master_job_file[0], "_R_NEW_START", str(machine_spec["machine_max_array_size"]*i))
-                            slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(slurm_file_array_subsys_dict[m], "_R_ARRAY_START_", str(machine_spec["machine_max_jobs"]*j + 1))
-                            slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(slurm_file_array_subsys_dict[m], "_R_ARRAY_END_", str(machine_spec["machine_max_jobs"]*(j+1)))
+                            slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(system_master_job_file[0], "_R_NEW_START", f"{machine_spec['machine_max_jobs'] * i}")
+                            slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(slurm_file_array_subsys_dict[m], "_R_ARRAY_START_", f"{machine_spec['machine_max_jobs'] * j + 1}")
+                            slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(slurm_file_array_subsys_dict[m], "_R_ARRAY_END_", f"{machine_spec['machine_max_jobs'] * (j + 1)}")
                             slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(slurm_file_array_subsys_dict[m], "_R_LAUNCHNEXT_", "1")
-                            slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(slurm_file_array_subsys_dict[m], "_R_NEXT_JOB_FILE_", str(m+1))
+                            slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(slurm_file_array_subsys_dict[m], "_R_NEXT_JOB_FILE_", f"{m + 1}")
                             slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(slurm_file_array_subsys_dict[m], "_R_CD_WHERE_", "${SLURM_SUBMIT_DIR}")
-                            string_list_to_textfile(system_path / f"job-array_CP2K_label_{arch_type}_{machine}_{m}.sh", slurm_file_array_subsys_dict[m])
+                            string_list_to_textfile(system_path / f"job-array_CP2K_label_{machine_spec['arch_type']}_{machine}_{m}.sh", slurm_file_array_subsys_dict[m])
                             m += 1
                         else:
                             slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(system_master_job_file[0], "_R_NEW_START", str(machine_spec["machine_max_array_size"]*i))
@@ -420,26 +424,26 @@ def main(
                                 slurm_file_array_subsys_dict[m] = replace_substring_in_string_list(slurm_file_array_subsys_dict[m], "_R_CD_WHERE_", "${SLURM_SUBMIT_DIR}/../"+exploration_json["systems_auto"][system_auto_index+1])
                             else:
                                 True
-                            string_list_to_textfile(system_path / f"job-array_CP2K_label_{arch_type}_{machine}_{m}.sh", slurm_file_array_subsys_dict[m])
+                            string_list_to_textfile(system_path / f"job-array_CP2K_label_{machine_spec['arch_type']}_{machine}_{m}.sh", slurm_file_array_subsys_dict[m])
                             m += 1
             del quotient, remainder, quotient2, remainder2, i, j
 
-        system_master_job_file[0] = replace_substring_in_string_list(
-            system_master_job_file[0], "_R_ARRAY_START_", "0"
-        )
-        system_master_job_file[0] = replace_substring_in_string_list(
-            system_master_job_file[0], "_R_ARRAY_END_", f"{labeling_count-1}"
-        )
-        system_master_job_file[0] = replace_substring_in_string_list(
-            system_master_job_file[0],
-            "_R_CP2K_JOBNAME_",
-            f"CP2K_{system_auto}_{padded_curr_iter}",
-        )
+        # system_master_job_file[0] = replace_substring_in_string_list(
+        #     system_master_job_file[0], "_R_ARRAY_START_", "0"
+        # )
+        # system_master_job_file[0] = replace_substring_in_string_list(
+        #     system_master_job_file[0], "_R_ARRAY_END_", f"{labeling_count-1}"
+        # )
+        # system_master_job_file[0] = replace_substring_in_string_list(
+        #     system_master_job_file[0],
+        #     "_R_CP2K_JOBNAME_",
+        #     f"CP2K_{system_auto}_{padded_curr_iter}",
+        # )
 
-        string_list_to_textfile(
-            system_path / f"job-array_CP2K_label_{arch_type}_{machine}.sh",
-            system_master_job_file[0],
-        )
+        # string_list_to_textfile(
+        #     system_path / f"job-array_CP2K_label_{machine_spec['arch_type']}_{machine}.sh",
+        #     system_master_job_file[0],
+        # )
 
         # Labeling input first job
         system_first_job_input = textfile_to_string_list(
@@ -530,7 +534,7 @@ def main(
             )
             string_list_to_textfile(
                 labeling_step_path
-                / f"job_CP2K_label_{padded_labeling_step}_{arch_type}_{machine}.sh",
+                / f"job_CP2K_label_{padded_labeling_step}_{machine_spec['arch_type']}_{machine}.sh",
                 job_file_t,
             )
             del job_file_t
@@ -615,7 +619,7 @@ def main(
                 )
                 string_list_to_textfile(
                     labeling_step_path
-                    / f"job_CP2K_label_{padded_labeling_step}_{arch_type}_{machine}.sh",
+                    / f"job_CP2K_label_{padded_labeling_step}_{machine_spec['arch_type']}_{machine}.sh",
                     job_file_t,
                 )
                 del job_file_t
@@ -685,7 +689,7 @@ def main(
     del total_to_label
 
     string_list_to_textfile(
-        current_path / f"job-array-params_CP2K_label_{arch_type}_{machine}.lst",
+        current_path / f"job-array-params_CP2K_label_{machine_spec['arch_type']}_{machine}.lst",
         job_array_params_file["cp2k"],
     )
 

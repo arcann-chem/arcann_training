@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/06
+Last modified: 2024/02/16
 
 The slurm module provides functions to manipulate SLURM data (as list of strings).
 

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/10/13
+Last modified: 2024/02/15
 """
 # Standard library modules
 import copy
@@ -105,20 +105,23 @@ def main(
         machine_walltime_format,
         machine_job_scheduler,
         machine_launch_command,
+        machine_max_jobs,
+        machine_max_array_size,
         user_machine_keyword,
         machine_spec,
     ) = get_machine_spec_for_step(
         deepmd_iterative_path,
         training_path,
-        "exploration",
+        current_step,
         fake_machine,
         user_machine_keyword,
     )
-    arch_type = machine_spec["arch_type"]
     logging.debug(f"machine: {machine}")
     logging.debug(f"machine_walltime_format: {machine_walltime_format}")
     logging.debug(f"machine_job_scheduler: {machine_job_scheduler}")
     logging.debug(f"machine_launch_command: {machine_launch_command}")
+    logging.debug(f"machine_max_jobs: {machine_max_jobs}")
+    logging.debug(f"machine_max_array_size: {machine_max_array_size}")
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     logging.debug(f"machine_spec: {machine_spec}")
 
@@ -161,7 +164,7 @@ def main(
     completed_count = 0
     for exploration_type in exploration_types:
         job_name = (
-            f"job-array_{exploration_type}-deepmd_explore_{arch_type}_{machine}.sh"
+            f"job-array_{exploration_type}-deepmd_explore_{machine_spec['arch_type']}_{machine}.sh"
         )
         if (Path(".") / job_name).is_file():
             subprocess.run([machine_launch_command, f"./{job_name}"])
