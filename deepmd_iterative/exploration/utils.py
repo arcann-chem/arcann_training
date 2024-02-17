@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/19
+Last modified: 2024/02/17
 
 Functions
 ---------
@@ -40,6 +40,7 @@ get_last_frame_number(model_deviation: np.ndarray, sigma_high_limit: float, dist
 update_system_nb_steps_factor(previous_json: Dict, system_auto_index: int) -> int
     Calculates a ratio based on information from a dictionary and returns a multiplying factor for system_nb_steps.
 """
+
 # Standard library modules
 import subprocess
 from copy import deepcopy
@@ -213,9 +214,7 @@ def generate_input_exploration_json(
 
 
 @catch_errors_decorator
-def get_system_exploration(
-    merged_input_json: Dict, system_auto_index: int
-) -> Tuple[
+def get_system_exploration(merged_input_json: Dict, system_auto_index: int) -> Tuple[
     str,
     Union[float, int],
     Union[float, int],
@@ -387,9 +386,7 @@ def generate_input_exploration_deviation_json(
 
 
 @catch_errors_decorator
-def get_system_deviation(
-    merged_input_json: Dict, system_auto_index: int
-) -> Tuple[
+def get_system_deviation(merged_input_json: Dict, system_auto_index: int) -> Tuple[
     Union[float, int],
     Union[float, int],
     Union[float, int],
@@ -560,9 +557,11 @@ def generate_input_exploration_disturbed_json(
 
 
 @catch_errors_decorator
-def get_system_disturb(
-    merged_input_json: Dict, system_auto_index: int
-) -> Tuple[Union[float, int], Union[float, int], List[int],]:
+def get_system_disturb(merged_input_json: Dict, system_auto_index: int) -> Tuple[
+    Union[float, int],
+    Union[float, int],
+    List[int],
+]:
     """
     Return a tuple of system exploration parameters based on the input JSON and system index.
 
@@ -798,7 +797,6 @@ def get_last_frame_number(
     return last_frame
 
 
-# TODO Redo the unit tests, and docstrings
 # Unittested
 @catch_errors_decorator
 def update_system_nb_steps_factor(previous_json: Dict, system_auto_index: int) -> int:
@@ -808,7 +806,7 @@ def update_system_nb_steps_factor(previous_json: Dict, system_auto_index: int) -
     Parameters
     ----------
     previous_json : Dict
-        A dictionary containing information about the previous interation.
+        A dictionary containing information about the previous iteration.
     system_auto_index : int
         An integer representing the system index.
 
@@ -816,6 +814,17 @@ def update_system_nb_steps_factor(previous_json: Dict, system_auto_index: int) -
     -------
     int
         An integer representing the multiplying factor for system_nb_steps.
+
+    Notes
+    -----
+    This function calculates a ratio of ill-described candidates to the total number of candidates in the previous iteration.
+    Based on this ratio, it returns a multiplying factor for system_nb_steps.
+
+    The multiplying factor is determined as follows:
+    - If the ill-described ratio is less than 0.10, the factor is 4 times the previous system_nb_steps.
+    - If the ill-described ratio is between 0.10 and 0.20, the factor is 2 times the previous system_nb_steps.
+    - Otherwise, the factor is equal to the previous system_nb_steps.
+
     """
     # Calculate the ratio of ill-described candidates to the total number of candidates
     ill_described_ratio = (

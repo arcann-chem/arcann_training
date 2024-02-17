@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/04
+Last modified: 2024/02/17
 
 This module contains functions for checking the availability of certain commands on the system, as well as a function for validating the current working directory during the execution of a specific step.
 
@@ -19,10 +19,12 @@ check_vmd(vmd_path: str = None) -> str
 validate_step_folder(step_name: str) -> None
     Check if the current directory matches the expected directory for the given step.
 """
+
 # Standard library modules
 import logging
 import os
 import subprocess
+import shutil
 from pathlib import Path
 
 # Local imports
@@ -75,14 +77,12 @@ def check_atomsk(atomsk_path: str = None) -> str:
         return str(Path(atomsk_path).resolve())
 
     # Check if atomsk is available in system path
-    try:
-        atomsk = subprocess.check_output(
-            ["command", "-v", "atomsk"], stderr=subprocess.STDOUT
-        )
+    atomsk = shutil.which("atomsk")
+    if atomsk is not None:
         logging.info(f"Atomsk found in $PATH.")
-        atomsk_path = Path(atomsk.strip().decode()).resolve()
+        atomsk_path = Path(atomsk).resolve()
         return f"{atomsk_path}"
-    except subprocess.CalledProcessError:
+    else:
         error_msg = f"Atomsk not found."
         raise FileNotFoundError(error_msg)
 
@@ -132,14 +132,12 @@ def check_vmd(vmd_path: str = None) -> str:
         return str(Path(vmd_path).resolve())
 
     # Check if vmd is available in system path
-    try:
-        vmd = subprocess.check_output(
-            ["command", "-v", "vmd"], stderr=subprocess.STDOUT
-        )
+    vmd = shutil.which("vmd")
+    if vmd is not None:
         logging.info(f"VMD found in $PATH.")
-        vmd_path = Path(vmd.strip().decode()).resolve()
+        vmd_path = Path(vmd).resolve()
         return f"{vmd_path}"
-    except subprocess.CalledProcessError:
+    else:
         error_msg = f"VMD not found."
         raise FileNotFoundError(error_msg)
 

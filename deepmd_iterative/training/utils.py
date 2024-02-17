@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/12/12
+Last modified: 2024/02/17
 
 The utils module provides functions for the training step.
 
@@ -31,6 +31,7 @@ validate_deepmd_config(training_config) -> None
     A function to validate the provided training configuration for a DeePMD model.
 
 """
+
 # Standard library modules
 import json
 from pathlib import Path
@@ -109,6 +110,7 @@ def generate_training_json(
                 merged_input_json[key] = default_input_json[key]
             else:
                 training_json[key] = user_input_json[key]
+                merged_input_json[key] = user_input_json[key]
         elif key in previous_json:
             training_json[key] = previous_json[key]
             merged_input_json[key] = previous_json[key]

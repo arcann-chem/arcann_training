@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/04
+Last modified: 2024/02/17
 
 Test case for the check module.
 
@@ -21,6 +21,7 @@ TestCheckVMD():
 TestValidateStepFolder():
     Test case for the 'validate_step_folder' function.
 """
+
 # Standard library modules
 import logging
 import os
@@ -71,12 +72,12 @@ class TestCheckAtomsk(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tempdir)
 
-    @patch("subprocess.check_output")
-    def test_system_path(self, mock_check_output):
+    @patch("shutil.which")
+    def test_system_path(self, mock_which):
         """
         Test that 'check_atomsk' finds atomsk in the system path and returns the full path.
         """
-        mock_check_output.return_value = b"/usr/bin/atomsk\n"
+        mock_which.return_value = "/usr/bin/atomsk"
         atomsk_bin = check_atomsk()
         self.assertEqual(atomsk_bin, str(Path("/usr/bin/atomsk").resolve()))
 
@@ -148,12 +149,12 @@ class TestCheckVMD(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tempdir)
 
-    @patch("subprocess.check_output")
-    def test_system_path(self, mock_check_output):
+    @patch("shutil.which")
+    def test_system_path(self, mock_which):
         """
         Test that 'check_vmd' finds vmd in the system path and returns the full path.
         """
-        mock_check_output.return_value = b"/usr/bin/vmd\n"
+        mock_which.return_value = "/usr/bin/vmd"
         vmd_bin = check_vmd()
         self.assertEqual(vmd_bin, str(Path("/usr/bin/vmd").resolve()))
 

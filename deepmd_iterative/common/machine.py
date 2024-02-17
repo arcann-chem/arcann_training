@@ -30,6 +30,7 @@ get_machine_from_configs(machine_configs: List[Dict], machine_short_name: str = 
 get_machine_spec_for_step(deepmd_iterative_path: Path, training_path: Path, step: str, input_machine_shortname: str = None, user_machine_keyword: Union[str, List[str]] = None, check_only: bool = False) -> Tuple[str, Dict[str, Any], str, str]
     A function to returns the machine specification for a given step and machine.
 """
+
 # Standard library modules
 import socket
 from pathlib import Path
@@ -347,7 +348,7 @@ def get_machine_spec_for_step(
                 "job_scheduler",
                 "launch_command",
                 "max_jobs",
-                "max_array_size"
+                "max_array_size",
             ]:
                 # Check if the current keyword matches the user keyword
                 if (
