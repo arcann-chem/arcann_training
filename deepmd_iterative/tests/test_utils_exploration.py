@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/05
+Last modified: 2024/02/17
 
 Test cases for the (training) utils module.
 
@@ -19,6 +19,7 @@ TestGetLastFrameNumber():
 TestUpdateNbStepsFactor():
     Test case for the 'update_system_nb_steps_factor' function.
 """
+
 # Standard library modules
 import json
 import tempfile
@@ -171,7 +172,7 @@ class TestUpdateSystemNbStepsFactor(unittest.TestCase):
         self.temp_file = Path(self.temp_dir.name) / "prevexploration.json"
         with self.temp_file.open(mode="w") as f:
             f.write(
-                '{"systems_auto": [{"nb_candidates": 5, "nb_rejected": 0, "nb_total": 100}]}'
+                '{"systems_auto": [{"candidates_count": 5, "rejected_count": 0, "total_count": 100, "nb_steps": 100}]}'
             )
 
     def tearDown(self):
@@ -185,11 +186,11 @@ class TestUpdateSystemNbStepsFactor(unittest.TestCase):
             prevexploration_json = json.load(f)
 
         # Test the function for various ratios of ill-described candidates
-        self.assertEqual(update_system_nb_steps_factor(prevexploration_json, 0), 4)
-        prevexploration_json["systems_auto"][0]["nb_rejected"] = 5
-        self.assertEqual(update_system_nb_steps_factor(prevexploration_json, 0), 2)
-        prevexploration_json["systems_auto"][0]["nb_candidates"] = 20
-        self.assertEqual(update_system_nb_steps_factor(prevexploration_json, 0), 1)
+        self.assertEqual(update_system_nb_steps_factor(prevexploration_json, 0), 400)
+        prevexploration_json["systems_auto"][0]["rejected_count"] = 5
+        self.assertEqual(update_system_nb_steps_factor(prevexploration_json, 0), 200)
+        prevexploration_json["systems_auto"][0]["candidates_count"] = 20
+        self.assertEqual(update_system_nb_steps_factor(prevexploration_json, 0), 100)
 
 
 if __name__ == "__main__":

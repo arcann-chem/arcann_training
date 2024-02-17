@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2023/09/04
-Last modified: 2024/02/15
+Last modified: 2024/02/17
 
 Test cases for the machine module.
 
@@ -25,6 +25,7 @@ TestGetMachineFromConfigs():
     Test cases for the 'get_machine_from_configs' function.
 
 """
+
 # Standard library modules
 import unittest
 import socket
@@ -144,33 +145,35 @@ class TestGetMachineKeyword(unittest.TestCase):
         """
         Test valid boolean value case.
         """
-        input_json = {"user_machine_keyword": True}
+        input_json = {"user_machine_keyword_train": True}
         previous_json = {}
         default_json = {}
 
-        result = get_machine_keyword(input_json, previous_json, default_json)
+        result = get_machine_keyword(input_json, previous_json, default_json, "train")
         self.assertEqual(result, True)
 
     def test_valid_string_value(self):
         """
         Test valid string value case.
         """
-        input_json = {"user_machine_keyword": "some_keyword"}
+        input_json = {"user_machine_keyword_label": "some_keyword"}
         previous_json = {}
         default_json = {}
 
-        result = get_machine_keyword(input_json, previous_json, default_json)
+        result = get_machine_keyword(input_json, previous_json, default_json, "label")
         self.assertEqual(result, "some_keyword")
 
     def test_valid_list_value(self):
         """
         Test valid list value case.
         """
-        input_json = {"user_machine_keyword": ["project", "allocation", "arch_name"]}
+        input_json = {
+            "user_machine_keyword_exp": ["project", "allocation", "arch_name"]
+        }
         previous_json = {}
         default_json = {}
 
-        result = get_machine_keyword(input_json, previous_json, default_json)
+        result = get_machine_keyword(input_json, previous_json, default_json, "exp")
         self.assertEqual(result, ["project", "allocation", "arch_name"])
 
     def test_key_not_found(self):
@@ -182,7 +185,7 @@ class TestGetMachineKeyword(unittest.TestCase):
         default_json = {}
 
         with self.assertRaises(KeyError):
-            get_machine_keyword(input_json, previous_json, default_json)
+            get_machine_keyword(input_json, previous_json, default_json, "label")
 
     def test_invalid_value_type(self):
         """

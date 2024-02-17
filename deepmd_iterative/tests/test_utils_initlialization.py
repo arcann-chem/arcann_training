@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/10/13
+Last modified: 2024/02/17
 
 Test cases for the utils/initialization module.
 
@@ -15,6 +15,7 @@ Classes
 TestGenerateMainJson
     Test cases for the 'generate_main_json' function.
 """
+
 # Standard library modules
 import unittest
 
