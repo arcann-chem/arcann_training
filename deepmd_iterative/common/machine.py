@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/18
+Last modified: 2024/02/16
 
 The machine module provides functions for machine operations.
 
@@ -131,11 +131,29 @@ def get_machine_keyword(
         The previous JSON containing previously defined parameters.
     default_json : dict
         The default JSON containing default parameters.
+    step : str
+        The step for which the machine keyword is being retrieved.
 
     Returns
     -------
     Union[bool, str, List[str]]
         The value of the "user_machine_keyword" key, if it exists and is of the correct type.
+
+    Raises
+    ------
+    KeyError
+        If the key is not found in any of the provided JSON.
+    TypeError
+        If the value is not of the correct type.
+
+    Notes
+    -----
+    The function checks if the key is present in any of the JSON dictionaries (input_json, previous_json, default_json).
+    If the key is found, the value is retrieved and validated to ensure it is of the correct type.
+    The correct types for the value are:
+    - bool: False or True (indicating if the keyword is deactivated or not)
+    - str: a keyword
+    - List[str]: a list of keywords in the form ["project", "allocation", "arch_name"]
     """
 
     # The key to look up in the JSON.
@@ -208,9 +226,9 @@ def get_machine_config_files(
         machine_configs.append(load_json_file(training_config_path))
 
     # Check for 'machine.json' file in the deepmd_iterative directory.
-    default_config_path = deepmd_iterative_path / "assets" / "machine.json"
-    if default_config_path.is_file():
-        machine_configs.append(load_json_file(default_config_path))
+    # default_config_path = deepmd_iterative_path / "assets" / "machine.json"
+    # if default_config_path.is_file():
+    #     machine_configs.append(load_json_file(default_config_path))
 
     # If no 'machine.json' file is found, raise a FileNotFoundError.
     if not machine_configs:
@@ -269,7 +287,7 @@ def get_machine_spec_for_step(
     input_machine_shortname: str = None,
     user_machine_keyword: Union[str, List[str]] = None,
     check_only: bool = False,
-) -> Tuple[str, Dict[str, Any], str, str, str]:
+) -> Tuple[str, Dict[str, Any], str, str, str, str, str, Dict[str, Any]]:
     """
     Return the machine specification for a given step and machine.
 
@@ -290,12 +308,14 @@ def get_machine_spec_for_step(
 
     Returns
     -------
-    Tuple[str, Dict[str, Any], str, str]
+    Tuple[str, Dict[str, Any], str, str, str, str, str, Dict[str, Any]]
         A tuple containing the following elements:
             - machine_shortname: The short name of the machine.
             - machine_walltime_format: The walltime format of the machine.
-            - machine_job_scheduler
-            - machine_launch_command: The launch command to use on the machine.
+            - machine_job_scheduler: The job scheduler for the machine.
+            - machine_launch_command: The launch command for the machine.
+            - machine_max_jobs: The maximum number of jobs that can be run on the machine.
+            - machine_max_array_size: The maximum array size that can be run on the machine.
             - machine_keyword: The keyword (provided, or found) for the machine specification
             - machine_spec: The machine specification as a dictionary.
 
@@ -314,7 +334,7 @@ def get_machine_spec_for_step(
 
     # If check_only is True, return an empty machine specification
     if check_only:
-        return machine_shortname, [], "", ""
+        return machine_shortname, {}, "", "", "", "", "", {}
 
     # Iterate over all machine configurations
     for config in machine_configs:
@@ -326,6 +346,8 @@ def get_machine_spec_for_step(
                 "walltime_format",
                 "job_scheduler",
                 "launch_command",
+                "max_jobs",
+                "max_array_size"
             ]:
                 # Check if the current keyword matches the user keyword
                 if (
@@ -351,10 +373,11 @@ def get_machine_spec_for_step(
                             config[machine_shortname]["walltime_format"],
                             config[machine_shortname]["job_scheduler"],
                             config[machine_shortname]["launch_command"],
+                            config[machine_shortname]["max_jobs"],
+                            config[machine_shortname]["max_array_size"],
                             config_key,
                             config_data,
                         )
-                        # From the keyword (or default), get the machine spec (or for the fake one)
 
     # If no matching configuration was found, return an error
     if user_machine_keyword is not None and not (

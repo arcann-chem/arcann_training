@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/20
+Last modified: 2024/02/15
 """
 # Standard library modules
 import copy
@@ -103,6 +103,8 @@ def main(
         machine_walltime_format,
         machine_job_scheduler,
         machine_launch_command,
+        machine_max_jobs,
+        machine_max_array_size,
         user_machine_keyword,
         machine_spec,
     ) = get_machine_spec_for_step(
@@ -116,6 +118,8 @@ def main(
     logging.debug(f"machine_walltime_format: {machine_walltime_format}")
     logging.debug(f"machine_job_scheduler: {machine_job_scheduler}")
     logging.debug(f"machine_launch_command: {machine_launch_command}")
+    logging.debug(f"machine_max_jobs: {machine_max_jobs}")
+    logging.debug(f"machine_max_array_size: {machine_max_array_size}")
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     logging.debug(f"machine_spec: {machine_spec}")
 

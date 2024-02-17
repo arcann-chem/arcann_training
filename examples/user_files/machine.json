@@ -5,6 +5,8 @@
         "walltime_format": "hours",
         "job_scheduler": "slurm",
         "launch_command": "sbatch",
+        "max_jobs" : -1,
+        "max_array_size" : 10000,
         "a100_kro": {
             "project_name": "kro",
             "allocation_name": "a100",
@@ -145,7 +147,10 @@
     {
         "hostname": "irene",
         "walltime_format": "seconds",
+        "job_scheduler": "mslurm",
         "launch_command": "ccc_msub",
+        "max_jobs" : 250,
+        "max_array_size" : 1000,
         "cpu_gen7156": {
             "project_name": "gen7156",
             "allocation_name": "rome",
