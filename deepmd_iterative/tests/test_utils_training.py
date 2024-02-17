@@ -439,8 +439,6 @@ class TestGenerateTrainingJson(unittest.TestCase):
         training_json, updated_merged_json = generate_training_json(
             user_input, previous_json, self.default_input_json, merged_input_json
         )
-        print(updated_merged_json)
-        print(expected_merged_json)
         self.assertDictEqual(training_json, expected_training_json)
         self.assertDictEqual(updated_merged_json, expected_merged_json)
 
