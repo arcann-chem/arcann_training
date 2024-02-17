@@ -163,9 +163,7 @@ def main(
 
     completed_count = 0
     for exploration_type in exploration_types:
-        job_name = (
-            f"job-array_{exploration_type}-deepmd_explore_{machine_spec['arch_type']}_{machine}.sh"
-        )
+        job_name = f"job-array_{exploration_type}-deepmd_explore_{machine_spec['arch_type']}_{machine}.sh"
         if (Path(".") / job_name).is_file():
             subprocess.run([machine_launch_command, f"./{job_name}"])
             logging.info(f"Exploration - Array LAMMPS launched.")

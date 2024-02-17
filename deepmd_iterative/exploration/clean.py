@@ -127,10 +127,12 @@ def main(
                     (Path(".") / archive_name).read_bytes()
                 )
             string_list_to_textfile(
-                training_path / "starting_structures" / archive_name.replace(".tar.bz2", ".lst"),
+                training_path
+                / "starting_structures"
+                / archive_name.replace(".tar.bz2", ".lst"),
                 starting_structures,
             )
-            
+
             cmd = [
                 "tar",
                 "-I",
@@ -142,7 +144,11 @@ def main(
                 archive_name.replace(".tar.bz2", ".lst"),
             ]
             subprocess.run(cmd)
-            remove_file(training_path / "starting_structures" / archive_name.replace(".tar.bz2", ".lst"))
+            remove_file(
+                training_path
+                / "starting_structures"
+                / archive_name.replace(".tar.bz2", ".lst")
+            )
 
             del starting_structures, starting_structures_xyz, starting_structures_lmp
             logging.info(

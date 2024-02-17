@@ -124,7 +124,7 @@ def main(
                     "timings_s"
                 ] = previous_labeling_json["systems_auto"][system_auto]["timings_s"]
             else:
-                labeling_json["systems_auto"][system_auto]["timings_s"] = [1800,3600]
+                labeling_json["systems_auto"][system_auto]["timings_s"] = [1800, 3600]
             labeling_json["systems_auto"][system_auto]["candidates_skipped_count"] = 0
             labeling_json["systems_auto"][system_auto][
                 "disturbed_candidates_skipped_count"

@@ -214,7 +214,9 @@ def generate_input_exploration_json(
 
 
 @catch_errors_decorator
-def get_system_exploration(merged_input_json: Dict, system_auto_index: int) -> Tuple[
+def get_system_exploration(
+    merged_input_json: Dict, system_auto_index: int
+) -> Tuple[
     str,
     Union[float, int],
     Union[float, int],
@@ -386,7 +388,9 @@ def generate_input_exploration_deviation_json(
 
 
 @catch_errors_decorator
-def get_system_deviation(merged_input_json: Dict, system_auto_index: int) -> Tuple[
+def get_system_deviation(
+    merged_input_json: Dict, system_auto_index: int
+) -> Tuple[
     Union[float, int],
     Union[float, int],
     Union[float, int],
@@ -557,11 +561,9 @@ def generate_input_exploration_disturbed_json(
 
 
 @catch_errors_decorator
-def get_system_disturb(merged_input_json: Dict, system_auto_index: int) -> Tuple[
-    Union[float, int],
-    Union[float, int],
-    List[int],
-]:
+def get_system_disturb(
+    merged_input_json: Dict, system_auto_index: int
+) -> Tuple[Union[float, int], Union[float, int], List[int],]:
     """
     Return a tuple of system exploration parameters based on the input JSON and system index.
 

@@ -89,7 +89,10 @@ def main(
         deepmd_iterative_path / "assets" / "default_config.json"
     )[current_step]
     default_input_json_present = bool(default_input_json)
-    if default_input_json_present and not (current_path / "default_input.json").is_file():
+    if (
+        default_input_json_present
+        and not (current_path / "default_input.json").is_file()
+    ):
         write_json_file(default_input_json, (current_path / "default_input.json"))
     logging.debug(f"default_input_json: {default_input_json}")
     logging.debug(f"default_input_json_present: {default_input_json_present}")
@@ -662,9 +665,7 @@ def main(
                             )
                         else:
                             system_lammps_data = textfile_to_string_list(
-                                training_path
-                                / "user_files"
-                                / system_lammps_data_fn
+                                training_path / "user_files" / system_lammps_data_fn
                             )
                         input_replace_dict["_R_DATA_FILE_"] = system_lammps_data_fn
                         # Get again the system_cell and nb_atom
