@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/16
+Last modified: 2024/02/27
 """
 # Standard library modules
 import copy
@@ -176,7 +176,7 @@ def main(
         if (system_path/ f"job-array_CP2K_label_{machine_spec['arch_type']}_{machine}_0.sh").is_file():
             change_directory(system_path)
             try:
-                #subprocess.run([machine_launch_command, f"./job-array_CP2K_label_{machine_spec['arch_type']}_{machine}_0.sh"])
+                subprocess.run([machine_launch_command, f"./job-array_CP2K_label_{machine_spec['arch_type']}_{machine}_0.sh"])
                 logging.info(f"Labeling - '{system_auto}' launched.")
                 launched_count += 1
                 if not labeling_json["launch_all_jobs"]:
