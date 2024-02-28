@@ -151,9 +151,31 @@
         "launch_command": "ccc_msub",
         "max_jobs" : 250,
         "max_array_size" : 1000,
-        "cpu_gen7156": {
+        "cpu_rome_gen7156": {
             "project_name": "gen7156",
             "allocation_name": "rome",
+            "arch_name": "cpu",
+            "arch_type": "cpu",
+            "partition": null,
+            "subpartition": null,
+            "qos": {"normal": 86400, "long": 259200},
+            "valid_for": ["labeling"],
+            "default": ["labeling"]
+        },
+        "cpu_rome_gen11005": {
+            "project_name": "gen11005",
+            "allocation_name": "rome",
+            "arch_name": "cpu",
+            "arch_type": "cpu",
+            "partition": null,
+            "subpartition": null,
+            "qos": {"normal": 86400, "long": 259200},
+            "valid_for": ["labeling"],
+            "default": ["labeling"]
+        },
+        "cpu_skylake_gen11005": {
+            "project_name": "gen11005",
+            "allocation_name": "skylake",
             "arch_name": "cpu",
             "arch_type": "cpu",
             "partition": null,
