@@ -20,9 +20,11 @@ import numpy as np
 from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
+    get_key_in_dict,
+    load_default_json_file,
 )
 from deepmd_iterative.common.list import textfile_to_string_list
-from deepmd_iterative.common.check import validate_step_folder
+from deepmd_iterative.common.check import validate_step_folder, check_vmd, check_dcd_is_valid
 
 
 def main(
@@ -52,6 +54,23 @@ def main(
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
 
+    # Load the default input JSON
+    default_input_json = load_default_json_file(
+        deepmd_iterative_path / "assets" / "default_config.json"
+    )[current_step]
+    default_input_json_present = bool(default_input_json)
+    logging.debug(f"default_input_json: {default_input_json}")
+    logging.debug(f"default_input_json_present: {default_input_json_present}")
+
+    # Load the user input JSON
+    if (current_path / user_input_json_filename).is_file():
+        user_input_json = load_json_file((current_path / user_input_json_filename))
+    else:
+        user_input_json = {}
+    user_input_json_present = bool(user_input_json)
+    logging.debug(f"user_input_json: {user_input_json}")
+    logging.debug(f"user_input_json_present: {user_input_json_present}")
+
     # Get control path, load the main JSON and the exploration JSON
     control_path = training_path / "control"
     main_json = load_json_file((control_path / "config.json"))
@@ -59,12 +78,35 @@ def main(
         (control_path / f"exploration_{padded_curr_iter}.json")
     )
 
+    # Load the previous exploration JSON and training JSON
+    if curr_iter > 0:
+        prev_iter = curr_iter - 1
+        padded_prev_iter = str(prev_iter).zfill(3)
+        previous_training_json = load_json_file(
+            (control_path / f"training_{padded_prev_iter}.json")
+        )
+        if prev_iter > 0:
+            previous_exploration_json = load_json_file(
+                (control_path / ("exploration_" + padded_prev_iter + ".json"))
+            )
+        else:
+            previous_exploration_json = {}
+    else:
+        previous_training_json = {}
+        previous_exploration_json = {}
+
     # Check if we can continue
     if not exploration_json["is_launched"]:
         logging.error(f"Lock found. Execute first: exploration launch.")
         logging.error(f"Aborting...")
         return 1
 
+    # Check if the vmd package is installed
+    vmd_bin = check_vmd(
+        get_key_in_dict(
+            "vmd_path", user_input_json, previous_exploration_json, default_input_json
+        )
+    )
     # Check the normal termination of the exploration phase
     # Counters
     completed_count = 0
@@ -85,155 +127,99 @@ def main(
         }
 
         for it_nnp in range(1, main_json["nnp_count"] + 1):
-            for it_number in range(
-                1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1
-            ):
-                local_path = (
-                    Path(".").resolve()
-                    / str(system_auto)
-                    / str(it_nnp)
-                    / (str(it_number).zfill(5))
-                )
+            for it_number in range(1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1):
+                local_path = (Path(".").resolve() / str(system_auto) / str(it_nnp) / (str(it_number).zfill(5)))
+                logging.debug(f"Checking local_path: {local_path}")
+
+                # If there is a skip, we skip
+                if (local_path / "skip").is_file():
+                    skipped_count += 1
+                    exploration_json["systems_auto"][system_auto]["skipped_count"] += 1
+                    logging.warning(f"'{local_path}' skipped.")
+                    continue
 
                 # LAMMPS
-                if (
-                    exploration_json["systems_auto"][system_auto]["exploration_type"]
-                    == "lammps"
-                ):
-                    lammps_output_file = (
-                        local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.log"
-                    )
-                    if lammps_output_file.is_file():
-                        lammps_output = textfile_to_string_list(lammps_output_file)
-                        if (local_path / "skip").is_file():
-                            skipped_count += 1
-                            exploration_json["systems_auto"][system_auto][
-                                "skipped_count"
-                            ] += 1
-                            logging.warning(f"'{lammps_output_file}' skipped.")
-                        elif (local_path / "force").is_file():
-                            forced_count += 1
-                            exploration_json["systems_auto"][system_auto][
-                                "forced_count"
-                            ] += 1
-                            logging.warning(f"'{lammps_output_file}' forced.")
-                        elif any("Total wall time:" in f for f in lammps_output):
-                            system_count += 1
-                            completed_count += 1
-                            exploration_json["systems_auto"][system_auto][
-                                "completed_count"
-                            ] += 1
-                            timings_str = [
-                                zzz for zzz in lammps_output if "Loop time of" in zzz
-                            ]
-                            timings.append(float(timings_str[0].split(" ")[3]))
-                            del timings_str
-                        else:
-                            logging.critical(
-                                f"'{lammps_output_file}' failed. Check manually."
-                            )
-                        del lammps_output
-                    elif (local_path / "skip").is_file():
+                if (exploration_json["systems_auto"][system_auto]["exploration_type"]== "lammps"):
+                    traj_file = (local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.dcd")
+                    lammps_output_file = (local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.log")
+                    model_deviation_filename = (local_path / f"model_devi_{system_auto}_{it_nnp}_{padded_curr_iter}.out")
+
+                    # Log if files are missing.
+                    if not all([traj_file.is_file(), lammps_output_file.is_file(), model_deviation_filename.is_file()]):
+                        logging.critical(f"'{local_path}': missing files. Check manually.")
+                        del lammps_output_file, traj_file, model_deviation_filename
+                        continue
+
+                    # Check if DCD is unreadable
+                    if not check_dcd_is_valid(traj_file, vmd_bin):
+                        (local_path / "skip").touch(exist_ok=True)
                         skipped_count += 1
-                        exploration_json["systems_auto"][system_auto][
-                            "skipped_count"
-                        ] += 1
-                        logging.warning(f"'{lammps_output_file}' skipped.")
+                        exploration_json["systems_auto"][system_auto]["skipped_count"] += 1
+                        logging.warning(f"'{traj_file}' present but invalid.")
+                        logging.warning(F"'{local_path}' auto-skipped.")
+                        del lammps_output_file, traj_file, model_deviation_filename
+                        continue
+
+                    # Check if output is valid (or forced)
+                    lammps_output = textfile_to_string_list(lammps_output_file)
+                    if (local_path / "force").is_file():
+                        forced_count += 1
+                        exploration_json["systems_auto"][system_auto]["forced_count"] += 1
+                        logging.warning(f"'{local_path}' forced.")
+                    elif any("Total wall time:" in f for f in lammps_output):
+                        system_count += 1
+                        completed_count += 1
+                        exploration_json["systems_auto"][system_auto]["completed_count"] += 1
+                        timings_str = [zzz for zzz in lammps_output if "Loop time of" in zzz]
+                        timings.append(float(timings_str[0].split(" ")[3]))
+                        del timings_str
                     else:
-                        logging.critical(
-                            f"'{lammps_output_file}' failed. Check manually."
-                        )
-                    del lammps_output_file
+                        logging.critical(f"'{lammps_output_file}' failed. Check manually.")
+                    del lammps_output, lammps_output_file, traj_file, model_deviation_filename
 
                 # i-PI
-                elif (
-                    exploration_json["systems_auto"][system_auto]["exploration_type"]
-                    == "i-PI"
-                ):
-                    ipi_output_file = (
-                        local_path
-                        / f"{system_auto}_{it_nnp}_{padded_curr_iter}.i-PI.server.log"
-                    )
-                    if ipi_output_file.is_file():
-                        ipi_output = textfile_to_string_list(ipi_output_file)
-                        if (local_path / "skip").is_file():
-                            skipped_count += 1
-                            exploration_json["systems_auto"][system_auto][
-                                "skipped_count"
-                            ] += 1
-                            logging.warning(f"'{ipi_output_file}' skipped.")
-                        elif (local_path / "force").is_file():
-                            forced_count += 1
-                            exploration_json["systems_auto"][system_auto][
-                                "forced_count"
-                            ] += 1
-                            logging.warning(f"'{ipi_output_file}' forced.")
-                        elif any("SIMULATION: Exiting cleanly" in f for f in ipi_output):
-                            system_count += 1
-                            completed_count += 1
-                            exploration_json["systems_auto"][system_auto][
-                                "completed_count"
-                            ] += 1
-                            ipi_time = [
-                                zzz
-                                for zzz in ipi_output
-                                if "Average timings at MD step" in zzz
-                            ]
-                            ipi_time2 = [
-                                zzz[zzz.index("step:") + len("step:") : zzz.index("\n")]
-                                for zzz in ipi_time
-                            ]
-                            timings.append(
-                                np.average(np.asarray(ipi_time2, dtype="float32"))
-                            )
-                            del ipi_time, ipi_time2
-                        else:
-                            logging.critical(
-                                f"'{ipi_output_file}' failed. Check manually."
-                            )
-                        del ipi_output
-                    elif (local_path / "skip").is_file():
-                        skipped_count += 1
-                        exploration_json["systems_auto"][system_auto][
-                            "skipped_count"
-                        ] += 1
-                        logging.warning(f"'{ipi_output_file}' skipped.")
+                elif (exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI"):
+                    ipi_output_file = (local_path/ f"{system_auto}_{it_nnp}_{padded_curr_iter}.i-PI.server.log")
+
+                    # Log if files are missing.
+                    if not ipi_output_file.is_file():
+                        logging.critical(f"'{local_path}': missing files. Check manually.")
+                        del ipi_output_file
+                        continue
+
+                    # Check if output is valid (or forced)
+                    ipi_output = textfile_to_string_list(ipi_output_file)
+                    if (local_path / "force").is_file():
+                        forced_count += 1
+                        exploration_json["systems_auto"][system_auto]["forced_count"] += 1
+                        logging.warning(f"'{local_path}' forced.")
+                    elif any("SIMULATION: Exiting cleanly" in f for f in ipi_output):
+                        system_count += 1
+                        completed_count += 1
+                        exploration_json["systems_auto"][system_auto]["completed_count"] += 1
+                        ipi_time = [zzz for zzz in ipi_output if "Average timings at MD step" in zzz]
+                        ipi_time2 = [zzz[zzz.index("step:") + len("step:") : zzz.index("\n")] for zzz in ipi_time]
+                        timings.append(np.average(np.asarray(ipi_time2, dtype="float32")))
+                        del ipi_time, ipi_time2
                     else:
                         logging.critical(f"'{ipi_output_file}' failed. Check manually.")
+                        del ipi_output
                     del ipi_output_file
-
                 else:
-                    logging.error(
-                        f"'{exploration_json['exploration_type']}' unknown. Check manually."
-                    )
+                    logging.error(f"'{exploration_json['exploration_type']}' unknown. Check manually.")
                     return 1
-
                 del local_path
 
         # timings = timings_sum / system_count
 
-        if (
-            exploration_json["systems_auto"][system_auto]["exploration_type"]
-            == "lammps"
-        ):
-            average_per_step = (
-                np.array(timings)
-                / exploration_json["systems_auto"][system_auto]["nb_steps"]
-            )
-        elif (
-            exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI"
-        ):
+        if (exploration_json["systems_auto"][system_auto]["exploration_type"]== "lammps"):
+            average_per_step = (np.array(timings)/ exploration_json["systems_auto"][system_auto]["nb_steps"])
+        elif (exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI"):
             average_per_step = np.array(timings)
 
-        exploration_json["systems_auto"][system_auto]["mean_s_per_step"] = np.average(
-            average_per_step
-        )
-        exploration_json["systems_auto"][system_auto]["median_s_per_step"] = np.median(
-            average_per_step
-        )
-        exploration_json["systems_auto"][system_auto][
-            "stdeviation_s_per_step"
-        ] = np.std(average_per_step)
+        exploration_json["systems_auto"][system_auto]["mean_s_per_step"] = np.average(average_per_step)
+        exploration_json["systems_auto"][system_auto]["median_s_per_step"] = np.median(average_per_step)
+        exploration_json["systems_auto"][system_auto]["stdeviation_s_per_step"] = np.std(average_per_step)
 
         del timings, average_per_step, system_count
 

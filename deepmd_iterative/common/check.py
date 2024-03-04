@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/17
+Last modified: 2024/03/04
 
 This module contains functions for checking the availability of certain commands on the system, as well as a function for validating the current working directory during the execution of a specific step.
 
@@ -23,6 +23,7 @@ validate_step_folder(step_name: str) -> None
 # Standard library modules
 import logging
 import os
+import re
 import subprocess
 import shutil
 from pathlib import Path
@@ -66,9 +67,8 @@ def check_atomsk(atomsk_path: str = None) -> str:
         if Path(atomsk_path).is_file():
             return str(Path(atomsk_path).resolve())
         else:
-            logging.warning(
-                f"Atomsk path {atomsk_path}' is invalid. Checking environment variable and system path..."
-            )
+            logging.warning(f"Atomsk path '{atomsk_path}' is invalid. Deleting the atomsk_path variable. Checking environment variable and system path...")
+            del atomsk_path
 
     # Check if ATOMSK_PATH is defined and is valid
     atomsk_path = os.environ.get("ATOMSK_PATH")
@@ -121,9 +121,8 @@ def check_vmd(vmd_path: str = None) -> str:
     if vmd_path is not None and vmd_path != "" and Path(vmd_path).is_file():
         return str(Path(vmd_path).resolve())
     else:
-        logging.warning(
-            f"VMD path '{vmd_path}' is invalid. Checking environment variable and system path..."
-        )
+        logging.warning(f"VMD path '{vmd_path}' is invalid. Deleting the vmd_path variable. Checking environment variable and system path...")
+        del vmd_path
 
     # Check if VMD_PATH is defined and is valid
     vmd_path = os.environ.get("VMD_PATH")
@@ -169,3 +168,40 @@ def validate_step_folder(step_name: str) -> None:
     if step_name not in current_directory.name:
         error_msg = f"The current directory '{current_directory}' does not match the expected directory for the '{step_name}' step."
         raise ValueError(error_msg)
+
+
+@catch_errors_decorator
+def check_dcd_is_valid(dcd_path: Path, vmd_bin: Path) -> bool:
+    """
+    Check if the dcd file is valid.
+
+    Returns
+    -------
+    bool
+        True if the dcd file is valid, False otherwise.
+    """
+    vmd_script = f"""
+    # Load your trajectory file
+    mol addfile {dcd_path} type dcd waitfor all
+
+    # Get the number of frames
+    set numFrames [molinfo top get numframes]
+
+    # Output the number of frames
+    puts "Number of frames: $numFrames"
+
+    # Quit VMD
+    quit
+    """
+    # Run VMD script from command line
+    result = subprocess.run([vmd_bin, '-dispdev', 'text', '-e', '/dev/stdin'], input=vmd_script, text=True, capture_output=True)
+
+    # Check if the output contains "Unable to load file "
+    if "Unable to load file " in result.stdout:
+        return False
+    else:
+        match = re.search(r"Number of frames: (\d+)", result.stdout)
+        if match:
+            return True
+        else:
+            return False
