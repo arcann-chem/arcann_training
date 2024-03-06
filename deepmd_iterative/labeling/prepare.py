@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/16
+Last modified: 2024/03/06
 """
 # Standard library modules
 import copy
@@ -498,7 +498,7 @@ def main(
         )
     del system_auto_index, system_auto
     logging.info(f"{total_to_label} structures will be labeled.")
-    if total_to_label <= machine_max_jobs:
+    if (total_to_label <= machine_max_jobs) or (machine_max_jobs <= 0):
         labeling_json = {**labeling_json, "launch_all_jobs": True}
     else:
         labeling_json = {**labeling_json, "launch_all_jobs": False}
