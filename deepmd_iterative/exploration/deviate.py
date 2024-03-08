@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/10/31
+Last modified: 2024/03/08
 """
 # Standard library modules
 import copy
@@ -259,7 +259,7 @@ def main(
                         end_row_number = end_row_number - 1
 
                     # This part is when sigma_high_limit was never crossed
-                    if end_row_number == -1:
+                    if end_row_number < 0:
                         mean_deviation_max_f = np.mean(
                             model_deviation[start_row_number:, 4]
                         )
