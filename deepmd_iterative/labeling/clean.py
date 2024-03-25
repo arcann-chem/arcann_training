@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/10/15
+Last modified: 2024/03/25
 """
 # Standard library modules
 import logging
@@ -100,6 +100,7 @@ def main(
     remove_files_matching_glob(current_path, "**/*labeling*.inp")
     logging.info("Deleting job error files...")
     remove_files_matching_glob(current_path, "**/CP2K.*")
+    remove_files_matching_glob(current_path, "**/ORCA.*")
     logging.info(f"Cleaning done!")
     logging.info(f"Compressing into a bzip2 tar archive...")
 

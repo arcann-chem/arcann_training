@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/06
+Last modified: 2024/03/25
 """
 # Standard library modules
 import copy
@@ -176,16 +176,20 @@ def main(
     )
     logging.debug(f"merged_input_json: {merged_input_json}")
 
+    labeling_program = merged_input_json["labeling_program"]
+    logging.debug(f"labeling_program: {labeling_program}")
+
     # Generate the labeling JSON
     labeling_json = {}
     labeling_json = {
         **labeling_json,
+        "labeling_program" : labeling_program,
         "user_machine_keyword_label": user_machine_keyword,
     }
-
+    labeling_program_up = labeling_program.upper()
     # Check if the job file exists
-    job_file_array_name = f"job-array_CP2K_label_{machine_spec['arch_type']}_{machine}.sh"
-    job_file_name = f"job_CP2K_label_{machine_spec['arch_type']}_{machine}.sh"
+    job_file_array_name = f"job-array_{labeling_program_up}_label_{machine_spec['arch_type']}_{machine}.sh"
+    job_file_name = f"job_{labeling_program_up}_label_{machine_spec['arch_type']}_{machine}.sh"
 
     # 0 is array, 1 is individual
     master_job_file = {}
@@ -205,7 +209,7 @@ def main(
     labeling_json["systems_auto"] = {}
 
     job_array_params_file = {}
-    job_array_params_file["cp2k"] = [":SYSTEM:INDEX:CP2K_INPUT_F1:CP2K_INPUT_F2:CP2K_WFRST_F:CP2K_XYZ_F:NODES:MPI_PER_NODE:THREADS_PER_MPI:WALLTIME_S:"]
+    job_array_params_file[f"{labeling_program}"] = [f":SYSTEM:INDEX:{labeling_program_up}_INPUT_F1:{labeling_program_up}_INPUT_F2:{labeling_program_up}_WFRST_F:{labeling_program_up}_XYZ_F:NODES:MPI_PER_NODE:THREADS_PER_MPI:WALLTIME_S:"]
 
     # Get the list of systems to label to get the next one
     total_to_label = 0
@@ -289,7 +293,7 @@ def main(
             logging.error(f"Aborting...")
             return
 
-        system_master_job_file[0] = replace_substring_in_string_list(system_master_job_file[0], "_R_CP2K_JOBNAME_", f"CP2K_{system_auto}_{padded_curr_iter}")
+        system_master_job_file[0] = replace_substring_in_string_list(system_master_job_file[0], f"_R_{labeling_program_up}_JOBNAME_", f"{labeling_program_up}_{system_auto}_{padded_curr_iter}")
 
         # Find the index of the next system with non-zero selected_count
         next_index = system_auto_index + 1
@@ -342,10 +346,10 @@ def main(
                 slurm_file_array_subsys_dict[batch_number] = replace_substring_in_string_list(slurm_file_array_subsys_dict[batch_number], "_R_CD_WHERE_", "${SLURM_SUBMIT_DIR}")
 
             # Save the batch-specific slurm file
-            string_list_to_textfile(system_path / f"job-array_CP2K_label_{machine_spec['arch_type']}_{machine}_{batch_number}.sh", slurm_file_array_subsys_dict[batch_number])
+            string_list_to_textfile(system_path / f"job-array_{labeling_program_up}_label_{machine_spec['arch_type']}_{machine}_{batch_number}.sh", slurm_file_array_subsys_dict[batch_number])
 
-            jobs_processed += batch_size 
-            batch_number += 1  
+            jobs_processed += batch_size
+            batch_number += 1
 
             if batch_number % (machine_max_array_size // machine_max_jobs) == 0:
                 block_start += effective_capacity_increment
@@ -356,9 +360,10 @@ def main(
         system_first_job_input = replace_substring_in_string_list(system_first_job_input, "_R_CELL_", " ".join( [str(zzz) for zzz in main_json["systems_auto"][system_auto]["cell"]]))
 
         # Labeling input second job
-        system_second_job_input = textfile_to_string_list(training_path / "user_files" / f"2_{system_auto}_labeling_XXXXX_{machine}.inp")
-        system_second_job_input = replace_substring_in_string_list(system_second_job_input, "_R_WALLTIME_", f"{system_walltime_second_job_h * 3600}")
-        system_second_job_input = replace_substring_in_string_list(system_second_job_input, "_R_CELL_", " ".join( [str(zzz) for zzz in main_json["systems_auto"][system_auto]["cell"]] ))
+        if labeling_program == "cp2k":
+            system_second_job_input = textfile_to_string_list(training_path / "user_files" / f"2_{system_auto}_labeling_XXXXX_{machine}.inp")
+            system_second_job_input = replace_substring_in_string_list(system_second_job_input, "_R_WALLTIME_", f"{system_walltime_second_job_h * 3600}")
+            system_second_job_input = replace_substring_in_string_list(system_second_job_input, "_R_CELL_", " ".join( [str(zzz) for zzz in main_json["systems_auto"][system_auto]["cell"]] ))
 
         # Regular
         xyz_file = (training_path / f"{padded_curr_iter}-exploration" / system_auto / f"candidates_{padded_curr_iter}_{system_auto}.xyz")
@@ -377,18 +382,21 @@ def main(
 
             first_job_input_t = deepcopy(system_first_job_input)
             first_job_input_t = replace_substring_in_string_list(first_job_input_t, "XXXXX", padded_labeling_step)
+            first_job_input_t = replace_substring_in_string_list(first_job_input_t, "_R_NB_MPI_", f"{system_nb_nodes * system_nb_mpi_per_node}")
             string_list_to_textfile(labeling_step_path / f"1_labeling_{padded_labeling_step}.inp", first_job_input_t)
             del first_job_input_t
 
-            second_job_input_t = deepcopy(system_second_job_input)
-            second_job_input_t = replace_substring_in_string_list(second_job_input_t, "XXXXX", padded_labeling_step)
-            string_list_to_textfile(labeling_step_path / f"2_labeling_{padded_labeling_step}.inp", second_job_input_t)
-            del second_job_input_t
+            if labeling_program == "cp2k":
+                second_job_input_t = deepcopy(system_second_job_input)
+                second_job_input_t = replace_substring_in_string_list(second_job_input_t, "XXXXX", padded_labeling_step)
+                second_job_input_t = replace_substring_in_string_list(second_job_input_t, "_R_NB_MPI_", f"{system_nb_nodes * system_nb_mpi_per_node}")
+                string_list_to_textfile(labeling_step_path / f"2_labeling_{padded_labeling_step}.inp", second_job_input_t)
+                del second_job_input_t
 
             job_file_t = deepcopy(system_master_job_file[1])
             job_file_t = replace_substring_in_string_list(job_file_t, "XXXXX", padded_labeling_step)
-            job_file_t = replace_substring_in_string_list(job_file_t, "_R_CP2K_JOBNAME_", f"CP2K_{system_auto}_{padded_curr_iter}")
-            string_list_to_textfile(labeling_step_path / f"job_CP2K_label_{padded_labeling_step}_{machine_spec['arch_type']}_{machine}.sh", job_file_t)
+            job_file_t = replace_substring_in_string_list(job_file_t, f"_R_{labeling_program_up}_JOBNAME_", f"{labeling_program_up}_{system_auto}_{padded_curr_iter}")
+            string_list_to_textfile(labeling_step_path / f"job_{labeling_program_up}_label_{padded_labeling_step}_{machine_spec['arch_type']}_{machine}.sh", job_file_t)
             del job_file_t
 
             write_xyz_frame(
@@ -409,7 +417,7 @@ def main(
             job_array_params_line += f"{system_nb_mpi_per_node}:"
             job_array_params_line += f"{system_nb_threads_per_mpi}:"
             job_array_params_line += f"{walltime_approx_s}:"
-            job_array_params_file["cp2k"].append(job_array_params_line)
+            job_array_params_file[f"{labeling_program}"].append(job_array_params_line)
             del padded_labeling_step, labeling_step_path
 
         del labeling_step
@@ -435,16 +443,16 @@ def main(
                 first_job_input_t = replace_substring_in_string_list(first_job_input_t, "XXXXX", padded_labeling_step)
                 string_list_to_textfile(labeling_step_path / f"1_labeling_{padded_labeling_step}.inp", first_job_input_t)
                 del first_job_input_t
-
-                second_job_input_t = deepcopy(system_second_job_input)
-                second_job_input_t = replace_substring_in_string_list(second_job_input_t, "XXXXX", padded_labeling_step)
-                string_list_to_textfile(labeling_step_path / f"2_labeling_{padded_labeling_step}.inp", second_job_input_t)
-                del second_job_input_t
+                if labeling_program == "cp2k":
+                    second_job_input_t = deepcopy(system_second_job_input)
+                    second_job_input_t = replace_substring_in_string_list(second_job_input_t, "XXXXX", padded_labeling_step)
+                    string_list_to_textfile(labeling_step_path / f"2_labeling_{padded_labeling_step}.inp", second_job_input_t)
+                    del second_job_input_t
 
                 job_file_t = deepcopy(system_master_job_file[1])
                 job_file_t = replace_substring_in_string_list(job_file_t, "XXXXX", padded_labeling_step)
-                job_file_t = replace_substring_in_string_list(job_file_t, "_R_CP2K_JOBNAME_", f"CP2K_{system_auto}_{padded_curr_iter}")
-                string_list_to_textfile(labeling_step_path / f"job_CP2K_label_{padded_labeling_step}_{machine_spec['arch_type']}_{machine}.sh", job_file_t)
+                job_file_t = replace_substring_in_string_list(job_file_t, f"_R_{labeling_program_up}_JOBNAME_", f"{labeling_program_up}_{system_auto}_{padded_curr_iter}")
+                string_list_to_textfile(labeling_step_path / f"job_{labeling_program_up}_label_{padded_labeling_step}_{machine_spec['arch_type']}_{machine}.sh", job_file_t)
                 del job_file_t
 
                 write_xyz_frame(
@@ -466,7 +474,7 @@ def main(
                 job_array_params_line += f"{system_nb_mpi_per_node}:"
                 job_array_params_line += f"{system_nb_threads_per_mpi}:"
                 job_array_params_line += f"{walltime_approx_s}:"
-                job_array_params_file["cp2k"].append(job_array_params_line)
+                job_array_params_file[f"{labeling_program}"].append(job_array_params_line)
 
                 del padded_labeling_step, labeling_step_path
 
@@ -503,13 +511,13 @@ def main(
     else:
         labeling_json = {**labeling_json, "launch_all_jobs": False}
 
-    if total_to_label != len(job_array_params_file["cp2k"])-1:
+    if total_to_label != len(job_array_params_file[f"{labeling_program}"])-1:
         logging.error(f"The number of structures to label does not match the number of jobs.")
         logging.error(f"Aborting...")
         return 1
 
-    string_list_to_textfile(current_path / f"job-array-params_CP2K_label_{machine_spec['arch_type']}_{machine}.lst", job_array_params_file["cp2k"])
-    job_array_params_file_array = np.genfromtxt(current_path / f"job-array-params_CP2K_label_{machine_spec['arch_type']}_{machine}.lst", dtype=str, delimiter=":", skip_header=1)
+    string_list_to_textfile(current_path / f"job-array-params_{labeling_program_up}_label_{machine_spec['arch_type']}_{machine}.lst", job_array_params_file[f"{labeling_program}"])
+    job_array_params_file_array = np.genfromtxt(current_path / f"job-array-params_{labeling_program_up}_label_{machine_spec['arch_type']}_{machine}.lst", dtype=str, delimiter=":", skip_header=1)
 
     # Set booleans in the exploration JSON
     labeling_json = {

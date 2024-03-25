@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/27
+Last modified: 2024/03/14
 """
 # Standard library modules
 import copy
@@ -84,7 +84,7 @@ def main(
     control_path = training_path / "control"
     main_json = load_json_file((control_path / "config.json"))
     labeling_json = load_json_file((control_path / f"labeling_{padded_curr_iter}.json"))
-
+    
     # Load the previous labeling JSON
     if curr_iter > 1:
         prev_iter = curr_iter - 1
@@ -107,6 +107,10 @@ def main(
         None if isinstance(user_machine_keyword, bool) else user_machine_keyword
     )
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
+
+    labeling_program = labeling_json["labeling_json"]
+    logging.debug(f"labeling_program: {labeling_program}")
+    labeling_program_up = labeling_program.upper()
 
 # From the keyword (or default), get the machine spec (or for the fake one)
     (
@@ -173,10 +177,10 @@ def main(
             launched_count += 1
             continue
 
-        if (system_path/ f"job-array_CP2K_label_{machine_spec['arch_type']}_{machine}_0.sh").is_file():
+        if (system_path/ f"job-array_{labeling_program_up}_label_{machine_spec['arch_type']}_{machine}_0.sh").is_file():
             change_directory(system_path)
             try:
-                subprocess.run([machine_launch_command, f"./job-array_CP2K_label_{machine_spec['arch_type']}_{machine}_0.sh"])
+                subprocess.run([machine_launch_command, f"./job-array_{labeling_program_up}_label_{machine_spec['arch_type']}_{machine}_0.sh"])
                 logging.info(f"Labeling - '{system_auto}' launched.")
                 launched_count += 1
                 if not labeling_json["launch_all_jobs"]:
