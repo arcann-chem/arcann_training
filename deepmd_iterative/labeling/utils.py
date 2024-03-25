@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/19
+Last modified: 2024/03/14
 
 Functions
 ---------
@@ -17,6 +17,7 @@ get_system_labeling(merged_input_json: Dict, system_auto_index: int) -> Tuple[fl
     Returns a tuple of system labeling parameters based on the input JSON and system number.
 """
 # Standard library modules
+import logging
 from typing import Dict, List, Tuple
 
 # Local imports
@@ -56,20 +57,23 @@ def generate_input_labeling_json(
     Raises
     ------
     ValueError
-        If the exploration type is neither "lammps" nor "i-PI".
+        If the labeling_program is not in valid_labeling_program.
     KeyError
         If a key is not found in any of the JSON dictionaries.
     TypeError
-        If the value type is not int/float or bool (for disturbed_start).
+        If the value type is not str/int/float.
     ValueError
         If the length of the value list is not equal to the system count.
     """
 
     system_count = len(main_json.get("systems_auto", []))
 
+    valid_labeling_program = ["cp2k", "orca"]
+
     previous_input_json = convert_control_to_input(previous_json, main_json)
 
     for key in [
+        "labeling_program",
         "walltime_first_job_h",
         "walltime_second_job_h",
         "nb_nodes",
@@ -93,32 +97,50 @@ def generate_input_labeling_json(
             error_msg = f"'{key}' not found in any of the JSON dictionaries"
             raise KeyError(error_msg)
 
-        # Everything is system dependent so a list
-        merged_input_json[key] = []
+        # This is not system dependent and should be a string and should not change from previous iteration (but issue just a warning if it does).
+        if key == "labeling_program":
+            if key in previous_input_json and value != previous_input_json[key]:
+                logging.critical(f"Labeling program changed from {previous_input_json[key]} to {value}!")
 
-        # Default is used for the key
-        if default_used:
-            merged_input_json[key] = [value[0]] * system_count
-        else:
-            # Check if previous or user provided a list
-            if isinstance(value, List):
-                if len(value) == system_count:
-                    for it_value in value:
-                        if isinstance(it_value, (int, float)):
-                            merged_input_json[key].append(it_value)
-                        else:
-                            error_msg = f"Type mismatch: the type is '{type(it_value)}', but it should be '{type(1)}' or '{type(1.0)}'."
-                            raise TypeError(error_msg)
-                else:
-                    error_msg = f"Size mismatch: The length of the list should be '{system_count}' corresponding to the number of systems."
-                    raise ValueError(error_msg)
-
-            # If it is not a List
-            elif isinstance(value, (int, float)):
-                merged_input_json[key] = [value] * system_count
+            if default_used:
+                merged_input_json[key] = value
             else:
-                error_msg = f"Type mismatch: the type is '{type(it_value)}', but it should be '{type(1)}' or '{type(1.0)}'."
-                raise TypeError(error_msg)
+                if isinstance(value, str):
+                    if value in valid_labeling_program:
+                        merged_input_json[key] = value
+                    else:
+                        error_msg = f"Exploration type {key} is not known: use either {valid_labeling_program}."
+                        raise ValueError(error_msg)
+                else:
+                    error_msg = f"Type mismatch: the type is '{type(value)}', but it should be '{type('string')}'."
+                    raise TypeError(error_msg)
+        else:
+            # Everything else is system dependent so a list
+            merged_input_json[key] = []
+
+            # Default is used for the key
+            if default_used:
+                merged_input_json[key] = [value[0]] * system_count
+            else:
+                # Check if previous or user provided a list
+                if isinstance(value, List):
+                    if len(value) == system_count:
+                        for it_value in value:
+                            if isinstance(it_value, (int, float)):
+                                merged_input_json[key].append(it_value)
+                            else:
+                                error_msg = f"Type mismatch: the type is '{type(it_value)}', but it should be '{type(1)}' or '{type(1.0)}'."
+                                raise TypeError(error_msg)
+                    else:
+                        error_msg = f"Size mismatch: The length of the list should be '{system_count}' corresponding to the number of systems."
+                        raise ValueError(error_msg)
+
+                # If it is not a List
+                elif isinstance(value, (int, float)):
+                    merged_input_json[key] = [value] * system_count
+                else:
+                    error_msg = f"Type mismatch: the type is '{type(it_value)}', but it should be '{type(1)}' or '{type(1.0)}'."
+                    raise TypeError(error_msg)
 
     return merged_input_json
 
@@ -126,7 +148,7 @@ def generate_input_labeling_json(
 @catch_errors_decorator
 def get_system_labeling(
     merged_input_json: Dict, system_auto_index: int
-) -> Tuple[float, float, int, int, int,]:
+) -> Tuple[str, float, float, int, int, int,]:
     """
     Return a tuple of system labeling parameters based on the input JSON and system index.
 
@@ -139,20 +161,24 @@ def get_system_labeling(
 
     Returns
     -------
-    Tuple[float, float, int, int, int]
+    Tuple[str, float, float, int, int, int]
         A tuple containing system labeling parameters:
+        - labeling_program : str
+            The labeling program.
         - walltime_first_job_h : float
-            X
+            The walltime for the first job in hours.
         - walltime_second_job_h : float
-            X
+            The walltime for the second job in hours.
         - nb_nodes : int
-            X
+            The number of nodes.
         - nb_mpi_per_node : int
-            X
+            The number of MPI processes per node.
         - nb_threads_per_mpi : int
-            X
+            The number of threads per MPI process.
     """
     system_values = []
+    for key in [ "labeling_program" ]:
+        system_values.append(merged_input_json[key][system_auto_index])
 
     for key in [
         "walltime_first_job_h",

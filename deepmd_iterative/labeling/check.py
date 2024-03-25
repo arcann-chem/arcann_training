@@ -6,10 +6,11 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/10/17
+Last modified: 2024/03/14
 """
 # Standard library modules
 import logging
+import re
 import sys
 from pathlib import Path
 
@@ -71,6 +72,11 @@ def main(
         del prev_iter, padded_prev_iter
     else:
         previous_labeling_json = {}
+
+
+    labeling_program = labeling_json["labeling_json"]
+    logging.debug(f"labeling_program: {labeling_program}")
+    labeling_program_up = labeling_program.upper()
 
     # Check if we can continue
     if not labeling_json["is_launched"]:
@@ -142,61 +148,50 @@ def main(
                 system_candidates_skipped_count += 1
                 system_candidates_skipped.append(f"{labeling_step_path}\n")
             else:
-                system_output_cp2k_file = {}
-                system_output_cp2k = {}
-                for step in [0, 1]:
-                    system_output_cp2k_file[step] = (
-                        labeling_step_path
-                        / f"{step+1}_labeling_{padded_labeling_step}.out"
-                    )
-                    if system_output_cp2k_file[step].is_file():
-                        system_output_cp2k[step] = textfile_to_string_list(
-                            system_output_cp2k_file[step]
-                        )
+                if labeling_program == "cp2k":
+                    system_output_cp2k_file = {}
+                    system_output_cp2k = {}
+                    for step in [0, 1]:
+                        system_output_cp2k_file[step] = (labeling_step_path / f"{step+1}_labeling_{padded_labeling_step}.out")
+                        if system_output_cp2k_file[step].is_file():
+                            system_output_cp2k[step] = textfile_to_string_list(system_output_cp2k_file[step])
 
-                        if any(
-                            "SCF run converged in" in _
-                            for _ in system_output_cp2k[step]
-                        ):
-                            candidates_step_count[step] += 1
-                            system_candidates_converged_count[step] += 1
-                            if any(
-                                "T I M I N G" in _ for _ in system_output_cp2k[step]
-                            ):
-                                system_timings[step] = [
-                                    _
-                                    for _ in system_output_cp2k[step]
-                                    if "CP2K                                 1  1.0"
-                                    in _
-                                ]
-                                system_tinings_sum[step] += float(
-                                    system_timings[step][0].split(" ")[-1]
-                                )
+                            if any("SCF run converged in" in _ for _ in system_output_cp2k[step]):
+                                candidates_step_count[step] += 1
+                                system_candidates_converged_count[step] += 1
+                                if any("T I M I N G" in _ for _ in system_output_cp2k[step]):
+                                    system_timings[step] = [_ for _ in system_output_cp2k[step] if "CP2K                                 1  1.0" in _ ]
+                                    system_tinings_sum[step] += float(system_timings[step][0].split(" ")[-1])
 
-                        elif any(
-                            "SCF run converged in" in _
-                            for _ in system_output_cp2k[step]
-                        ):
-                            system_candidates_not_converged[step].append(
-                                f"{system_output_cp2k_file[step]}"
-                            )
+                            elif any("SCF run NOT converged" in _ for _ in system_output_cp2k[step]):
+                                system_candidates_not_converged[step].append(f"{system_output_cp2k_file[step]}")
 
+                            else:
+                                system_candidates_failed[step].append(f"{system_output_cp2k_file[step]}")
                         else:
-                            system_candidates_failed[step].append(
-                                f"{system_output_cp2k_file[step]}"
-                            )
-                    else:
-                        system_candidates_failed[step].append(
-                            f"{system_output_cp2k_file[step]}"
-                        )
+                            system_candidates_failed[step].append(f"{system_output_cp2k_file[step]}")
+                    del system_output_cp2k_file, system_output_cp2k
 
-                del system_output_cp2k_file, system_output_cp2k
+                elif labeling_program == "orca":
+                    system_output_orca_file = (labeling_step_path / f"1_labeling_{padded_labeling_step}.out")
+                    if system_output_orca_file.is_file():
+                        system_output_orca = textfile_to_string_list(system_output_orca_file)
+                        if any("ORCA TERMINATED NORMALLY" in _ for _ in system_output_orca) and any("SCF CONVERGED" in _ for _ in system_output_orca):
+                            candidates_step_count[0] += 1
+                            system_candidates_converged_count[0] += 1
+                            if any("Sum of individual times" in _ for _ in system_output_orca):
+                                system_timings[0] = [_ for _ in system_output_orca if "Sum of individual times" in _]
+                                pattern = r'(\d+\.\d+) sec'
+                                matches = re.search(pattern, system_timings)
+                                if matches:
+                                    system_tinings_sum[0] += float(matches.group(1))
+                        else:
+                            system_candidates_failed[0].append(f"{system_output_orca_file}")
+                    else:
+                        system_candidates_failed[0].append(f"{system_output_orca_file}")
 
         if system_disturbed_candidates_count > 0:
-            for labeling_step in range(
-                system_candidates_count,
-                system_candidates_count + system_disturbed_candidates_count,
-            ):
+            for labeling_step in range(system_candidates_count,system_candidates_count + system_disturbed_candidates_count):
                 padded_labeling_step = str(labeling_step).zfill(5)
                 labeling_step_path = system_path / padded_labeling_step
 
@@ -204,66 +199,55 @@ def main(
                     # If the step was skipped
                     candidates_skipped_count += 1
                     system_disturbed_candidates_skipped_count += 1
-                    system_disturbed_candidates_skipped.append(
-                        f"{labeling_step_path}\n"
-                    )
+                    system_disturbed_candidates_skipped.append(f"{labeling_step_path}\n")
                 else:
-                    system_output_cp2k_file = {}
-                    system_output_cp2k = {}
-                    for step in [0, 1]:
-                        system_output_cp2k_file[step] = (
-                            labeling_step_path
-                            / f"{step+1}_labeling_{padded_labeling_step}.out"
-                        )
-
-                        if system_output_cp2k_file[step].is_file():
-                            system_output_cp2k[step] = textfile_to_string_list(
-                                system_output_cp2k_file[step]
-                            )
-
-                            if any(
-                                "SCF run converged in" in _
-                                for _ in system_output_cp2k[step]
-                            ):
-                                candidates_step_count[step] += 1
-                                system_candidates_converged_count[step] += 1
-                                if any(
-                                    "T I M I N G" in _ for _ in system_output_cp2k[step]
-                                ):
-                                    system_timings[step] = [
-                                        _
-                                        for _ in system_output_cp2k[step]
-                                        if "CP2K                                 1  1.0"
-                                        in _
-                                    ]
-                                    system_tinings_sum[step] += float(
-                                        system_timings[step][0].split(" ")[-1]
-                                    )
-                            elif any(
-                                "SCF run converged in" in _
-                                for _ in system_output_cp2k[step]
-                            ):
-                                system_candidates_not_converged[step].append(
-                                    f"{system_output_cp2k_file[step]}"
-                                )
-
+                    if labeling_program == "cp2k":
+                        system_output_cp2k_file = {}
+                        system_output_cp2k = {}
+                        for step in [0, 1]:
+                            system_output_cp2k_file[step] = (labeling_step_path / f"{step+1}_labeling_{padded_labeling_step}.out")
+                            if system_output_cp2k_file[step].is_file():
+                                system_output_cp2k[step] = textfile_to_string_list(system_output_cp2k_file[step])
+                                if any("SCF run converged in" in _ for _ in system_output_cp2k[step]):
+                                    candidates_step_count[step] += 1
+                                    system_candidates_converged_count[step] += 1
+                                    if any("T I M I N G" in _ for _ in system_output_cp2k[step]):
+                                        system_timings[step] = [_ for _ in system_output_cp2k[step] if "CP2K                                 1  1.0" in _ ]
+                                        system_tinings_sum[step] += float(system_timings[step][0].split(" ")[-1])
+                                elif any("SCF run NOT converged" in _ for _ in system_output_cp2k[step] ):
+                                    system_candidates_not_converged[step].append( f"{system_output_cp2k_file[step]}")
+                                else:
+                                    system_candidates_failed[0].append(f"{system_output_orca_file}")
                             else:
-                                system_candidates_failed[step].append(
-                                    f"{system_output_cp2k_file[step]}"
-                                )
+                                system_candidates_failed[step].append(f"{system_output_cp2k_file[step]}")
+                        del system_output_cp2k_file, system_output_cp2k
+
+                    elif labeling_program == "orca":
+                        system_output_orca_file = (labeling_step_path / f"1_labeling_{padded_labeling_step}.out")
+                        if system_output_orca_file.is_file():
+                            system_output_orca = textfile_to_string_list(system_output_orca_file)
+                            if any("ORCA TERMINATED NORMALLY" in _ for _ in system_output_orca) and any("SCF CONVERGED" in _ for _ in system_output_orca):
+                                candidates_step_count[0] += 1
+                                system_candidates_converged_count[0] += 1
+                                if any("Sum of individual times" in _ for _ in system_output_orca):
+                                    system_timings[0] = [_ for _ in system_output_orca if "Sum of individual times" in _]
+                                    pattern = r'(\d+\.\d+) sec'
+                                    matches = re.search(pattern, system_timings)
+                                    if matches:
+                                        system_tinings_sum[0] += float(matches.group(1))
+                            else:
+                                system_candidates_failed[0].append(f"{system_output_orca_file}")
                         else:
-                            system_candidates_failed[step].append(
-                                f"{system_output_cp2k_file[step]}"
-                            )
+                            system_candidates_failed[0].append(f"{system_output_orca_file}")
 
-                    del system_output_cp2k_file, system_output_cp2k
-
-        if (
-            candidates_step_count[0] == 0 or candidates_step_count[1] == 0
-        ) and candidates_skipped_count == 0:
-            logging.critical(
-                "ALL jobs have failed/not converged/still running (second step)."
-            )
+        if (candidates_step_count[0] == 0 or candidates_step_count[1] == 0) and candidates_skipped_count == 0 and labeling_program == "cp2k":
+            logging.critical("ALL jobs have failed/not converged/still running (second step).")
+            logging.critical("Please check manually before relaunching this step")
+            logging.critical('Or create files named "skip" to skip some configurations')
+            logging.critical("Aborting...")
+            return 1
+        elif (candidates_step_count[0] == 0) and candidates_step_count == 0 and labeling_program == "orca":
+            logging.critical("ALL jobs have failed/not converged/still running (first step).")
             logging.critical("Please check manually before relaunching this step")
             logging.critical('Or create files named "skip" to skip some configurations')
             logging.critical("Aborting...")
@@ -356,19 +340,17 @@ def main(
         )
     del system_auto, system_auto_index
 
-    if candidates_expected_count != (
-        candidates_step_count[0] + candidates_skipped_count
-    ):
-        logging.warning(
-            "Some jobs have failed/not converged/still running (first step). Check manually if needed."
-        )
-
-    if candidates_expected_count != (
-        candidates_step_count[1] + candidates_skipped_count
-    ):
-        logging.critical(
-            "Some jobs have failed/not converged/still running (second step). Check manually."
-        )
+    # Check first step, write warning if not converged/failed and CP2K, abort if not converged/failed and ORCA
+    if (candidates_expected_count != (candidates_step_count[0] + candidates_skipped_count)) and labeling_program == "cp2k":
+        logging.warning("Some jobs have failed/not converged/still running (first step). Check manually if needed.")
+    elif (candidates_expected_count != (candidates_step_count[0] + candidates_skipped_count)) and labeling_program == "orca":
+        logging.critical("Some jobs have failed/not converged/still running (first step). Check manually.")
+        logging.critical("Or create files named 'skip' to skip some configurations.")
+        logging.critical("Aborting")
+        return 1
+    # Check second step, abort if not converged/failed and CP2K
+    if (candidates_expected_count != (candidates_step_count[1] + candidates_skipped_count)) and labeling_program == "cp2k":
+        logging.critical("Some jobs have failed/not converged/still running (second step). Check manually.")
         logging.critical("Or create files named 'skip' to skip some configurations.")
         logging.critical("Aborting")
         return 1
@@ -380,14 +362,6 @@ def main(
     ):
         labeling_json["is_checked"] = True
     del candidates_expected_count, candidates_skipped_count, candidates_step_count
-
-    # for system_auto_index, system_auto in enumerate(labeling_json["systems_auto"]):
-    #     system_path = current_path / system_auto
-    #     logging.info("Deleting SLURM out/error files...")
-    #     remove_files_matching_glob(system_path, "**/CP2K.*")
-    #     remove_files_matching_glob(system_path, "CP2K.*")
-    #     logging.info("Cleaning done!")
-    # del system_auto, system_auto_index, system_path
 
     # Dump the JSON files (exploration JSONN)
     write_json_file(labeling_json, (control_path / f"labeling_{padded_curr_iter}.json"))
