@@ -23,5 +23,5 @@ setup(
         "Programming Language :: Python :: 3.9",
     ],
     python_requires=">=3.7",
-    install_requires=["numpy>=1.17.3"],
+    install_requires=["numpy>=1.17.3", "pyyaml>=6"],
 )

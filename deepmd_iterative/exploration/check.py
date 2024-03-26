@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/04
+Last modified: 2024/03/26
 """
 # Standard library modules
 import logging
@@ -24,7 +24,7 @@ from deepmd_iterative.common.json import (
     load_default_json_file,
 )
 from deepmd_iterative.common.list import textfile_to_string_list
-from deepmd_iterative.common.check import validate_step_folder, check_vmd, check_dcd_is_valid
+from deepmd_iterative.common.check import validate_step_folder, check_vmd, check_dcd_is_valid, check_nc_is_valid
 
 
 def main(
@@ -176,6 +176,45 @@ def main(
                     else:
                         logging.critical(f"'{lammps_output_file}' failed. Check manually.")
                     del lammps_output, lammps_output_file, traj_file, model_deviation_filename
+                    
+                elif (exploration_json["systems_auto"][system_auto]["exploration_type"]== "sander_ml"):
+                    traj_file = (local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.nc")
+                    sander_emle_output_file = (local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.out")
+                    model_deviation_filename = (local_path / f"model_devi_{system_auto}_{it_nnp}_{padded_curr_iter}.out")
+
+                    # Log if files are missing.
+                    if not all([traj_file.is_file(), lammps_output_file.is_file(), model_deviation_filename.is_file()]):
+                        logging.critical(f"'{local_path}': missing files. Check manually.")
+                        del lammps_output_file, traj_file, model_deviation_filename
+                        continue
+
+                    # Check if NC is unreadable
+                    if not check_nc_is_valid(traj_file, vmd_bin):
+                        (local_path / "skip").touch(exist_ok=True)
+                        skipped_count += 1
+                        exploration_json["systems_auto"][system_auto]["skipped_count"] += 1
+                        logging.warning(f"'{traj_file}' present but invalid.")
+                        logging.warning(F"'{local_path}' auto-skipped.")
+                        del sander_emle_output_file, traj_file, model_deviation_filename
+                        continue
+
+                    # Check if output is valid (or forced)
+                    sander_emle_ouput = textfile_to_string_list(sander_emle_output_file)
+                    if (local_path / "force").is_file():
+                        forced_count += 1
+                        exploration_json["systems_auto"][system_auto]["forced_count"] += 1
+                        logging.warning(f"'{local_path}' forced.")
+                    # TODO : Check if the output is valid
+                    elif any("Total wall time:" in f for f in sander_emle_ouput):
+                        system_count += 1
+                        completed_count += 1
+                        exploration_json["systems_auto"][system_auto]["completed_count"] += 1
+                        timings_str = [zzz for zzz in sander_emle_ouput if "Loop time of" in zzz]
+                        timings.append(float(timings_str[0].split(" ")[3]))
+                        del timings_str
+                    else:
+                        logging.critical(f"'{sander_emle_output_file}' failed. Check manually.")
+                    del sander_emle_ouput, sander_emle_output_file, traj_file, model_deviation_filename
 
                 # i-PI
                 elif (exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI"):

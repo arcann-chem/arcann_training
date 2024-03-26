@@ -1,0 +1,25 @@
+backend: deepmd
+deepmd_model: 
+  - /home/kirill/tmp/Valentin/deepmd/graph_1_000.pb
+  - /home/kirill/tmp/Valentin/deepmd/graph_2_000.pb
+  - /home/kirill/tmp/Valentin/deepmd/graph_3_000.pb
+deepmd_deviation: /home/kirill/tmp/Valentin/deepmd/output/deviation.dat
+device: null
+energy_file: emle_energy.txt
+energy_frequency: 0
+external_backend: null
+interpolate_steps: null
+lambda_interpolate: null
+log_file: emle_log.txt
+log_level: ERROR
+method: electrostatic
+mm_charges: null
+model: /home/kirill/tmp/Valentin/deepmd/mlmm_cho_b3lyp.mat
+orca_path: null
+orca_template: null
+parm7: null
+plugin_path: null
+qm_indices: null
+rascal_model: null
+restart: false
+sqm_theory: null

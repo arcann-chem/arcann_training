@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/17
+Last modified: 2024/03/25
 
 Functions
 ---------
@@ -140,24 +140,28 @@ def generate_input_exploration_json(
                 exploration_dep = 0
             elif value == "i-PI":
                 exploration_dep = 1
+            elif value == "sander_emle":
+                exploration_dep = 0
             elif isinstance(value, List):
                 exploration_dep = []
                 if len(value) == system_count:
                     for it_value in value:
-                        if it_value != "lammps" and it_value != "i-PI":
-                            error_msg = f"Exploration type {key} is not know: use ethier 'lammps' or 'i-PI' or in a list"
+                        if it_value != "lammps" and it_value != "i-PI" and it_value != "sander_emle":
+                            error_msg = f"Exploration type {key} is not know: use ethier 'lammps' or 'i-PI' or 'sander_emle' or in a list"
                             raise ValueError(error_msg)
                         else:
                             if it_value == "lammps":
                                 exploration_dep.append(0)
                             elif it_value == "i-PI":
                                 exploration_dep.append(1)
+                            elif it_value == 'sander_emle':
+                                exploration_dep.append(0)
                             merged_input_json[key].append(it_value)
                 else:
                     error_msg = f"{key}: Size mismatch: The length of the list should be '{system_count}' corresponding to the number of systems."
                     raise ValueError(error_msg)
             else:
-                error_msg = f"Exploration type {key} is not know: use ethier 'lammps' or 'i-PI' or in a list"
+                error_msg = f"Exploration type {key} is not know: use ethier 'lammps' or 'i-PI' or 'sander_emle' or in a list"
                 raise ValueError(error_msg)
         else:
             # Everything is system dependent so a list

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/15
+Last modified: 2024/03/26
 """
 # Standard library modules
 import copy
@@ -18,6 +18,7 @@ from pathlib import Path
 
 # Non-standard library imports
 import numpy as np
+import yaml
 
 # Local imports
 from deepmd_iterative.common.check import validate_step_folder, check_atomsk
@@ -120,13 +121,9 @@ def main(
     if curr_iter > 0:
         prev_iter = curr_iter - 1
         padded_prev_iter = str(prev_iter).zfill(3)
-        previous_training_json = load_json_file(
-            (control_path / f"training_{padded_prev_iter}.json")
-        )
+        previous_training_json = load_json_file(control_path / f"training_{padded_prev_iter}.json")
         if prev_iter > 0:
-            previous_exploration_json = load_json_file(
-                (control_path / f"exploration_{padded_prev_iter}.json")
-            )
+            previous_exploration_json = load_json_file(control_path / f"exploration_{padded_prev_iter}.json")
         else:
             previous_exploration_json = {}
     else:
@@ -228,45 +225,27 @@ def main(
     for exploration_type in exploration_types:
         walltime_approx_s[exploration_type] = []
 
-        job_file_name = (
-            f"job_{exploration_type}-deepmd_explore_{arch_type}_{machine}.sh"
-        )
-        job_array_file_name = (
-            f"job-array_{exploration_type}-deepmd_explore_{arch_type}_{machine}.sh"
-        )
+        job_file_name = (f"job_{exploration_type}-deepmd_explore_{arch_type}_{machine}.sh")
+        job_array_file_name = (f"job-array_{exploration_type}-deepmd_explore_{arch_type}_{machine}.sh")
 
         if (current_path.parent / "user_files" / job_file_name).is_file():
-            master_job_file[exploration_type] = textfile_to_string_list(
-                current_path.parent / "user_files" / job_file_name
-            )
+            master_job_file[exploration_type] = textfile_to_string_list(current_path.parent / "user_files" / job_file_name)
         else:
-            logging.error(
-                f"No JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine."
-            )
+            logging.error(f"No JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine.")
             logging.error(f"Aborting...")
             return 1
 
         if (current_path.parent / "user_files" / job_array_file_name).is_file():
-            master_job_array_file[exploration_type] = textfile_to_string_list(
-                current_path.parent / "user_files" / job_array_file_name
-            )
+            master_job_array_file[exploration_type] = textfile_to_string_list(current_path.parent / "user_files" / job_array_file_name)
         else:
-            logging.warning(
-                f"No ARRAY JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine."
-            )
+            logging.warning(f"No ARRAY JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine.")
             logging.error(f"Aborting...")
             return 1
 
-        logging.debug(
-            f"master_job_file: {master_job_file[exploration_type][0:5]}, {master_job_file[exploration_type][-5:-1]}"
-        )
-        logging.debug(
-            f"master_job_array_file: {master_job_array_file[exploration_type][0:5]}, {master_job_array_file[exploration_type][-5:-1]}"
-        )
+        logging.debug(f"master_job_file: {master_job_file[exploration_type][0:5]}, {master_job_file[exploration_type][-5:-1]}")
+        logging.debug(f"master_job_array_file: {master_job_array_file[exploration_type][0:5]}, {master_job_array_file[exploration_type][-5:-1]}")
 
-        merged_input_json["job_email"] = get_key_in_dict(
-            "job_email", user_input_json, previous_exploration_json, default_input_json
-        )
+        merged_input_json["job_email"] = get_key_in_dict("job_email", user_input_json, previous_exploration_json, default_input_json)
 
         del jobs_path, job_file_name
     del exploration_type
@@ -276,12 +255,9 @@ def main(
     nb_sim = 0
 
     job_array_params_file = {}
-    job_array_params_file["lammps"] = [
-        "PATH/_R_DEEPMD_VERSION_/_R_MODEL_FILES_LIST_/_R_INPUT_FILE_/_R_DATA_FILE_/_R_RERUN_FILE_/_R_PLUMED_FILES_LIST_/"
-    ]
-    job_array_params_file["i-PI"] = [
-        "PATH/_R_DEEPMD_VERSION_/_R_MODEL_FILES_LIST_/_R_INPUT_FILE_/_R_DATA_FILE_/_R_RERUN_FILE_/_R_PLUMED_FILES_LIST_/"
-    ]
+    job_array_params_file["lammps"] = ["PATH/_R_DEEPMD_VERSION_/_R_MODEL_FILES_LIST_/_R_INPUT_FILE_/_R_DATA_FILE_/_R_RERUN_FILE_/_R_PLUMED_FILES_LIST_/"]
+    job_array_params_file["i-PI"] = ["PATH/_R_DEEPMD_VERSION_/_R_MODEL_FILES_LIST_/_R_INPUT_FILE_/_R_DATA_FILE_/_R_RERUN_FILE_/_R_PLUMED_FILES_LIST_/"]
+    job_array_params_file["sander_emle"] = ["PATH/_R_DEEPMD_VERSION_/_R_MODEL_FILES_LIST_/_R_SANDER_IN_FILE_/_R_COORD_FILE_/_R_EMLE_YAML_FILE_/_R_EMLE_MODEL_FILE_/_R_TOP_FILE_/_R_PLUMED_FILES_LIST_/"]
 
     # Loop through each system and set its exploration
     for system_auto_index, system_auto in enumerate(main_json["systems_auto"]):
@@ -312,17 +288,26 @@ def main(
         input_replace_dict = {}
 
         # Get the input file (.in or .xml) for the current system and check if plumed is being used
+
+        # LAMMPS
         if system_exploration_type == "lammps":
-            master_system_lammps_in = textfile_to_string_list(
-                training_path / "user_files" / (system_auto + ".in")
-            )
+            master_system_lammps_in = textfile_to_string_list(training_path / "user_files" / (system_auto + ".in"))
             # Check if the LAMMPS input file contains any "plumed" lines
             if any("plumed" in zzz for zzz in master_system_lammps_in):
                 plumed[0] = True
+
+        # SANDER-EMLE
+        elif system_exploration_type == "sander_emle":
+            master_system_sander_emle_in = textfile_to_string_list(training_path / "user_files" / (system_auto + ".in"))
+            with (training_path / "user_files" / (system_auto + ".yaml")).open() as f:
+                master_system_sander_emle_yaml = yaml.load(f, Loader=yaml.FullLoader)
+            # Check if the SANDER input ful contains any "plumed" lines
+            if any("plumed" in zzz for zzz in master_system_sander_emle_in):
+                plumed[0] = True
+
+        # i-PI
         elif system_exploration_type == "i-PI":
-            master_system_ipi_xml = read_xml_file(
-                training_path / "user_files" / (system_auto + ".xml")
-            )
+            master_system_ipi_xml = read_xml_file(training_path / "user_files" / (system_auto + ".xml"))
             master_system_ipi_xml_aslist = xml_to_string_list(master_system_ipi_xml)
             # Create a JSON object with placeholders for the dp-i-PI input file parameters
             master_system_ipi_json = {
@@ -341,26 +326,21 @@ def main(
         # If plumed is being used for the current system, get the plumed input files
         if plumed[0] == 1:
             # Find all plumed files associated with the current system
-            plumed_files = [
-                plumed_file
-                for plumed_file in (training_path / "user_files").glob(
-                    f"plumed*_{system_auto}.dat"
-                )
-            ]
+            plumed_files = [plumed_file for plumed_file in (training_path / "user_files").glob(f"plumed*_{system_auto}.dat")]
+
             # If no plumed files are found, print an error message and exit
             if len(plumed_files) == 0:
-                logging.error(f"Plumed in (LAMMPS) input but no plumed files found")
+                logging.error(f"Plumed in (LAMMPS/i-PI/SANDER-EMLE) input but no plumed files found")
                 logging.error(f"Aborting...")
                 sys.exit(1)
+
             # Read the contents of each plumed file into a dictionary
             plumed_input = {}
             for plumed_file in plumed_files:
                 plumed_input[plumed_file.name] = textfile_to_string_list(plumed_file)
             # Analyze each plumed file to determine whether it contains MOVINGRESTRAINTS keyword (SMD)
             for plumed_file in plumed_files:
-                plumed[1], plumed[2] = analyze_plumed_file_for_movres(
-                    plumed_input[plumed_file.name]
-                )
+                plumed[1], plumed[2] = analyze_plumed_file_for_movres(plumed_input[plumed_file.name])
                 if plumed[1] and plumed[2] != 0:
                     break
 
@@ -395,9 +375,7 @@ def main(
             # First exploration
             if curr_iter == 1:
                 system_lammps_data_fn = system_auto + ".lmp"
-                system_lammps_data = textfile_to_string_list(
-                    training_path / "user_files" / system_lammps_data_fn
-                )
+                system_lammps_data = textfile_to_string_list(training_path / "user_files" / system_lammps_data_fn)
                 input_replace_dict["_R_DATA_FILE_"] = system_lammps_data_fn
 
                 # Default time and nb steps
@@ -410,17 +388,11 @@ def main(
                 system_walltime_approx_s = system_init_job_walltime_h * 3600
 
                 # TODO Do we update or leave it as is (-1 if default, user value else)
-                merged_input_json["job_walltime_h"][system_auto_index] = (
-                    system_walltime_approx_s / 3600
-                )
-                walltime_approx_s[system_exploration_type].append(
-                    system_walltime_approx_s
-                )
+                merged_input_json["job_walltime_h"][system_auto_index] = (system_walltime_approx_s / 3600)
+                walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
 
                 # Get the cell and nb of atoms: It can be done now because the starting point is the same by NNP and by traj
-                system_nb_atm, num_atom_types, box, masses, coords = read_lammps_data(
-                    system_lammps_data
-                )
+                system_nb_atm, num_atom_types, box, masses, coords = read_lammps_data(system_lammps_data)
                 system_cell = [box[1] - box[0], box[3] - box[2], box[5] - box[4]]
 
             # Subsequent ones
@@ -429,55 +401,95 @@ def main(
                 if plumed[1]:
                     system_nb_steps = plumed[2]
                 # User inputs
-                elif (
-                    "exp_time_ps" in user_input_json
-                    and user_input_json["exp_time_ps"] != -1
-                ):
+                elif ("exp_time_ps" in user_input_json and user_input_json["exp_time_ps"] != -1):
                     system_nb_steps = system_exp_time_ps / system_timestep_ps
                 # Auto value
                 else:
-                    system_nb_steps = update_system_nb_steps_factor(
-                        previous_exploration_json, system_auto
-                    )
+                    system_nb_steps = update_system_nb_steps_factor(previous_exploration_json, system_auto)
                     # Update if over Max value
                     if system_nb_steps > system_max_exp_time_ps / system_timestep_ps:
                         system_nb_steps = system_max_exp_time_ps / system_timestep_ps
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(system_nb_steps)}"
 
                 # TODO Do we update or leave it as is (-1 if default, user value else)
-                merged_input_json["exp_time_ps"][system_auto_index] = (
-                    system_nb_steps * system_timestep_ps
-                )
+                merged_input_json["exp_time_ps"][system_auto_index] = (system_nb_steps * system_timestep_ps)
 
                 # Walltime
                 if "job_walltime_h" in user_input_json:
                     system_walltime_approx_s = int(system_job_walltime_h * 3600)
                 else:
                     # Abritary factor
-                    system_walltime_approx_s = max(
-                        int(
-                            (
-                                previous_exploration_json["systems_auto"][system_auto][
-                                    "mean_s_per_step"
-                                ]
-                                * system_nb_steps
-                            )
-                            * 1.50
-                        ),
-                        1800,
-                    )
+                    system_walltime_approx_s = max(int((previous_exploration_json["systems_auto"][system_auto]["mean_s_per_step"] * system_nb_steps) * 1.50), 1800)
                     # Round up to the next 30min
-                    system_walltime_approx_s = int(
-                        np.ceil(system_walltime_approx_s / 1800) * 1800
-                    )
+                    system_walltime_approx_s = int(np.ceil(system_walltime_approx_s / 1800) * 1800)
 
                 # TODO Do we update or leave it as is (-1 if default, user value else)
-                merged_input_json["job_walltime_h"][system_auto_index] = (
-                    system_walltime_approx_s / 3600
-                )
-                walltime_approx_s[system_exploration_type].append(
-                    system_walltime_approx_s
-                )
+                merged_input_json["job_walltime_h"][system_auto_index] = (system_walltime_approx_s / 3600)
+                walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
+
+            # Get print freq
+            system_print_every_x_steps = system_nb_steps * system_print_mult
+            input_replace_dict["_R_PRINT_FREQ_"] = f"{int(system_print_every_x_steps)}"
+
+
+        elif system_exploration_type == "sander_emle":
+
+            input_replace_dict["_R_TEMPERATURE_"] = f"{system_temperature_K}"
+
+            # First exploration
+            if curr_iter == 1:
+
+                system_sander_emle_data_fn = system_auto + ".ncrst"
+                input_replace_dict["_R_COORD_FILE_"] = system_sander_emle_data_fn
+                system_sander_emle_data_path = (training_path / "user_files" / system_sander_emle_data_fn)
+
+                # Default time and nb steps
+                if plumed[1]:
+                    system_nb_steps = plumed[2]
+                else:
+                    system_nb_steps = system_init_exp_time_ps / system_timestep_ps
+                input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(system_nb_steps)}"
+
+                system_walltime_approx_s = system_init_job_walltime_h * 3600
+
+                # TODO Do we update or leave it as is (-1 if default, user value else)
+                merged_input_json["job_walltime_h"][system_auto_index] = (system_walltime_approx_s / 3600)
+                walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
+
+                system_nb_atm = main_json["systems_auto"][system_auto]["nb_atm"]
+                system_cell = main_json["systems_auto"][system_auto]["cell"]
+
+            # Subsequent ones
+            else:
+                # SMD wins
+                if plumed[1]:
+                    system_nb_steps = plumed[2]
+                # User inputs
+                elif ("exp_time_ps" in user_input_json and user_input_json["exp_time_ps"] != -1):
+                    system_nb_steps = system_exp_time_ps / system_timestep_ps
+                # Auto value
+                else:
+                    system_nb_steps = update_system_nb_steps_factor(previous_exploration_json, system_auto)
+                    # Update if over Max value
+                    if system_nb_steps > system_max_exp_time_ps / system_timestep_ps:
+                        system_nb_steps = system_max_exp_time_ps / system_timestep_ps
+                input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(system_nb_steps)}"
+
+                # TODO Do we update or leave it as is (-1 if default, user value else)
+                merged_input_json["exp_time_ps"][system_auto_index] = (system_nb_steps * system_timestep_ps)
+
+                # Walltime
+                if "job_walltime_h" in user_input_json:
+                    system_walltime_approx_s = int(system_job_walltime_h * 3600)
+                else:
+                    # Abritary factor
+                    system_walltime_approx_s = max(int((previous_exploration_json["systems_auto"][system_auto]["mean_s_per_step"]* system_nb_steps) * 1.50), 1800)
+                    # Round up to the next 30min
+                    system_walltime_approx_s = int(np.ceil(system_walltime_approx_s / 1800) * 1800)
+
+                # TODO Do we update or leave it as is (-1 if default, user value else)
+                merged_input_json["job_walltime_h"][system_auto_index] = (system_walltime_approx_s / 3600)
+                walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
 
             # Get print freq
             system_print_every_x_steps = system_nb_steps * system_print_mult
@@ -485,13 +497,9 @@ def main(
 
         # i-PI // UNTESTED
         elif system_exploration_type == "i-PI":
-            system_temperature_K = float(
-                get_temperature_from_ipi_xml(master_system_ipi_xml)
-            )
+            system_temperature_K = float(get_temperature_from_ipi_xml(master_system_ipi_xml))
             if system_temperature_K == -1:
-                logging.error(
-                    f"No temperature found in the xml: '{training_path / 'files' / (system_auto + '.xml')}'."
-                )
+                logging.error(f"No temperature found in the xml: '{training_path / 'files' / (system_auto + '.xml')}'.")
                 logging.error("Aborting...")
                 sys.exit(1)
 
@@ -501,9 +509,7 @@ def main(
             # First exploration
             if curr_iter == 1:
                 system_lammps_data_fn = system_auto + ".lmp"
-                system_lammps_data = textfile_to_string_list(
-                    training_path / "user_files" / system_lammps_data_fn
-                )
+                system_lammps_data = textfile_to_string_list(training_path / "user_files" / system_lammps_data_fn)
                 system_ipi_xyz_fn = system_auto + ".xyz"
                 input_replace_dict["_R_DATA_FILE_"] = system_ipi_xyz_fn
                 master_system_ipi_json["coord_file"] = system_ipi_xyz_fn
@@ -521,9 +527,7 @@ def main(
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.STDOUT,
                 )
-                system_ipi_xyz = textfile_to_string_list(
-                    training_path / "user_files" / system_ipi_xyz_fn
-                )
+                system_ipi_xyz = textfile_to_string_list(training_path / "user_files" / system_ipi_xyz_fn)
                 # Default time and nb steps
                 if plumed[1]:
                     system_nb_steps = plumed[2]
@@ -534,17 +538,11 @@ def main(
                 system_walltime_approx_s = system_init_job_walltime_h * 3600
 
                 # TODO Do we update or leave it as is (-1 if default, user value else)
-                merged_input_json["job_walltime_h"][system_auto_index] = (
-                    system_walltime_approx_s / 3600
-                )
-                walltime_approx_s[system_exploration_type].append(
-                    system_walltime_approx_s
-                )
+                merged_input_json["job_walltime_h"][system_auto_index] = (system_walltime_approx_s / 3600)
+                walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
 
                 # Get the cell and nb of atoms: It can be done now because the starting point is the same by NNP and by traj
-                system_nb_atm, num_atom_types, box, masses, coords = read_lammps_data(
-                    system_lammps_data
-                )
+                system_nb_atm, num_atom_types, box, masses, coords = read_lammps_data(system_lammps_data)
                 system_cell = [box[1] - box[0], box[3] - box[2], box[5] - box[4]]
                 input_replace_dict["_R_CELL_"] = f"{system_cell}"
                 # Get the type_map from config (key added after first training)
@@ -561,45 +559,26 @@ def main(
                     system_nb_steps = system_exp_time_ps / system_timestep_ps
                 # Auto value
                 else:
-                    system_nb_steps *= update_system_nb_steps_factor(
-                        previous_exploration_json, system_auto
-                    )
+                    system_nb_steps *= update_system_nb_steps_factor(previous_exploration_json, system_auto)
                     # Update if over Max value
                     if system_nb_steps > (system_max_exp_time_ps / system_timestep_ps):
                         system_nb_steps = system_max_exp_time_ps / system_timestep_ps
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(system_nb_steps)}"
                 # Update the new input
-                merged_input_json["system_exp_time_ps"] = (
-                    system_nb_steps * system_timestep_ps
-                )
+                merged_input_json["system_exp_time_ps"] = (system_nb_steps * system_timestep_ps)
 
                 # Walltime
                 if user_input_json_present:
                     system_walltime_approx_s = int(system_job_walltime_h * 3600)
                 else:
                     # Abritary factor
-                    system_walltime_approx_s = max(
-                        int(
-                            (
-                                previous_exploration_json["systems_auto"][system_auto][
-                                    "mean_s_per_step"
-                                ]
-                                * system_nb_steps
-                            )
-                            * 1.50
-                        ),
-                        1800,
-                    )
+                    system_walltime_approx_s = max(int((previous_exploration_json["systems_auto"][system_auto]["mean_s_per_step"] * system_nb_steps) * 1.50),1800)
                     # Round up to the next 30min
-                    system_walltime_approx_s = int(
-                        np.ceil(system_walltime_approx_s / 1800) * 1800
-                    )
+                    system_walltime_approx_s = int(np.ceil(system_walltime_approx_s / 1800) * 1800)
 
                 # TODO Do we update or leave it as is (-1 if default, user value else)
                 merged_input_json["job_walltime_h"] = system_walltime_approx_s / 3600
-                walltime_approx_s[system_exploration_type].append(
-                    system_walltime_approx_s
-                )
+                walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
 
             # Get print freq
             system_print_every_x_steps = system_nb_steps * system_print_mult
@@ -627,46 +606,27 @@ def main(
                     training_path,
                     local_path,
                 )
+                logging.debug(f"{models_list}, {models_string}")
 
                 # LAMMPS
                 if system_exploration_type == "lammps":
                     system_lammps_in = copy.deepcopy(master_system_lammps_in)
-                    input_replace_dict[
-                        "_R_SEED_VEL_"
-                    ] = f"{nnp_index}{random.randrange(0, 1000)}{traj_index}{padded_curr_iter}"
-                    input_replace_dict[
-                        "_R_SEED_THER_"
-                    ] = f"{nnp_index}{random.randrange(0, 1000)}{traj_index}{padded_curr_iter}"
-                    input_replace_dict[
-                        "_R_DCD_OUT_"
-                    ] = f"{system_auto}_{nnp_index}_{padded_curr_iter}.dcd"
-                    input_replace_dict[
-                        "_R_RESTART_OUT_"
-                    ] = f"{system_auto}_{nnp_index}_{padded_curr_iter}.restart"
+                    input_replace_dict["_R_SEED_VEL_"] = f"{nnp_index}{random.randrange(0, 1000)}{traj_index}{padded_curr_iter}"
+                    input_replace_dict["_R_SEED_THER_"] = f"{nnp_index}{random.randrange(0, 1000)}{traj_index}{padded_curr_iter}"
+                    input_replace_dict["_R_DCD_OUT_"] = f"{system_auto}_{nnp_index}_{padded_curr_iter}.dcd"
+                    input_replace_dict["_R_RESTART_OUT_"] = f"{system_auto}_{nnp_index}_{padded_curr_iter}.restart"
                     input_replace_dict["_R_MODEL_FILES_LIST_"] = models_string
-                    input_replace_dict[
-                        "_R_DEVI_OUT_"
-                    ] = f"model_devi_{system_auto}_{nnp_index}_{padded_curr_iter}.out"
+                    input_replace_dict["_R_DEVI_OUT_"] = f"model_devi_{system_auto}_{nnp_index}_{padded_curr_iter}.out"
                     # Get data files (starting points) if iteration is > 1
                     if curr_iter > 1:
                         if len(starting_point_list) == 0:
-                            starting_point_list = copy.deepcopy(
-                                starting_point_list_bckp
-                            )
-                        system_lammps_data_fn = starting_point_list[
-                            random.randrange(0, len(starting_point_list))
-                        ]
+                            starting_point_list = copy.deepcopy(starting_point_list_bckp)
+                        system_lammps_data_fn = starting_point_list[random.randrange(0, len(starting_point_list))]
                         starting_point_list.remove(system_lammps_data_fn)
                         if system_previous_start:
-                            system_lammps_data = textfile_to_string_list(
-                                training_path
-                                / "starting_structures"
-                                / system_lammps_data_fn
-                            )
+                            system_lammps_data = textfile_to_string_list(training_path / "starting_structures" / system_lammps_data_fn)
                         else:
-                            system_lammps_data = textfile_to_string_list(
-                                training_path / "user_files" / system_lammps_data_fn
-                            )
+                            system_lammps_data = textfile_to_string_list(training_path / "user_files" / system_lammps_data_fn)
                         input_replace_dict["_R_DATA_FILE_"] = system_lammps_data_fn
                         # Get again the system_cell and nb_atom
                         (
@@ -815,6 +775,188 @@ def main(
                     del system_lammps_in
                     del job_file
                     # END OF INDIVIDUAL JOB FILE
+
+                elif system_exploration_type == "sander_emle":
+                    system_sander_emle_in = copy.deepcopy(master_system_sander_emle_in)
+                    system_sander_emle_yaml = copy.deepcopy(master_system_sander_emle_yaml)
+
+                    input_replace_dict["_R_SEED_VEL_"] = f"{nnp_index}{random.randrange(0, 1000)}{traj_index}{padded_curr_iter}"
+                    input_replace_dict["_R_NC_OUT_"] = f"{system_auto}_{nnp_index}_{padded_curr_iter}.nc"
+                    input_replace_dict["_R_RESTART_OUT_"] = f"{system_auto}_{nnp_index}_{padded_curr_iter}.restrt"
+                    input_replace_dict["_R_DEVI_OUT_"] = f"model_devi_{system_auto}_{nnp_index}_{padded_curr_iter}.out"
+
+                    # Get data files (starting points) if iteration is > 1
+                    if curr_iter > 1:
+                        if len(starting_point_list) == 0:
+                            starting_point_list = copy.deepcopy(starting_point_list_bckp)
+                        system_sander_emle_data_fn = starting_point_list[random.randrange(0, len(starting_point_list))]
+                        starting_point_list.remove(system_sander_emle_data_fn)
+                        if system_previous_start:
+                            system_sander_emle_data_path = (training_path / "starting_structures" / system_sander_emle_data_fn)
+                        else:
+                            system_sander_emle_data_path = (training_path / "user_files" / system_sander_emle_data_fn)
+                        input_replace_dict["_R_COORD_FILE_"] = system_sander_emle_data_fn
+
+                        system_nb_atm = main_json["systems_auto"][system_auto]["nb_atm"]
+                        system_cell = main_json["systems_auto"][system_auto]["cell"]
+
+                    # Plumed files
+                    if plumed[0]:
+                        input_replace_dict[
+                            "_R_PLUMED_IN_"
+                        ] = f"plumed_{system_auto}.dat"
+                        input_replace_dict[
+                            "_R_PLUMED_OUT_"
+                        ] = f"plumed_{system_auto}_{nnp_index}_{padded_curr_iter}.log"
+                        for it_plumed_input in plumed_input:
+                            plumed_input[
+                                it_plumed_input
+                            ] = replace_substring_in_string_list(
+                                plumed_input[it_plumed_input],
+                                "_R_PRINT_FREQ_",
+                                f"{int(system_print_every_x_steps)}",
+                            )
+                            string_list_to_textfile(
+                                local_path / it_plumed_input,
+                                plumed_input[it_plumed_input],
+                            )
+
+                    # Write CRD/PRMTOP/EMLE_MODEL file
+                    system_emle_model_file = (training_path / "user_files" / f"{system_auto}.mat")
+                    system_prmtop_file = (training_path / "user_files" / f"{system_auto}.prmtop")
+
+                    subprocess.run(["cp", f"{system_emle_model_file}", local_path], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                    subprocess.run(["cp", f"{system_prmtop_file}", local_path], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                    subprocess.run(["cp", f"{system_sander_emle_data_path}", local_path], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+
+                    # Save the nb of steps and print freq in the exploration JSON
+                    exploration_json["systems_auto"][system_auto]["nb_steps"] = int(system_nb_steps)
+                    exploration_json["systems_auto"][system_auto]["print_every_x_steps"] = int(system_print_every_x_steps)
+
+                    #  Write INPUT file
+                    for key, value in input_replace_dict.items():
+                        system_sander_emle_in = replace_substring_in_string_list(system_sander_emle_in, key, value)
+                    del key, value
+                    string_list_to_textfile(local_path/ (f"{system_auto}_{nnp_index}_{padded_curr_iter}.in"), system_sander_emle_in)
+
+                    # Write YAML file
+                    system_sander_emle_yaml['deepmd_model'] = models_list
+                    system_sander_emle_yaml['deepmd_deviation'] = f"model_devi_{system_auto}_{nnp_index}_{padded_curr_iter}.out"
+                    system_sander_emle_yaml['energy_file'] = f"{system_auto}_{nnp_index}_{padded_curr_iter}_emle.en"
+                    system_sander_emle_yaml['log_file'] = f"{system_auto}_{nnp_index}_{padded_curr_iter}_emle.log"
+                    system_sander_emle_yaml['model'] = f"{system_auto}.mat"
+
+                    with (local_path / f"{system_auto}_{nnp_index}_{padded_curr_iter}.yaml").open('w') as f:
+                        yaml.dump(system_sander_emle_yaml, f)
+
+                    job_array_params_line = (
+                        str(system_auto)
+                        + "_"
+                        + str(nnp_index)
+                        + "_"
+                        + str(traj_index).zfill(5)
+                        + "/"
+                    )
+                    job_array_params_line += (
+                        f"{exploration_json['deepmd_model_version']}" + "/"
+                    )
+                    job_array_params_line += (
+                        str(models_string.replace(" ", '" "')) + "/"
+                    )
+                    job_array_params_line += (
+                        f"{system_auto}_{nnp_index}_{padded_curr_iter}.in" + "/"
+                    )
+                    job_array_params_line += f"{system_sander_emle_data_fn}" + "/"
+                    job_array_params_line += (
+                        f"{system_auto}_{nnp_index}_{padded_curr_iter}.yaml" + "/"
+                    )
+                    job_array_params_line += f"{system_auto}.mat" + "/"
+                    job_array_params_line += f"{system_auto}.prmtop" + "/"
+                    job_array_params_line += "" + "/"
+
+                    # INDIVIDUAL JOB FILE
+                    job_file = replace_in_slurm_file_general(
+                        master_job_file[system_exploration_type],
+                        machine_spec,
+                        system_walltime_approx_s,
+                        machine_walltime_format,
+                        merged_input_json["job_email"],
+                    )
+
+                    job_file = replace_substring_in_string_list(
+                        job_file,
+                        "_R_DEEPMD_VERSION_",
+                        f"{exploration_json['deepmd_model_version']}",
+                    )
+                    job_file = replace_substring_in_string_list(
+                        job_file,
+                        "_R_MODEL_FILES_LIST_",
+                        str(models_string.replace(" ", '" "')),
+                    )
+                    job_file = replace_substring_in_string_list(
+                        job_file,
+                        "_R_SANDER_IN_FILE_",
+                        f"{system_auto}_{nnp_index}_{padded_curr_iter}.in",
+                    )
+                    job_file = replace_substring_in_string_list(
+                        job_file,
+                        "_R_SANDER_OUT_FILE_",
+                        f"{system_auto}_{nnp_index}_{padded_curr_iter}",
+                    )
+                    job_file = replace_substring_in_string_list(
+                        job_file,
+                        "_R_EMLE_YAML_FILE_",
+                        f"{system_auto}_{nnp_index}_{padded_curr_iter}.yaml",
+                    )
+                    job_file = replace_substring_in_string_list(
+                        job_file, "_R_COORD_FILE_", f"{system_sander_emle_data_fn}"
+                    )
+                    job_file = replace_substring_in_string_list(
+                        job_file, "_R_TOP_FILE_", f"{system_auto}.prmtop"
+                    )
+                    job_file = replace_substring_in_string_list(
+                        job_file, "_R_EMLE_MODEL_FILE_", f"{system_auto}.mat"
+                    )
+                    if plumed[0] == 1:
+                        for n, it_plumed_input in enumerate(plumed_input):
+                            if n == 0:
+                                job_file = replace_substring_in_string_list(
+                                    job_file, "_R_PLUMED_FILES_LIST_", it_plumed_input
+                                )
+                                job_array_params_line += it_plumed_input
+                            else:
+                                job_file = replace_substring_in_string_list(
+                                    job_file,
+                                    prev_plumed,
+                                    prev_plumed + '" "' + it_plumed_input,
+                                )
+                                job_array_params_line = job_array_params_line.replace(
+                                    prev_plumed, prev_plumed + '" "' + it_plumed_input
+                                )
+                            prev_plumed = it_plumed_input
+                        del n, it_plumed_input, prev_plumed
+                    else:
+                        job_file = replace_substring_in_string_list(
+                            job_file, ' "_R_PLUMED_FILES_LIST_"', ""
+                        )
+                        job_array_params_line += ""
+
+                    job_array_params_line += "/"
+                    job_array_params_file[system_exploration_type].append(
+                        job_array_params_line
+                    )
+
+                    string_list_to_textfile(
+                        local_path
+                        / f"job_{system_exploration_type}-deepmd_explore_{arch_type}_{machine}.sh",
+                        job_file,
+                    )
+
+                    #del system_lammps_in
+                    del job_file
+                    # END OF INDIVIDUAL JOB FILE
+
+
                 # i-PI
                 elif system_exploration_type == "i-PI":
                     system_ipi_json = copy.deepcopy(master_system_ipi_json)
@@ -1024,7 +1166,6 @@ def main(
             system_exp_time_ps,
             system_nb_atm,
             system_nb_steps,
-            system_lammps_data,
             system_timestep_ps,
             system_walltime_approx_s,
             system_exploration_type,
