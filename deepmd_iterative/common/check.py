@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/04
+Last modified: 2024/03/26
 
 This module contains functions for checking the availability of certain commands on the system, as well as a function for validating the current working directory during the execution of a specific step.
 
@@ -205,3 +205,44 @@ def check_dcd_is_valid(dcd_path: Path, vmd_bin: Path) -> bool:
             return True
         else:
             return False
+
+@catch_errors_decorator
+def check_nc_is_valid(nc_path: Path, vmd_bin: Path) -> bool:
+    """
+    Check if the nc file is valid.
+
+    Returns
+    -------
+    bool
+        True if the nc file is valid, False otherwise.
+    """
+    vmd_script = f"""
+    # Load your trajectory file
+    mol addfile {nc_path} type netctf waitfor all
+
+    # Get the number of frames
+    set numFrames [molinfo top get numframes]
+
+    # Output the number of frames
+    puts "Number of frames: $numFrames"
+    
+    # Convert to dcd
+    set dcd_path [string map {{".nc" ".dcd"}} {nc_path}]
+    animate write dcd $dcd_path beg 0 end [expr {{$numFrames - 1}}] waitfor all
+
+    # Quit VMD
+    quit
+    """
+    # Run VMD script from command line
+    result = subprocess.run([vmd_bin, '-dispdev', 'text', '-e', '/dev/stdin'], input=vmd_script, text=True, capture_output=True)
+
+    # Check if the output contains "Unable to load file "
+    if "Unable to load file " in result.stdout:
+        return False
+    else:
+        match = re.search(r"Number of frames: (\d+)", result.stdout)
+        if match:
+            return True
+        else:
+            return False
+
