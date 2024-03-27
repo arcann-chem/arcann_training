@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/17
+Last modified: 2024/03/27
 
 The utils module provides functions for the training step.
 
@@ -94,7 +94,6 @@ def generate_training_json(
         "use_initial_datasets",
         "use_extra_datasets",
         "deepmd_model_version",
-        "deepmd_model_type_descriptor",
         "start_lr",
         "stop_lr",
         "decay_rate",
@@ -364,22 +363,6 @@ def validate_deepmd_config(training_config) -> None:
         If the configuration is not valid with respect to machine/arch_name/arch and DeePMD.
     """
     # Check DeePMD version
-    if training_config["deepmd_model_version"] not in [2.0, 2.1, 2.2]:
-        error_msg = f"Invalid deepmd model version (2.0 or 2.1 or 2.2): '{training_config['deepmd_model_version']}'."
-        raise ValueError(error_msg)
-
-    # Check DeePMD descriptor type
-    if training_config["deepmd_model_type_descriptor"] not in ["se_e2_a"]:
-        error_msg = f"Invalid deepmd type descriptor (se_e2_a): '{training_config['deepmd_model_type_descriptor']}'."
-        raise ValueError(error_msg)
-
-    # Check mismatch between machine/arch_name/arch and DeePMD
-    if training_config["deepmd_model_version"] < 2.0:
-        error_msg = f"Only version >= 2.0 on Jean Zay!"
-        raise ValueError(error_msg)
-    if (
-        training_config["deepmd_model_version"] < 2.1
-        and training_config["arch_name"] == "a100"
-    ):
-        error_msg = f"Only version >= 2.1 on Jean Zay A100!"
+    if float(training_config["deepmd_model_version"]) < 2.0 or float(training_config["deepmd_model_version"]) >= 3.0:
+        error_msg = f"Only 2.x version of deepmd are suppported: '{training_config['deepmd_model_version']}'."
         raise ValueError(error_msg)

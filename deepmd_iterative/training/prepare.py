@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/15
+Last modified: 2024/03/27
 """
 
 # Standard library modules
@@ -29,6 +29,7 @@ from deepmd_iterative.common.json import (
     load_default_json_file,
     load_json_file,
     write_json_file,
+    replace_values_by_key_name,
 )
 from deepmd_iterative.common.list import (
     replace_substring_in_string_list,
@@ -86,7 +87,7 @@ def main(
         default_input_json_present
         and not (current_path / "default_input.json").is_file()
     ):
-        write_json_file(default_input_json, (current_path / "default_input.json"))
+        write_json_file(default_input_json, (current_path / "default_input.json"), read_only=True)
     logging.debug(f"default_input_json: {default_input_json}")
     logging.debug(f"default_input_json_present: {default_input_json_present}")
 
@@ -179,6 +180,26 @@ def main(
         exploration_json = {}
         labeling_json = {}
 
+    if "deepmd_model_version" not in user_input_json:
+        dptrain_list = []
+        for file in (current_path.parent / "user_files").iterdir():
+            if file.suffix != ".json":
+                continue
+            if "dptrain" not in file.stem:
+                continue
+            dptrain_list.append(file)
+        if dptrain_list == []:
+            logging.error(f"No dptrain_DEEPMDVERSION.json files found in {(current_path.parent / 'user_files')}")
+            logging.error(f"Aborting...")
+            return 1
+
+        dptrain_max_version = 0
+        for dptrain in dptrain_list:
+            dptrain_max_version = max(dptrain_max_version, float(dptrain.stem.split('_')[-1]))
+
+        user_input_json["deepmd_model_version"] = dptrain_max_version
+        del dptrain_list, dptrain_max_version
+
     # Generate/update both the training JSON and the merged input JSON
     # Priority: user > previous > default
     training_json, merged_input_json = generate_training_json(
@@ -187,6 +208,7 @@ def main(
         default_input_json,
         merged_input_json,
     )
+    logging.info(f"Using DeePMD version: {merged_input_json['deepmd_model_version']}")
     logging.debug(f"training_json: {training_json}")
     logging.debug(f"merged_input_json: {merged_input_json}")
 
@@ -217,13 +239,25 @@ def main(
         training_path
         / "user_files"
         / (
-            f"dptrain_{training_json['deepmd_model_version']}_{training_json['deepmd_model_type_descriptor']}.json"
+            f"dptrain_{training_json['deepmd_model_version']}.json"
         )
     ).resolve()
 
     dp_train_input = load_json_file(dp_train_input_path)
-    main_json["type_map"] = {}
-    main_json["type_map"] = dp_train_input["model"]["type_map"]
+    if "type_map" not in main_json:
+        type_map = []
+        for element in main_json["properties"]:
+            type_map.append(main_json["properties"][element]["symbol"])
+        main_json["type_map"] = type_map
+
+    # Make sure they are the same
+    if dp_train_input["model"]["type_map"] != main_json["type_map"]:
+        logging.error(f"Type map in {dp_train_input_path} does not match the one in config.json.")
+        logging.error(f"Aborting...")
+        return 1
+
+    #main_json["type_map"] = {}
+    #main_json["type_map"] = dp_train_input["model"]["type_map"]
     del dp_train_input_path
     logging.debug(f"dp_train_input: {dp_train_input}")
     logging.debug(f"main_json: {main_json}")
@@ -554,81 +588,34 @@ def main(
 
     # Walltime
     if curr_iter == 0:
-        if (
-            "init_job_walltime_train_h" in user_input_json
-            and user_input_json["init_job_walltime_train_h"] > 0
-        ):
-            walltime_approx_s = int(user_input_json["init_job_walltime_train_h"] * 3600)
-            logging.debug(
-                f"init_job_walltime_train_h: {user_input_json['init_job_walltime_train_h']}"
-            )
-        elif (
-            "job_walltime_train_h" in user_input_json
-            and user_input_json["job_walltime_train_h"] > 0
-        ):
+        if ("job_walltime_train_h" in user_input_json and user_input_json["job_walltime_train_h"] > 0):
             walltime_approx_s = int(user_input_json["job_walltime_train_h"] * 3600)
-            logging.debug(
-                f"job_walltime_train_h: {user_input_json['job_walltime_train_h']}"
-            )
-        elif (
-            "mean_s_per_step" in user_input_json
-            and user_input_json["mean_s_per_step"] > 0
-        ):
-            walltime_approx_s = int(
-                np.ceil(
-                    (training_json["numb_steps"] * user_input_json["mean_s_per_step"])
-                )
-            )
+            mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
+            logging.debug(f"job_walltime_train_h: {user_input_json['job_walltime_train_h']}")
+        elif ("mean_s_per_step" in user_input_json and user_input_json["mean_s_per_step"] > 0):
+            walltime_approx_s = int(np.ceil((training_json["numb_steps"] * user_input_json["mean_s_per_step"])))
+            mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
             logging.debug(f"mean_s_per_step: {user_input_json['mean_s_per_step']}")
         else:
-            walltime_approx_s = int(
-                max(
-                    np.ceil(
-                        training_json["numb_steps"]
-                        * default_input_json["mean_s_per_step"]
-                    ),
-                    default_input_json["init_job_walltime_train_h"] * 3600,
-                    default_input_json["job_walltime_train_h"] * 3600,
-                )
-            )
-            merged_input_json["init_job_walltime_train_h"] = -1
-            merged_input_json["job_walltime_train_h"] = -1
-            merged_input_json["mean_s_per_step"] = -1
+            walltime_approx_s = int(max(np.ceil(training_json["numb_steps"] * default_input_json["mean_s_per_step"]), default_input_json["job_walltime_train_h"] * 3600,))
+            mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
     else:
-        if (
-            "job_walltime_train_h" in user_input_json
-            and user_input_json["job_walltime_train_h"] > 0
-        ):
+        if ("job_walltime_train_h" in user_input_json and user_input_json["job_walltime_train_h"] > 0):
             walltime_approx_s = int(user_input_json["job_walltime_train_h"] * 3600)
-            logging.debug(
-                f"job_walltime_train_h: {user_input_json['job_walltime_train_h']}"
-            )
-        elif (
-            "mean_s_per_step" in user_input_json
-            and user_input_json["mean_s_per_step"] > 0
-        ):
-            walltime_approx_s = int(
-                np.ceil(
-                    (training_json["numb_steps"] * user_input_json["mean_s_per_step"])
-                )
-            )
+            mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
+            logging.debug(f"job_walltime_train_h: {user_input_json['job_walltime_train_h']}")
+        elif ("mean_s_per_step" in user_input_json and user_input_json["mean_s_per_step"] > 0):
+            walltime_approx_s = int(np.ceil((training_json["numb_steps"] * user_input_json["mean_s_per_step"])))
+            mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
             logging.debug(f"mean_s_per_step: {user_input_json['mean_s_per_step']}")
         else:
-            walltime_approx_s = int(
-                np.ceil(
-                    (
-                        training_json["numb_steps"]
-                        * (previous_training_json["mean_s_per_step"] * 1.2)
-                    )
-                )
-            )
-            logging.debug(
-                f"mean_s_per_step: {previous_training_json['mean_s_per_step']}"
-            )
-            merged_input_json["job_walltime_train_h"] = -1
-            merged_input_json["mean_s_per_step"] = -1
+            walltime_approx_s = int(np.ceil((training_json["numb_steps"] * (previous_training_json["mean_s_per_step"] * 1.2))))
+            mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
 
+    merged_input_json["job_walltime_train_h"] = float(walltime_approx_s / 3600)
+    merged_input_json["mean_s_per_step"] = mean_s_per_step
     logging.debug(f"walltime_approx_s: {walltime_approx_s}")
+    logging.debug(f"mean_s_per_step: {mean_s_per_step}")
 
     for nnp in range(1, main_json["nnp_count"] + 1):
         local_path = current_path / f"{nnp}"
@@ -638,27 +625,11 @@ def main(
         random.seed()
         random_0_1000 = random.randrange(0, 1000)
 
-        if training_json["deepmd_model_type_descriptor"] == "se_ar":
-            dp_train_input["model"]["descriptor"]["a"]["seed"] = int(
-                f"{nnp}{random_0_1000}{padded_curr_iter}"
-            )
-            dp_train_input["model"]["descriptor"]["r"]["seed"] = int(
-                f"{nnp}{random_0_1000}{padded_curr_iter}"
-            )
-        else:
-            dp_train_input["model"]["descriptor"]["seed"] = int(
-                f"{nnp}{random_0_1000}{padded_curr_iter}"
-            )
-        dp_train_input["model"]["fitting_net"]["seed"] = int(
-            f"{nnp}{random_0_1000}{padded_curr_iter}"
-        )
-        dp_train_input["training"]["seed"] = int(
-            f"{nnp}{random_0_1000}{padded_curr_iter}"
-        )
+        replace_values_by_key_name(dp_train_input, "seed", int(f"{nnp}{random_0_1000}{padded_curr_iter}"))
 
         dp_train_input_file = (Path(f"{nnp}") / "training.json").resolve()
 
-        write_json_file(dp_train_input, dp_train_input_file, False)
+        write_json_file(dp_train_input, dp_train_input_file, enable_logging=False, read_only=True)
 
         job_file = replace_in_slurm_file_general(
             master_job_file,
@@ -679,6 +650,7 @@ def main(
         string_list_to_textfile(
             local_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh",
             job_file,
+            read_only = True
         )
         del job_file, local_path, dp_train_input_file, random_0_1000
 
@@ -686,11 +658,10 @@ def main(
 
     # Dump the JSON files (main, training and merged input)
     logging.info(f"-" * 88)
-    write_json_file(main_json, (control_path / "config.json"))
-    write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"))
-    backup_and_overwrite_json_file(
-        merged_input_json, (current_path / user_input_json_filename)
-    )
+    write_json_file(main_json, (control_path / "config.json"), read_only=True)
+    write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"), read_only=True)
+    backup_and_overwrite_json_file(merged_input_json, (current_path / "used_input.json"), read_only=True)
+
 
     # End
     logging.info(f"-" * 88)

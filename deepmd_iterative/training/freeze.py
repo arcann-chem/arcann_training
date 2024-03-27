@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/15
+Last modified: 2024/03/27
 """
 # Standard library modules
 import copy
@@ -200,6 +200,7 @@ def main(
         string_list_to_textfile(
             local_path / f"job_deepmd_freeze_{machine_spec['arch_type']}_{machine}.sh",
             job_file,
+            read_only = True,
         )
         del job_file
 
@@ -237,11 +238,9 @@ def main(
         training_json["is_freeze_launched"] = True
 
     # Dump the JSON files (main, training and merged input)
-    write_json_file(main_json, (control_path / "config.json"))
-    write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"))
-    backup_and_overwrite_json_file(
-        merged_input_json, (current_path / user_input_json_filename)
-    )
+    write_json_file(main_json, (control_path / "config.json"), read_only=True)
+    write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"), read_only=True)
+    backup_and_overwrite_json_file(merged_input_json, (current_path / "used_input.json"), read_only=True)
 
     # End
     logging.info(f"-" * 88)

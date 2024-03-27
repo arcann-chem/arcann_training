@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/05
+Last modified: 2024/03/27
 
 The lammps module provides functions to manipulate LAMMPS data (as list of strings).
 
@@ -16,27 +16,28 @@ read_lammps_data(lines: List[str],) -> Tuple(int, int, np.ndarray, Dict[int], np
     Read LAMMPS data file and extract required information.
 """
 # Standard library modules
-from typing import Dict, List, Tuple
+from pathlib import Path
+from typing import Dict, List, Union, Tuple
 
 # Third-party modules
 import numpy as np
 
 # Local imports
 from deepmd_iterative.common.utils import catch_errors_decorator
-
+from deepmd_iterative.common.list import textfile_to_string_list
 
 # Unittested
 @catch_errors_decorator
 def read_lammps_data(
-    lines: List[str],
+    data_file: Union[Path, List[str]],
 ) -> Tuple[int, int, np.ndarray, Dict[int, float], np.ndarray]:
     """
     Read LAMMPS data file and extract required information.
 
     Parameters
     ----------
-    lines : List[str]
-        List of strings, where each string represents a line from the LAMMPS data file.
+    data_file : Path
+        Path to the LAMMPS data file or list of lines from a LAMMPS data file.
 
     Returns
     -------
@@ -52,6 +53,11 @@ def read_lammps_data(
     ValueError
         If any required information is missing or inconsistent in the input data.
     """
+    if type(data_file) == type(Path('.')):
+        lines = textfile_to_string_list(data_file)
+    else:
+        lines = data_file
+
     # Input validation
     if not lines or not isinstance(lines, list):
         raise ValueError("Input 'lines' must be a non-empty list of strings.")
@@ -65,6 +71,7 @@ def read_lammps_data(
     xy, xz, yz = None, None, None
     masses = {}
     atoms = []
+    atoms_type_list = []
     in_atoms_section = False
     in_masses_section = False
 
@@ -78,6 +85,7 @@ def read_lammps_data(
             continue
         if in_atoms_section:
             atoms.append(line.split()[2:6])
+            atoms_type_list.append(line.split()[1:2])
             continue
         if "Masses" in line:
             in_masses_section = True
@@ -135,6 +143,17 @@ def read_lammps_data(
     if len(atoms) != num_atoms:
         error_msg = f"Number of coordinates ('{len(atoms)}') does not match the number of atoms ('{num_atoms}')."
         raise ValueError(error_msg)
+
+    atoms_type_list = np.array(atoms_type_list, dtype=int)
+    atoms_type_list = np.unique(atoms_type_list)
+
+    for atoms_type in atoms_type_list:
+        if atoms_type not in masses:
+            if type(data_file) == type(Path('.')):
+                error_msg = f"Atom type '{atoms_type}' present in the coordinates section but not found in masses. Problem with your LMP file: {data_file}"
+            else:
+                error_msg = f"Atom type '{atoms_type}' present in the coordinates section but not found in masses. Problem with your LMP file"
+            raise ValueError(error_msg)
 
     # Return results
     return (

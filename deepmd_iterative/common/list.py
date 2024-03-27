@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/04
+Last modified: 2024/03/27
 
 The utils module provides functions to manipulate lists.
 
@@ -119,7 +119,7 @@ def replace_substring_in_string_list(
 
 # Unittested
 @catch_errors_decorator
-def string_list_to_textfile(file_path: Path, string_list: List[str]) -> None:
+def string_list_to_textfile(file_path: Path, string_list: List[str], read_only = False) -> None:
     """
     Write a list of strings to a text file.
 
@@ -165,6 +165,9 @@ def string_list_to_textfile(file_path: Path, string_list: List[str]) -> None:
         error_msg = f"'{string_list}' must not be empty."
         raise ValueError(error_msg)
 
+    if file_path.exists():
+        file_path.chmod(0o644)
+
     try:
         with file_path.open("w") as text_file:
             text_file.write("\n".join(string_list))
@@ -172,6 +175,13 @@ def string_list_to_textfile(file_path: Path, string_list: List[str]) -> None:
     except OSError as e:
         error_msg = f"error writing to file '{file_path}': '{e}'"
         raise OSError(error_msg)
+
+    if read_only:
+        current_permissions = file_path.stat().st_mode
+        # Remove the write permission (0222) while keeping others intact
+        new_permissions = current_permissions & ~0o222
+        # Update the file permissions
+        file_path.chmod(new_permissions)
 
 
 # Unittested

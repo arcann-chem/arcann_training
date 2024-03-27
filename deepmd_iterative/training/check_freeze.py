@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/20
+Last modified: 2024/03/27
 """
 # Standard library modules
 import logging
@@ -76,7 +76,7 @@ def main(
         training_json["is_frozen"] = True
 
     # Dump the JSON (training JSON)
-    write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"))
+    write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"), read_only=True)
 
     # End
     logging.info(f"-" * 88)

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/15
+Last modified: 2024/03/27
 """
 # Standard library modules
 import copy
@@ -184,10 +184,8 @@ def main(
         training_json["is_launched"] = True
 
     # Dump the JSON (training JSON and merged input JSON)
-    write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"))
-    backup_and_overwrite_json_file(
-        merged_input_json, (current_path / user_input_json_filename)
-    )
+    write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"), read_only=True)
+    backup_and_overwrite_json_file(merged_input_json, (current_path / "used_input.json"), read_only=True)
 
     # End
     logging.info(f"-" * 88)

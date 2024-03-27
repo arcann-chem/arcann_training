@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/17
+Last modified: 2024/03/27
 """
 
 # Standard library modules
@@ -25,7 +25,7 @@ from deepmd_iterative.common.json import (
     load_json_file,
     write_json_file,
 )
-from deepmd_iterative.initialization.utils import generate_main_json
+from deepmd_iterative.initialization.utils import generate_main_json, populate_systems_auto, check_properties_file, check_dptrain_properties, check_lmp_properties, check_typeraw_properties
 
 
 # Main function
@@ -39,6 +39,7 @@ def main(
     # Get the current path and set the training path as the current path
     current_path = Path(".").resolve()
     training_path = current_path
+    user_files_path = current_path / "user_files"
 
     # Log the step and phase of the program
     logging.info(f"Step: {current_step.capitalize()}.")
@@ -56,12 +57,13 @@ def main(
         default_input_json_present
         and not (current_path / "default_input.json").is_file()
     ):
-        write_json_file(default_input_json, (current_path / "default_input.json"))
+        write_json_file(default_input_json, (current_path / "default_input.json"), read_only=True)
+
     logging.debug(f"default_input_json: {default_input_json}")
     logging.debug(f"default_input_json_present: {default_input_json_present}")
 
     # Load the user input JSON
-    user_input_json = load_json_file((current_path / user_input_json_filename))
+    user_input_json = load_json_file((current_path / user_input_json_filename), abort_on_error=False)
     user_input_json_present = bool(user_input_json)
     logging.debug(f"user_input_json: {user_input_json}")
     logging.debug(f"user_input_json_present: {user_input_json_present}")
@@ -72,6 +74,26 @@ def main(
         error_msg=f"No data folder found in: {training_path}",
     )
 
+    # Check the properties file
+    properties_dict = check_properties_file(user_files_path / "properties.txt")
+
+    # Auto-populate the systems_auto
+    if "system_auto" not in user_input_json:
+        user_input_json["systems_auto"] = populate_systems_auto(user_files_path)
+        if not user_input_json["systems_auto"]:
+            logging.error(f"No lmp found in {user_files_path}")
+            logging.error(f"Aborting...")
+            return 1
+        else:
+            logging.info(f"Auto-populated 'systems_auto' with: {user_input_json['systems_auto']}")
+    else:
+        for system_auto in user_input_json["systems_auto"]:
+            if not (user_files_path / f"{system_auto}.lmp").is_file():
+                logging.error(f"File not found: {user_files_path / f'{system_auto}.lmp'} but requested as system")
+                logging.error(f"Aborting...")
+                return 1
+    logging.debug(f"user_input_json: {user_input_json}")
+
     # Generate the main JSON, the merged input JSON and the padded current iteration
     main_json, merged_input_json, padded_curr_iter = generate_main_json(
         user_input_json, default_input_json
@@ -79,6 +101,16 @@ def main(
     logging.debug(f"main_json: {main_json}")
     logging.debug(f"merged_input_json : {merged_input_json }")
     logging.debug(f"padded_curr_iter : {padded_curr_iter}")
+
+    # Add the properties dictionary to the main JSON
+    main_json["properties"] = properties_dict
+
+    # Check the lmp against the properties
+    for system_auto in main_json["systems_auto"]:
+        check_lmp_properties(user_files_path / f"{system_auto}.lmp", main_json["properties"])
+
+    # Check the dptrain against the properties
+    check_dptrain_properties(user_files_path, main_json["properties"])
 
     # Create the control directory
     control_path = training_path / "control"
@@ -101,6 +133,8 @@ def main(
     initial_datasets_json = {}
     for initial_dataset_path in initial_datasets_paths:
         check_file_existence(initial_dataset_path / "type.raw")
+        # Check the type.raw file against the properties
+        check_typeraw_properties(initial_dataset_path / "type.raw", main_json["properties"])
         initial_dataset_set_path = initial_dataset_path / "set.000"
         for data_type in ["box", "coord", "energy", "force"]:
             check_file_existence(initial_dataset_set_path / (data_type + ".npy"))
@@ -122,11 +156,9 @@ def main(
 
     # Dump the JSON files (main, initial datasets and merged input)
     logging.info(f"-" * 88)
-    write_json_file(main_json, (control_path / "config.json"))
-    write_json_file(initial_datasets_json, (control_path / "initial_datasets.json"))
-    backup_and_overwrite_json_file(
-        merged_input_json, (current_path / user_input_json_filename)
-    )
+    write_json_file(main_json, (control_path / "config.json"), read_only=True)
+    write_json_file(initial_datasets_json, (control_path / "initial_datasets.json"), read_only=True)
+    backup_and_overwrite_json_file(merged_input_json, (current_path / "used_input.json"), read_only=True)
 
     # End
     logging.info(f"-" * 88)

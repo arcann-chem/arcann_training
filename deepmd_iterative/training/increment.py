@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/20
+Last modified: 2024/03/27
 """
 # Standard library modules
 import logging
@@ -19,9 +19,6 @@ from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.filesystem import (
     check_directory,
     check_file_existence,
-    remove_file,
-    remove_files_matching_glob,
-    remove_tree,
 )
 from deepmd_iterative.common.json import (
     load_json_file,
@@ -134,8 +131,8 @@ def main(
     training_json["is_incremented"] = True
 
     # Dump the JSON files (main, training)
-    write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"))
-    write_json_file(main_json, (control_path / "config.json"))
+    write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"), read_only=True)
+    write_json_file(main_json, (control_path / "config.json"), read_only=True)
 
     # End
     logging.info(
