@@ -6,8 +6,9 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/16
+Last modified: 2024/03/28
 """
+
 # Standard library modules
 import copy
 import logging
@@ -17,20 +18,8 @@ from pathlib import Path
 
 # Local imports
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.filesystem import (
-    change_directory,
-)
-from deepmd_iterative.common.json import (
-    backup_and_overwrite_json_file,
-    load_default_json_file,
-    load_json_file,
-    write_json_file,
-)
-from deepmd_iterative.common.machine import (
-    assert_same_machine,
-    get_machine_keyword,
-    get_machine_spec_for_step,
-)
+from deepmd_iterative.common.json import backup_and_overwrite_json_file, load_default_json_file, load_json_file, write_json_file
+from deepmd_iterative.common.machine import assert_same_machine, get_machine_keyword, get_machine_spec_for_step
 
 
 def main(
@@ -45,9 +34,7 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
-    )
+    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
@@ -61,9 +48,7 @@ def main(
     curr_iter = int(padded_curr_iter)
 
     # Load the default input JSON
-    default_input_json = load_default_json_file(
-        deepmd_iterative_path / "assets" / "default_config.json"
-    )[current_step]
+    default_input_json = load_default_json_file(deepmd_iterative_path / "assets" / "default_config.json")[current_step]
     default_input_json_present = bool(default_input_json)
     logging.debug(f"default_input_json: {default_input_json}")
     logging.debug(f"default_input_json_present: {default_input_json_present}")
@@ -83,20 +68,14 @@ def main(
     # Get control path, load the main JSON and the exploration JSON
     control_path = training_path / "control"
     main_json = load_json_file((control_path / "config.json"))
-    exploration_json = load_json_file(
-        (control_path / f"exploration_{padded_curr_iter}.json")
-    )
+    exploration_json = load_json_file((control_path / f"exploration_{padded_curr_iter}.json"))
 
     # Get the machine keyword (Priority: user > previous > default)
     # And update the merged input JSON
-    user_machine_keyword = get_machine_keyword(
-        user_input_json, exploration_json, default_input_json, "exp"
-    )
+    user_machine_keyword = get_machine_keyword(user_input_json, exploration_json, default_input_json, "exp")
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
-    user_machine_keyword = (
-        None if isinstance(user_machine_keyword, bool) else user_machine_keyword
-    )
+    user_machine_keyword = None if isinstance(user_machine_keyword, bool) else user_machine_keyword
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
 
     # From the keyword (or default), get the machine spec (or for the fake one)
@@ -140,9 +119,7 @@ def main(
     # Check if we can continue
     if exploration_json["is_launched"]:
         logging.critical(f"Already launched...")
-        continuing = input(
-            f"Do you want to continue?\n['Y' for yes, anything else to abort]\n"
-        )
+        continuing = input(f"Do you want to continue?\n['Y' for yes, anything else to abort]\n")
         if continuing == "Y":
             del continuing
         else:
@@ -156,9 +133,7 @@ def main(
     # Launch the jobs
     exploration_types = []
     for system_auto in exploration_json["systems_auto"]:
-        exploration_types.append(
-            exploration_json["systems_auto"][system_auto]["exploration_type"]
-        )
+        exploration_types.append(exploration_json["systems_auto"][system_auto]["exploration_type"])
     exploration_types = list(set(exploration_types))
 
     completed_count = 0
@@ -169,105 +144,30 @@ def main(
             logging.info(f"Exploration - Array LAMMPS launched.")
             completed_count += 1
 
-    # for system_auto_index, system_auto in enumerate(exploration_json["systems_auto"]):
-    #     for nnp_index in range(1, main_json["nnp_count"] + 1):
-    #         for traj_index in range(
-    #             1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1
-    #         ):
-    #             local_path = (
-    #                 Path(".").resolve()
-    #                 / str(system_auto)
-    #                 / str(nnp_index)
-    #                 / (str(traj_index).zfill(5))
-    #             )
-
-    #             if (
-    #                 local_path
-    #                 / f"job_deepmd_{exploration_json['systems_auto'][system_auto]['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh"
-    #             ).is_file():
-    #                 change_directory(local_path)
-    #                 try:
-    #                     subprocess.run(
-    #                         [
-    #                             machine_launch_command,
-    #                             f"./job_deepmd_{exploration_json['systems_auto'][system_auto]['exploration_type']}_{machine_spec['arch_type']}_{machine}.sh",
-    #                         ]
-    #                     )
-    #                     logging.info(
-    #                         f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' launched."
-    #                     )
-    #                     completed_count += 1
-    #                 except FileNotFoundError:
-    #                     logging.critical(
-    #                         f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' NOT launched - '{machine_launch_command}' not found."
-    #                     )
-    #                 change_directory(local_path.parent.parent.parent)
-    #             else:
-    #                 logging.critical(
-    #                     f"Exploration - '{system_auto}' '{nnp_index}' '{traj_index}' NOT launched - No job file."
-    #                 )
-    #             del local_path
-    #         del traj_index
-    #     del nnp_index
-    # del system_auto_index, system_auto
-
     logging.info(f"-" * 88)
-    # Update the booleans in the exploration JSON
-    # if completed_count == (
-    #     exploration_json["nnp_count"]
-    #     * sum(
-    #         [
-    #             exploration_json["systems_auto"][_]["traj_count"]
-    #             for _ in exploration_json["systems_auto"]
-    #         ]
-    #     )
-    # ):
+
     if completed_count == len(exploration_types):
         exploration_json["is_launched"] = True
 
     # Dump the JSON files (exploration JSON and merged input JSON)
-    write_json_file(
-        exploration_json, (control_path / f"exploration_{padded_curr_iter}.json")
-    )
-    backup_and_overwrite_json_file(
-        merged_input_json, (current_path / user_input_json_filename)
-    )
+    write_json_file(exploration_json, (control_path / f"exploration_{padded_curr_iter}.json"))
+    backup_and_overwrite_json_file(merged_input_json, (current_path / "used_input.json"), read_only=True)
 
     # End
     logging.info(f"-" * 88)
-    # if completed_count == (
-    #     exploration_json["nnp_count"]
-    #     * sum(
-    #         [
-    #             exploration_json["systems_auto"][_]["traj_count"]
-    #             for _ in exploration_json["systems_auto"]
-    #         ]
-    #     )
-    # ):
+
     if completed_count == len(exploration_types):
-        logging.info(
-            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
-        )
+        logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
     else:
-        logging.critical(
-            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!"
-        )
+        logging.critical(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!")
         logging.critical(f"Some jobs did not launch correctly.")
         logging.critical(f"Please launch manually before continuing to the next step.")
-        logging.critical(
-            f"Replace the key 'is_launched' to 'True' in the 'exploration_{padded_curr_iter}.json'."
-        )
+        logging.critical(f"Replace the key 'is_launched' to 'True' in the 'exploration_{padded_curr_iter}.json'.")
     del completed_count
 
     # Cleaning
     del current_path, control_path, training_path
-    del (
-        default_input_json,
-        default_input_json_present,
-        user_input_json,
-        user_input_json_present,
-        user_input_json_filename,
-    )
+    del default_input_json, default_input_json_present, user_input_json, user_input_json_present, user_input_json_filename
     del main_json, merged_input_json
     del curr_iter, padded_curr_iter
     del machine, machine_spec, machine_walltime_format, machine_launch_command

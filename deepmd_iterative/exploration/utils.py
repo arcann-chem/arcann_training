@@ -152,7 +152,7 @@ def generate_input_exploration_json(
                                 exploration_dep.append(0)
                             elif it_value == "i-PI":
                                 exploration_dep.append(1)
-                            elif it_value == 'sander_emle':
+                            elif it_value == "sander_emle":
                                 exploration_dep.append(0)
                             merged_input_json[key].append(it_value)
                 else:
@@ -171,9 +171,7 @@ def generate_input_exploration_json(
                     if isinstance(exploration_dep, List):
                         merged_input_json[key] = [value[0][_] for _ in exploration_dep]
                     else:
-                        merged_input_json[key] = [
-                            value[0][exploration_dep]
-                        ] * system_count
+                        merged_input_json[key] = [value[0][exploration_dep]] * system_count
                 else:
                     merged_input_json[key] = [value[0]] * system_count
             else:
@@ -181,17 +179,7 @@ def generate_input_exploration_json(
                 if isinstance(value, List):
                     if len(value) == system_count:
                         for it_value in value:
-                            if (
-                                isinstance(it_value, (int, float))
-                                and (
-                                    key != "disturbed_start" and key != "previous_start"
-                                )
-                            ) or (
-                                isinstance(it_value, (bool))
-                                and (
-                                    key == "disturbed_start" or key == "previous_start"
-                                )
-                            ):
+                            if (isinstance(it_value, (int, float)) and (key != "disturbed_start" and key != "previous_start")) or (isinstance(it_value, (bool)) and (key == "disturbed_start" or key == "previous_start")):
                                 merged_input_json[key].append(it_value)
                             else:
                                 error_msg = f"{key}: Type mismatch: the type is '{type(it_value)}', but it should be '{type(1)}' or '{type(1.0)}' or '{type(True)}' (for previous_start or disturbed_start)"
@@ -200,13 +188,7 @@ def generate_input_exploration_json(
                         error_msg = f"{key}: Size mismatch: The length of the list should be '{system_count}' corresponding to the number of systems."
                         raise ValueError(error_msg)
                 # If it is not a List
-                elif (
-                    isinstance(value, (int, float))
-                    and (key != "disturbed_start" and key != "previous_start")
-                ) or (
-                    isinstance(value, (bool))
-                    and (key == "disturbed_start" or key == "previous_start")
-                ):
+                elif (isinstance(value, (int, float)) and (key != "disturbed_start" and key != "previous_start")) or (isinstance(value, (bool)) and (key == "disturbed_start" or key == "previous_start")):
                     merged_input_json[key] = [value] * system_count
                 else:
                     error_msg = f"{key}: Type mismatch: the type is '{type(it_value)}', but it should be '{type(1)}' or '{type(1.0)}' or '{type(True)}' (for previous_start or disturbed_start)"
@@ -216,9 +198,7 @@ def generate_input_exploration_json(
 
 
 @catch_errors_decorator
-def get_system_exploration(
-    merged_input_json: Dict, system_auto_index: int
-) -> Tuple[
+def get_system_exploration(merged_input_json: Dict, system_auto_index: int) -> Tuple[
     str,
     Union[float, int],
     Union[float, int],
@@ -382,9 +362,7 @@ def generate_input_exploration_deviation_json(
 
 
 @catch_errors_decorator
-def get_system_deviation(
-    merged_input_json: Dict, system_auto_index: int
-) -> Tuple[
+def get_system_deviation(merged_input_json: Dict, system_auto_index: int) -> Tuple[
     Union[float, int],
     Union[float, int],
     Union[float, int],
@@ -555,9 +533,11 @@ def generate_input_exploration_disturbed_json(
 
 
 @catch_errors_decorator
-def get_system_disturb(
-    merged_input_json: Dict, system_auto_index: int
-) -> Tuple[Union[float, int], Union[float, int], List[int],]:
+def get_system_disturb(merged_input_json: Dict, system_auto_index: int) -> Tuple[
+    Union[float, int],
+    Union[float, int],
+    List[int],
+]:
     """
     Return a tuple of system exploration parameters based on the input JSON and system index.
 
@@ -634,22 +614,12 @@ def generate_starting_points(
         file_extension = "xyz"
 
     # Get list of starting point file names for system and iteration
-    starting_points_path = list(
-        Path(training_path / "starting_structures").glob(
-            f"{padded_prev_iter}_{system_auto}_*.{file_extension}"
-        )
-    )
-    orginal_starting_points_path = list(
-        Path(training_path / "user_files").glob(f"{system_auto}.{file_extension}")
-    )
+    starting_points_path = list(Path(training_path / "starting_structures").glob(f"{padded_prev_iter}_{system_auto}_*.{file_extension}"))
+    orginal_starting_points_path = list(Path(training_path / "user_files").glob(f"{system_auto}.{file_extension}"))
     starting_points_all = [str(zzz).split("/")[-1] for zzz in starting_points_path]
     starting_points = [zzz for zzz in starting_points_all if "disturbed" not in zzz]
-    starting_points_disturbed = [
-        zzz for zzz in starting_points_all if zzz not in starting_points
-    ]
-    starting_points_original = [
-        str(_).split("/")[-1] for _ in orginal_starting_points_path
-    ]
+    starting_points_disturbed = [zzz for zzz in starting_points_all if zzz not in starting_points]
+    starting_points_original = [str(_).split("/")[-1] for _ in orginal_starting_points_path]
     starting_points_bckp = deepcopy(starting_points)
     starting_points_disturbed_bckp = deepcopy(starting_points_disturbed)
     starting_points_original_bckp = deepcopy(starting_points_original)
@@ -669,10 +639,7 @@ def generate_starting_points(
             starting_points_bckp = deepcopy(starting_points_original_bckp)
             return starting_points, starting_points_bckp, False, False
         # If input file is not present, check if system started from disturbed minimum in previous iteration
-        elif (
-            previous_json["systems_auto"][system_auto]["disturbed_start"]
-            and previous_json["systems_auto"][system_auto]["disturbed_start_value"]
-        ):
+        elif previous_json["systems_auto"][system_auto]["disturbed_start"] and previous_json["systems_auto"][system_auto]["disturbed_start_value"]:
             # If system started from disturbed minimum in previous iteration, use disturbed starting points
             starting_points = deepcopy(starting_points_disturbed)
             starting_points_bckp = deepcopy(starting_points_disturbed_bckp)
@@ -721,33 +688,17 @@ def create_models_list(
 
     # Generate list of NNP model indices and reorder based on current model to propagate
     list_nnp = [zzz for zzz in range(1, main_json["nnp_count"] + 1)]
-    reorder_nnp_list = (
-        list_nnp[list_nnp.index(it_nnp) :] + list_nnp[: list_nnp.index(it_nnp)]
-    )
+    reorder_nnp_list = list_nnp[list_nnp.index(it_nnp) :] + list_nnp[: list_nnp.index(it_nnp)]
 
     # Determine whether to use compressed models
     compress_str = "_compressed" if previous_json["is_compressed"] else ""
 
     # Generate list of model file names
-    models_list = [
-        "graph_" + str(f) + "_" + padded_prev_iter + compress_str + ".pb"
-        for f in reorder_nnp_list
-    ]
+    models_list = ["graph_" + str(f) + "_" + padded_prev_iter + compress_str + ".pb" for f in reorder_nnp_list]
 
     # Create symbolic links to the model files in the local directory
     for it_sub_nnp in range(1, main_json["nnp_count"] + 1):
-        nnp_apath = (
-            training_path
-            / "NNP"
-            / (
-                "graph_"
-                + str(it_sub_nnp)
-                + "_"
-                + padded_prev_iter
-                + compress_str
-                + ".pb"
-            )
-        ).resolve()
+        nnp_apath = (training_path / "NNP" / ("graph_" + str(it_sub_nnp) + "_" + padded_prev_iter + compress_str + ".pb")).resolve()
         subprocess.call(["ln", "-nsf", str(nnp_apath), str(local_path)])
 
     # Join the model file names into a single string for ease of use
@@ -758,9 +709,7 @@ def create_models_list(
 
 # Unittested
 @catch_errors_decorator
-def get_last_frame_number(
-    model_deviation: np.ndarray, sigma_high_limit: float, disturbed_start: bool
-) -> int:
+def get_last_frame_number(model_deviation: np.ndarray, sigma_high_limit: float, disturbed_start: bool) -> int:
     """
     Returns the index of the last frame to be processed based on the given parameters.
 
@@ -823,10 +772,7 @@ def update_system_nb_steps_factor(previous_json: Dict, system_auto_index: int) -
 
     """
     # Calculate the ratio of ill-described candidates to the total number of candidates
-    ill_described_ratio = (
-        previous_json["systems_auto"][system_auto_index]["candidates_count"]
-        + previous_json["systems_auto"][system_auto_index]["rejected_count"]
-    ) / previous_json["systems_auto"][system_auto_index]["total_count"]
+    ill_described_ratio = (previous_json["systems_auto"][system_auto_index]["candidates_count"] + previous_json["systems_auto"][system_auto_index]["rejected_count"]) / previous_json["systems_auto"][system_auto_index]["total_count"]
 
     # Return a multiplying factor for system_nb_steps based on the ratio of ill-described candidates
     if ill_described_ratio < 0.10:
