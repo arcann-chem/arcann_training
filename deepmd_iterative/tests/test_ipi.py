@@ -15,6 +15,7 @@ Classes
 TestGetTemperatureFromIpiXml():
     Test case for the 'get_temperature_from_ipi_xml' function.
 """
+
 # Standard library modules
 import unittest
 import tempfile

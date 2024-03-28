@@ -15,6 +15,7 @@ Classes
 TestPlumedAnalysis
     Test cases for the 'analyze_plumed_file_for_movres' function.
 """
+
 # Standard library modules
 import unittest
 

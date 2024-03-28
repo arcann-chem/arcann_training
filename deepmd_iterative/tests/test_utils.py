@@ -18,6 +18,7 @@ TestConvertSecondsToHhMmSs():
 TestCatchErrorsDecorator():
     Test case for the 'catch_errors_decorator' function.
 """
+
 # Standard library modules
 import unittest
 

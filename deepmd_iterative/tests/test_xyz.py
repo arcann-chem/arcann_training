@@ -24,6 +24,7 @@ TestWriteXYZFrameToFile():
 TestReadWriteXYZTrajectory():
     Test case for combined use of 'read_xyz_trajectory' and 'write_xyz_frame' functions.
 """
+
 # Standard library modules
 import unittest
 import tempfile
@@ -201,9 +202,7 @@ class TestReadXYZTrajectory(unittest.TestCase):
         """
         Test that the function returns the expected arrays for a single frame XYZ file.
         """
-        num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(
-            self.file_oneframe_path
-        )
+        num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(self.file_oneframe_path)
 
         self.assertIsInstance(num_atoms, np.ndarray)
         self.assertIsInstance(atom_symbols, np.ndarray)
@@ -229,9 +228,7 @@ class TestReadXYZTrajectory(unittest.TestCase):
         """
         Test that the function returns the expected arrays for a multi-frame XYZ file.
         """
-        num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(
-            self.file_path
-        )
+        num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(self.file_path)
 
         self.assertIsInstance(num_atoms, np.ndarray)
         self.assertIsInstance(atom_symbols, np.ndarray)
@@ -267,9 +264,7 @@ class TestReadXYZTrajectory(unittest.TestCase):
         """
         Test that the function returns the expected arrays for a multi-frame XYZ file with variable cell info.
         """
-        num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(
-            self.file_abc_path
-        )
+        num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(self.file_abc_path)
 
         self.assertIsInstance(num_atoms, np.ndarray)
         self.assertIsInstance(atom_symbols, np.ndarray)
@@ -315,13 +310,9 @@ class TestReadXYZTrajectory(unittest.TestCase):
         Test that the function raises a TypeError when the number of atoms is not an integer.
         """
         with self.assertRaises(TypeError) as cm:
-            num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(
-                self.file_var_path
-            )
+            num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(self.file_var_path)
         error_msg = str(cm.exception)
-        expected_error_msg = (
-            f"Incorrect file format: number of atoms must be an '{type(1)}'."
-        )
+        expected_error_msg = f"Incorrect file format: number of atoms must be an '{type(1)}'."
         self.assertEqual(error_msg, expected_error_msg)
 
     def test_read_xyz_trajectory_missing(self):
@@ -329,9 +320,7 @@ class TestReadXYZTrajectory(unittest.TestCase):
         Test that the function raises a FileNotFoundError when the input file is missing.
         """
         with self.assertRaises(FileNotFoundError) as cm:
-            num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(
-                self.file_miss_path
-            )
+            num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(self.file_miss_path)
         error_msg = str(cm.exception)
         expected_error_msg = f"File not found '{self.file_miss_path.name}' not in '{self.file_miss_path.parent}'."
         self.assertEqual(error_msg, expected_error_msg)
@@ -341,9 +330,7 @@ class TestReadXYZTrajectory(unittest.TestCase):
         Test that the function raises an IndexError when the input file has an incorrect format.
         """
         with self.assertRaises(IndexError) as cm:
-            num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(
-                self.file_inc_path
-            )
+            num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(self.file_inc_path)
         error_msg = str(cm.exception)
         expected_error_msg = f"Incorrect file format: end of file reached prematurely."
         self.assertEqual(error_msg, expected_error_msg)
@@ -374,9 +361,7 @@ class TestWriteXYZFrameToFile(unittest.TestCase):
         """
         frame_idx = 0
         num_atoms = np.array([2, 2, 2])
-        atom_coords = np.array(
-            [[[0, 0, 0], [1, 1, 1]], [[0, 0, 0], [2, 2, 2]], [[0, 0, 0], [1, 1, 1]]]
-        )
+        atom_coords = np.array([[[0, 0, 0], [1, 1, 1]], [[0, 0, 0], [2, 2, 2]], [[0, 0, 0], [1, 1, 1]]])
         cell_info = np.array(
             [
                 [10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 10.0],
@@ -386,9 +371,7 @@ class TestWriteXYZFrameToFile(unittest.TestCase):
         )
         atom_symbols = np.array([["C", "H"], ["C", "H"], ["N", "O"]])
         expected_output = "2\nABC = 10.0000 0.0000 0.0000 0.0000 10.0000 0.0000 0.0000 0.0000 10.0000\nC 0.000000 0.000000 0.000000\nH 1.000000 1.000000 1.000000\n"
-        write_xyz_frame(
-            self.temp_file, frame_idx, num_atoms, atom_symbols, atom_coords, cell_info
-        )
+        write_xyz_frame(self.temp_file, frame_idx, num_atoms, atom_symbols, atom_coords, cell_info)
 
         with open(self.temp_file) as f:
             output = f.read()
@@ -401,9 +384,7 @@ class TestWriteXYZFrameToFile(unittest.TestCase):
         """
         frame_idx = 3
         num_atoms = np.array([2, 3, 2])
-        atom_coords = np.array(
-            [[[0, 0, 0], [1, 1, 1]], [[0, 0, 0], [2, 2, 2]], [[0, 0, 0], [1, 1, 1]]]
-        )
+        atom_coords = np.array([[[0, 0, 0], [1, 1, 1]], [[0, 0, 0], [2, 2, 2]], [[0, 0, 0], [1, 1, 1]]])
         atom_symbols = np.array([["C", "H"], ["C", "H"], ["N", "O"]])
         cell_info = np.array([10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 0.0, 10.0])
 
@@ -456,9 +437,7 @@ class TestReadWriteXYZTrajectory(unittest.TestCase):
         """
         Test reading and writing a trajectory in xyz format.
         """
-        num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(
-            self.file_path
-        )
+        num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(self.file_path)
 
         self.assertIsInstance(num_atoms, np.ndarray)
         self.assertIsInstance(atom_symbols, np.ndarray)
@@ -499,12 +478,8 @@ class TestReadWriteXYZTrajectory(unittest.TestCase):
             )
         )
         self.file_new_path = Path(self.tmp_dir.name) / "new.xyz"
-        write_xyz_frame(
-            self.file_new_path, 0, num_atoms, atom_symbols, atom_coords, cell_info
-        )
-        num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(
-            self.file_new_path
-        )
+        write_xyz_frame(self.file_new_path, 0, num_atoms, atom_symbols, atom_coords, cell_info)
+        num_atoms, atom_symbols, atom_coords, cell_info = read_xyz_trajectory(self.file_new_path)
 
         self.assertIsInstance(num_atoms, np.ndarray)
         self.assertIsInstance(atom_symbols, np.ndarray)

@@ -99,9 +99,7 @@ class TestCreateModelsList(unittest.TestCase):
             prevtraining_json = json.load(f)
 
         # Test the function with various inputs
-        models_list, models_string = create_models_list(
-            config_json, prevtraining_json, 2, "000", self.training_dir, self.local_dir
-        )
+        models_list, models_string = create_models_list(config_json, prevtraining_json, 2, "000", self.training_dir, self.local_dir)
         expected_models_list = [
             "graph_2_000_compressed.pb",
             "graph_3_000_compressed.pb",
@@ -171,9 +169,7 @@ class TestUpdateSystemNbStepsFactor(unittest.TestCase):
         # Create a temporary JSON file for the test
         self.temp_file = Path(self.temp_dir.name) / "prevexploration.json"
         with self.temp_file.open(mode="w") as f:
-            f.write(
-                '{"systems_auto": [{"candidates_count": 5, "rejected_count": 0, "total_count": 100, "nb_steps": 100}]}'
-            )
+            f.write('{"systems_auto": [{"candidates_count": 5, "rejected_count": 0, "total_count": 100, "nb_steps": 100}]}')
 
     def tearDown(self):
         # Clean up the temporary directory and file

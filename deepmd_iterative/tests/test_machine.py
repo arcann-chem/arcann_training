@@ -167,9 +167,7 @@ class TestGetMachineKeyword(unittest.TestCase):
         """
         Test valid list value case.
         """
-        input_json = {
-            "user_machine_keyword_exp": ["project", "allocation", "arch_name"]
-        }
+        input_json = {"user_machine_keyword_exp": ["project", "allocation", "arch_name"]}
         previous_json = {}
         default_json = {}
 
@@ -233,14 +231,10 @@ class TestGetMachineFromConfigs(unittest.TestCase):
             {"machine1": {"hostname": "my_machine"}},
             {"machine2": {"hostname": "other_machine"}},
         ]
-        result = get_machine_from_configs(
-            machine_configs, machine_short_name="machine2"
-        )
+        result = get_machine_from_configs(machine_configs, machine_short_name="machine2")
         self.assertEqual(result, "machine2")
 
-    @patch(
-        "deepmd_iterative.common.machine.get_host_name", return_value="unknown_machine"
-    )
+    @patch("deepmd_iterative.common.machine.get_host_name", return_value="unknown_machine")
     def test_no_matching_config(self, mock_get_host_name):
         """
         Test case where no matching configuration is found.

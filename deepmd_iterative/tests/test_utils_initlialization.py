@@ -72,9 +72,7 @@ class TestGenerateMainJson(unittest.TestCase):
         }
         expected_padded_curr_iter = "000"
 
-        config_json, merged_input_json, padded_curr_iter = generate_main_json(
-            input_json, self.default_json
-        )
+        config_json, merged_input_json, padded_curr_iter = generate_main_json(input_json, self.default_json)
 
         self.assertDictEqual(config_json, expected_config_json)
         self.assertDictEqual(merged_input_json, expected_merged_input_json)
@@ -99,9 +97,7 @@ class TestGenerateMainJson(unittest.TestCase):
         }
         expected_padded_curr_iter = "000"
 
-        config_json, merged_input_json, padded_curr_iter = generate_main_json(
-            input_json, self.default_json
-        )
+        config_json, merged_input_json, padded_curr_iter = generate_main_json(input_json, self.default_json)
 
         self.assertDictEqual(config_json, expected_config_json)
         self.assertDictEqual(merged_input_json, expected_merged_input_json)

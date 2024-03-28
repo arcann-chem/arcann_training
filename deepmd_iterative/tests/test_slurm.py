@@ -15,6 +15,7 @@ Classes
 TestReplaceInSlurmFileGeneral
     Test cases for the 'replace_in_slurm_file_general' function.
 """
+
 # Standard library modules
 import unittest
 
