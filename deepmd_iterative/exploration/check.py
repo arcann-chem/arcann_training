@@ -6,8 +6,9 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/26
+Last modified: 2024/03/28
 """
+
 # Standard library modules
 import logging
 import sys
@@ -17,12 +18,7 @@ from pathlib import Path
 import numpy as np
 
 # Local imports
-from deepmd_iterative.common.json import (
-    load_json_file,
-    write_json_file,
-    get_key_in_dict,
-    load_default_json_file,
-)
+from deepmd_iterative.common.json import load_json_file, write_json_file, get_key_in_dict, load_default_json_file
 from deepmd_iterative.common.list import textfile_to_string_list
 from deepmd_iterative.common.check import validate_step_folder, check_vmd, check_dcd_is_valid, check_nc_is_valid
 
@@ -39,9 +35,7 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
-    )
+    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
@@ -55,9 +49,7 @@ def main(
     curr_iter = int(padded_curr_iter)
 
     # Load the default input JSON
-    default_input_json = load_default_json_file(
-        deepmd_iterative_path / "assets" / "default_config.json"
-    )[current_step]
+    default_input_json = load_default_json_file(deepmd_iterative_path / "assets" / "default_config.json")[current_step]
     default_input_json_present = bool(default_input_json)
     logging.debug(f"default_input_json: {default_input_json}")
     logging.debug(f"default_input_json_present: {default_input_json_present}")
@@ -74,21 +66,15 @@ def main(
     # Get control path, load the main JSON and the exploration JSON
     control_path = training_path / "control"
     main_json = load_json_file((control_path / "config.json"))
-    exploration_json = load_json_file(
-        (control_path / f"exploration_{padded_curr_iter}.json")
-    )
+    exploration_json = load_json_file((control_path / f"exploration_{padded_curr_iter}.json"))
 
     # Load the previous exploration JSON and training JSON
     if curr_iter > 0:
         prev_iter = curr_iter - 1
         padded_prev_iter = str(prev_iter).zfill(3)
-        previous_training_json = load_json_file(
-            (control_path / f"training_{padded_prev_iter}.json")
-        )
+        previous_training_json = load_json_file((control_path / f"training_{padded_prev_iter}.json"))
         if prev_iter > 0:
-            previous_exploration_json = load_json_file(
-                (control_path / ("exploration_" + padded_prev_iter + ".json"))
-            )
+            previous_exploration_json = load_json_file((control_path / ("exploration_" + padded_prev_iter + ".json")))
         else:
             previous_exploration_json = {}
     else:
@@ -102,11 +88,7 @@ def main(
         return 1
 
     # Check if the vmd package is installed
-    vmd_bin = check_vmd(
-        get_key_in_dict(
-            "vmd_path", user_input_json, previous_exploration_json, default_input_json
-        )
-    )
+    vmd_bin = check_vmd(get_key_in_dict("vmd_path", user_input_json, previous_exploration_json, default_input_json))
     # Check the normal termination of the exploration phase
     # Counters
     completed_count = 0
@@ -128,7 +110,7 @@ def main(
 
         for it_nnp in range(1, main_json["nnp_count"] + 1):
             for it_number in range(1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1):
-                local_path = (Path(".").resolve() / str(system_auto) / str(it_nnp) / (str(it_number).zfill(5)))
+                local_path = Path(".").resolve() / str(system_auto) / str(it_nnp) / (str(it_number).zfill(5))
                 logging.debug(f"Checking local_path: {local_path}")
 
                 # If there is a skip, we skip
@@ -139,10 +121,10 @@ def main(
                     continue
 
                 # LAMMPS
-                if (exploration_json["systems_auto"][system_auto]["exploration_type"]== "lammps"):
-                    traj_file = (local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.dcd")
-                    lammps_output_file = (local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.log")
-                    model_deviation_filename = (local_path / f"model_devi_{system_auto}_{it_nnp}_{padded_curr_iter}.out")
+                if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps":
+                    traj_file = local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.dcd"
+                    lammps_output_file = local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.log"
+                    model_deviation_filename = local_path / f"model_devi_{system_auto}_{it_nnp}_{padded_curr_iter}.out"
 
                     # Log if files are missing.
                     if not all([traj_file.is_file(), lammps_output_file.is_file(), model_deviation_filename.is_file()]):
@@ -156,7 +138,7 @@ def main(
                         skipped_count += 1
                         exploration_json["systems_auto"][system_auto]["skipped_count"] += 1
                         logging.warning(f"'{traj_file}' present but invalid.")
-                        logging.warning(F"'{local_path}' auto-skipped.")
+                        logging.warning(f"'{local_path}' auto-skipped.")
                         del lammps_output_file, traj_file, model_deviation_filename
                         continue
 
@@ -176,11 +158,11 @@ def main(
                     else:
                         logging.critical(f"'{lammps_output_file}' failed. Check manually.")
                     del lammps_output, lammps_output_file, traj_file, model_deviation_filename
-                    
-                elif (exploration_json["systems_auto"][system_auto]["exploration_type"]== "sander_ml"):
-                    traj_file = (local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.nc")
-                    sander_emle_output_file = (local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.out")
-                    model_deviation_filename = (local_path / f"model_devi_{system_auto}_{it_nnp}_{padded_curr_iter}.out")
+
+                elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_ml":
+                    traj_file = local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.nc"
+                    sander_emle_output_file = local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.out"
+                    model_deviation_filename = local_path / f"model_devi_{system_auto}_{it_nnp}_{padded_curr_iter}.out"
 
                     # Log if files are missing.
                     if not all([traj_file.is_file(), lammps_output_file.is_file(), model_deviation_filename.is_file()]):
@@ -194,7 +176,7 @@ def main(
                         skipped_count += 1
                         exploration_json["systems_auto"][system_auto]["skipped_count"] += 1
                         logging.warning(f"'{traj_file}' present but invalid.")
-                        logging.warning(F"'{local_path}' auto-skipped.")
+                        logging.warning(f"'{local_path}' auto-skipped.")
                         del sander_emle_output_file, traj_file, model_deviation_filename
                         continue
 
@@ -217,8 +199,8 @@ def main(
                     del sander_emle_ouput, sander_emle_output_file, traj_file, model_deviation_filename
 
                 # i-PI
-                elif (exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI"):
-                    ipi_output_file = (local_path/ f"{system_auto}_{it_nnp}_{padded_curr_iter}.i-PI.server.log")
+                elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
+                    ipi_output_file = local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.i-PI.server.log"
 
                     # Log if files are missing.
                     if not ipi_output_file.is_file():
@@ -251,9 +233,9 @@ def main(
 
         # timings = timings_sum / system_count
 
-        if (exploration_json["systems_auto"][system_auto]["exploration_type"]== "lammps"):
-            average_per_step = (np.array(timings)/ exploration_json["systems_auto"][system_auto]["nb_steps"])
-        elif (exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI"):
+        if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps":
+            average_per_step = np.array(timings) / exploration_json["systems_auto"][system_auto]["nb_steps"]
+        elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
             average_per_step = np.array(timings)
 
         exploration_json["systems_auto"][system_auto]["mean_s_per_step"] = np.average(average_per_step)
@@ -266,37 +248,16 @@ def main(
 
     logging.info(f"-" * 88)
     # Update the booleans in the exploration JSON
-    if (completed_count + skipped_count + forced_count) == (
-        exploration_json["nnp_count"]
-        * sum(
-            [
-                exploration_json["systems_auto"][_]["traj_count"]
-                for _ in exploration_json["systems_auto"]
-            ]
-        )
-    ):
+    if (completed_count + skipped_count + forced_count) == (exploration_json["nnp_count"] * sum([exploration_json["systems_auto"][_]["traj_count"] for _ in exploration_json["systems_auto"]])):
         exploration_json["is_checked"] = True
 
     # Dump the JSON files (exploration JSON)
-    write_json_file(
-        exploration_json,
-        (control_path / f"exploration_{padded_curr_iter}.json"),
-    )
+    write_json_file(exploration_json, (control_path / f"exploration_{padded_curr_iter}.json"), read_only=True)
 
     # End
     logging.info(f"-" * 88)
-    if (completed_count + skipped_count + forced_count) != (
-        exploration_json["nnp_count"]
-        * sum(
-            [
-                exploration_json["systems_auto"][_]["traj_count"]
-                for _ in exploration_json["systems_auto"]
-            ]
-        )
-    ):
-        logging.error(
-            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!"
-        )
+    if (completed_count + skipped_count + forced_count) != (exploration_json["nnp_count"] * sum([exploration_json["systems_auto"][_]["traj_count"] for _ in exploration_json["systems_auto"]])):
+        logging.error(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!")
         logging.error(f"Please check manually before relaunching this step.")
         logging.error(f"Or create files named 'skip' or 'force' to skip or force.")
         logging.error(f"Aborting...")
@@ -307,9 +268,7 @@ def main(
     if (skipped_count + forced_count) != 0:
         logging.warning(f"'{skipped_count}' systems were skipped.")
         logging.warning(f"'{forced_count}' systems were forced.")
-    logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
-    )
+    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
     del skipped_count, forced_count
 
     # Cleaning
