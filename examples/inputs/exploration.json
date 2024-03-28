@@ -14,8 +14,6 @@
     "job_walltime_h": { "value": null, "_comment": "int or list of int", "_default": [-1, -1]},
     "exp_time_ps": { "value": null, "_comment": "int or list of int", "_default": [-1, -1]},
     "max_exp_time_ps": { "value": null, "_comment": "int or list of int", "_default": [400, 100]},
-    "init_exp_time_ps": { "value": null, "_comment": "int or list of int", "_default": [10, 10]},
-    "init_job_walltime_h": { "value": null, "_comment": "int or list of int", "_default": [1, 10]},
     "max_candidates" : { "value": null, "_comment": "int or list of int", "_default": [500]},
     "sigma_low" : { "value": null, "_comment": "float or list of float", "_default": [0.2]},
     "sigma_high" : { "value": null, "_comment": "float or list of float", "_default": [0.7]},

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/27
+Last modified: 2024/03/28
 
 The utils module provides functions for the training step.
 
@@ -101,6 +101,8 @@ def generate_training_json(
         "decay_steps_fixed",
         "numb_steps",
         "numb_test",
+        "job_walltime_train_h",
+        "mean_s_per_step"
     ]:
         # Check if the key is present in any of the dictionaries, and set the value accordingly
         if key in user_input_json:

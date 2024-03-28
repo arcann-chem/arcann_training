@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/27
+Last modified: 2024/03/28
 """
 # Standard library modules
 import copy
@@ -37,7 +37,7 @@ from deepmd_iterative.common.machine import (
     get_machine_spec_for_step,
 )
 from deepmd_iterative.common.slurm import replace_in_slurm_file_general
-
+from deepmd_iterative.training.utils import generate_training_json
 
 def main(
     current_step: str,
@@ -85,6 +85,17 @@ def main(
 
     # Make a deepcopy of it to create the current input JSON
     merged_input_json = copy.deepcopy(user_input_json)
+
+    # Load the current input JSON
+    current_input_json = load_json_file((current_path / "used_input.json"))
+    # Generate/update both the training JSON and the merged input JSON
+    # Priority: user > previous/current > default
+    training_json, merged_input_json = generate_training_json(
+        user_input_json,
+        current_input_json,
+        default_input_json,
+        merged_input_json,
+    )
 
     # Get control path, load the main JSON and the training JSON
     control_path = training_path / "control"

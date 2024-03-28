@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/26
+Last modified: 2024/03/28
 
 This module contains functions for checking the availability of certain commands on the system, as well as a function for validating the current working directory during the execution of a specific step.
 
@@ -83,7 +83,7 @@ def check_atomsk(atomsk_path: str = None) -> str:
         atomsk_path = Path(atomsk).resolve()
         return f"{atomsk_path}"
     else:
-        error_msg = f"Atomsk not found."
+        error_msg = f"Atomsk not found. Please add it to your system path (or use ATOMSK_PATH environment variable to point towards the atomsk binary)."
         raise FileNotFoundError(error_msg)
 
 
@@ -137,7 +137,7 @@ def check_vmd(vmd_path: str = None) -> str:
         vmd_path = Path(vmd).resolve()
         return f"{vmd_path}"
     else:
-        error_msg = f"VMD not found."
+        error_msg = f"VMD not found in $PATH. Please add it to your system path (or use VMD_PATH environment variable to point towards the vmd binary)."
         raise FileNotFoundError(error_msg)
 
 

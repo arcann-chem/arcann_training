@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/25
+Last modified: 2024/03/28
 
 Functions
 ---------
@@ -108,8 +108,6 @@ def generate_input_exploration_json(
         "exp_time_ps",
         "max_exp_time_ps",
         "job_walltime_h",
-        "init_exp_time_ps",
-        "init_job_walltime_h",
         "print_interval_mult",
         "previous_start",
         "disturbed_start",
@@ -229,8 +227,6 @@ def get_system_exploration(
     Union[float, int],
     Union[float, int],
     Union[float, int],
-    Union[float, int],
-    Union[float, int],
     bool,
     bool,
 ]:
@@ -246,7 +242,7 @@ def get_system_exploration(
 
     Returns
     -------
-    Tuple[str, float, float, float, float, float, float, float, float, float, bool]
+    Tuple[str, float, float, float, float, float, float, float, bool]
         A tuple containing system exploration parameters:
         - exploration_typ : str
             Type of exploration
@@ -262,10 +258,6 @@ def get_system_exploration(
             Maximum allowed exploration time in picoseconds.
         - job_walltime_h : float
             Maximum job walltime in hours.
-        - init_exp_time_ps : float
-            Initial exploration time in picoseconds.
-        - init_job_walltime_h : float
-            Initial job walltime in hours.
         - print_interval_mult : float
             Print interval multiplier.
         - previous_start : bool
@@ -282,8 +274,6 @@ def get_system_exploration(
         "exp_time_ps",
         "max_exp_time_ps",
         "job_walltime_h",
-        "init_exp_time_ps",
-        "init_job_walltime_h",
         "print_interval_mult",
         "previous_start",
         "disturbed_start",
