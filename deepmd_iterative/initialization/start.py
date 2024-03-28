@@ -73,7 +73,8 @@ def main(
             logging.error(f"Aborting...")
             return 1
         else:
-            user_input_json["systems_auto"] = list_of_lmp.sort()
+            list_of_lmp.sort(key=natural_sort_key)
+            user_input_json["systems_auto"] = list_of_lmp
             logging.info(f"Auto-populated 'systems_auto' with: {user_input_json['systems_auto']}")
     else:
         for system_auto in user_input_json["systems_auto"]:
