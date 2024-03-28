@@ -6,8 +6,9 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/27
+Last modified: 2024/03/28
 """
+
 # Standard library modules
 import copy
 import logging
@@ -17,20 +18,9 @@ from pathlib import Path
 
 # Local imports
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.filesystem import (
-    change_directory,
-)
-from deepmd_iterative.common.json import (
-    backup_and_overwrite_json_file,
-    load_default_json_file,
-    load_json_file,
-    write_json_file,
-)
-from deepmd_iterative.common.machine import (
-    assert_same_machine,
-    get_machine_keyword,
-    get_machine_spec_for_step,
-)
+from deepmd_iterative.common.filesystem import change_directory
+from deepmd_iterative.common.json import backup_and_overwrite_json_file, load_default_json_file, load_json_file, write_json_file
+from deepmd_iterative.common.machine import assert_same_machine, get_machine_keyword, get_machine_spec_for_step
 
 
 def main(
@@ -45,9 +35,7 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
-    )
+    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
@@ -61,9 +49,7 @@ def main(
     curr_iter = int(padded_curr_iter)
 
     # Load the default input JSON
-    default_input_json = load_default_json_file(
-        deepmd_iterative_path / "assets" / "default_config.json"
-    )[current_step]
+    default_input_json = load_default_json_file(deepmd_iterative_path / "assets" / "default_config.json")[current_step]
     default_input_json_present = bool(default_input_json)
     logging.debug(f"default_input_json: {default_input_json}")
     logging.debug(f"default_input_json_present: {default_input_json_present}")
@@ -87,14 +73,10 @@ def main(
 
     # Get the machine keyword (Priority: user > previous > default)
     # And update the merged input JSON
-    user_machine_keyword = get_machine_keyword(
-        user_input_json, training_json, default_input_json, "train"
-    )
+    user_machine_keyword = get_machine_keyword(user_input_json, training_json, default_input_json, "train")
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
-    user_machine_keyword = (
-        None if isinstance(user_machine_keyword, bool) else user_machine_keyword
-    )
+    user_machine_keyword = None if isinstance(user_machine_keyword, bool) else user_machine_keyword
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
 
     # From the keyword (or default), get the machine spec (or for the fake one)
@@ -138,9 +120,7 @@ def main(
     # Check if we can continue
     if training_json["is_launched"]:
         logging.critical(f"Already launched...")
-        continuing = input(
-            f"Do you want to continue?\n['Y' for yes, anything else to abort]\n"
-        )
+        continuing = input(f"Do you want to continue?\n['Y' for yes, anything else to abort]\n")
         if continuing == "Y":
             del continuing
         else:
@@ -155,9 +135,7 @@ def main(
     completed_count = 0
     for nnp in range(1, main_json["nnp_count"] + 1):
         local_path = current_path / f"{nnp}"
-        if (
-            local_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh"
-        ).is_file():
+        if (local_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh").is_file():
             change_directory(local_path)
             try:
                 subprocess.run(
@@ -169,9 +147,7 @@ def main(
                 logging.info(f"DP Train - '{nnp}' launched.")
                 completed_count += 1
             except FileNotFoundError:
-                logging.critical(
-                    f"DP Train - '{nnp}' NOT launched - '{machine_launch_command}' not found."
-                )
+                logging.critical(f"DP Train - '{nnp}' NOT launched - '{machine_launch_command}' not found.")
             change_directory(local_path.parent)
         else:
             logging.critical(f"DP Train - '{nnp}' NOT launched - No job file.")
@@ -190,18 +166,12 @@ def main(
     # End
     logging.info(f"-" * 88)
     if completed_count == main_json["nnp_count"]:
-        logging.info(
-            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
-        )
+        logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
     else:
-        logging.critical(
-            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!"
-        )
+        logging.critical(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!")
         logging.critical(f"Some jobs did not launch correctly.")
         logging.critical(f"Please launch manually before continuing to the next step.")
-        logging.critical(
-            f"Replace the key 'is_launched' to 'True' in the 'training_{padded_curr_iter}.json'."
-        )
+        logging.critical(f"Replace the key 'is_launched' to 'True' in the 'training_{padded_curr_iter}.json'.")
     del completed_count
 
     # Cleaning

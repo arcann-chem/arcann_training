@@ -6,8 +6,9 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/27
+Last modified: 2024/03/28
 """
+
 # Standard library modules
 import logging
 import subprocess
@@ -16,14 +17,8 @@ from pathlib import Path
 
 # Local imports
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.filesystem import (
-    check_directory,
-    check_file_existence,
-)
-from deepmd_iterative.common.json import (
-    load_json_file,
-    write_json_file,
-)
+from deepmd_iterative.common.filesystem import check_directory, check_file_existence
+from deepmd_iterative.common.json import load_json_file, write_json_file
 
 
 def main(
@@ -38,9 +33,7 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
-    )
+    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
@@ -69,22 +62,13 @@ def main(
         local_path = Path(".").resolve() / f"{nnp}"
         check_file_existence(local_path / f"graph_{nnp}_{padded_curr_iter}.pb")
         if training_json["is_compressed"]:
-            check_file_existence(
-                local_path / f"graph_{nnp}_{padded_curr_iter}_compressed.pb"
-            )
+            check_file_existence(local_path / f"graph_{nnp}_{padded_curr_iter}_compressed.pb")
 
     # Prepare the test folder
     (training_path / f"{padded_curr_iter}-test").mkdir(exist_ok=True)
     check_directory((training_path / f"{padded_curr_iter}-test"))
 
-    subprocess.run(
-        [
-            "rsync",
-            "-a",
-            f"{training_path / 'data'}",
-            str(training_path / f"{padded_curr_iter}-test"),
-        ]
-    )
+    subprocess.run(["rsync", "-a", f"{training_path / 'data'}", str(training_path / f"{padded_curr_iter}-test")])
 
     # Copy the pb files to the NNP meta folder
     (training_path / "NNP").mkdir(exist_ok=True)
@@ -94,26 +78,8 @@ def main(
 
     for nnp in range(1, main_json["nnp_count"] + 1):
         if training_json["is_compressed"]:
-            subprocess.run(
-                [
-                    "rsync",
-                    "-a",
-                    str(
-                        local_path
-                        / f"{nnp}"
-                        / f"graph_{nnp}_{padded_curr_iter}_compressed.pb"
-                    ),
-                    str((training_path / "NNP")),
-                ]
-            )
-        subprocess.run(
-            [
-                "rsync",
-                "-a",
-                str(local_path / f"{nnp}" / f"graph_{nnp}_{padded_curr_iter}.pb"),
-                str((training_path / "NNP")),
-            ]
-        )
+            subprocess.run(["rsync", "-a", str(local_path / f"{nnp}" / f"graph_{nnp}_{padded_curr_iter}_compressed.pb"), str((training_path / "NNP"))])
+        subprocess.run(["rsync", "-a", str(local_path / f"{nnp}" / f"graph_{nnp}_{padded_curr_iter}.pb"), str((training_path / "NNP"))])
     del nnp
 
     # Next iteration
@@ -135,9 +101,7 @@ def main(
     write_json_file(main_json, (control_path / "config.json"), read_only=True)
 
     # End
-    logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
-    )
+    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
 
     # Cleaning
     del current_path, control_path, training_path

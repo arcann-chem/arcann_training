@@ -6,8 +6,9 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/27
+Last modified: 2024/03/28
 """
+
 # Standard library modules
 import logging
 import sys
@@ -15,10 +16,7 @@ from pathlib import Path
 
 # Local imports
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.json import (
-    load_json_file,
-    write_json_file,
-)
+from deepmd_iterative.common.json import load_json_file, write_json_file
 
 
 def main(
@@ -33,9 +31,7 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
-    )
+    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
@@ -81,13 +77,9 @@ def main(
     # End
     logging.info(f"-" * 88)
     if completed_count == main_json["nnp_count"]:
-        logging.info(
-            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
-        )
+        logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
     else:
-        logging.error(
-            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!"
-        )
+        logging.error(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!")
         logging.error(f"Some DP Compress did not finished correctly.")
         logging.error(f"Please check manually before relaunching this step.")
         logging.error(f"Aborting...")

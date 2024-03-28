@@ -102,7 +102,7 @@ def generate_training_json(
         "numb_steps",
         "numb_test",
         "job_walltime_train_h",
-        "mean_s_per_step"
+        "mean_s_per_step",
     ]:
         # Check if the key is present in any of the dictionaries, and set the value accordingly
         if key in user_input_json:
@@ -192,9 +192,7 @@ def calculate_decay_steps(num_structures: int, min_decay_steps: int = 5000) -> i
 
 # Unittested
 @catch_errors_decorator
-def calculate_decay_rate(
-    stop_batch: int, start_lr: float, stop_lr: float, decay_steps: int
-) -> float:
+def calculate_decay_rate(stop_batch: int, start_lr: float, stop_lr: float, decay_steps: int) -> float:
     """
     Calculate the decay rate based on the given training parameters.
 
@@ -236,9 +234,7 @@ def calculate_decay_rate(
 
 # Unittested
 @catch_errors_decorator
-def calculate_learning_rate(
-    current_step: int, start_lr: float, decay_rate: float, decay_steps: int
-) -> float:
+def calculate_learning_rate(current_step: int, start_lr: float, decay_rate: float, decay_steps: int) -> float:
     """
     Calculate the learning rate at a given training step, based on the given parameters.
 
@@ -264,12 +260,7 @@ def calculate_learning_rate(
         If any of the arguments are not positive or if decay_steps is not an integer.
     """
     # Check that all arguments are positive
-    if not all(
-        arg > 0 for arg in (current_step, start_lr, decay_rate, decay_steps)
-    ) or not all(
-        isinstance(arg, (int, float))
-        for arg in (current_step, start_lr, decay_rate, decay_steps)
-    ):
+    if not all(arg > 0 for arg in (current_step, start_lr, decay_rate, decay_steps)) or not all(isinstance(arg, (int, float)) for arg in (current_step, start_lr, decay_rate, decay_steps)):
         error_msg = f"All arguments must be positive."
         raise ValueError(error_msg)
     if not isinstance(decay_steps, int):
@@ -324,9 +315,7 @@ def check_initial_datasets(training_dir: Path) -> Dict[str, int]:
 
         # Check if the dataset exists in the 'data' subfolder
         if not dataset_path.is_dir():
-            error_msg = (
-                f"Initial dataset '{dataset_name}' is missing from the data subfolder."
-            )
+            error_msg = f"Initial dataset '{dataset_name}' is missing from the data subfolder."
             raise FileNotFoundError(error_msg)
 
         # Check if the number of samples in the dataset matches the expected count

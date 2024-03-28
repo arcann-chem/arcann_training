@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/27
+Last modified: 2024/03/28
 """
 
 # Standard library modules
@@ -23,31 +23,11 @@ import numpy as np
 # Local imports
 from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.filesystem import check_directory
-from deepmd_iterative.common.json import (
-    backup_and_overwrite_json_file,
-    get_key_in_dict,
-    load_default_json_file,
-    load_json_file,
-    write_json_file,
-    replace_values_by_key_name,
-)
-from deepmd_iterative.common.list import (
-    replace_substring_in_string_list,
-    string_list_to_textfile,
-    textfile_to_string_list,
-)
-from deepmd_iterative.common.machine import (
-    get_machine_keyword,
-    get_machine_spec_for_step,
-)
+from deepmd_iterative.common.json import backup_and_overwrite_json_file, get_key_in_dict, load_default_json_file, load_json_file, write_json_file, replace_values_by_key_name
+from deepmd_iterative.common.list import replace_substring_in_string_list, string_list_to_textfile, textfile_to_string_list
+from deepmd_iterative.common.machine import get_machine_keyword, get_machine_spec_for_step
 from deepmd_iterative.common.slurm import replace_in_slurm_file_general
-from deepmd_iterative.training.utils import (
-    calculate_decay_rate,
-    calculate_decay_steps,
-    check_initial_datasets,
-    validate_deepmd_config,
-    generate_training_json,
-)
+from deepmd_iterative.training.utils import calculate_decay_rate, calculate_decay_steps, check_initial_datasets, validate_deepmd_config, generate_training_json
 
 
 def main(
@@ -62,9 +42,7 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
-    )
+    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
@@ -79,14 +57,9 @@ def main(
     logging.debug(f"curr_iter, padded_curr_iter: {curr_iter}, {padded_curr_iter}")
 
     # Load the default input JSON
-    default_input_json = load_default_json_file(
-        deepmd_iterative_path / "assets" / "default_config.json"
-    )[current_step]
+    default_input_json = load_default_json_file(deepmd_iterative_path / "assets" / "default_config.json")[current_step]
     default_input_json_present = bool(default_input_json)
-    if (
-        default_input_json_present
-        and not (current_path / "default_input.json").is_file()
-    ):
+    if default_input_json_present and not (current_path / "default_input.json").is_file():
         write_json_file(default_input_json, (current_path / "default_input.json"), read_only=True)
     logging.debug(f"default_input_json: {default_input_json}")
     logging.debug(f"default_input_json_present: {default_input_json_present}")
@@ -111,22 +84,16 @@ def main(
     if curr_iter > 0:
         prev_iter = curr_iter - 1
         padded_prev_iter = str(prev_iter).zfill(3)
-        previous_training_json = load_json_file(
-            (control_path / f"training_{padded_prev_iter}.json")
-        )
+        previous_training_json = load_json_file((control_path / f"training_{padded_prev_iter}.json"))
     else:
         previous_training_json = {}
 
     # Get the machine keyword (Priority: user > previous > default)
     # And update the merged input JSON
-    user_machine_keyword = get_machine_keyword(
-        user_input_json, previous_training_json, default_input_json, "train"
-    )
+    user_machine_keyword = get_machine_keyword(user_input_json, previous_training_json, default_input_json, "train")
     logging.debug(f"merged_input_json: {merged_input_json}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
-    user_machine_keyword = (
-        None if isinstance(user_machine_keyword, bool) else user_machine_keyword
-    )
+    user_machine_keyword = None if isinstance(user_machine_keyword, bool) else user_machine_keyword
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
 
     # From the keyword (or default), get the machine spec (or for the fake one)
@@ -166,16 +133,12 @@ def main(
 
     # Check if we can continue
     if curr_iter > 0:
-        labeling_json = load_json_file(
-            (control_path / f"labeling_{padded_curr_iter}.json")
-        )
+        labeling_json = load_json_file((control_path / f"labeling_{padded_curr_iter}.json"))
         if not labeling_json["is_extracted"]:
             logging.error(f"Lock found. Please execute 'labeling extract' first.")
             logging.error(f"Aborting...")
             return 1
-        exploration_json = load_json_file(
-            (control_path / f"exploration_{padded_curr_iter}.json")
-        )
+        exploration_json = load_json_file((control_path / f"exploration_{padded_curr_iter}.json"))
     else:
         exploration_json = {}
         labeling_json = {}
@@ -195,19 +158,14 @@ def main(
 
         dptrain_max_version = 0
         for dptrain in dptrain_list:
-            dptrain_max_version = max(dptrain_max_version, float(dptrain.stem.split('_')[-1]))
+            dptrain_max_version = max(dptrain_max_version, float(dptrain.stem.split("_")[-1]))
 
         user_input_json["deepmd_model_version"] = dptrain_max_version
         del dptrain_list, dptrain_max_version
 
     # Generate/update both the training JSON and the merged input JSON
     # Priority: user > previous > default
-    training_json, merged_input_json = generate_training_json(
-        user_input_json,
-        previous_training_json,
-        default_input_json,
-        merged_input_json,
-    )
+    training_json, merged_input_json = generate_training_json(user_input_json, previous_training_json, default_input_json, merged_input_json)
     logging.info(f"Using DeePMD version: {merged_input_json['deepmd_model_version']}")
     logging.debug(f"training_json: {training_json}")
     logging.debug(f"merged_input_json: {merged_input_json}")
@@ -215,33 +173,21 @@ def main(
     # Check if the job file exists
     job_file_name = f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh"
     if (current_path.parent / "user_files" / job_file_name).is_file():
-        master_job_file = textfile_to_string_list(
-            current_path.parent / "user_files" / job_file_name
-        )
+        master_job_file = textfile_to_string_list(current_path.parent / "user_files" / job_file_name)
     else:
-        logging.error(
-            f"No JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine."
-        )
+        logging.error(f"No JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine.")
         logging.error(f"Aborting...")
         return 1
 
     logging.debug(f"master_job_file: {master_job_file[0:5]}, {master_job_file[-5:-1]}")
-    merged_input_json["job_email"] = get_key_in_dict(
-        "job_email", user_input_json, previous_training_json, default_input_json
-    )
+    merged_input_json["job_email"] = get_key_in_dict("job_email", user_input_json, previous_training_json, default_input_json)
     del job_file_name
 
     # Check DeePMD version
     validate_deepmd_config(training_json)
 
     # Check if the default input json file exists
-    dp_train_input_path = (
-        training_path
-        / "user_files"
-        / (
-            f"dptrain_{training_json['deepmd_model_version']}.json"
-        )
-    ).resolve()
+    dp_train_input_path = (training_path / "user_files" / (f"dptrain_{training_json['deepmd_model_version']}.json")).resolve()
 
     dp_train_input = load_json_file(dp_train_input_path)
     if "type_map" not in main_json:
@@ -256,8 +202,8 @@ def main(
         logging.error(f"Aborting...")
         return 1
 
-    #main_json["type_map"] = {}
-    #main_json["type_map"] = dp_train_input["model"]["type_map"]
+    # main_json["type_map"] = {}
+    # main_json["type_map"] = dp_train_input["model"]["type_map"]
     del dp_train_input_path
     logging.debug(f"dp_train_input: {dp_train_input}")
     logging.debug(f"main_json: {main_json}")
@@ -279,11 +225,7 @@ def main(
         if data_dir.is_dir():
             # Escape initial/extra sets, because initial get added first and extra as last, and also escape init_
             # not in initial_json (in case of removal)
-            if (
-                data_dir.name not in initial_datasets_info.keys()
-                and "extra_" != data_dir.name[:6]
-                and "init_" != data_dir.name[:5]
-            ):
+            if data_dir.name not in initial_datasets_info.keys() and "extra_" != data_dir.name[:6] and "init_" != data_dir.name[:5]:
                 # Escape test sets
                 if "test_" != data_dir.name[:5]:
                     # Escape if set iter is superior as iter, it is only for reprocessing old stuff
@@ -312,11 +254,7 @@ def main(
     if training_json["use_initial_datasets"]:
         for it_datasets_initial_json in initial_datasets_info.keys():
             if (data_path / it_datasets_initial_json).is_dir():
-                dp_train_input_datasets.append(
-                    f"{(Path(data_path.parts[-1]) / it_datasets_initial_json / '_')}"[
-                        :-1
-                    ]
-                )
+                dp_train_input_datasets.append(f"{(Path(data_path.parts[-1]) / it_datasets_initial_json / '_')}"[:-1])
                 training_datasets.append(it_datasets_initial_json)
                 initial_count += initial_datasets_info[it_datasets_initial_json]
 
@@ -326,11 +264,7 @@ def main(
     # This trick remove duplicates from list via set
     systems = list(set(systems))
     systems = [i for i in systems if i not in main_json["systems_auto"]]
-    systems = [
-        i
-        for i in systems
-        if i not in [zzz + "-disturbed" for zzz in main_json["systems_auto"]]
-    ]
+    systems = [i for i in systems if i not in [zzz + "-disturbed" for zzz in main_json["systems_auto"]]]
     systems = sorted(systems)
     main_json["systems_adhoc"] = systems
     del systems
@@ -349,84 +283,33 @@ def main(
             try:
                 for system_auto in main_json["systems_auto"]:
                     if (data_path / f"{system_auto}_{padded_iteration}").is_dir():
-                        dp_train_input_datasets.append(
-                            f"{(Path(data_path.parts[-1]) / (system_auto+'_'+padded_iteration) / '_')}"[
-                                :-1
-                            ]
-                        )
+                        dp_train_input_datasets.append(f"{(Path(data_path.parts[-1]) / (system_auto+'_'+padded_iteration) / '_')}"[:-1])
                         training_datasets.append(f"{system_auto}_{padded_iteration}")
-                        added_auto_count += np.load(
-                            data_path
-                            / f"{system_auto}_{padded_iteration}"
-                            / "set.000"
-                            / "box.npy"
-                        ).shape[0]
+                        added_auto_count += np.load(data_path / f"{system_auto}_{padded_iteration}" / "set.000" / "box.npy").shape[0]
                         if iteration == curr_iter:
-                            added_auto_iter_count += np.load(
-                                data_path
-                                / f"{system_auto}_{padded_iteration}"
-                                / "set.000"
-                                / "box.npy"
-                            ).shape[0]
+                            added_auto_iter_count += np.load(data_path / f"{system_auto}_{padded_iteration}" / "set.000" / "box.npy").shape[0]
                 del system_auto
             except (KeyError, NameError):
                 pass
             try:
-                for system_auto_disturbed in [
-                    zzz + "-disturbed" for zzz in main_json["systems_auto"]
-                ]:
-                    if (
-                        data_path / f"{system_auto_disturbed}_{padded_iteration}"
-                    ).is_dir():
-                        dp_train_input_datasets.append(
-                            f"{(Path(data_path.parts[-1]) / (system_auto_disturbed+'_'+padded_iteration) / '_')}"[
-                                :-1
-                            ]
-                        )
-                        training_datasets.append(
-                            f"{system_auto_disturbed}_{padded_iteration}"
-                        )
-                        added_auto_count += np.load(
-                            data_path
-                            / f"{system_auto_disturbed}_{padded_iteration}"
-                            / "set.000"
-                            / "box.npy"
-                        ).shape[0]
+                for system_auto_disturbed in [zzz + "-disturbed" for zzz in main_json["systems_auto"]]:
+                    if (data_path / f"{system_auto_disturbed}_{padded_iteration}").is_dir():
+                        dp_train_input_datasets.append(f"{(Path(data_path.parts[-1]) / (system_auto_disturbed+'_'+padded_iteration) / '_')}"[:-1])
+                        training_datasets.append(f"{system_auto_disturbed}_{padded_iteration}")
+                        added_auto_count += np.load(data_path / f"{system_auto_disturbed}_{padded_iteration}" / "set.000" / "box.npy").shape[0]
                         if iteration == curr_iter:
-                            added_auto_iter_count += np.load(
-                                data_path
-                                / f"{system_auto_disturbed}_{padded_iteration}"
-                                / "set.000"
-                                / "box.npy"
-                            ).shape[0]
+                            added_auto_iter_count += np.load(data_path / f"{system_auto_disturbed}_{padded_iteration}" / "set.000" / "box.npy").shape[0]
                 del system_auto_disturbed
             except (KeyError, NameError):
                 pass
             try:
                 for system_adhoc in main_json["systems_adhoc"]:
                     if (data_path / f"{system_adhoc}_{padded_iteration}").is_dir():
-                        dp_train_input_datasets.append(
-                            f"{(Path(data_path.parts[-1]) / (system_adhoc+'_'+padded_iteration) / '_')}"[
-                                :-1
-                            ]
-                        )
+                        dp_train_input_datasets.append(f"{(Path(data_path.parts[-1]) / (system_adhoc+'_'+padded_iteration) / '_')}"[:-1])
                         training_datasets.append(f"{system_adhoc}_{padded_iteration}")
-                        added_auto_count = (
-                            added_auto_count
-                            + np.load(
-                                data_path
-                                / f"{system_adhoc}_{padded_iteration}"
-                                / "set.000"
-                                / "box.npy"
-                            ).shape[0]
-                        )
+                        added_auto_count = added_auto_count + np.load(data_path / f"{system_adhoc}_{padded_iteration}" / "set.000" / "box.npy").shape[0]
                         if iteration == curr_iter:
-                            added_auto_iter_count += np.load(
-                                data_path
-                                / f"{system_adhoc}_{padded_iteration}"
-                                / "set.000"
-                                / "box.npy"
-                            ).shape[0]
+                            added_auto_iter_count += np.load(data_path / f"{system_adhoc}_{padded_iteration}" / "set.000" / "box.npy").shape[0]
                 del system_adhoc
             except (KeyError, NameError):
                 pass
@@ -439,22 +322,16 @@ def main(
         main_json["extra_datasets"] = extra_datasets
         del extra_datasets
         for extra_dataset in main_json["extra_datasets"]:
-            dp_train_input_datasets.append(
-                f"{(Path(data_path.parts[-1]) / extra_dataset / '_')}"[:-1]
-            )
+            dp_train_input_datasets.append(f"{(Path(data_path.parts[-1]) / extra_dataset / '_')}"[:-1])
             training_datasets.append(extra_dataset)
-            extra_count += np.load(
-                data_path / extra_dataset / "set.000" / "box.npy"
-            ).shape[0]
+            extra_count += np.load(data_path / extra_dataset / "set.000" / "box.npy").shape[0]
         del extra_dataset
     else:
         del extra_datasets
 
     # Total
     trained_count = initial_count + added_auto_count + added_adhoc_count + extra_count
-    logging.debug(
-        f"trained_count: {trained_count} = {initial_count} + {added_auto_count} + {added_adhoc_count} + {extra_count}"
-    )
+    logging.debug(f"trained_count: {trained_count} = {initial_count} + {added_auto_count} + {added_adhoc_count} + {extra_count}")
     logging.debug(f"dp_train_input_datasets: {dp_train_input_datasets}")
 
     # Update the inputs with the sets
@@ -476,23 +353,14 @@ def main(
 
     del training_datasets
     del trained_count, initial_count, extra_count
-    del (
-        added_auto_count,
-        added_adhoc_count,
-        added_auto_iter_count,
-        added_adhoc_iter_count,
-    )
+    del added_auto_count, added_adhoc_count, added_auto_iter_count, added_adhoc_iter_count
 
     # Here calculate the parameters
     # decay_steps it auto-recalculated as funcion of trained_count
     logging.debug(f"training_json - decay_steps: {training_json['decay_steps']}")
-    logging.debug(
-        f"merged_input_json - decay_steps: {merged_input_json['decay_steps']}"
-    )
+    logging.debug(f"merged_input_json - decay_steps: {merged_input_json['decay_steps']}")
     if not training_json["decay_steps_fixed"]:
-        decay_steps = calculate_decay_steps(
-            training_json["trained_count"], training_json["decay_steps"]
-        )
+        decay_steps = calculate_decay_steps(training_json["trained_count"], training_json["decay_steps"])
         logging.debug(f"Recalculating decay_steps")
         # Update the training JSON and the merged input JSON
         training_json["decay_steps"] = decay_steps
@@ -501,32 +369,16 @@ def main(
         decay_steps = training_json["decay_steps"]
     logging.debug(f"decay_steps: {decay_steps}")
     logging.debug(f"training_json - decay_steps: {training_json['decay_steps']}")
-    logging.debug(
-        f"merged_input_json - decay_steps: {merged_input_json['decay_steps']}"
-    )
+    logging.debug(f"merged_input_json - decay_steps: {merged_input_json['decay_steps']}")
 
     # numb_steps and decay_rate
-    logging.debug(
-        f"training_json - numb_steps / decay_rate: {training_json['numb_steps']} / {training_json['decay_rate']}"
-    )
-    logging.debug(
-        f"merged_input_json - numb_steps / decay_rate: {merged_input_json['numb_steps']} / {merged_input_json['decay_rate']}"
-    )
+    logging.debug(f"training_json - numb_steps / decay_rate: {training_json['numb_steps']} / {training_json['decay_rate']}")
+    logging.debug(f"merged_input_json - numb_steps / decay_rate: {merged_input_json['numb_steps']} / {merged_input_json['decay_rate']}")
     numb_steps = training_json["numb_steps"]
-    decay_rate_new = calculate_decay_rate(
-        numb_steps,
-        training_json["start_lr"],
-        training_json["stop_lr"],
-        training_json["decay_steps"],
-    )
+    decay_rate_new = calculate_decay_rate(numb_steps, training_json["start_lr"], training_json["stop_lr"], training_json["decay_steps"])
     while decay_rate_new < training_json["decay_rate"]:
         numb_steps = numb_steps + 10000
-        decay_rate_new = calculate_decay_rate(
-            numb_steps,
-            training_json["start_lr"],
-            training_json["stop_lr"],
-            training_json["decay_steps"],
-        )
+        decay_rate_new = calculate_decay_rate(numb_steps, training_json["start_lr"], training_json["stop_lr"], training_json["decay_steps"])
     # Update the training JSON and the merged input JSON
     training_json["numb_steps"] = int(numb_steps)
     training_json["decay_rate"] = decay_rate_new
@@ -534,12 +386,8 @@ def main(
     merged_input_json["decay_rate"] = decay_rate_new
     logging.debug(f"numb_steps: {numb_steps}")
     logging.debug(f"decay_rate: {decay_rate_new}")
-    logging.debug(
-        f"training_json - numb_steps / decay_rate: {training_json['numb_steps']} / {training_json['decay_rate']}"
-    )
-    logging.debug(
-        f"merged_input_json - numb_steps / decay_rate: {merged_input_json['numb_steps']} / {merged_input_json['decay_rate']}"
-    )
+    logging.debug(f"training_json - numb_steps / decay_rate: {training_json['numb_steps']} / {training_json['decay_rate']}")
+    logging.debug(f"merged_input_json - numb_steps / decay_rate: {merged_input_json['numb_steps']} / {merged_input_json['decay_rate']}")
 
     del decay_steps, numb_steps, decay_rate_new
 
@@ -564,14 +412,7 @@ def main(
     localdata_path = current_path / "data"
     localdata_path.mkdir(exist_ok=True)
     for dp_train_input_dataset in dp_train_input_datasets:
-        subprocess.run(
-            [
-                "rsync",
-                "-a",
-                f"{training_path / (dp_train_input_dataset.rsplit('/', 1)[0])}",
-                f"{localdata_path}",
-            ]
-        )
+        subprocess.run(["rsync", "-a", f"{training_path / (dp_train_input_dataset.rsplit('/', 1)[0])}", f"{localdata_path}"])
     del dp_train_input_dataset, localdata_path, dp_train_input_datasets
 
     # Change some inside output
@@ -588,23 +429,23 @@ def main(
 
     # Walltime
     if curr_iter == 0:
-        if ("job_walltime_train_h" in user_input_json and user_input_json["job_walltime_train_h"] > 0):
+        if "job_walltime_train_h" in user_input_json and user_input_json["job_walltime_train_h"] > 0:
             walltime_approx_s = int(user_input_json["job_walltime_train_h"] * 3600)
             mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
             logging.debug(f"job_walltime_train_h: {user_input_json['job_walltime_train_h']}")
-        elif ("mean_s_per_step" in user_input_json and user_input_json["mean_s_per_step"] > 0):
+        elif "mean_s_per_step" in user_input_json and user_input_json["mean_s_per_step"] > 0:
             walltime_approx_s = int(np.ceil((training_json["numb_steps"] * user_input_json["mean_s_per_step"])))
             mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
             logging.debug(f"mean_s_per_step: {user_input_json['mean_s_per_step']}")
         else:
-            walltime_approx_s = int(max(np.ceil(training_json["numb_steps"] * default_input_json["mean_s_per_step"]), default_input_json["job_walltime_train_h"] * 3600,))
+            walltime_approx_s = int(max(np.ceil(training_json["numb_steps"] * default_input_json["mean_s_per_step"]), default_input_json["job_walltime_train_h"] * 3600))
             mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
     else:
-        if ("job_walltime_train_h" in user_input_json and user_input_json["job_walltime_train_h"] > 0):
+        if "job_walltime_train_h" in user_input_json and user_input_json["job_walltime_train_h"] > 0:
             walltime_approx_s = int(user_input_json["job_walltime_train_h"] * 3600)
             mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
             logging.debug(f"job_walltime_train_h: {user_input_json['job_walltime_train_h']}")
-        elif ("mean_s_per_step" in user_input_json and user_input_json["mean_s_per_step"] > 0):
+        elif "mean_s_per_step" in user_input_json and user_input_json["mean_s_per_step"] > 0:
             walltime_approx_s = int(np.ceil((training_json["numb_steps"] * user_input_json["mean_s_per_step"])))
             mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
             logging.debug(f"mean_s_per_step: {user_input_json['mean_s_per_step']}")
@@ -614,6 +455,8 @@ def main(
 
     merged_input_json["job_walltime_train_h"] = float(walltime_approx_s / 3600)
     merged_input_json["mean_s_per_step"] = mean_s_per_step
+    training_json["job_walltime_train_h"] = float(walltime_approx_s / 3600)
+    training_json["mean_s_per_step"] = mean_s_per_step
     logging.debug(f"walltime_approx_s: {walltime_approx_s}")
     logging.debug(f"mean_s_per_step: {mean_s_per_step}")
 
@@ -631,27 +474,13 @@ def main(
 
         write_json_file(dp_train_input, dp_train_input_file, enable_logging=False, read_only=True)
 
-        job_file = replace_in_slurm_file_general(
-            master_job_file,
-            machine_spec,
-            walltime_approx_s,
-            machine_walltime_format,
-            training_json["job_email"],
-        )
+        job_file = replace_in_slurm_file_general(master_job_file, machine_spec, walltime_approx_s, machine_walltime_format, training_json["job_email"])
 
-        job_file = replace_substring_in_string_list(
-            job_file, "_R_DEEPMD_VERSION_", f"{training_json['deepmd_model_version']}"
-        )
+        job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_VERSION_", f"{training_json['deepmd_model_version']}")
         # TODO This feature is not used. Write a way to if the training didn't finish, restart it and relaunch. (probably in check.py, and ask user for confirmation)
-        job_file = replace_substring_in_string_list(
-            job_file, "_R_CHECKPOINT_", f"model.ckpt"
-        )
+        job_file = replace_substring_in_string_list(job_file, "_R_CHECKPOINT_", f"model.ckpt")
 
-        string_list_to_textfile(
-            local_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh",
-            job_file,
-            read_only = True
-        )
+        string_list_to_textfile(local_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh", job_file, read_only=True)
         del job_file, local_path, dp_train_input_file, random_0_1000
 
     del nnp, walltime_approx_s, dp_train_input
@@ -662,38 +491,17 @@ def main(
     write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"), read_only=True)
     backup_and_overwrite_json_file(merged_input_json, (current_path / "used_input.json"), read_only=True)
 
-
     # End
     logging.info(f"-" * 88)
-    logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
-    )
+    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
 
     # Cleaning
     del current_path, control_path, training_path, data_path
-    del (
-        default_input_json,
-        default_input_json_present,
-        user_input_json,
-        user_input_json_present,
-        user_input_json_filename,
-    )
-    del (
-        main_json,
-        merged_input_json,
-        training_json,
-        previous_training_json,
-        labeling_json,
-    )
+    del default_input_json, default_input_json_present, user_input_json, user_input_json_present, user_input_json_filename
+    del main_json, merged_input_json, training_json, previous_training_json, labeling_json
     del user_machine_keyword
     del curr_iter, padded_curr_iter
-    del (
-        machine,
-        machine_spec,
-        machine_walltime_format,
-        machine_launch_command,
-        machine_job_scheduler,
-    )
+    del machine, machine_spec, machine_walltime_format, machine_job_scheduler, machine_launch_command, machine_max_jobs, machine_max_array_size
     del master_job_file
 
     logging.debug(f"LOCAL")

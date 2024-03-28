@@ -6,8 +6,9 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/27
+Last modified: 2024/03/28
 """
+
 # Standard library modules
 import logging
 import re
@@ -19,13 +20,8 @@ import numpy as np
 
 # Local imports
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.list import (
-    textfile_to_string_list,
-)
-from deepmd_iterative.common.json import (
-    load_json_file,
-    write_json_file,
-)
+from deepmd_iterative.common.list import textfile_to_string_list
+from deepmd_iterative.common.json import load_json_file, write_json_file
 
 
 def main(
@@ -40,9 +36,7 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
-    )
+    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
@@ -101,12 +95,8 @@ def main(
                 del time_pattern, batch_pattern
 
                 for suffix in ["index", "meta", "data-00000-of-00001"]:
-                    if (
-                        local_path / f"model.ckpt-{batch_numbers[-1]}.{suffix}"
-                    ).is_file():
-                        (
-                            local_path / f"model.ckpt-{batch_numbers[-1]}.{suffix}"
-                        ).rename(local_path / f"model.ckpt.{suffix}")
+                    if (local_path / f"model.ckpt-{batch_numbers[-1]}.{suffix}").is_file():
+                        (local_path / f"model.ckpt-{batch_numbers[-1]}.{suffix}").rename(local_path / f"model.ckpt.{suffix}")
                 del suffix
 
                 step_sizes.extend(np.diff(batch_numbers))
@@ -128,15 +118,9 @@ def main(
 
     # If not empty
     if training_times and step_sizes:
-        training_json["mean_s_per_step"] = np.average(training_times) / np.average(
-            step_sizes
-        )
-        training_json["median_s_per_step"] = np.median(training_times) / np.average(
-            step_sizes
-        )
-        training_json["stdeviation_s_per_step"] = np.std(training_times) / np.average(
-            step_sizes
-        )
+        training_json["mean_s_per_step"] = np.average(training_times) / np.average(step_sizes)
+        training_json["median_s_per_step"] = np.median(training_times) / np.average(step_sizes)
+        training_json["stdeviation_s_per_step"] = np.std(training_times) / np.average(step_sizes)
     else:
         training_json["mean_s_per_step"] = -1
         training_json["median_s_per_step"] = -1
@@ -153,13 +137,9 @@ def main(
     # End
     logging.info(f"-" * 88)
     if completed_count == main_json["nnp_count"]:
-        logging.info(
-            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
-        )
+        logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
     else:
-        logging.critical(
-            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!"
-        )
+        logging.critical(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!")
         logging.critical(f"Some DP Train did not finished correctly.")
         logging.critical(f"Please check manually before re-exectuing this step.")
         logging.critical(f"Aborting...")

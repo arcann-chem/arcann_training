@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/27
+Last modified: 2024/03/28
 
 generate_main_json(user_input_json: Dict, default_input_json: Dict) -> Tuple[Dict, Dict, str]
     A function to generate the main JSON by combining values from the user input JSON and the default JSON.
@@ -29,9 +29,7 @@ from deepmd_iterative.common.json import load_json_file
 
 # Unittested
 @catch_errors_decorator
-def generate_main_json(
-    user_input_json: Dict, default_input_json: Dict
-) -> Tuple[Dict, Dict, str]:
+def generate_main_json(user_input_json: Dict, default_input_json: Dict) -> Tuple[Dict, Dict, str]:
     """
     Generate the main JSON by combining values from the user input JSON and the default JSON.
     If the user input JSON is invalid, an error is raised, and the script is terminated.
@@ -76,16 +74,8 @@ def generate_main_json(
             error_msg = f"'systems_auto' not provided, it is mandatory. It should be a list of '{type(default_input_json['systems_auto'][0])}'."
             raise ValueError(error_msg)
         else:
-            main_json[key] = (
-                user_input_json[key]
-                if key in user_input_json
-                else default_input_json[key]
-            )
-            merged_input_json[key] = (
-                merged_input_json[key]
-                if key in merged_input_json
-                else default_input_json[key]
-            )
+            main_json[key] = user_input_json[key] if key in user_input_json else default_input_json[key]
+            merged_input_json[key] = merged_input_json[key] if key in merged_input_json else default_input_json[key]
 
     main_json["current_iteration"] = 0
 
@@ -96,30 +86,6 @@ def generate_main_json(
 
     return main_json, merged_input_json, str(main_json["current_iteration"]).zfill(3)
 
-
-@catch_errors_decorator
-def populate_systems_auto(user_files_path: Path) -> List[str]:
-    """
-    Scans a directory for '.lmp' files and returns a list of their stems (file names without extensions).
-
-    This function uses a list comprehension to efficiently iterate through the directory specified by `user_files_path`,
-    including only those files with a '.lmp' extension. It's a concise and readable way to collect specific file names
-    from a directory.
-
-    Parameters
-    ----------
-    user_files_path : Path
-        The path to the directory to scan for '.lmp' files.
-
-    Returns
-    -------
-    List[str]
-        A list of stems from files with a '.lmp' extension found in the directory. Returns an empty list if no such files exist.
-    """
-    # Using list comprehension for conciseness and readability
-    systems_auto = [file.stem for file in user_files_path.glob('*.lmp')]
-
-    return systems_auto
 
 @catch_errors_decorator
 def check_properties_file(file_path: Path) -> dict:
@@ -163,7 +129,7 @@ def check_properties_file(file_path: Path) -> dict:
     masses = {}
 
     # Process 'type' section
-    for line in lines[type_index + 1:masses_index]:
+    for line in lines[type_index + 1 : masses_index]:
         parts = line.split()
         if len(parts) != 2:
             error_msg = f"Line '{line}' does not have two parts in your 'type' section. Check your properties file."
@@ -176,7 +142,7 @@ def check_properties_file(file_path: Path) -> dict:
                 raise ValueError(error_msg)
 
     # Process 'masses' section
-    for line in lines[masses_index+1:masses_index+1+len(types)]:
+    for line in lines[masses_index + 1 : masses_index + 1 + len(types)]:
         parts = line.split()
         if len(parts) != 2:
             error_msg = f"Line '{line}' does not have two parts in your 'masses' section. Check your properties file."
@@ -196,7 +162,7 @@ def check_properties_file(file_path: Path) -> dict:
     combined = {}
     combined = {}
     for symbol, type_id in types.items():
-        combined[type_id] = {'symbol': symbol, 'mass': masses[symbol]}
+        combined[type_id] = {"symbol": symbol, "mass": masses[symbol]}
 
     return combined
 
@@ -230,7 +196,7 @@ def check_lmp_properties(lmp_file: Path, properties: Dict) -> bool:
         error_msg = f"In LMP file {lmp_file}, there are more atom types compared to the properties file."
         raise ValueError(error_msg)
 
-    for atom_type_id  in masses:
+    for atom_type_id in masses:
         if atom_type_id not in properties:
             error_msg = f"Atom type {atom_type_id} is not in the properties file but is present in the LMP file {lmp_file}."
             raise ValueError(error_msg)
@@ -239,11 +205,12 @@ def check_lmp_properties(lmp_file: Path, properties: Dict) -> bool:
         if masses[atom_type_id] == 0.1:
             continue
 
-        if not np.isclose(masses[atom_type_id], properties[atom_type_id]['mass'], atol=1e-2):
+        if not np.isclose(masses[atom_type_id], properties[atom_type_id]["mass"], atol=1e-2):
             error_msg = f"Masses do not match for atom type {atom_type_id} between the LMP file {lmp_file} and properties file."
             raise ValueError(error_msg)
 
     return True
+
 
 @catch_errors_decorator
 def check_dptrain_properties(user_files_path: Path, properties_dict: Dict):
@@ -260,13 +227,14 @@ def check_dptrain_properties(user_files_path: Path, properties_dict: Dict):
 
     for dptrain in dptrain_list:
         dptrain_dict = load_json_file(dptrain)
-        if len(dptrain_dict['model']['type_map']) != len(properties_dict):
+        if len(dptrain_dict["model"]["type_map"]) != len(properties_dict):
             error_msg = f"Number of types in {dptrain} does not match the number of types in properties file"
             raise ValueError(error_msg)
-        for idx, type_dptrain in enumerate(dptrain_dict['model']['type_map']):
-            if type_dptrain != properties_dict[idx+1]['symbol']:
+        for idx, type_dptrain in enumerate(dptrain_dict["model"]["type_map"]):
+            if type_dptrain != properties_dict[idx + 1]["symbol"]:
                 error_msg = f"Type {type_dptrain} not in properties or order is incorrect. Check your {dptrain}"
                 raise ValueError(error_msg)
+
 
 @catch_errors_decorator
 def check_typeraw_properties(type_raw_path, properties_dict):
