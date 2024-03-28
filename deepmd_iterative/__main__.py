@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/16
+Last modified: 2024/03/28
 """
 
 # Standard library modules
@@ -19,28 +19,9 @@ from pathlib import Path
 parser = argparse.ArgumentParser(description="Deepmd iterative program suite")
 parser.add_argument("step_name", type=str, help="Step name")
 parser.add_argument("phase_name", type=str, help="Phase name")
-parser.add_argument(
-    "-v",
-    "--verbose",
-    type=int,
-    default=0,
-    help="verbosity, 0 (default) or 1 (debug)",
-)
-parser.add_argument(
-    "-i",
-    "--input",
-    type=str,
-    default="input.json",
-    help="name of the input file (with ext)",
-)
-
-parser.add_argument(
-    "-c",
-    "--cluster",
-    type=str,
-    default=None,
-    help="name of the fake cluster",
-)
+parser.add_argument("-v", "--verbose", type=int, default=0, help="verbosity, 0 (default) or 1 (debug)")
+parser.add_argument("-i", "--input", type=str, default="input.json", help="name of the input file (with ext)")
+parser.add_argument("-c", "--cluster", type=str, default=None, help="name of the fake cluster")
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -48,10 +29,7 @@ if __name__ == "__main__":
     deepmd_iterative_path = Path(__file__).parent
 
     if int(args.verbose) == 1:
-        logging.basicConfig(
-            level=logging.DEBUG,
-            format="%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s",
-        )
+        logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s")
     else:
         logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
@@ -83,11 +61,7 @@ if __name__ == "__main__":
     valid_phases = {}
     for step in steps:
         step_path = deepmd_iterative_path / step
-        files = [
-            f.stem
-            for f in step_path.iterdir()
-            if f.is_file() and f.suffix == ".py" and f.stem not in ["__init__", "utils"]
-        ]
+        files = [f.stem for f in step_path.iterdir() if f.is_file() and f.suffix == ".py" and f.stem not in ["__init__", "utils"]]
         valid_phases[step] = files
 
     if step_name not in steps:
@@ -97,9 +71,7 @@ if __name__ == "__main__":
         exit(exit_code)
 
     elif phase_name not in valid_phases.get(step_name, []):
-        logging.error(
-            f"Invalid phase for step {step_name}. Valid phases are: {valid_phases[step_name]}"
-        )
+        logging.error(f"Invalid phase for step {step_name}. Valid phases are: {valid_phases[step_name]}")
         logging.error(f"Aborting...")
         exit_code = 1
         exit(exit_code)
@@ -108,9 +80,7 @@ if __name__ == "__main__":
     else:
         try:
             submodule = importlib.import_module(submodule_name)
-            exit_code = submodule.main(
-                step_name, phase_name, deepmd_iterative_path, fake_cluster, input_fn
-            )
+            exit_code = submodule.main(step_name, phase_name, deepmd_iterative_path, fake_cluster, input_fn)
             del submodule, submodule_name
         except Exception as e:
             logging.error(f"{e}")
@@ -124,9 +94,7 @@ if __name__ == "__main__":
     if exit_code == 0:
         logging.info(f"{step_name.capitalize()} - {phase_name.capitalize()} finished")
     else:
-        logging.error(
-            f"{step_name.capitalize()} - {phase_name.capitalize()} encountered an error"
-        )
+        logging.error(f"{step_name.capitalize()} - {phase_name.capitalize()} encountered an error")
     logging.info(f"-" * 88)
     logging.info(f"-" * 88)
 
