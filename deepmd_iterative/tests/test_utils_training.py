@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/17
+Last modified: 2024/03/28
 
 Test cases for the (training) utils module.
 
@@ -305,10 +305,6 @@ class TestDeepMDConfigValidation(unittest.TestCase):
         Tests if the function correctly validates a valid configuration.
     test_invalid_model_version():
         Tests if the function raises a ValueError for an invalid model version.
-    test_invalid_model_type_descriptor():
-        Tests if the function raises a ValueError for an invalid model type descriptor.
-    test_invalid_arch_name_for_version_2_0():
-        Tests if the function raises a ValueError for an invalid arch_name with model version 2.0.
     """
 
     def test_valid_config(self):
@@ -317,7 +313,6 @@ class TestDeepMDConfigValidation(unittest.TestCase):
         """
         config = {
             "deepmd_model_version": 2.1,
-            "deepmd_model_type_descriptor": "se_e2_a",
             "arch_name": "a100",
         }
         self.assertIsNone(validate_deepmd_config(config))
@@ -328,30 +323,6 @@ class TestDeepMDConfigValidation(unittest.TestCase):
         """
         config = {
             "deepmd_model_version": 1.5,
-            "deepmd_model_type_descriptor": "se_e2_a",
-        }
-        with self.assertRaises(ValueError):
-            validate_deepmd_config(config)
-
-    def test_invalid_model_type_descriptor(self):
-        """
-        Tests if the function raises a ValueError for an invalid model type descriptor.
-        """
-        config = {
-            "deepmd_model_version": 2.0,
-            "deepmd_model_type_descriptor": "invalid_descriptor",
-        }
-        with self.assertRaises(ValueError):
-            validate_deepmd_config(config)
-
-    def test_invalid_arch_name_for_version_2_0(self):
-        """
-        Tests if the function raises a ValueError for an invalid arch_name with model version 2.0.
-        """
-        config = {
-            "deepmd_model_version": 2.0,
-            "deepmd_model_type_descriptor": "se_e2_a",
-            "arch_name": "a100",
         }
         with self.assertRaises(ValueError):
             validate_deepmd_config(config)
@@ -382,7 +353,6 @@ class TestGenerateTrainingJson(unittest.TestCase):
             "use_initial_datasets": True,
             "use_extra_datasets": False,
             "deepmd_model_version": "1.0",
-            "deepmd_model_type_descriptor": "type1",
             "start_lr": 0.001,
             "stop_lr": 0.0001,
             "decay_rate": 0.9,
@@ -390,6 +360,8 @@ class TestGenerateTrainingJson(unittest.TestCase):
             "decay_steps_fixed": True,
             "numb_steps": 1000,
             "numb_test": 100,
+            "job_walltime_train_h": -1,
+            "mean_s_per_step": 0.1,
         }
 
     def test_valid_user_input(self):
@@ -399,6 +371,7 @@ class TestGenerateTrainingJson(unittest.TestCase):
         user_input = {
             "user_machine_keyword_train": "custom",
             "job_email": "user@example.com",
+            "mean_s_per_step": 0.5,
         }
         previous_json = {}
         merged_input_json = {}
@@ -410,7 +383,6 @@ class TestGenerateTrainingJson(unittest.TestCase):
             "use_initial_datasets": True,
             "use_extra_datasets": False,
             "deepmd_model_version": "1.0",
-            "deepmd_model_type_descriptor": "type1",
             "start_lr": 0.001,
             "stop_lr": 0.0001,
             "decay_rate": 0.9,
@@ -418,6 +390,8 @@ class TestGenerateTrainingJson(unittest.TestCase):
             "decay_steps_fixed": True,
             "numb_steps": 1000,
             "numb_test": 100,
+            "job_walltime_train_h": -1,
+            "mean_s_per_step": 0.5,
         }
         expected_merged_json = {
             "user_machine_keyword_train": "custom",
@@ -427,7 +401,6 @@ class TestGenerateTrainingJson(unittest.TestCase):
             "use_initial_datasets": True,
             "use_extra_datasets": False,
             "deepmd_model_version": "1.0",
-            "deepmd_model_type_descriptor": "type1",
             "start_lr": 0.001,
             "stop_lr": 0.0001,
             "decay_rate": 0.9,
@@ -435,6 +408,8 @@ class TestGenerateTrainingJson(unittest.TestCase):
             "decay_steps_fixed": True,
             "numb_steps": 1000,
             "numb_test": 100,
+            "job_walltime_train_h": -1,
+            "mean_s_per_step": 0.5,
         }
         training_json, updated_merged_json = generate_training_json(
             user_input, previous_json, self.default_input_json, merged_input_json
@@ -478,6 +453,8 @@ class TestGenerateTrainingJson(unittest.TestCase):
             "user_machine_keyword_freeze": "previous",
             "user_machine_keyword_compress": "previous",
             "job_email": "previous@example.com",
+            "job_walltime_train_h": -1,
+            "mean_s_per_step": 0.3,
         }
         merged_input_json = {}
 
@@ -489,7 +466,6 @@ class TestGenerateTrainingJson(unittest.TestCase):
             "use_initial_datasets": True,
             "use_extra_datasets": False,
             "deepmd_model_version": "1.0",
-            "deepmd_model_type_descriptor": "type1",
             "start_lr": 0.001,
             "stop_lr": 0.0001,
             "decay_rate": 0.9,
@@ -497,6 +473,8 @@ class TestGenerateTrainingJson(unittest.TestCase):
             "decay_steps_fixed": True,
             "numb_steps": 1000,
             "numb_test": 100,
+            "job_walltime_train_h": -1,
+            "mean_s_per_step": 0.3,
         }
 
         training_json, updated_merged_json = generate_training_json(
