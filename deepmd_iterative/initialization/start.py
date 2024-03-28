@@ -67,13 +67,13 @@ def main(
 
     # Auto-populate the systems_auto
     if "system_auto" not in user_input_json:
-        user_input_json["systems_auto"] = [file.stem for file in user_files_path.glob("*.lmp")]
-        if not user_input_json["systems_auto"]:
+        list_of_lmp = [file.stem for file in user_files_path.glob("*.lmp")]
+        if not list_of_lmp:
             logging.error(f"No lmp found in {user_files_path}")
             logging.error(f"Aborting...")
             return 1
         else:
-            user_input_json["systems_auto"] = user_input_json["systems_auto"].sort(key=natural_sort_key)
+            user_input_json["systems_auto"] = list_of_lmp.sort(key=natural_sort_key)
             logging.info(f"Auto-populated 'systems_auto' with: {user_input_json['systems_auto']}")
     else:
         for system_auto in user_input_json["systems_auto"]:
