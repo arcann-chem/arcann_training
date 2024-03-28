@@ -21,6 +21,7 @@ import numpy as np
 from deepmd_iterative.common.filesystem import check_directory, check_file_existence
 from deepmd_iterative.common.json import backup_and_overwrite_json_file, load_default_json_file, load_json_file, write_json_file
 from deepmd_iterative.initialization.utils import generate_main_json, check_properties_file, check_dptrain_properties, check_lmp_properties, check_typeraw_properties
+from deepmd_iterative.common.utils import natural_sort_key
 
 
 # Main function
@@ -72,6 +73,7 @@ def main(
             logging.error(f"Aborting...")
             return 1
         else:
+            user_input_json["systems_auto"] = user_input_json["systems_auto"].sort(key=natural_sort_key)
             logging.info(f"Auto-populated 'systems_auto' with: {user_input_json['systems_auto']}")
     else:
         for system_auto in user_input_json["systems_auto"]:

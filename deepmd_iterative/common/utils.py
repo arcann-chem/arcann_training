@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/04
+Last modified: 2024/03/28
 
 The utils module provides helper functions.
 
@@ -20,6 +20,7 @@ convert_seconds_to_hh_mm_ss(seconds: float) -> str
 """
 # Standard library modules
 import logging
+import re
 from typing import Any, Callable
 
 
@@ -84,3 +85,13 @@ def convert_seconds_to_hh_mm_ss(seconds: float) -> str:
 
     # Return the time duration as a string in the format of HH:MM:SS
     return "%d:%02d:%02d" % (hours, minutes, seconds)
+
+@catch_errors_decorator
+def natural_sort_key(s):
+    if not isinstance(s, str):
+        raise TypeError("Input must be a string")
+    if s == "":
+        return []
+    _nsre = re.compile('([0-9]+)')
+    return [int(text) if text.isdigit() else text.lower()
+            for text in re.split(_nsre, s) if text] 
