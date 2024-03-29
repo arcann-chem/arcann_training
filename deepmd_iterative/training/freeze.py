@@ -69,6 +69,8 @@ def main(
     if (current_path / "used_input.json").is_file():
         current_input_json = load_json_file((current_path / "used_input.json"))
     else:
+        logging.warning(f"No used_input.json found. Starting with empty one.")
+        logging.warning(f"You should avoid this by not deleting the used_input.json file.")
         current_input_json = {}
     logging.debug(f"current_input_json: {current_input_json}")
 

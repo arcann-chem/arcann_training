@@ -47,17 +47,8 @@ def main(
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
 
-    # Load the default input JSON
-    default_input_json = load_default_json_file(deepmd_iterative_path / "assets" / "default_config.json")[current_step]
-    default_input_json_present = bool(default_input_json)
-    logging.debug(f"default_input_json: {default_input_json}")
-    logging.debug(f"default_input_json_present: {default_input_json_present}")
-
     # If the used input JSON is present, load it
-    if (current_path / "used_input.json").is_file():
-        current_input_json = load_json_file((current_path / "used_input.json"))
-    else:
-        current_input_json = {}
+    current_input_json = load_json_file((current_path / "used_input.json"), abort_on_error=True)
     logging.debug(f"current_input_json: {current_input_json}")
 
     # Get control path and load the main JSON and the training JSON
@@ -138,9 +129,8 @@ def main(
     if completed_count == main_json["nnp_count"]:
         training_json["is_launched"] = True
 
-    # Dump the JSON (training JSON and current input JSON)
+    # Dump the JSON (training JSON)
     write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"), read_only=True)
-    backup_and_overwrite_json_file(current_input_json, (current_path / "used_input.json"), read_only=True)
 
     # End
     logging.info(f"-" * 88)
@@ -155,23 +145,11 @@ def main(
 
     # Cleaning
     del current_path, control_path, training_path
-    del (
-        default_input_json,
-        default_input_json_present,
-        # user_input_json,
-        # user_input_json_present,
-        user_input_json_filename,
-    )
+    del user_input_json_filename
     del user_machine_keyword
     del main_json, current_input_json, training_json
     del curr_iter, padded_curr_iter
-    del (
-        machine,
-        machine_spec,
-        machine_walltime_format,
-        machine_launch_command,
-        machine_job_scheduler,
-    )
+    del machine, machine_spec, machine_walltime_format, machine_launch_command, machine_job_scheduler, machine_max_jobs, machine_max_array_size
 
     logging.debug(f"LOCAL")
     logging.debug(f"{locals()}")
