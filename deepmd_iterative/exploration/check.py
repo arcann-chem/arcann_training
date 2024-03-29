@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/28
+Last modified: 2024/03/29
 """
 
 # Standard library modules
@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 
 # Local imports
-from deepmd_iterative.common.json import load_json_file, write_json_file, get_key_in_dict, load_default_json_file
+from deepmd_iterative.common.json import load_json_file, write_json_file, get_key_in_dict, load_default_json_file, backup_and_overwrite_json_file
 from deepmd_iterative.common.list import textfile_to_string_list
 from deepmd_iterative.common.check import validate_step_folder, check_vmd, check_dcd_is_valid, check_nc_is_valid
 
@@ -63,6 +63,15 @@ def main(
     logging.debug(f"user_input_json: {user_input_json}")
     logging.debug(f"user_input_json_present: {user_input_json_present}")
 
+    # If the used input JSON is present, load it
+    if (current_path / "used_input.json").is_file():
+        current_input_json = load_json_file((current_path / "used_input.json"))
+    else:
+        logging.warning(f"No used_input.json found. Starting with empty one.")
+        logging.warning(f"You should avoid this by not deleting the used_input.json file.")
+        current_input_json = {}
+    logging.debug(f"current_input_json: {current_input_json}")
+
     # Get control path, load the main JSON and the exploration JSON
     control_path = training_path / "control"
     main_json = load_json_file((control_path / "config.json"))
@@ -89,6 +98,10 @@ def main(
 
     # Check if the vmd package is installed
     vmd_bin = check_vmd(get_key_in_dict("vmd_path", user_input_json, previous_exploration_json, default_input_json))
+    current_input_json["vmd_path"] = vmd_bin
+
+    exploration_json["vmd_path"] = vmd_bin
+
     # Check the normal termination of the exploration phase
     # Counters
     completed_count = 0
@@ -238,9 +251,21 @@ def main(
         elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
             average_per_step = np.array(timings)
 
-        exploration_json["systems_auto"][system_auto]["mean_s_per_step"] = np.average(average_per_step)
-        exploration_json["systems_auto"][system_auto]["median_s_per_step"] = np.median(average_per_step)
-        exploration_json["systems_auto"][system_auto]["stdeviation_s_per_step"] = np.std(average_per_step)
+        if np.isnan(np.average(average_per_step)) and prev_iter > 0:
+            for timings_key in ["mean_s_per_step", "median_s_per_step", "stdeviation_s_per_step"]:
+                exploration_json["systems_auto"][system_auto][timings_key] = previous_exploration_json["systems_auto"][system_auto][timings_key]
+            del timings_key
+        elif np.isnan(np.average(average_per_step)) and prev_iter == 0:
+            input_json = load_json_file((current_path / "used_input.json"))
+            input_json["exploration"]["systems_auto"][system_auto]["mean_s_per_step"] = 0
+            for timings_key in ["mean_s_per_step", "median_s_per_step", "stdeviation_s_per_step"]:
+                exploration_json["systems_auto"][system_auto][timings_key] = 0
+            del timings_key
+
+        else:
+            exploration_json["systems_auto"][system_auto]["mean_s_per_step"] = np.average(average_per_step)
+            exploration_json["systems_auto"][system_auto]["median_s_per_step"] = np.median(average_per_step)
+            exploration_json["systems_auto"][system_auto]["stdeviation_s_per_step"] = np.std(average_per_step)
 
         del timings, average_per_step, system_count
 
@@ -253,6 +278,7 @@ def main(
 
     # Dump the JSON files (exploration JSON)
     write_json_file(exploration_json, (control_path / f"exploration_{padded_curr_iter}.json"), read_only=True)
+    backup_and_overwrite_json_file(current_input_json, (current_path / "used_input.json"), read_only=True)
 
     # End
     logging.info(f"-" * 88)

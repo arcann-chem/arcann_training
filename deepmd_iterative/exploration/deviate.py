@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/28
+Last modified: 2024/03/29
 """
 
 # Standard library modules
@@ -73,8 +73,14 @@ def main(
     logging.debug(f"user_input_json: {user_input_json}")
     logging.debug(f"user_input_json_present: {user_input_json_present}")
 
-    # Make a deepcopy of it to create the merged input JSON
-    merged_input_json = copy.deepcopy(user_input_json)
+    # If the used input JSON is present, load it
+    if (current_path / "used_input.json").is_file():
+        current_input_json = load_json_file((current_path / "used_input.json"))
+    else:
+        logging.warning(f"No used_input.json found. Starting with empty one.")
+        logging.warning(f"You should avoid this by not deleting the used_input.json file.")
+        current_input_json = {}
+    logging.debug(f"current_input_json: {current_input_json}")
 
     # Get control path, load the main JSON and the exploration JSON
     control_path = training_path / "control"
@@ -106,14 +112,15 @@ def main(
 
     # Generate/update the merged input JSON
     # Priority: user > previous > default
-    merged_input_json = generate_input_exploration_deviation_json(
+    current_input_json = generate_input_exploration_deviation_json(
         user_input_json,
         previous_exploration_json,
         default_input_json,
-        merged_input_json,
+        current_input_json,
         main_json,
     )
-    logging.debug(f"merged_input_json: {merged_input_json}")
+    logging.debug(f"current_input_json: {current_input_json}")
+
     for system_auto_index, system_auto in enumerate(main_json["systems_auto"]):
         # Set the system params for deviation selection
         (
@@ -122,7 +129,7 @@ def main(
             sigma_high,
             sigma_high_limit,
             ignore_first_x_ps,
-        ) = get_system_deviation(merged_input_json, system_auto_index)
+        ) = get_system_deviation(current_input_json, system_auto_index)
 
         # Initialize
         exploration_json["systems_auto"][system_auto] = {
@@ -336,7 +343,7 @@ def main(
             sigma_high,
             sigma_high_limit,
             ignore_first_x_ps,
-        ) = get_system_deviation(merged_input_json, system_auto_index)
+        ) = get_system_deviation(current_input_json, system_auto_index)
 
         # Initialize
         exploration_json["systems_auto"][system_auto] = {
@@ -448,7 +455,7 @@ def main(
 
     # Dump the JSON files (exploration and merged input)
     write_json_file(exploration_json, (control_path / f"exploration_{padded_curr_iter}.json"))
-    backup_and_overwrite_json_file(merged_input_json, (current_path / "used_input.json"), read_only=True)
+    backup_and_overwrite_json_file(current_input_json, (current_path / "used_input.json"), read_only=True)
 
     # End
     logging.info(f"-" * 88)

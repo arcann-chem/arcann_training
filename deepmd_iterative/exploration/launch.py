@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/28
+Last modified: 2024/03/29
 """
 
 # Standard library modules
@@ -47,37 +47,15 @@ def main(
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
 
-    # Load the default input JSON
-    default_input_json = load_default_json_file(deepmd_iterative_path / "assets" / "default_config.json")[current_step]
-    default_input_json_present = bool(default_input_json)
-    logging.debug(f"default_input_json: {default_input_json}")
-    logging.debug(f"default_input_json_present: {default_input_json_present}")
-
-    # Load the user input JSON
-    if (current_path / user_input_json_filename).is_file():
-        user_input_json = load_json_file((current_path / user_input_json_filename))
-    else:
-        user_input_json = {}
-    user_input_json_present = bool(user_input_json)
-    logging.debug(f"user_input_json: {user_input_json}")
-    logging.debug(f"user_input_json_present: {user_input_json_present}")
-
-    # Make a deepcopy of it to create the merged input JSON
-    merged_input_json = copy.deepcopy(user_input_json)
+    # Load the input JSON is present, load it
+    current_input_json = load_json_file((current_path / "used_input.json"), abort_on_error=True)
 
     # Get control path, load the main JSON and the exploration JSON
     control_path = training_path / "control"
     main_json = load_json_file((control_path / "config.json"))
     exploration_json = load_json_file((control_path / f"exploration_{padded_curr_iter}.json"))
 
-    # Get the machine keyword (Priority: user > previous > default)
-    # And update the merged input JSON
-    user_machine_keyword = get_machine_keyword(user_input_json, exploration_json, default_input_json, "exp")
-    logging.debug(f"user_machine_keyword: {user_machine_keyword}")
-    # Set it to None if bool, because: get_machine_spec_for_step needs None
-    user_machine_keyword = None if isinstance(user_machine_keyword, bool) else user_machine_keyword
-    logging.debug(f"user_machine_keyword: {user_machine_keyword}")
-
+    user_machine_keyword = current_input_json["user_machine_keyword_exp"]
     # From the keyword (or default), get the machine spec (or for the fake one)
     (
         machine,
@@ -103,9 +81,6 @@ def main(
     logging.debug(f"machine_max_array_size: {machine_max_array_size}")
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     logging.debug(f"machine_spec: {machine_spec}")
-
-    merged_input_json["user_machine_keyword_exp"] = user_machine_keyword
-    logging.debug(f"merged_input_json: {merged_input_json}")
 
     if fake_machine is not None:
         logging.info(f"Pretending to be on: '{fake_machine}'.")
@@ -139,7 +114,7 @@ def main(
     completed_count = 0
     for exploration_type in exploration_types:
         job_name = f"job-array_{exploration_type}-deepmd_explore_{machine_spec['arch_type']}_{machine}.sh"
-        if (Path(".") / job_name).is_file():
+        if (current_path / job_name).is_file():
             subprocess.run([machine_launch_command, f"./{job_name}"])
             logging.info(f"Exploration - Array LAMMPS launched.")
             completed_count += 1
@@ -151,7 +126,6 @@ def main(
 
     # Dump the JSON files (exploration JSON and merged input JSON)
     write_json_file(exploration_json, (control_path / f"exploration_{padded_curr_iter}.json"))
-    backup_and_overwrite_json_file(merged_input_json, (current_path / "used_input.json"), read_only=True)
 
     # End
     logging.info(f"-" * 88)
@@ -167,10 +141,10 @@ def main(
 
     # Cleaning
     del current_path, control_path, training_path
-    del default_input_json, default_input_json_present, user_input_json, user_input_json_present, user_input_json_filename
-    del main_json, merged_input_json
+    del user_input_json_filename
+    del main_json, current_input_json
     del curr_iter, padded_curr_iter
-    del machine, machine_spec, machine_walltime_format, machine_launch_command
+    del machine, machine_spec, machine_walltime_format, machine_launch_command, machine_job_scheduler, machine_max_jobs, machine_max_array_size
 
     logging.debug(f"LOCAL")
     logging.debug(f"{locals()}")

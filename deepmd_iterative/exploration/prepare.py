@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/28
+Last modified: 2024/03/29
 """
 
 # Standard library modules
@@ -77,8 +77,14 @@ def main(
     logging.debug(f"user_input_json: {user_input_json}")
     logging.debug(f"user_input_json_present: {user_input_json_present}")
 
-    # Make a deepcopy of it to create the merged input JSON
-    merged_input_json = copy.deepcopy(user_input_json)
+    # Create a empty (None/Null) current input JSON
+    current_input_json = {}
+    for key in default_input_json:
+        current_input_json[key] = None
+    logging.debug(f"current_input_json: {current_input_json}")
+
+    # # Make a deepcopy of it to create the merged input JSON
+    # current_input_json = copy.deepcopy(user_input_json)
 
     # Get control path and load the main JSON
     control_path = training_path / "control"
@@ -106,8 +112,8 @@ def main(
     # Check if the atomsk package is installed
     atomsk_bin = check_atomsk(get_key_in_dict("atomsk_path", user_input_json, previous_exploration_json, default_input_json))
     # Update the merged input JSON
-    merged_input_json["atomsk_path"] = atomsk_bin
-    logging.debug(f"merged_input_json: {merged_input_json}")
+    current_input_json["atomsk_path"] = atomsk_bin
+    logging.debug(f"current_input_json: {current_input_json}")
 
     # Get the machine keyword (Priority: user > previous > default)
     # And update the merged input JSON
@@ -144,8 +150,8 @@ def main(
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     logging.debug(f"machine_spec: {machine_spec}")
 
-    merged_input_json["user_machine_keyword_exp"] = user_machine_keyword
-    logging.debug(f"merged_input_json: {merged_input_json}")
+    current_input_json["user_machine_keyword_exp"] = user_machine_keyword
+    logging.debug(f"current_input_json: {current_input_json}")
 
     if fake_machine is not None:
         logging.info(f"Pretending to be on: '{fake_machine}'.")
@@ -155,8 +161,8 @@ def main(
 
     # Generate/update the merged input JSON
     # Priority: user > previous > default
-    merged_input_json = generate_input_exploration_json(user_input_json, previous_exploration_json, default_input_json, merged_input_json, main_json)
-    logging.debug(f"merged_input_json: {merged_input_json}")
+    current_input_json = generate_input_exploration_json(user_input_json, previous_exploration_json, default_input_json, current_input_json, main_json)
+    logging.debug(f"current_input_json: {current_input_json}")
 
     # TODO to rewrite (generate_exploration_json ?)
     # Generate the exploration JSON
@@ -170,7 +176,7 @@ def main(
     }
 
     # Check if the job file exists (for each exploration requested)
-    exploration_types = list(set(merged_input_json["exploration_type"]))
+    exploration_types = list(set(current_input_json["exploration_type"]))
     master_job_file = {}
     master_job_array_file = {}
     walltime_approx_s = {}
@@ -208,7 +214,7 @@ def main(
         logging.debug(f"master_job_file: {master_job_file[exploration_type][0:5]}, {master_job_file[exploration_type][-5:-1]}")
         logging.debug(f"master_job_array_file: {master_job_array_file[exploration_type][0:5]}, {master_job_array_file[exploration_type][-5:-1]}")
 
-        merged_input_json["job_email"] = get_key_in_dict("job_email", user_input_json, previous_exploration_json, default_input_json)
+        current_input_json["job_email"] = get_key_in_dict("job_email", user_input_json, previous_exploration_json, default_input_json)
 
         del jobs_path, job_file_name
     del exploration_type
@@ -239,7 +245,7 @@ def main(
             system_print_mult,
             system_previous_start,
             system_disturbed_start,
-        ) = get_system_exploration(merged_input_json, system_auto_index)
+        ) = get_system_exploration(current_input_json, system_auto_index)
         logging.debug(f"{system_exploration_type, system_traj_count, system_timestep_ps,system_temperature_K,system_exp_time_ps,system_max_exp_time_ps,system_job_walltime_h,system_print_mult,system_previous_start,system_disturbed_start}")
 
         plumed = [False, False, False]
@@ -366,8 +372,8 @@ def main(
 
                 system_walltime_approx_s = system_job_walltime_h * 3600
 
-                merged_input_json["job_walltime_h"][system_auto_index] = system_walltime_approx_s / 3600
-                merged_input_json["exp_time_ps"][system_auto_index] = system_nb_steps * system_timestep_ps
+                current_input_json["job_walltime_h"][system_auto_index] = system_walltime_approx_s / 3600
+                current_input_json["exp_time_ps"][system_auto_index] = system_nb_steps * system_timestep_ps
 
                 walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
 
@@ -391,7 +397,7 @@ def main(
                         system_nb_steps = system_max_exp_time_ps / system_timestep_ps
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(system_nb_steps)}"
 
-                merged_input_json["exp_time_ps"][system_auto_index] = system_nb_steps * system_timestep_ps
+                current_input_json["exp_time_ps"][system_auto_index] = system_nb_steps * system_timestep_ps
 
                 # Walltime
                 if "job_walltime_h" in user_input_json:
@@ -402,7 +408,7 @@ def main(
                     # Round up to the next 30min
                     system_walltime_approx_s = int(np.ceil(system_walltime_approx_s / 1800) * 1800)
 
-                merged_input_json["job_walltime_h"][system_auto_index] = system_walltime_approx_s / 3600
+                current_input_json["job_walltime_h"][system_auto_index] = system_walltime_approx_s / 3600
                 walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
 
             # Get print freq
@@ -442,8 +448,8 @@ def main(
 
                 system_walltime_approx_s = system_job_walltime_h * 3600
 
-                merged_input_json["job_walltime_h"][system_auto_index] = system_walltime_approx_s / 3600
-                merged_input_json["exp_time_ps"][system_auto_index] = system_nb_steps * system_timestep_ps
+                current_input_json["job_walltime_h"][system_auto_index] = system_walltime_approx_s / 3600
+                current_input_json["exp_time_ps"][system_auto_index] = system_nb_steps * system_timestep_ps
 
                 walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
 
@@ -466,7 +472,7 @@ def main(
                         system_nb_steps = system_max_exp_time_ps / system_timestep_ps
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(system_nb_steps)}"
 
-                merged_input_json["exp_time_ps"][system_auto_index] = system_nb_steps * system_timestep_ps
+                current_input_json["exp_time_ps"][system_auto_index] = system_nb_steps * system_timestep_ps
 
                 # Walltime
                 if "job_walltime_h" in user_input_json:
@@ -477,7 +483,7 @@ def main(
                     # Round up to the next 30min
                     system_walltime_approx_s = int(np.ceil(system_walltime_approx_s / 1800) * 1800)
 
-                merged_input_json["job_walltime_h"][system_auto_index] = system_walltime_approx_s / 3600
+                current_input_json["job_walltime_h"][system_auto_index] = system_walltime_approx_s / 3600
                 walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
 
             # Get print freq
@@ -527,7 +533,7 @@ def main(
 
                 system_walltime_approx_s = system_job_walltime_h * 3600
 
-                merged_input_json["job_walltime_h"][system_auto_index] = system_walltime_approx_s / 3600
+                current_input_json["job_walltime_h"][system_auto_index] = system_walltime_approx_s / 3600
                 walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
 
                 # Get the cell and nb of atoms: It can be done now because the starting point is the same by NNP and by traj
@@ -554,7 +560,7 @@ def main(
                         system_nb_steps = system_max_exp_time_ps / system_timestep_ps
                 input_replace_dict["_R_NUMBER_OF_STEPS_"] = f"{int(system_nb_steps)}"
                 # Update the new input
-                merged_input_json["system_exp_time_ps"] = system_nb_steps * system_timestep_ps
+                current_input_json["system_exp_time_ps"] = system_nb_steps * system_timestep_ps
 
                 # Walltime
                 if user_input_json_present:
@@ -565,7 +571,7 @@ def main(
                     # Round up to the next 30min
                     system_walltime_approx_s = int(np.ceil(system_walltime_approx_s / 1800) * 1800)
 
-                merged_input_json["job_walltime_h"] = system_walltime_approx_s / 3600
+                current_input_json["job_walltime_h"] = system_walltime_approx_s / 3600
                 walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
 
             # Get print freq
@@ -642,7 +648,7 @@ def main(
                         machine_spec,
                         system_walltime_approx_s,
                         machine_walltime_format,
-                        merged_input_json["job_email"],
+                        current_input_json["job_email"],
                     )
 
                     job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_VERSION_", f"{exploration_json['deepmd_model_version']}")
@@ -750,7 +756,7 @@ def main(
                     job_array_params_line += "" + "/"
 
                     # INDIVIDUAL JOB FILE
-                    job_file = replace_in_slurm_file_general(master_job_file[system_exploration_type], machine_spec, system_walltime_approx_s, machine_walltime_format, merged_input_json["job_email"])
+                    job_file = replace_in_slurm_file_general(master_job_file[system_exploration_type], machine_spec, system_walltime_approx_s, machine_walltime_format, current_input_json["job_email"])
                     job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_VERSION_", f"{exploration_json['deepmd_model_version']}")
                     job_file = replace_substring_in_string_list(job_file, "_R_MODEL_FILES_LIST_", str(models_string.replace(" ", '" "')))
                     job_file = replace_substring_in_string_list(job_file, "_R_SANDER_IN_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}.in")
@@ -832,7 +838,7 @@ def main(
                     write_json_file(system_ipi_json, local_path / (f"{system_auto}_{nnp_index}_{padded_curr_iter}.json"), read_only=True)
 
                     # INDIVIDUAL JOB FILE
-                    job_file = replace_in_slurm_file_general(master_job_file[system_exploration_type], machine_spec, system_walltime_approx_s, machine_walltime_format, merged_input_json["job_email"])
+                    job_file = replace_in_slurm_file_general(master_job_file[system_exploration_type], machine_spec, system_walltime_approx_s, machine_walltime_format, current_input_json["job_email"])
 
                     job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_VERSION_", f"{exploration_json['deepmd_model_version']}")
                     job_file = replace_substring_in_string_list(job_file, "_R_MODEL_FILES_LIST_", f"{models_list[0]}")
@@ -913,7 +919,7 @@ def main(
 
     for exploration_type in exploration_types:
         if len(job_array_params_file[exploration_type]) > 1:
-            job_array_file = replace_in_slurm_file_general(master_job_array_file[exploration_type], machine_spec, max(walltime_approx_s[exploration_type]), machine_walltime_format, merged_input_json["job_email"])
+            job_array_file = replace_in_slurm_file_general(master_job_array_file[exploration_type], machine_spec, max(walltime_approx_s[exploration_type]), machine_walltime_format, current_input_json["job_email"])
 
             job_array_file = replace_substring_in_string_list(job_array_file, "_R_ARRAY_START_", "0")
             job_array_file = replace_substring_in_string_list(job_array_file, "_R_ARRAY_END_", f"{nb_sim - 1}")
@@ -929,7 +935,7 @@ def main(
     logging.info(f"-" * 88)
     write_json_file(main_json, (control_path / "config.json"), read_only=True)
     write_json_file(exploration_json, (control_path / f"exploration_{padded_curr_iter}.json"), read_only=True)
-    backup_and_overwrite_json_file(merged_input_json, (current_path / "used_input.json"), read_only=True)
+    backup_and_overwrite_json_file(current_input_json, (current_path / "used_input.json"), read_only=True)
 
     # End
     logging.info(f"-" * 88)
@@ -938,7 +944,7 @@ def main(
     # Cleaning
     del current_path, control_path, training_path
     del default_input_json, default_input_json_present, user_input_json, user_input_json_present, user_input_json_filename
-    del main_json, merged_input_json, exploration_json, previous_training_json, previous_exploration_json
+    del main_json, current_input_json, exploration_json, previous_training_json, previous_exploration_json
     del user_machine_keyword
     del curr_iter, padded_curr_iter, prev_iter, padded_prev_iter
     del machine, machine_spec, machine_walltime_format, machine_launch_command, machine_job_scheduler

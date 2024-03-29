@@ -67,8 +67,14 @@ def main(
     logging.debug(f"user_input_json: {user_input_json}")
     logging.debug(f"user_input_json_present: {user_input_json_present}")
 
-    # Make a deepcopy of it to create the current input JSON
-    merged_input_json = copy.deepcopy(user_input_json)
+    # If the used input JSON is present, load it
+    if (current_path / "used_input.json").is_file():
+        current_input_json = load_json_file((current_path / "used_input.json"))
+    else:
+        logging.warning(f"No used_input.json found. Starting with empty one.")
+        logging.warning(f"You should avoid this by not deleting the used_input.json file.")
+        current_input_json = {}
+    logging.debug(f"current_input_json: {current_input_json}")
 
     # Get control path, load the main JSON and the exploration JSON
     control_path = training_path / "control"
@@ -89,8 +95,18 @@ def main(
         previous_exploration_json = {}
 
     # Check if the atomsk and vmd package are installed
-    atomsk_bin = check_atomsk(get_key_in_dict("atomsk_path", user_input_json, previous_exploration_json, default_input_json))
-    vmd_bin = check_vmd(get_key_in_dict("vmd_path", user_input_json, previous_exploration_json, default_input_json))
+    if "atomsk_path" not in user_input_json:
+        atomsk_bin = check_atomsk(get_key_in_dict("atomsk_path", current_input_json, previous_exploration_json, default_input_json))
+    else:
+        atomsk_bin = check_atomsk(get_key_in_dict("atomsk_path", user_input_json, previous_exploration_json, default_input_json))
+        current_input_json["atomsk_path"] = atomsk_bin
+    if "vmd_path" not in user_input_json:
+        vmd_bin = check_vmd(get_key_in_dict("vmd_path", current_input_json, previous_exploration_json, default_input_json))
+    else:
+        vmd_bin = check_vmd(get_key_in_dict("vmd_path", user_input_json, previous_exploration_json, default_input_json))
+        current_input_json["vmd_path"] = vmd_bin
+    logging.debug(f"atomsk_bin: {atomsk_bin}")
+    logging.debug(f"vmd_bin: {vmd_bin}")
 
     # Check if we can continue
     if not exploration_json["is_deviated"]:
@@ -99,9 +115,9 @@ def main(
         return 1
 
     # Update the current input JSON
-    merged_input_json["atomsk_path"] = atomsk_bin
-    merged_input_json["vmd_path"] = vmd_bin
-    logging.debug(f"merged_input_json: {merged_input_json}")
+    current_input_json["atomsk_path"] = atomsk_bin
+    current_input_json["vmd_path"] = vmd_bin
+    logging.debug(f"current_input_json: {current_input_json}")
 
     # Update the current exploration JSON
     exploration_json["atomsk_path"] = atomsk_bin
@@ -110,14 +126,14 @@ def main(
 
     # Generate/update the merged input JSON
     # Priority: user > previous > default
-    merged_input_json = generate_input_exploration_disturbed_json(
+    current_input_json = generate_input_exploration_disturbed_json(
         user_input_json,
         previous_exploration_json,
         default_input_json,
-        merged_input_json,
+        current_input_json,
         main_json,
     )
-    logging.debug(f"merged_input_json: {merged_input_json}")
+    logging.debug(f"current_input_json: {current_input_json}")
 
     check_file_existence(deepmd_iterative_path / "assets" / "others" / "vmd_dcd_selection_index.tcl")
     master_vmd_tcl = textfile_to_string_list(deepmd_iterative_path / "assets" / "others" / "vmd_dcd_selection_index.tcl")
@@ -133,7 +149,7 @@ def main(
 
         print_every_x_steps = exploration_json["systems_auto"][system_auto]["print_every_x_steps"]
         # Set the system params for disburbed selection
-        disturbed_start_value, disturbed_start_indexes, disturbed_candidate_value, disturbed_candidate_indexes = get_system_disturb(merged_input_json, system_auto_index)
+        disturbed_start_value, disturbed_start_indexes, disturbed_candidate_value, disturbed_candidate_indexes = get_system_disturb(current_input_json, system_auto_index)
 
         if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps":
             check_file_existence(training_path / "user_files" / f"{system_auto}.lmp")
@@ -222,7 +238,7 @@ def main(
                         if not disturbed_start_indexes:
                             subprocess.run([atomsk_bin, "-ow", str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}_disturbed.xyz"), "-disturb", str(disturbed_start_value), "exyz"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
                         else:
-                            subprocess.run([atomsk_bin, "-ow", str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}_disturbed.xyz"), "-select", ",".join([str(idx) for idx in disturbed_start_indexes]), "-disturb", str(disturbed_start_value), "exyz"],stdout=subprocess.DEVNULL,stderr=subprocess.STDOUT)
+                            subprocess.run([atomsk_bin, "-ow", str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}_disturbed.xyz"), "-select", ",".join([str(idx) for idx in disturbed_start_indexes]), "-disturb", str(disturbed_start_value), "exyz"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
                         # Atomsk XYZ -> LMP
                         remove_file(starting_structures_path / f"{min_file_name}_{padded_min_index}_disturbed.lmp")
@@ -345,7 +361,7 @@ def main(
 
     # Dump the JSON files (exploration and merged input)
     write_json_file(exploration_json, (control_path / f"exploration_{padded_curr_iter}.json"))
-    backup_and_overwrite_json_file(merged_input_json, (current_path / "used_input.json"), read_only=True)
+    backup_and_overwrite_json_file(current_input_json, (current_path / "used_input.json"), read_only=True)
 
     # End
     logging.info(f"-" * 88)
@@ -354,7 +370,7 @@ def main(
     # Cleaning
     del current_path, control_path, training_path
     del default_input_json, default_input_json_present, user_input_json, user_input_json_present, user_input_json_filename
-    del main_json, merged_input_json, exploration_json, previous_training_json, previous_exploration_json
+    del main_json, current_input_json, exploration_json, previous_training_json, previous_exploration_json
     del curr_iter, padded_curr_iter, prev_iter, padded_prev_iter
     del atomsk_bin, vmd_bin
 
