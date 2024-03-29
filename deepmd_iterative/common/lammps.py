@@ -15,6 +15,7 @@ Functions
 read_lammps_data(lines: List[str],) -> Tuple(int, int, np.ndarray, Dict[int], np.ndarray)
     Read LAMMPS data file and extract required information.
 """
+
 # Standard library modules
 from pathlib import Path
 from typing import Dict, List, Union, Tuple
@@ -25,6 +26,7 @@ import numpy as np
 # Local imports
 from deepmd_iterative.common.utils import catch_errors_decorator
 from deepmd_iterative.common.list import textfile_to_string_list
+
 
 # Unittested
 @catch_errors_decorator
@@ -53,7 +55,7 @@ def read_lammps_data(
     ValueError
         If any required information is missing or inconsistent in the input data.
     """
-    if type(data_file) == type(Path('.')):
+    if type(data_file) == type(Path(".")):
         lines = textfile_to_string_list(data_file)
     else:
         lines = data_file
@@ -121,14 +123,7 @@ def read_lammps_data(
     if num_atom_types == None:
         error_msg = "The number of atom types was not found."
         raise ValueError(error_msg)
-    if (
-        xlo == None
-        or xhi == None
-        or ylo == None
-        or yhi == None
-        or zlo == None
-        or zhi == None
-    ):
+    if xlo == None or xhi == None or ylo == None or yhi == None or zlo == None or zhi == None:
         error_msg = f"Invalid box coordinates."
         raise ValueError(error_msg)
     if len(masses) == 0:
@@ -149,7 +144,7 @@ def read_lammps_data(
 
     for atoms_type in atoms_type_list:
         if atoms_type not in masses:
-            if type(data_file) == type(Path('.')):
+            if type(data_file) == type(Path(".")):
                 error_msg = f"Atom type '{atoms_type}' present in the coordinates section but not found in masses. Problem with your LMP file: {data_file}"
             else:
                 error_msg = f"Atom type '{atoms_type}' present in the coordinates section but not found in masses. Problem with your LMP file"

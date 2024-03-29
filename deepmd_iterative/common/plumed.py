@@ -15,6 +15,7 @@ Functions
 analyze_plumed_file_for_movres(plumed_lines: List[str]) -> Tuple[bool, Union[int, bool]]
     A function to analyze a Plumed file to extract information about the MOVINGRESTRAINT keyword and the last STEP value used.
 """
+
 # Standard library modules
 import re
 from typing import List, Tuple, Union

@@ -194,7 +194,7 @@ def check_dcd_is_valid(dcd_path: Path, vmd_bin: Path) -> bool:
     quit
     """
     # Run VMD script from command line
-    result = subprocess.run([vmd_bin, '-dispdev', 'text', '-e', '/dev/stdin'], input=vmd_script, text=True, capture_output=True)
+    result = subprocess.run([vmd_bin, "-dispdev", "text", "-e", "/dev/stdin"], input=vmd_script, text=True, capture_output=True)
 
     # Check if the output contains "Unable to load file "
     if "Unable to load file " in result.stdout:
@@ -205,6 +205,7 @@ def check_dcd_is_valid(dcd_path: Path, vmd_bin: Path) -> bool:
             return True
         else:
             return False
+
 
 @catch_errors_decorator
 def check_nc_is_valid(nc_path: Path, vmd_bin: Path) -> bool:
@@ -234,7 +235,7 @@ def check_nc_is_valid(nc_path: Path, vmd_bin: Path) -> bool:
     quit
     """
     # Run VMD script from command line
-    result = subprocess.run([vmd_bin, '-dispdev', 'text', '-e', '/dev/stdin'], input=vmd_script, text=True, capture_output=True)
+    result = subprocess.run([vmd_bin, "-dispdev", "text", "-e", "/dev/stdin"], input=vmd_script, text=True, capture_output=True)
 
     # Check if the output contains "Unable to load file "
     if "Unable to load file " in result.stdout:
@@ -245,4 +246,3 @@ def check_nc_is_valid(nc_path: Path, vmd_bin: Path) -> bool:
             return True
         else:
             return False
-

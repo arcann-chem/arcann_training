@@ -21,6 +21,7 @@ read_xyz_trajectory(file_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray
 write_xyz_frame(file_path: Path, frame_idx: int, num_atoms: np.ndarray, atom_coords: np.ndarray, atom_symbols: np.ndarray) -> None
     A function to write the XYZ coordinates of a specific frame of a trajectory to a file.
 """
+
 # Standard library modules
 import re
 from pathlib import Path
@@ -71,9 +72,7 @@ def parse_cell_from_comment(comment_line: str) -> np.ndarray:
     if nine_numbers_match:
         return np.array([float(num) for num in nine_numbers_match.groups()])
 
-    three_numbers_match = re.match(
-        r"ABC\s*=\s*(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s*$", comment_line
-    )
+    three_numbers_match = re.match(r"ABC\s*=\s*(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s*$", comment_line)
     if three_numbers_match:
         three_cell = np.array([float(num) for num in three_numbers_match.groups()])
         cell = np.zeros(9)
@@ -139,9 +138,7 @@ def read_xyz_trajectory(
             # First line contains the total number of atoms in the molecule
             num_atoms_str = lines[i].strip()
             if not re.match(r"^\d+$", num_atoms_str):
-                error_msg = (
-                    f"Incorrect file format: number of atoms must be an '{type(1)}'."
-                )
+                error_msg = f"Incorrect file format: number of atoms must be an '{type(1)}'."
                 raise TypeError(error_msg)
             num_atoms = int(num_atoms_str)
             num_atoms_list.append(num_atoms)
@@ -161,9 +158,7 @@ def read_xyz_trajectory(
                 try:
                     fields = lines[i + j + 2].split()
                 except IndexError:
-                    error_msg = (
-                        f"Incorrect file format: end of file reached prematurely."
-                    )
+                    error_msg = f"Incorrect file format: end of file reached prematurely."
                     raise IndexError(error_msg)
 
                 if len(fields) != 4:
@@ -271,11 +266,6 @@ def write_xyz_frame(
         # Loop over each atom in the specified frame
         for ii in range(num_atoms[frame_idx]):
             # Write the atomic symbol and Cartesian coordinates to the file in XYZ format
-            xyz_file.write(
-                f"{atom_symbols[frame_idx, ii]} "
-                f"{atom_coords[frame_idx, ii, 0]:.6f} "
-                f"{atom_coords[frame_idx, ii, 1]:.6f} "
-                f"{atom_coords[frame_idx, ii, 2]:.6f}\n"
-            )
+            xyz_file.write(f"{atom_symbols[frame_idx, ii]} " f"{atom_coords[frame_idx, ii, 0]:.6f} " f"{atom_coords[frame_idx, ii, 1]:.6f} " f"{atom_coords[frame_idx, ii, 2]:.6f}\n")
     # Close the file
     xyz_file.close()

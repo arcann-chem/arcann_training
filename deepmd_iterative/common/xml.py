@@ -24,6 +24,7 @@ read_xml_file(xml_file_path: Path) -> ET.ElementTree
 write_xml_file(xml_tree: ET.ElementTree, xml_file_path: Path) -> None
     A function to write an XML tree to a file at the specified path.
 """
+
 # Standard library modules
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -113,9 +114,7 @@ def read_xml_file(xml_file_path: Path) -> ET.ElementTree:
     """
     # Check if the file exists
     if not xml_file_path.is_file():
-        error_msg = (
-            f"File not found '{xml_file_path.name}' not in '{xml_file_path.parent}'."
-        )
+        error_msg = f"File not found '{xml_file_path.name}' not in '{xml_file_path.parent}'."
         raise FileNotFoundError(error_msg)
     else:
         try:

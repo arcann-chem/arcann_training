@@ -8,6 +8,7 @@
 Created: 2024/03/01
 Last modified: 2024/03/25
 """
+
 # Standard library modules
 import logging
 import re
@@ -28,7 +29,7 @@ def extract_and_convert_energy(energy_in, energy_out, system_candidates_not_skip
             if match:
                 energy_float = float(match.group(1))
                 energy_array = np.asarray(energy_float, dtype=np.float64).flatten()
-                energy_out[system_candidates_not_skipped_counter - 1] = (energy_array[0] * factor)
+                energy_out[system_candidates_not_skipped_counter - 1] = energy_array[0] * factor
         return energy_out
     elif program == "orca":
         energy_line_index = energy_in.index("# The current total energy in Eh") + 2
@@ -47,19 +48,20 @@ def extract_and_convert_coordinates(coordinates_in, coordinates_out, system_cand
 
 def extract_and_convert_box_volume(input, box_out, volume_out, system_candidates_not_skipped_counter, factor=1.0, program=None, version=None):
     if program == "cp2k":
-        cell = [float(_)for _ in re.findall(r"\d+\.\d+", [_ for _ in input if "ABC" in _][0])]
+        cell = [float(_) for _ in re.findall(r"\d+\.\d+", [_ for _ in input if "ABC" in _][0])]
         box_out[system_candidates_not_skipped_counter - 1, 0] = cell[0]
         box_out[system_candidates_not_skipped_counter - 1, 4] = cell[1]
         box_out[system_candidates_not_skipped_counter - 1, 8] = cell[2]
-        volume_out[system_candidates_not_skipped_counter - 1] = (cell[0] * cell[1] * cell[2])
+        volume_out[system_candidates_not_skipped_counter - 1] = cell[0] * cell[1] * cell[2]
         return box_out, volume_out
     elif program == "orca":
         cell = input
         box_out[system_candidates_not_skipped_counter - 1, 0] = cell[0]
         box_out[system_candidates_not_skipped_counter - 1, 4] = cell[1]
         box_out[system_candidates_not_skipped_counter - 1, 8] = cell[2]
-        volume_out[system_candidates_not_skipped_counter - 1] = (cell[0] * cell[1] * cell[2])
+        volume_out[system_candidates_not_skipped_counter - 1] = cell[0] * cell[1] * cell[2]
         return box_out, volume_out
+
 
 def extract_and_convert_forces(forces_in, forces_out, system_candidates_not_skipped_counter, factor=1.0, program=None, version=None):
     if program == "cp2k":
@@ -81,6 +83,7 @@ def extract_and_convert_forces(forces_in, forces_out, system_candidates_not_skip
         forces_out[system_candidates_not_skipped_counter - 1, :] = forces_array * factor
         return forces_out
 
+
 def extract_and_convert_virial(stress_in, virial_out, system_candidates_not_skipped_counter, volume, factor=1.0, program=None, version=None):
     if program == "cp2k":
         if version < 8 and version >= 6:
@@ -93,12 +96,12 @@ def extract_and_convert_virial(stress_in, virial_out, system_candidates_not_skip
             if matching_index is not None:
                 x_values = re.findall(r"X\s*(-?\d+\.\d+)\s*(-?\d+\.\d+)\s*(-?\d+\.\d+)", stress_in[matching_index + 1])
                 y_values = re.findall(r"Y\s*(-?\d+\.\d+)\s*(-?\d+\.\d+)\s*(-?\d+\.\d+)", stress_in[matching_index + 2])
-                z_values = re.findall(r"Z\s*(-?\d+\.\d+)\s*(-?\d+\.\d+)\s*(-?\d+\.\d+)", stress_in[matching_index + 3]   )
+                z_values = re.findall(r"Z\s*(-?\d+\.\d+)\s*(-?\d+\.\d+)\s*(-?\d+\.\d+)", stress_in[matching_index + 3])
 
                 tensor_values = np.vstack((x_values, y_values, z_values)).astype(np.float64)
 
                 stress_xyz_array = tensor_values.flatten()
-                virial_out[system_candidates_not_skipped_counter - 1, :] = (stress_xyz_array * volume[system_candidates_not_skipped_counter - 1] / factor)
+                virial_out[system_candidates_not_skipped_counter - 1, :] = stress_xyz_array * volume[system_candidates_not_skipped_counter - 1] / factor
 
                 return virial_out, True
             else:
@@ -118,7 +121,7 @@ def extract_and_convert_virial(stress_in, virial_out, system_candidates_not_skip
 
                 tensor_values = np.vstack((x_values, y_values, z_values)).astype(np.float64)
                 stress_xyz_array = tensor_values.flatten()
-                virial_out[system_candidates_not_skipped_counter - 1, :] = (stress_xyz_array* volume[system_candidates_not_skipped_counter - 1]/ factor)
+                virial_out[system_candidates_not_skipped_counter - 1, :] = stress_xyz_array * volume[system_candidates_not_skipped_counter - 1] / factor
 
                 return virial_out, True
             else:
@@ -128,7 +131,8 @@ def extract_and_convert_virial(stress_in, virial_out, system_candidates_not_skip
             logging.info(f"This version of CP2K is not supported for tensor: {version}")
             return virial_out, False
 
-def extract_and_convert_wannier(wannier_in, wannier_out, system_candidates_not_skipped_counter, nb_atom ,wannier_not_converged, factor=1.0, program=None, version=None):
+
+def extract_and_convert_wannier(wannier_in, wannier_out, system_candidates_not_skipped_counter, nb_atom, wannier_not_converged, factor=1.0, program=None, version=None):
     if program == "cp2k":
         del wannier_in[0 : 2 + nb_atom]
         wannier_in = [" ".join(_.replace("\n", "").split()) for _ in wannier_in]

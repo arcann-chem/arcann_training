@@ -15,6 +15,7 @@ Functions
 get_temperature_from_ipi_xml(input_file: str) -> float
     A function to extract the temperature value from an XML file and returns it as a float.
 """
+
 # Standard library modules
 import xml.etree.ElementTree as ET
 

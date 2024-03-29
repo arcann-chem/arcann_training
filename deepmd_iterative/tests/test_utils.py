@@ -93,19 +93,19 @@ class TestCatchErrorsDecorator(unittest.TestCase):
 
 class TestNaturalSortKey(unittest.TestCase):
     def test_with_numbers(self):
-        self.assertEqual(natural_sort_key('abc123def'), ['abc', 123, 'def'])
+        self.assertEqual(natural_sort_key("abc123def"), ["abc", 123, "def"])
 
     def test_without_numbers(self):
-        self.assertEqual(natural_sort_key('abcdef'), ['abcdef'])
+        self.assertEqual(natural_sort_key("abcdef"), ["abcdef"])
 
     def test_empty_string(self):
-        self.assertEqual(natural_sort_key(''), [])
+        self.assertEqual(natural_sort_key(""), [])
 
     def test_mixed_case_string(self):
-        self.assertEqual(natural_sort_key('AbC123DeF'), ['abc', 123, 'def'])
+        self.assertEqual(natural_sort_key("AbC123DeF"), ["abc", 123, "def"])
 
     def test_string_with_multiple_numbers(self):
-        self.assertEqual(natural_sort_key('abc12def34'), ['abc', 12, 'def', 34])
+        self.assertEqual(natural_sort_key("abc12def34"), ["abc", 12, "def", 34])
 
     def test_non_string_input(self):
         with self.assertRaises(TypeError):

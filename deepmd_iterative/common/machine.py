@@ -78,9 +78,7 @@ def get_host_name() -> str:
 # TODO Test will fail
 # Unittested
 @catch_errors_decorator
-def assert_same_machine(
-    user_machine_keyword: str, control_json: Dict, step: str
-) -> None:
+def assert_same_machine(user_machine_keyword: str, control_json: Dict, step: str) -> None:
     """
     Verify that the provided machine keyword matches the expected machine keyword in the control JSON.
 
@@ -118,9 +116,7 @@ def assert_same_machine(
 
 # Unittested
 @catch_errors_decorator
-def get_machine_keyword(
-    input_json: Dict, previous_json: Dict, default_json: Dict, step: str
-) -> Union[bool, str, List[str]]:
+def get_machine_keyword(input_json: Dict, previous_json: Dict, default_json: Dict, step: str) -> Union[bool, str, List[str]]:
     """
     Get the value of the "user_machine_keyword" key from input JSON, previous JSON or default JSON, and validate its type.
 
@@ -176,14 +172,7 @@ def get_machine_keyword(
         raise KeyError(error_msg)
 
     # Check if the value is of the correct type.
-    if (
-        not isinstance(value, bool)
-        and not (isinstance(value, str) and value != "")
-        and not (
-            isinstance(value, List)
-            and all([isinstance(value[_], str) for _ in range(len(value))])
-        )
-    ):
+    if not isinstance(value, bool) and not (isinstance(value, str) and value != "") and not (isinstance(value, List) and all([isinstance(value[_], str) for _ in range(len(value))])):
         # The value is not of the correct type.
         error_msg = f"""
             Wrong type: '{key}' is '{type(value)}'.\n
@@ -196,9 +185,7 @@ def get_machine_keyword(
 
 
 @catch_errors_decorator
-def get_machine_config_files(
-    deepmd_iterative_path: Path, training_path: Path
-) -> List[Dict]:
+def get_machine_config_files(deepmd_iterative_path: Path, training_path: Path) -> List[Dict]:
     """
     Return a list of dictionaries containing machine configurations for all machines found in the given paths.
 
@@ -241,9 +228,7 @@ def get_machine_config_files(
 
 # Unittested
 @catch_errors_decorator
-def get_machine_from_configs(
-    machine_configs: List[Dict], machine_short_name: str = ""
-) -> str:
+def get_machine_from_configs(machine_configs: List[Dict], machine_short_name: str = "") -> str:
     """
     Given a list of machine configuration dictionaries and an optional input machine name,
     return the name of the machine that matches the current hostname or the input machine name.
@@ -329,9 +314,7 @@ def get_machine_spec_for_step(
     machine_configs = get_machine_config_files(deepmd_iterative_path, training_path)
 
     # Get the short name of the machine to use
-    machine_shortname = get_machine_from_configs(
-        machine_configs, input_machine_shortname
-    )
+    machine_shortname = get_machine_from_configs(machine_configs, input_machine_shortname)
 
     # If check_only is True, return an empty machine specification
     if check_only:
@@ -351,21 +334,7 @@ def get_machine_spec_for_step(
                 "max_array_size",
             ]:
                 # Check if the current keyword matches the user keyword
-                if (
-                    user_machine_keyword is None
-                    or (
-                        isinstance(user_machine_keyword, str)
-                        and user_machine_keyword == config_key
-                    )
-                    or (
-                        isinstance(user_machine_keyword, list)
-                        and len(user_machine_keyword) == 3
-                        and user_machine_keyword[0] == config_data.get("project_name")
-                        and user_machine_keyword[1]
-                        == config_data.get("allocation_name")
-                        and user_machine_keyword[2] == config_data.get("arch_name")
-                    )
-                ):
+                if user_machine_keyword is None or (isinstance(user_machine_keyword, str) and user_machine_keyword == config_key) or (isinstance(user_machine_keyword, list) and len(user_machine_keyword) == 3 and user_machine_keyword[0] == config_data.get("project_name") and user_machine_keyword[1] == config_data.get("allocation_name") and user_machine_keyword[2] == config_data.get("arch_name")):
                     # Check if the step is valid for the current configuration
                     if step in config_data.get("valid_for", []):
                         # Return the machine specification
@@ -381,30 +350,17 @@ def get_machine_spec_for_step(
                         )
 
     # If no matching configuration was found, return an error
-    if user_machine_keyword is not None and not (
-        isinstance(user_machine_keyword, str)
-        or (isinstance(user_machine_keyword, list) and len(user_machine_keyword) == 3)
-    ):
+    if user_machine_keyword is not None and not (isinstance(user_machine_keyword, str) or (isinstance(user_machine_keyword, list) and len(user_machine_keyword) == 3)):
         error_msg = f"Invalid 'user_machine_keyword'. Please provide either a '{type('')}' or a '{type([])}' of 3 '{type('')}"
-    elif user_machine_keyword is not None and (
-        isinstance(user_machine_keyword, list) and len(user_machine_keyword) == 3
-    ):
+    elif user_machine_keyword is not None and (isinstance(user_machine_keyword, list) and len(user_machine_keyword) == 3):
         error_msg = f"User keyword '{user_machine_keyword}' not found in any configuration files"
     elif not machine_configs:
         error_msg = "No machine configuration files found"
-    elif user_machine_keyword is not None and not any(
-        user_machine_keyword in config for config in machine_configs
-    ):
+    elif user_machine_keyword is not None and not any(user_machine_keyword in config for config in machine_configs):
         error_msg = f"User keyword '{user_machine_keyword}' not found in any configuration files"
-    elif input_machine_shortname is not None and machine_shortname not in [
-        config.get("name") for config in machine_configs
-    ]:
-        error_msg = (
-            f"No configuration found for input machine '{input_machine_shortname}'"
-        )
-    elif user_machine_keyword is not None and not any(
-        user_machine_keyword in config for config in machine_configs
-    ):
+    elif input_machine_shortname is not None and machine_shortname not in [config.get("name") for config in machine_configs]:
+        error_msg = f"No configuration found for input machine '{input_machine_shortname}'"
+    elif user_machine_keyword is not None and not any(user_machine_keyword in config for config in machine_configs):
         error_msg = f"User keyword '{user_machine_keyword}' not found in any configuration files"
     else:
         error_msg = f"No default configuration found for step '{step}' and machine '{machine_shortname}'"
