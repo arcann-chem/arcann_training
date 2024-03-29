@@ -250,18 +250,26 @@ def main(
             average_per_step = np.array(timings) / exploration_json["systems_auto"][system_auto]["nb_steps"]
         elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
             average_per_step = np.array(timings)
+        else:
+            average_per_step = np.NaN
 
         if np.isnan(np.average(average_per_step)) and prev_iter > 0:
+            logging.warning(f"Using previous mean_s_per_step for '{system_auto}'")
             for timings_key in ["mean_s_per_step", "median_s_per_step", "stdeviation_s_per_step"]:
                 exploration_json["systems_auto"][system_auto][timings_key] = previous_exploration_json["systems_auto"][system_auto][timings_key]
             del timings_key
         elif np.isnan(np.average(average_per_step)) and prev_iter == 0:
-            input_json = load_json_file((current_path / "used_input.json"))
-            input_json["exploration"]["systems_auto"][system_auto]["mean_s_per_step"] = 0
-            for timings_key in ["mean_s_per_step", "median_s_per_step", "stdeviation_s_per_step"]:
+            if "job_walltime_h" in current_input_json:
+                logging.warning(f"Using job_walltime_h to calculate mean_s_per_step for '{system_auto}'.")
+                average_per_step = (current_input_json["job_walltime_h"][system_auto_index] * 3600) / exploration_json["systems_auto"][system_auto]["nb_steps"]
+            else:
+                logging.error(f"Missing input job_walltime_h for '{system_auto}', set to the default to calculcate mean_s_per_step.")
+                average_per_step = 3600. / exploration_json["systems_auto"][system_auto]["nb_steps"]
+
+            exploration_json["systems_auto"][system_auto][timings_key] = average_per_step
+            for timings_key in ["median_s_per_step", "stdeviation_s_per_step"]:
                 exploration_json["systems_auto"][system_auto][timings_key] = 0
             del timings_key
-
         else:
             exploration_json["systems_auto"][system_auto]["mean_s_per_step"] = np.average(average_per_step)
             exploration_json["systems_auto"][system_auto]["median_s_per_step"] = np.median(average_per_step)
