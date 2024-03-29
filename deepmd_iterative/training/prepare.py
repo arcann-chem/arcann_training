@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/28
+Last modified: 2024/03/29
 """
 
 # Standard library modules
@@ -73,8 +73,8 @@ def main(
     logging.debug(f"user_input_json: {user_input_json}")
     logging.debug(f"user_input_json_present: {user_input_json_present}")
 
-    # Make a deepcopy of it to create the merged input JSON
-    merged_input_json = copy.deepcopy(user_input_json)
+    # Make a deepcopy of it to create the used input JSON
+    current_input_json = copy.deepcopy(user_input_json)
 
     # Get control path and load the main JSON
     control_path = training_path / "control"
@@ -90,8 +90,7 @@ def main(
 
     # Get the machine keyword (Priority: user > previous > default)
     # And update the merged input JSON
-    user_machine_keyword = get_machine_keyword(user_input_json, previous_training_json, default_input_json, "train")
-    logging.debug(f"merged_input_json: {merged_input_json}")
+    user_machine_keyword = get_machine_keyword(current_input_json, previous_training_json, default_input_json, "train")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
     user_machine_keyword = None if isinstance(user_machine_keyword, bool) else user_machine_keyword
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
@@ -122,8 +121,8 @@ def main(
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     logging.debug(f"machine_spec: {machine_spec}")
 
-    merged_input_json["user_machine_keyword_train"] = user_machine_keyword
-    logging.debug(f"merged_input_json: {merged_input_json}")
+    current_input_json["user_machine_keyword_train"] = user_machine_keyword
+    logging.debug(f"current_input_json: {current_input_json}")
 
     if fake_machine is not None:
         logging.info(f"Pretending to be on: '{fake_machine}'.")
@@ -164,11 +163,11 @@ def main(
         del dptrain_list, dptrain_max_version
 
     # Generate/update both the training JSON and the merged input JSON
-    # Priority: user > previous > default
-    training_json, merged_input_json = generate_training_json(user_input_json, previous_training_json, default_input_json, merged_input_json)
-    logging.info(f"Using DeePMD version: {merged_input_json['deepmd_model_version']}")
+    # Priority: user/current > previous > default
+    training_json, current_input_json = generate_training_json(current_input_json, previous_training_json, default_input_json)
+    logging.info(f"Using DeePMD version: {current_input_json['deepmd_model_version']}")
     logging.debug(f"training_json: {training_json}")
-    logging.debug(f"merged_input_json: {merged_input_json}")
+    logging.debug(f"current_input_json: {current_input_json}")
 
     # Check if the job file exists
     job_file_name = f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh"
@@ -180,7 +179,7 @@ def main(
         return 1
 
     logging.debug(f"master_job_file: {master_job_file[0:5]}, {master_job_file[-5:-1]}")
-    merged_input_json["job_email"] = get_key_in_dict("job_email", user_input_json, previous_training_json, default_input_json)
+    current_input_json["job_email"] = get_key_in_dict("job_email", user_input_json, previous_training_json, default_input_json)
     del job_file_name
 
     # Check DeePMD version
@@ -358,22 +357,22 @@ def main(
     # Here calculate the parameters
     # decay_steps it auto-recalculated as funcion of trained_count
     logging.debug(f"training_json - decay_steps: {training_json['decay_steps']}")
-    logging.debug(f"merged_input_json - decay_steps: {merged_input_json['decay_steps']}")
+    logging.debug(f"current_input_json - decay_steps: {current_input_json['decay_steps']}")
     if not training_json["decay_steps_fixed"]:
         decay_steps = calculate_decay_steps(training_json["trained_count"], training_json["decay_steps"])
         logging.debug(f"Recalculating decay_steps")
         # Update the training JSON and the merged input JSON
         training_json["decay_steps"] = decay_steps
-        merged_input_json["decay_steps"] = decay_steps
+        current_input_json["decay_steps"] = decay_steps
     else:
         decay_steps = training_json["decay_steps"]
     logging.debug(f"decay_steps: {decay_steps}")
     logging.debug(f"training_json - decay_steps: {training_json['decay_steps']}")
-    logging.debug(f"merged_input_json - decay_steps: {merged_input_json['decay_steps']}")
+    logging.debug(f"current_input_json - decay_steps: {current_input_json['decay_steps']}")
 
     # numb_steps and decay_rate
     logging.debug(f"training_json - numb_steps / decay_rate: {training_json['numb_steps']} / {training_json['decay_rate']}")
-    logging.debug(f"merged_input_json - numb_steps / decay_rate: {merged_input_json['numb_steps']} / {merged_input_json['decay_rate']}")
+    logging.debug(f"current_input_json - numb_steps / decay_rate: {current_input_json['numb_steps']} / {current_input_json['decay_rate']}")
     numb_steps = training_json["numb_steps"]
     decay_rate_new = calculate_decay_rate(numb_steps, training_json["start_lr"], training_json["stop_lr"], training_json["decay_steps"])
     while decay_rate_new < training_json["decay_rate"]:
@@ -382,12 +381,12 @@ def main(
     # Update the training JSON and the merged input JSON
     training_json["numb_steps"] = int(numb_steps)
     training_json["decay_rate"] = decay_rate_new
-    merged_input_json["numb_steps"] = int(numb_steps)
-    merged_input_json["decay_rate"] = decay_rate_new
+    current_input_json["numb_steps"] = int(numb_steps)
+    current_input_json["decay_rate"] = decay_rate_new
     logging.debug(f"numb_steps: {numb_steps}")
     logging.debug(f"decay_rate: {decay_rate_new}")
     logging.debug(f"training_json - numb_steps / decay_rate: {training_json['numb_steps']} / {training_json['decay_rate']}")
-    logging.debug(f"merged_input_json - numb_steps / decay_rate: {merged_input_json['numb_steps']} / {merged_input_json['decay_rate']}")
+    logging.debug(f"current_input_json - numb_steps / decay_rate: {current_input_json['numb_steps']} / {current_input_json['decay_rate']}")
 
     del decay_steps, numb_steps, decay_rate_new
 
@@ -421,40 +420,31 @@ def main(
 
     logging.debug(f"training_json: {training_json}")
     logging.debug(f"user_input_json: {user_input_json}")
-    logging.debug(f"merged_input_json: {merged_input_json}")
+    logging.debug(f"current_input_json: {current_input_json}")
     logging.debug(f"default_input_json: {default_input_json}")
     logging.debug(f"previous_training_json: {previous_training_json}")
 
     # Create the inputs/jobfiles for each NNP with random SEED
 
     # Walltime
-    if curr_iter == 0:
-        if "job_walltime_train_h" in user_input_json and user_input_json["job_walltime_train_h"] > 0:
-            walltime_approx_s = int(user_input_json["job_walltime_train_h"] * 3600)
-            mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
-            logging.debug(f"job_walltime_train_h: {user_input_json['job_walltime_train_h']}")
-        elif "mean_s_per_step" in user_input_json and user_input_json["mean_s_per_step"] > 0:
-            walltime_approx_s = int(np.ceil((training_json["numb_steps"] * user_input_json["mean_s_per_step"])))
-            mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
-            logging.debug(f"mean_s_per_step: {user_input_json['mean_s_per_step']}")
-        else:
+    if "job_walltime_train_h" in user_input_json and user_input_json["job_walltime_train_h"] > 0:
+        walltime_approx_s = int(user_input_json["job_walltime_train_h"] * 3600)
+        mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
+        logging.debug(f"job_walltime_train_h: {user_input_json['job_walltime_train_h']}")
+    elif "mean_s_per_step" in user_input_json and user_input_json["mean_s_per_step"] > 0:
+        walltime_approx_s = int(np.ceil((training_json["numb_steps"] * user_input_json["mean_s_per_step"])))
+        mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
+        logging.debug(f"mean_s_per_step: {user_input_json['mean_s_per_step']}")
+    else:
+        if curr_iter == 0:
             walltime_approx_s = int(max(np.ceil(training_json["numb_steps"] * default_input_json["mean_s_per_step"]), default_input_json["job_walltime_train_h"] * 3600))
             mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
-    else:
-        if "job_walltime_train_h" in user_input_json and user_input_json["job_walltime_train_h"] > 0:
-            walltime_approx_s = int(user_input_json["job_walltime_train_h"] * 3600)
-            mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
-            logging.debug(f"job_walltime_train_h: {user_input_json['job_walltime_train_h']}")
-        elif "mean_s_per_step" in user_input_json and user_input_json["mean_s_per_step"] > 0:
-            walltime_approx_s = int(np.ceil((training_json["numb_steps"] * user_input_json["mean_s_per_step"])))
-            mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
-            logging.debug(f"mean_s_per_step: {user_input_json['mean_s_per_step']}")
         else:
-            walltime_approx_s = int(np.ceil((training_json["numb_steps"] * (previous_training_json["mean_s_per_step"] * 1.2))))
+            walltime_approx_s = int(max(np.ceil(training_json["numb_steps"] * previous_training_json["mean_s_per_step"] * 1.2), default_input_json["job_walltime_train_h"] * 3600))
             mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
 
-    merged_input_json["job_walltime_train_h"] = float(walltime_approx_s / 3600)
-    merged_input_json["mean_s_per_step"] = mean_s_per_step
+    current_input_json["job_walltime_train_h"] = float(walltime_approx_s / 3600)
+    current_input_json["mean_s_per_step"] = mean_s_per_step
     training_json["job_walltime_train_h"] = float(walltime_approx_s / 3600)
     training_json["mean_s_per_step"] = mean_s_per_step
     logging.debug(f"walltime_approx_s: {walltime_approx_s}")
@@ -485,11 +475,11 @@ def main(
 
     del nnp, walltime_approx_s, dp_train_input
 
-    # Dump the JSON files (main, training and merged input)
+    # Dump the JSON files (main, training and current input)
     logging.info(f"-" * 88)
     write_json_file(main_json, (control_path / "config.json"), read_only=True)
     write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"), read_only=True)
-    backup_and_overwrite_json_file(merged_input_json, (current_path / "used_input.json"), read_only=True)
+    backup_and_overwrite_json_file(current_input_json, (current_path / "used_input.json"), read_only=True)
 
     # End
     logging.info(f"-" * 88)
@@ -498,7 +488,7 @@ def main(
     # Cleaning
     del current_path, control_path, training_path, data_path
     del default_input_json, default_input_json_present, user_input_json, user_input_json_present, user_input_json_filename
-    del main_json, merged_input_json, training_json, previous_training_json, labeling_json
+    del main_json, current_input_json, training_json, previous_training_json, labeling_json
     del user_machine_keyword
     del curr_iter, padded_curr_iter
     del machine, machine_spec, machine_walltime_format, machine_job_scheduler, machine_launch_command, machine_max_jobs, machine_max_array_size

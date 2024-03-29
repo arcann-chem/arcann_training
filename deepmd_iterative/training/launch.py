@@ -6,11 +6,10 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/28
+Last modified: 2024/03/29
 """
 
 # Standard library modules
-import copy
 import logging
 import subprocess
 import sys
@@ -54,31 +53,19 @@ def main(
     logging.debug(f"default_input_json: {default_input_json}")
     logging.debug(f"default_input_json_present: {default_input_json_present}")
 
-    # Load the user input JSON
-    if (current_path / user_input_json_filename).is_file():
-        user_input_json = load_json_file((current_path / user_input_json_filename))
+    # If the used input JSON is present, load it
+    if (current_path / "used_input.json").is_file():
+        current_input_json = load_json_file((current_path / "used_input.json"))
     else:
-        user_input_json = {}
-    user_input_json_present = bool(user_input_json)
-    logging.debug(f"user_input_json: {user_input_json}")
-    logging.debug(f"user_input_json_present: {user_input_json_present}")
-
-    # Make a deepcopy of it to create the merged input JSON
-    merged_input_json = copy.deepcopy(user_input_json)
+        current_input_json = {}
+    logging.debug(f"current_input_json: {current_input_json}")
 
     # Get control path and load the main JSON and the training JSON
     control_path = training_path / "control"
     main_json = load_json_file((control_path / "config.json"))
     training_json = load_json_file((control_path / f"training_{padded_curr_iter}.json"))
 
-    # Get the machine keyword (Priority: user > previous > default)
-    # And update the merged input JSON
-    user_machine_keyword = get_machine_keyword(user_input_json, training_json, default_input_json, "train")
-    logging.debug(f"user_machine_keyword: {user_machine_keyword}")
-    # Set it to None if bool, because: get_machine_spec_for_step needs None
-    user_machine_keyword = None if isinstance(user_machine_keyword, bool) else user_machine_keyword
-    logging.debug(f"user_machine_keyword: {user_machine_keyword}")
-
+    user_machine_keyword = current_input_json["user_machine_keyword_train"]
     # From the keyword (or default), get the machine spec (or for the fake one)
     (
         machine,
@@ -104,9 +91,6 @@ def main(
     logging.debug(f"machine_max_array_size: {machine_max_array_size}")
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     logging.debug(f"machine_spec: {machine_spec}")
-
-    merged_input_json["user_machine_keyword_train"] = user_machine_keyword
-    logging.debug(f"merged_input_json: {merged_input_json}")
 
     if fake_machine is not None:
         logging.info(f"Pretending to be on: '{fake_machine}'.")
@@ -138,12 +122,7 @@ def main(
         if (local_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh").is_file():
             change_directory(local_path)
             try:
-                subprocess.run(
-                    [
-                        machine_launch_command,
-                        f"./job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh",
-                    ]
-                )
+                subprocess.run([machine_launch_command, f"./job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh"])
                 logging.info(f"DP Train - '{nnp}' launched.")
                 completed_count += 1
             except FileNotFoundError:
@@ -159,9 +138,9 @@ def main(
     if completed_count == main_json["nnp_count"]:
         training_json["is_launched"] = True
 
-    # Dump the JSON (training JSON and merged input JSON)
+    # Dump the JSON (training JSON and current input JSON)
     write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"), read_only=True)
-    backup_and_overwrite_json_file(merged_input_json, (current_path / "used_input.json"), read_only=True)
+    backup_and_overwrite_json_file(current_input_json, (current_path / "used_input.json"), read_only=True)
 
     # End
     logging.info(f"-" * 88)
@@ -179,12 +158,12 @@ def main(
     del (
         default_input_json,
         default_input_json_present,
-        user_input_json,
-        user_input_json_present,
+        # user_input_json,
+        # user_input_json_present,
         user_input_json_filename,
     )
     del user_machine_keyword
-    del main_json, merged_input_json, training_json
+    del main_json, current_input_json, training_json
     del curr_iter, padded_curr_iter
     del (
         machine,

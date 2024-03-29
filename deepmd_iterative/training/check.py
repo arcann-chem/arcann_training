@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/28
+Last modified: 2024/03/29
 """
 
 # Standard library modules
@@ -69,9 +69,13 @@ def main(
 
     for nnp in range(1, main_json["nnp_count"] + 1):
         local_path = current_path / f"{nnp}"
-        if (local_path / "training.out").is_file():
+        if (local_path / "training.log").is_file():
+            training_out = textfile_to_string_list((local_path / "training.log"))
+        elif (local_path / "training.out").is_file():
             training_out = textfile_to_string_list((local_path / "training.out"))
-
+        else:
+            training_out = []
+        if training_out:
             # Finished correctly
             if any("finished training" in s for s in training_out):
                 training_out_time = [s for s in training_out if "training time" in s]

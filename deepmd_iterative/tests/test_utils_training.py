@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/28
+Last modified: 2024/03/29
 
 Test cases for the (training) utils module.
 
@@ -356,7 +356,6 @@ class TestGenerateTrainingJson(unittest.TestCase):
             "mean_s_per_step": 0.5,
         }
         previous_json = {}
-        merged_input_json = {}
         expected_training_json = {
             "user_machine_keyword_train": "custom",
             "user_machine_keyword_freeze": "default",
@@ -393,7 +392,7 @@ class TestGenerateTrainingJson(unittest.TestCase):
             "job_walltime_train_h": -1,
             "mean_s_per_step": 0.5,
         }
-        training_json, updated_merged_json = generate_training_json(user_input, previous_json, self.default_input_json, merged_input_json)
+        training_json, updated_merged_json = generate_training_json(user_input, previous_json, self.default_input_json)
         self.assertDictEqual(training_json, expected_training_json)
         self.assertDictEqual(updated_merged_json, expected_merged_json)
 
@@ -401,12 +400,11 @@ class TestGenerateTrainingJson(unittest.TestCase):
         """
         Tests if the function raises a ValueError for an invalid key in user input.
         """
-        user_input = {}
+        user_input = {"numb_steps": "dos"}
         previous_json = {}
-        merged_input_json = {}
-        default_input_json = {}
-        with self.assertRaises(ValueError):
-            generate_training_json(user_input, previous_json, default_input_json, merged_input_json)
+        default_input_json = {"numb_steps": 1000}
+        with self.assertRaises(TypeError):
+            generate_training_json(user_input, previous_json, default_input_json)
 
     def test_type_mismatch(self):
         """
@@ -414,10 +412,9 @@ class TestGenerateTrainingJson(unittest.TestCase):
         """
         user_input = {"numb_steps": "invalid_type"}
         previous_json = {}
-        merged_input_json = {}
 
         with self.assertRaises(TypeError):
-            generate_training_json(user_input, previous_json, self.default_input_json, merged_input_json)
+            generate_training_json(user_input, previous_json, self.default_input_json)
 
     def test_use_previous_json(self):
         """
@@ -432,7 +429,6 @@ class TestGenerateTrainingJson(unittest.TestCase):
             "job_walltime_train_h": -1,
             "mean_s_per_step": 0.3,
         }
-        merged_input_json = {}
 
         expected_training_json = {
             "user_machine_keyword_train": "previous",
@@ -453,7 +449,7 @@ class TestGenerateTrainingJson(unittest.TestCase):
             "mean_s_per_step": 0.3,
         }
 
-        training_json, updated_merged_json = generate_training_json(user_input, previous_json, self.default_input_json, merged_input_json)
+        training_json, updated_merged_json = generate_training_json(user_input, previous_json, self.default_input_json)
         self.assertDictEqual(training_json, expected_training_json)
         self.assertDictEqual(updated_merged_json, expected_training_json)
 

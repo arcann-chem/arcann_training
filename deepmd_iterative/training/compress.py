@@ -6,11 +6,10 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/28
+Last modified: 2024/03/29
 """
 
 # Standard library modules
-import copy
 import logging
 import subprocess
 import sys
@@ -66,19 +65,34 @@ def main(
     logging.debug(f"user_input_json: {user_input_json}")
     logging.debug(f"user_input_json_present: {user_input_json_present}")
 
-    # Make a deepcopy of it to create the current input JSON
-    merged_input_json = copy.deepcopy(user_input_json)
-
-    # Load the current input JSON
-    current_input_json = load_json_file((current_path / "used_input.json"))
-    # Generate/update both the training JSON and the merged input JSON
-    # Priority: user > previous/current > default
-    training_json, merged_input_json = generate_training_json(user_input_json, current_input_json, default_input_json, merged_input_json)
+    # If the used input JSON is present, load it
+    if (current_path / "used_input.json").is_file():
+        current_input_json = load_json_file((current_path / "used_input.json"))
+    else:
+        current_input_json = {}
+    logging.debug(f"current_input_json: {current_input_json}")
 
     # Get control path, load the main JSON and the training JSON
     control_path = training_path / "control"
     main_json = load_json_file((control_path / "config.json"))
     training_json = load_json_file((control_path / f"training_{padded_curr_iter}.json"))
+
+    # Load the previous training JSON
+    if curr_iter > 0:
+        prev_iter = curr_iter - 1
+        padded_prev_iter = str(prev_iter).zfill(3)
+        previous_training_json = load_json_file((control_path / f"training_{padded_prev_iter}.json"))
+    else:
+        previous_training_json = {}
+
+    # If the user input JSON is present, update the user_machine_keyword_freeze and job_email if present
+    for key in ["user_machine_keyword_compress", "job_email"]:
+        if user_input_json_present and key in user_input_json:
+            current_input_json[key] = user_input_json[key]
+        elif key in previous_training_json:
+            current_input_json[key] = previous_training_json[key]
+        else:
+            current_input_json[key] = default_input_json[key]
 
     # Check if we can continue
     if training_json["is_compress_launched"]:
@@ -96,7 +110,7 @@ def main(
 
     # Get the machine keyword (Priority: user > previous > default)
     # And update the current input JSON
-    user_machine_keyword = get_machine_keyword(user_input_json, training_json, default_input_json, "compress")
+    user_machine_keyword = get_machine_keyword(current_input_json, training_json, default_input_json, "compress")
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
     user_machine_keyword = None if isinstance(user_machine_keyword, bool) else user_machine_keyword
@@ -128,8 +142,8 @@ def main(
     logging.debug(f"user_machine_keyword: {user_machine_keyword}")
     logging.debug(f"machine_spec: {machine_spec}")
 
-    merged_input_json["user_machine_keyword_compress"] = user_machine_keyword
-    logging.debug(f"merged_input_json: {merged_input_json}")
+    current_input_json["user_machine_keyword_compress"] = user_machine_keyword
+    logging.debug(f"current_input_json: {current_input_json}")
 
     if fake_machine is not None:
         logging.info(f"Pretending to be on: '{fake_machine}'.")
@@ -153,13 +167,13 @@ def main(
 
     # Prep and launch DP Compress
     completed_count = 0
-    walltime_approx_s = 7200
+    walltime_approx_s = 3900
     for nnp in range(1, main_json["nnp_count"] + 1):
         local_path = current_path / f"{nnp}"
 
         check_file_existence(local_path / "model.ckpt.index")
 
-        job_file = replace_in_slurm_file_general(master_job_file, machine_spec, walltime_approx_s, machine_walltime_format, merged_input_json["job_email"])
+        job_file = replace_in_slurm_file_general(master_job_file, machine_spec, walltime_approx_s, machine_walltime_format, current_input_json["job_email"])
         job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_VERSION_", f"{training_json['deepmd_model_version']}")
         job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_MODEL_", f"graph_{nnp}_{padded_curr_iter}")
 
@@ -190,10 +204,10 @@ def main(
     if completed_count == main_json["nnp_count"]:
         training_json["is_compress_launched"] = True
 
-    # Dump the JSON files (main, training and merged input)
+    # Dump the JSON files (main, training and current input)
     write_json_file(main_json, (control_path / "config.json"), read_only=True)
     write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"), read_only=True)
-    backup_and_overwrite_json_file(merged_input_json, (current_path / "used_input.json"), read_only=True)
+    backup_and_overwrite_json_file(current_input_json, (current_path / "used_input.json"), read_only=True)
 
     # End
     logging.info(f"-" * 88)
@@ -208,8 +222,8 @@ def main(
     # Cleaning
     del current_path, control_path, training_path
     del default_input_json, default_input_json_present, user_input_json, user_input_json_present, user_input_json_filename
-    del walltime_approx_s, user_machine_keyword
-    del main_json, merged_input_json, training_json
+    del user_machine_keyword, walltime_approx_s
+    del main_json, current_input_json, training_json
     del curr_iter, padded_curr_iter
     del machine, machine_spec, machine_walltime_format, machine_launch_command, machine_job_scheduler
 
