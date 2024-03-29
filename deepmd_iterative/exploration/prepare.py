@@ -83,15 +83,9 @@ def main(
         current_input_json[key] = None
     logging.debug(f"current_input_json: {current_input_json}")
 
-    # # Make a deepcopy of it to create the merged input JSON
-    # current_input_json = copy.deepcopy(user_input_json)
-
     # Get control path and load the main JSON
     control_path = training_path / "control"
     main_json = load_json_file((control_path / "config.json"))
-
-    # Get extra needed paths
-    jobs_path = deepmd_iterative_path / "assets" / "jobs" / current_step
 
     # Load the previous exploration and training JSON
     if curr_iter > 0:
@@ -216,7 +210,7 @@ def main(
 
         current_input_json["job_email"] = get_key_in_dict("job_email", user_input_json, previous_exploration_json, default_input_json)
 
-        del jobs_path, job_file_name
+        del job_file_name
     del exploration_type
 
     # Preparation of the exploration
