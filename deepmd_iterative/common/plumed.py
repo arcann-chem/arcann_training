@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/04
+Last modified: 2024/03/30
 
 The plumed module provides functions to manipulate PLUMED data (as list of strings).
 
@@ -15,6 +15,7 @@ Functions
 analyze_plumed_file_for_movres(plumed_lines: List[str]) -> Tuple[bool, Union[int, bool]]
     A function to analyze a Plumed file to extract information about the MOVINGRESTRAINT keyword and the last STEP value used.
 """
+# TODO: Homogenize the docstrings for this module
 
 # Standard library modules
 import re
@@ -24,6 +25,7 @@ from typing import List, Tuple, Union
 from deepmd_iterative.common.utils import catch_errors_decorator
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def analyze_plumed_file_for_movres(
     plumed_lines: List[str],

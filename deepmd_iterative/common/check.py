@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/28
+Last modified: 2024/03/30
 
 This module contains functions for checking the availability of certain commands on the system, as well as a function for validating the current working directory during the execution of a specific step.
 
@@ -19,6 +19,7 @@ check_vmd(vmd_path: str = None) -> str
 validate_step_folder(step_name: str) -> None
     Check if the current directory matches the expected directory for the given step.
 """
+# TODO: Homogenize the docstrings for this module
 
 # Standard library modules
 import logging
@@ -170,6 +171,7 @@ def validate_step_folder(step_name: str) -> None:
         raise ValueError(error_msg)
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def check_dcd_is_valid(dcd_path: Path, vmd_bin: Path) -> bool:
     """
@@ -207,6 +209,7 @@ def check_dcd_is_valid(dcd_path: Path, vmd_bin: Path) -> bool:
             return False
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def check_nc_is_valid(nc_path: Path, vmd_bin: Path) -> bool:
     """

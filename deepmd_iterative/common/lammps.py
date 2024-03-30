@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/27
+Last modified: 2024/03/30
 
 The lammps module provides functions to manipulate LAMMPS data (as list of strings).
 
@@ -15,6 +15,7 @@ Functions
 read_lammps_data(lines: List[str],) -> Tuple(int, int, np.ndarray, Dict[int], np.ndarray)
     Read LAMMPS data file and extract required information.
 """
+# TODO: Homogenize the docstrings for this module
 
 # Standard library modules
 from pathlib import Path

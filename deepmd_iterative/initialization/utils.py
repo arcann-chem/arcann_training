@@ -6,11 +6,12 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/28
+Last modified: 2024/03/30
 
 generate_main_json(user_input_json: Dict, default_input_json: Dict) -> Tuple[Dict, Dict, str]
     A function to generate the main JSON by combining values from the user input JSON and the default JSON.
 """
+# TODO: Homogenize the docstrings for this module
 
 # Standard library modules
 import logging
@@ -87,6 +88,7 @@ def generate_main_json(user_input_json: Dict, default_input_json: Dict) -> Tuple
     return main_json, merged_input_json, str(main_json["current_iteration"]).zfill(3)
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def check_properties_file(file_path: Path) -> dict:
     """
@@ -167,6 +169,7 @@ def check_properties_file(file_path: Path) -> dict:
     return combined
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def check_lmp_properties(lmp_file: Path, properties: Dict) -> bool:
     """
@@ -212,6 +215,7 @@ def check_lmp_properties(lmp_file: Path, properties: Dict) -> bool:
     return True
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def check_dptrain_properties(user_files_path: Path, properties_dict: Dict):
     dptrain_list = []
@@ -235,7 +239,7 @@ def check_dptrain_properties(user_files_path: Path, properties_dict: Dict):
                 error_msg = f"Type {type_dptrain} not in properties or order is incorrect. Check your {dptrain}"
                 raise ValueError(error_msg)
 
-
+# TODO: Add tests for this function
 @catch_errors_decorator
 def check_typeraw_properties(type_raw_path, properties_dict):
     type_raw = np.genfromtxt(type_raw_path, dtype=np.int32)

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/13
+Last modified: 2024/03/30
 
 The filesystem module provides functions to handle file and directory management
 
@@ -33,6 +33,7 @@ remove_tree(directory_path: Path) -> None
 remove_all_symlink(directory_path: Path) -> None
     A function to recursively removes symbolic links within a directory and its subdirectories.
 """
+# TODO: Homogenize the docstrings for this module
 
 # Standard library modules
 import logging

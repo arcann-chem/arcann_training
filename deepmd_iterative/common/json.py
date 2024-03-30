@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/27
+Last modified: 2024/03/30
 
 The json module provides functions to manipulate JSON data (as dict).
 
@@ -33,6 +33,7 @@ write_json_file(json_dict: Dict, file_path: Path, enable_logging: bool = True, *
 convert_control_to_input(control_json: Dict, main_json: Dict) -> Dict:
     A functin to convert control JSON data to a input JSON.
 """
+# TODO: Homogenize the docstrings for this module
 
 # Standard library modules
 import json
@@ -360,6 +361,7 @@ def write_json_file(
         raise Exception(error_msg)
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def convert_control_to_input(control_json: Dict, main_json: Dict) -> Dict:
     """
@@ -397,6 +399,7 @@ def convert_control_to_input(control_json: Dict, main_json: Dict) -> Dict:
     return input_json
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def replace_values_by_key_name(d: Union[Dict[str, Any], List[Any]], key_name: str, new_value: Any, parent_key: str = "") -> None:
     """

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/29
+Last modified: 2024/03/30
 
 Functions
 ---------
@@ -40,6 +40,7 @@ get_last_frame_number(model_deviation: np.ndarray, sigma_high_limit: float, dist
 update_system_nb_steps_factor(previous_json: Dict, system_auto_index: int) -> int
     Calculates a ratio based on information from a dictionary and returns a multiplying factor for system_nb_steps.
 """
+# TODO: Homogenize the docstrings for this module
 
 # Standard library modules
 import subprocess
@@ -55,6 +56,7 @@ from deepmd_iterative.common.utils import catch_errors_decorator
 from deepmd_iterative.common.json import convert_control_to_input
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def generate_input_exploration_json(
     user_input_json: Dict,
@@ -197,6 +199,7 @@ def generate_input_exploration_json(
     return merged_input_json
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def get_system_exploration(merged_input_json: Dict, system_auto_index: int) -> Tuple[
     str,
@@ -263,6 +266,7 @@ def get_system_exploration(merged_input_json: Dict, system_auto_index: int) -> T
     return tuple(system_values)
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def generate_input_exploration_deviation_json(
     user_input_json: Dict,
@@ -361,6 +365,7 @@ def generate_input_exploration_deviation_json(
     return merged_input_json
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def get_system_deviation(merged_input_json: Dict, system_auto_index: int) -> Tuple[
     Union[float, int],
@@ -401,6 +406,7 @@ def get_system_deviation(merged_input_json: Dict, system_auto_index: int) -> Tup
     return tuple(system_values)
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def generate_input_exploration_disturbed_json(
     user_input_json: Dict,
@@ -532,6 +538,7 @@ def generate_input_exploration_disturbed_json(
     return merged_input_json
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def get_system_disturb(merged_input_json: Dict, system_auto_index: int) -> Tuple[
     Union[float, int],
@@ -567,6 +574,7 @@ def get_system_disturb(merged_input_json: Dict, system_auto_index: int) -> Tuple
     return tuple(system_values)
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def generate_starting_points(
     exploration_type: str,

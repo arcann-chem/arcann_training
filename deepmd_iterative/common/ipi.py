@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/04
+Last modified: 2024/03/30
 
 The ipi module provides functions to manipulate i-PI data (as XML tree).
 
@@ -15,6 +15,7 @@ Functions
 get_temperature_from_ipi_xml(input_file: str) -> float
     A function to extract the temperature value from an XML file and returns it as a float.
 """
+# TODO: Homogenize the docstrings for this module
 
 # Standard library modules
 import xml.etree.ElementTree as ET

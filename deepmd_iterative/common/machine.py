@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/16
+Last modified: 2024/03/30
 
 The machine module provides functions for machine operations.
 
@@ -30,6 +30,7 @@ get_machine_from_configs(machine_configs: List[Dict], machine_short_name: str = 
 get_machine_spec_for_step(deepmd_iterative_path: Path, training_path: Path, step: str, input_machine_shortname: str = None, user_machine_keyword: Union[str, List[str]] = None, check_only: bool = False) -> Tuple[str, Dict[str, Any], str, str]
     A function to returns the machine specification for a given step and machine.
 """
+# TODO: Homogenize the docstrings for this module
 
 # Standard library modules
 import socket
@@ -75,7 +76,6 @@ def get_host_name() -> str:
             return hostname
 
 
-# TODO Test will fail
 # Unittested
 @catch_errors_decorator
 def assert_same_machine(user_machine_keyword: str, control_json: Dict, step: str) -> None:
@@ -184,6 +184,7 @@ def get_machine_keyword(input_json: Dict, previous_json: Dict, default_json: Dic
     return value
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def get_machine_config_files(deepmd_iterative_path: Path, training_path: Path) -> List[Dict]:
     """
@@ -265,6 +266,7 @@ def get_machine_from_configs(machine_configs: List[Dict], machine_short_name: st
     raise ValueError(error_msg)
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def get_machine_spec_for_step(
     deepmd_iterative_path: Path,

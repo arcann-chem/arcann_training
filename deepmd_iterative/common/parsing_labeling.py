@@ -6,8 +6,9 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2024/03/01
-Last modified: 2024/03/25
+Last modified: 2024/03/30
 """
+# TODO: Homogenize the docstrings for this module
 
 # Standard library modules
 import logging
@@ -20,6 +21,7 @@ import numpy as np
 from deepmd_iterative.common.utils import catch_errors_decorator
 
 
+# TODO: Add tests for this function
 def extract_and_convert_energy(energy_in, energy_out, system_candidates_not_skipped_counter, factor=1.0, program=None, version=None):
     if program == "cp2k":
         pattern = r"ENERGY\|.*?([-+]?\d*\.\d+(?:[eE][-+]?\d+)?)"
@@ -37,6 +39,7 @@ def extract_and_convert_energy(energy_in, energy_out, system_candidates_not_skip
         energy_out[system_candidates_not_skipped_counter - 1] = energy
 
 
+# TODO: Add tests for this function
 def extract_and_convert_coordinates(coordinates_in, coordinates_out, system_candidates_not_skipped_counter, factor=1.0):
     del coordinates_in[0:2]
     coordinates_in = [" ".join(_.replace("\n", "").split()) for _ in coordinates_in]
@@ -46,6 +49,7 @@ def extract_and_convert_coordinates(coordinates_in, coordinates_out, system_cand
     return coordinates_out
 
 
+# TODO: Add tests for this function
 def extract_and_convert_box_volume(input, box_out, volume_out, system_candidates_not_skipped_counter, factor=1.0, program=None, version=None):
     if program == "cp2k":
         cell = [float(_) for _ in re.findall(r"\d+\.\d+", [_ for _ in input if "ABC" in _][0])]
@@ -63,6 +67,7 @@ def extract_and_convert_box_volume(input, box_out, volume_out, system_candidates
         return box_out, volume_out
 
 
+# TODO: Add tests for this function
 def extract_and_convert_forces(forces_in, forces_out, system_candidates_not_skipped_counter, factor=1.0, program=None, version=None):
     if program == "cp2k":
         del forces_in[0:4]
@@ -84,6 +89,7 @@ def extract_and_convert_forces(forces_in, forces_out, system_candidates_not_skip
         return forces_out
 
 
+# TODO: Add tests for this function
 def extract_and_convert_virial(stress_in, virial_out, system_candidates_not_skipped_counter, volume, factor=1.0, program=None, version=None):
     if program == "cp2k":
         if version < 8 and version >= 6:
@@ -132,6 +138,7 @@ def extract_and_convert_virial(stress_in, virial_out, system_candidates_not_skip
             return virial_out, False
 
 
+# TODO: Add tests for this function
 def extract_and_convert_wannier(wannier_in, wannier_out, system_candidates_not_skipped_counter, nb_atom, wannier_not_converged, factor=1.0, program=None, version=None):
     if program == "cp2k":
         del wannier_in[0 : 2 + nb_atom]

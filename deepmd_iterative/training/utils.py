@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/29
+Last modified: 2024/03/30
 
 The utils module provides functions for the training step.
 
@@ -31,6 +31,7 @@ validate_deepmd_config(training_config) -> None
     A function to validate the provided training configuration for a DeePMD model.
 
 """
+# TODO: Homogenize the docstrings for this module
 
 # Standard library modules
 import copy

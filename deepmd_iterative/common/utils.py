@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/28
+Last modified: 2024/03/30
 
 The utils module provides helper functions.
 
@@ -18,6 +18,8 @@ catch_errors_decorator(func: Callable[..., Any]) -> Callable[..., Any]
 convert_seconds_to_hh_mm_ss(seconds: float) -> str
     A function to convert a time duration in seconds to the format of HH:MM:SS.
 """
+# TODO: Homogenize the docstrings for this module
+
 
 # Standard library modules
 import logging
@@ -86,6 +88,7 @@ def convert_seconds_to_hh_mm_ss(seconds: float) -> str:
     return "%d:%02d:%02d" % (hours, minutes, seconds)
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def natural_sort_key(s):
     if not isinstance(s, str):

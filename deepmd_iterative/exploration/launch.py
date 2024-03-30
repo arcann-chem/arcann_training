@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/29
+Last modified: 2024/03/30
 """
 
 # Standard library modules
@@ -18,8 +18,8 @@ from pathlib import Path
 
 # Local imports
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.json import backup_and_overwrite_json_file, load_default_json_file, load_json_file, write_json_file
-from deepmd_iterative.common.machine import assert_same_machine, get_machine_keyword, get_machine_spec_for_step
+from deepmd_iterative.common.json import load_json_file, write_json_file
+from deepmd_iterative.common.machine import assert_same_machine, get_machine_spec_for_step
 
 
 def main(
@@ -47,8 +47,9 @@ def main(
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
 
-    # Load the input JSON is present, load it
+    # Load the input JSON
     current_input_json = load_json_file((current_path / "used_input.json"), abort_on_error=True)
+    logging.debug(f"current_input_json: {current_input_json}")
 
     # Get control path, load the main JSON and the exploration JSON
     control_path = training_path / "control"
@@ -56,7 +57,9 @@ def main(
     exploration_json = load_json_file((control_path / f"exploration_{padded_curr_iter}.json"))
 
     user_machine_keyword = current_input_json["user_machine_keyword_exp"]
-    # From the keyword (or default), get the machine spec (or for the fake one)
+    logging.debug(f"user_machine_keyword: {user_machine_keyword}")
+
+    # From the keyword, get the machine spec (or for the fake one)
     (
         machine,
         machine_walltime_format,

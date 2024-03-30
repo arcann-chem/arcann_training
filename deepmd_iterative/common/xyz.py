@@ -6,26 +6,27 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/06
+Last modified: 2024/03/30
 
 The xyz module provides functions to manipulate XYZ data (as np.ndarray).
 
 Functions
 ---------
-parse_cell_from_comment(comment_line: str) -> np.ndarray
-    A function to parse the cell informations from a comment line.
+parse_xyz_trajectory_file(trajectory_file_path: Path, is_extended: bool = True) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, List]
+    A function to parse an extended XYZ format trajectory file, returning information about the atomic structure throughout the trajectory.
 
-read_xyz_trajectory(file_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray]
-    A function to read an XYZ format trajectory file and return the number of atoms, atomic symbols, and atomic coordinates.
+parse_extended_format(comment_line: str) -> Tuple[List[float], bool]
+    A function to parse the comment line of an extended XYZ file for lattice and properties information.
 
-write_xyz_frame(file_path: Path, frame_idx: int, num_atoms: np.ndarray, atom_coords: np.ndarray, atom_symbols: np.ndarray) -> None
-    A function to write the XYZ coordinates of a specific frame of a trajectory to a file.
+write_xyz_frame(trajectory_file_path: Path, frame_idx: int, atom_counts: np.ndarray, atomic_symbols: np.ndarray, atomic_coordinates: np.ndarray, cell_info: np.ndarray, comments: List[str]) -> None
+    A function to write the XYZ coordinates of a specific frame from a trajectory to a file, including extended format lattice information if provided.
 """
+# TODO: Homogenize the docstrings for this module
 
 # Standard library modules
 import re
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, List
 
 # Third-party modules
 import numpy as np
@@ -33,239 +34,174 @@ import numpy as np
 # Local imports
 from deepmd_iterative.common.utils import catch_errors_decorator
 
-
-# Unittested
+# TODO: Add tests for this function
 @catch_errors_decorator
-def parse_cell_from_comment(comment_line: str) -> np.ndarray:
+def parse_xyz_trajectory_file(trajectory_file_path: Path, is_extended: bool = True) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, List]:
     """
-    Parses the cell informations from a comment line.
-
-    This function attempts to match the input comment line with specific patterns to extract cell information.
-    It first tries to match the pattern with 9 numbers and then with 3 numbers.
+    Parses an XYZ format trajectory file, returning information about the atomic structure throughout the trajectory.
 
     Parameters
     ----------
-    comment_line : str
-        The comment line containing cell information.
-
-    Returns
-    -------
-    np.ndarray or False
-        If the comment line matches any pattern, returns an array representing the cell;
-        otherwise, returns False.
-
-    Examples
-    --------
-    >>> parse_cell_from_comment("ABC = 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0")
-    array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0])
-
-    >>> parse_cell_from_comment("ABC = 1.0 2.0 3.0")
-    array([1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 3.0])
-
-    >>> parse_cell_from_comment("Invalid format")
-    False
-    """
-    nine_numbers_match = re.match(
-        r"ABC\s*=\s*(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s*$",
-        comment_line,
-    )
-    if nine_numbers_match:
-        return np.array([float(num) for num in nine_numbers_match.groups()])
-
-    three_numbers_match = re.match(r"ABC\s*=\s*(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s*$", comment_line)
-    if three_numbers_match:
-        three_cell = np.array([float(num) for num in three_numbers_match.groups()])
-        cell = np.zeros(9)
-        for i, f in enumerate([0, 4, 8]):
-            cell[f] = three_cell[i]
-        return cell
-
-    return False
-
-
-# Unittested
-@catch_errors_decorator
-def read_xyz_trajectory(
-    file_path: Path,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Read an XYZ format trajectory file and return the number of atoms, atomic symbols, atomic coordinates, and cell.
-
-    Parameters
-    ----------
-    file_path : Path
+    trajectory_file_path : Path
         The path to the trajectory file.
+    is_extended : bool, optional
+        Indicates if the file is in extended XYZ format which includes lattice information and properties.
 
     Returns
     -------
-    Tuple[np.ndarray, np.ndarray, np.ndarray]
-        A tuple containing the following numpy arrays:
-        - num_atoms (np.ndarray): Array of the number of atoms for each step with dim(nb_step)
-        - atom_symbols (np.ndarray): Array of atomic symbols with dim(nb_step, num_atoms)
-        - atom_coords (np.ndarray): Array of atomic coordinates with dim(nb_step, num_atoms, 3)
-        - cell_info (np.ndarray): Array of cell parameters with dim(nb_step, 9) or False if not present.
+    Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, List[str]]
+        A tuple containing the following:
+        - atom_counts: An array of the number of atoms for each frame.
+        - atomic_symbols: An array of atomic symbols for each frame, with each symbol up to 3 characters.
+        - atomic_coordinates: An array of atomic coordinates for each frame.
+        - cell_info: An array of cell lattice information for each frame (only if is_extended is True and valid).
+        - comments: A list of comments for each frame.
 
     Raises
     ------
     FileNotFoundError
-        If the specified file does not exist.
+        If the trajectory file does not exist.
     TypeError
-        If the number of atoms is not an integer.
+        If the number of atoms is not an integer or extended format is incorrect.
     ValueError
-        If the number of atoms is not constant throughout the trajectory file.
-        If the file format is incorrect.
-        If the comment line format is inconsistent.
+        If the number of atoms changes throughout the file or if the file format is incorrect.
     """
     # Check if the file exists
-    if not file_path.is_file():
+    if not trajectory_file_path.is_file():
         # If the file does not exist, log an error message and abort
-        error_msg = f"File not found '{file_path.name}' not in '{file_path.parent}'."
+        error_msg = f"File not found {trajectory_file_path.name} not in {trajectory_file_path.parent}"
         raise FileNotFoundError(error_msg)
 
     # Initialize the output lists
-    num_atoms_list = []
-    atom_symbols_list = []
-    atom_coords_list = []
-    cell_info_list = []
+    atom_counts, atomic_symbols, atomic_coordinates, cell_info, comments = [], [], [], [], []
 
-    # Open the file and read in the lines
-    with file_path.open("r") as f:
-        lines = f.readlines()
+    # Open the file and read in the file_lines
+    with trajectory_file_path.open("r") as f:
+        lines  = f.readlines()
 
         # Loop through each line in the file
         i = 0
         while i < len(lines):
             # First line contains the total number of atoms in the molecule
-            num_atoms_str = lines[i].strip()
-            if not re.match(r"^\d+$", num_atoms_str):
-                error_msg = f"Incorrect file format: number of atoms must be an '{type(1)}'."
+            atom_count_str = lines[i].strip()
+            if not re.match(r"^\d+$", atom_count_str):
+                error_msg = "Incorrect file format: number of atoms must be an integer."
                 raise TypeError(error_msg)
-            num_atoms = int(num_atoms_str)
-            num_atoms_list.append(num_atoms)
+            atom_count  = int(atom_count_str)
+            atom_counts.append(atom_count)
 
-            # Second line contains ABC = xx xy xz yx yy yz zx zy zz or ABC = a b c or comments
-            comment_line = lines[i + 1].strip()
-            step_cell = parse_cell_from_comment(comment_line)
-            cell_info_list.append(step_cell)
+            # Second line is the comment line (optional)
+            comment = lines[i + 1].strip()
+            comments.append(comment)
 
-            # Initialize arrays to store the symbols and coordinates for the current timestep
-            step_atom_symbols = np.zeros((num_atoms,), dtype="<U2")
-            step_atom_coords = np.zeros((num_atoms, 3))
+            if is_extended:
+                lattice, properties = parse_extended_format(comment)
+                cell_info.append(lattice)
 
-            # Loop through the lines for the current timestep
-            for j in range(num_atoms):
-                # Parse the line to get the symbol and coordinates
-                try:
-                    fields = lines[i + j + 2].split()
-                except IndexError:
-                    error_msg = f"Incorrect file format: end of file reached prematurely."
-                    raise IndexError(error_msg)
+            # Initialize arrays to store the symbols and coordinates for the current timeframe
+            symbols_frame = np.zeros((atom_count,), dtype="<U3")
+            coordinates_frame = np.zeros((atom_count, 3))
 
-                if len(fields) != 4:
-                    error_msg = f"Incorrect file format: each line after the first two must contain an atomic symbol and three floating point numbers."
-                    raise ValueError(error_msg)
+            for j in range(atom_count):
+                line = lines[i + j + 2].split()
 
-                symbol = fields[0]
-                if not re.match(r"^[A-Za-z]{1,2}$", symbol):
-                    error_msg = f"Incorrect file format: invalid atomic symbol '{symbol}' on line {i+j+2}."
-                    raise ValueError(error_msg)
-                try:
-                    x, y, z = map(float, fields[1:4])
-                except ValueError:
-                    error_msg = f"Incorrect file format: could not parse coordinates on line {i+j+2}."
-                    raise ValueError(error_msg)
+                if len(line) != 4:
+                    raise ValueError("Incorrect file format: expected an atomic symbol followed by three coordinates.")
 
-                # Add the symbol and coordinates to the arrays
-                step_atom_symbols[j] = symbol
-                step_atom_coords[j] = [x, y, z]
+                symbol, x, y, z = line[0], float(line[1]), float(line[2]), float(line[3])
+                symbols_frame[j] = symbol
+                coordinates_frame[j] = [x, y, z]
 
-            # Add the arrays for the current timestep to the output lists
-            atom_symbols_list.append(step_atom_symbols)
-            atom_coords_list.append(step_atom_coords)
+            atomic_symbols.append(symbols_frame)
+            atomic_coordinates.append(coordinates_frame)
 
-            # Increment the line index by num_atoms + 2 (to skip the two lines for the current timestep)
-            i += num_atoms + 2
+            i += atom_count + 2
 
-    # Check if the number of atoms is constant throughout the trajectory file.
-    if len(set(num_atoms_list)) > 1:
-        error_msg = f"Number of atoms is not constant throughout the trajectory file."
-        raise ValueError(error_msg)
+    if len(set(atom_counts)) > 1:
+        raise ValueError("Number of atoms is not constant throughout the trajectory file.")
 
-    valid_cell_types = {np.ndarray, bool}
-    cell_types = {type(cell) for cell in cell_info_list}
-    if len(cell_types) > 1 or not (cell_types <= valid_cell_types):
-        error_msg = f"The comment line format is inconsistent."
-        raise TypeError(error_msg)
-
-    # Convert the lists to numpy arrays.
-    num_atoms = np.array(num_atoms_list, dtype=int)
-    atom_symbols = np.array(atom_symbols_list)
-    atom_coords = np.array(atom_coords_list)
-    cell_info = np.array(cell_info_list)
-
-    return num_atoms, atom_symbols, atom_coords, cell_info
+    return (np.array(atom_counts), np.array(atomic_symbols), np.array(atomic_coordinates), np.array(cell_info) if is_extended else np.array([]), comments)
 
 
-# Unittested
+# TODO: Add tests for this function
 @catch_errors_decorator
-def write_xyz_frame(
-    file_path: Path,
-    frame_idx: int,
-    num_atoms: np.ndarray,
-    atom_symbols: np.ndarray,
-    atom_coords: np.ndarray,
-    cell_info: np.ndarray,
-) -> None:
+def parse_extended_format(comment_line: str) -> Tuple[List[float], bool]:
     """
-    Write the XYZ coordinates of a specific frame of a trajectory to a file.
+    Parses the comment line of an extended XYZ file for lattice and properties information.
 
     Parameters
     ----------
-    file_path : Path
-        The file path to write the XYZ coordinates to.
-    frame_idx : int
-        The index of the frame to write the XYZ coordinates for.
-    num_atoms : np.ndarray
-        An array containing the number of atoms in each frame of the trajectory with shape (nb_step).
-    atom_symbols : np.ndarray
-        An array containing the atomic symbols for each atom in each frame of the trajectory with shape (nb_step, num_atoms).
-    atom_coords : np.ndarray
-        An array containing the coordinates of each atom in each frame of the trajectory with shape (nb_step, num_atoms, 3).
-    atom_coords : np.ndarray
-        An array containing the coordinates of each atom in each frame of the trajectory with shape (nb_step, num_atoms, 3).
-    cell_info : np.ndarray
-        An array containing the cell information for each frame of the trajectory with shape (nb_step, 9).
+    comment_line : str
+        The comment line containing lattice and properties information.
 
     Returns
     -------
-    None
+    Tuple[List[float], bool]
+        Lattice information as a list of floats and a boolean indicating if properties are correctly formatted.
+    """
+    lattice_regex = r"Lattice=\"((?:[-\d\.]+\s+){8}[-\d\.]+)\""
+    properties_regex = r"Properties=species:S:1:pos:R:3"
+
+    lattice_match = re.search(lattice_regex, comment_line)
+    properties_match = re.search(properties_regex, comment_line)
+
+    if lattice_match and properties_match:
+        lattice_floats = [float(value) for value in lattice_match.group(1).split()]
+        return lattice_floats, True
+    else:
+        error_msg = f"Incorrect extended format: comment '{comment_line}'."
+        raise ValueError(error_msg)
+
+
+# TODO: Add tests for this function
+@catch_errors_decorator
+def write_xyz_frame(trajectory_file_path: Path, frame_idx: int, atom_counts: np.ndarray, atomic_symbols: np.ndarray, atomic_coordinates: np.ndarray, cell_info: np.ndarray, comments: List[str]) -> None:
+    """
+    Writes the XYZ coordinates of a specific frame from a trajectory to a file, including extended format lattice information if provided.
+
+    Parameters
+    ----------
+    trajectory_file_path : Path
+        The file path where the XYZ coordinates will be written.
+    frame_idx : int
+        The index of the frame to write the XYZ coordinates for.
+    atom_counts : np.ndarray
+        An array containing the number of atoms in each frame of the trajectory.
+    atomic_symbols : np.ndarray
+        An array containing the atomic symbols for each atom in each frame of the trajectory.
+    atomic_coordinates : np.ndarray
+        An array containing the coordinates of each atom in each frame of the trajectory.
+    cell_info : np.ndarray
+        An array containing the cell lattice information for each frame.
+    comments : List[str]
+        A list of comments for each frame.
 
     Raises
     ------
     IndexError
         If the specified frame index is out of range.
     """
-    # Check that the specified frame index is within the range of available frames
-    if frame_idx >= num_atoms.size:
-        error_msg = f"Frame index out of range: {frame_idx} (number of frames: {num_atoms.size})."
-        raise IndexError(error_msg)
-    # Open the specified file in write mode
-    with file_path.open("w") as xyz_file:
-        # Write the number of atoms in the specified frame to the file
-        xyz_file.write(f"{num_atoms[frame_idx]}\n")
-        # Write a line indicating the index of the frame or if the cell is defined
-        if isinstance(cell_info[frame_idx], np.bool_) and not cell_info[frame_idx]:
-            xyz_file.write(f"Frame index: {frame_idx}\n")
-        elif isinstance(cell_info, bool):
-            xyz_file.write(f"Frame index: {frame_idx}\n")
-        else:
-            print(cell_info[frame_idx])
-            cell = " ".join([f"{value:.4f}" for value in cell_info[frame_idx]])
-            xyz_file.write(f"ABC = {cell}\n")
 
-        # Loop over each atom in the specified frame
-        for ii in range(num_atoms[frame_idx]):
-            # Write the atomic symbol and Cartesian coordinates to the file in XYZ format
-            xyz_file.write(f"{atom_symbols[frame_idx, ii]} " f"{atom_coords[frame_idx, ii, 0]:.6f} " f"{atom_coords[frame_idx, ii, 1]:.6f} " f"{atom_coords[frame_idx, ii, 2]:.6f}\n")
-    # Close the file
-    xyz_file.close()
+    # Validate frame index
+    if frame_idx >= atom_counts.shape[0]:
+        raise IndexError(f"Frame index out of range: {frame_idx} (total frames: {atom_counts.shape[0]})")
+
+    # Start writing to the file
+    with trajectory_file_path.open("w") as file:
+        # Write the atom count for the frame
+        file.write(f"{atom_counts[frame_idx]}\n")
+
+        # Write the comment line with cell information if available
+        if cell_info.size > 0:
+            cell_line = " ".join(map(str, cell_info[frame_idx]))
+            comment_line = f'Lattice="{cell_line}" Properties=species:S:1:pos:R:3'
+        else:
+            comment_line = comments[frame_idx] if frame_idx < len(comments) else ""
+        file.write(f"{comment_line}\n")
+
+        # Write atomic symbols and coordinates for the frame
+        for atom_index in range(atom_counts[frame_idx]):
+            symbol = atomic_symbols[frame_idx, atom_index]
+            coords = atomic_coordinates[frame_idx, atom_index]
+            coords_line = " ".join(f"{coord:.6f}" for coord in coords)
+            file.write(f"{symbol} {coords_line}\n")

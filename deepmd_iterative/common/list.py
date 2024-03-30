@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/27
+Last modified: 2024/03/30
 
 The utils module provides functions to manipulate lists.
 
@@ -24,6 +24,7 @@ string_list_to_textfile(file_path: Path, string_list: List[str]) -> None
 textfile_to_string_list(file_path: Path) -> List[str]
     A function to read the contents of a text file and return a list of strings.
 """
+# TODO: Homogenize the docstrings for this module
 
 # Standard library modules
 from pathlib import Path
