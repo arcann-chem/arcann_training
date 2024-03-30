@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/14
+Last modified: 2024/03/30
 
 Functions
 ---------
@@ -16,6 +16,7 @@ generate_input_labeling_json(user_input_json: Dict, previous_json: Dict, default
 get_system_labeling(merged_input_json: Dict, system_auto_index: int) -> Tuple[float, float, int, int, int]
     Returns a tuple of system labeling parameters based on the input JSON and system number.
 """
+
 # Standard library modules
 import logging
 from typing import Dict, List, Tuple
@@ -25,6 +26,7 @@ from deepmd_iterative.common.utils import catch_errors_decorator
 from deepmd_iterative.common.json import convert_control_to_input
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def generate_input_labeling_json(
     user_input_json: Dict,
@@ -145,10 +147,16 @@ def generate_input_labeling_json(
     return merged_input_json
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
-def get_system_labeling(
-    merged_input_json: Dict, system_auto_index: int
-) -> Tuple[str, float, float, int, int, int,]:
+def get_system_labeling(merged_input_json: Dict, system_auto_index: int) -> Tuple[
+    str,
+    float,
+    float,
+    int,
+    int,
+    int,
+]:
     """
     Return a tuple of system labeling parameters based on the input JSON and system index.
 
@@ -177,8 +185,8 @@ def get_system_labeling(
             The number of threads per MPI process.
     """
     system_values = []
-    for key in [ "labeling_program" ]:
-        system_values.append(merged_input_json[key][system_auto_index])
+    for key in ["labeling_program"]:
+        system_values.append(merged_input_json[key])
 
     for key in [
         "walltime_first_job_h",
