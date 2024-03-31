@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/28
+Last modified: 2024/03/31
 """
 
 # Standard library modules
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     logging.info(f"-" * 88)
     logging.info(f"-" * 88)
 
-    steps = ["initialization", "training", "exploration", "labeling"]
+    steps = ["initialization", "training", "exploration", "labeling", "test"]
     valid_phases = {}
     for step in steps:
         step_path = deepmd_iterative_path / step

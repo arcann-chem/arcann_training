@@ -59,5 +59,14 @@
         "nb_nodes": [1],
         "nb_mpi_per_node": [10],
         "nb_threads_per_mpi": [1]
+    },
+    "test":
+    {
+        "user_machine_keyword_test": false,
+        "user_machine_keyword_extract_test": false,
+        "job_email": "",
+        "job_walltime_h": 2.0,
+        "is_compressed": false,
+        "deepmd_model_version": 0.0
     }
 }
