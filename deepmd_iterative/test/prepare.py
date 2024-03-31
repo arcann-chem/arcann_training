@@ -237,7 +237,6 @@ def main(
         "is_prepared": True,
         "is_launched": False,
         "is_checked": False,
-        "is_extracted": False,
     }
 
     logging.info(f"-" * 88)
