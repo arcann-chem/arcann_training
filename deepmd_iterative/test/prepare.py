@@ -26,6 +26,7 @@ from deepmd_iterative.common.machine import get_machine_keyword, get_machine_spe
 from deepmd_iterative.common.slurm import replace_in_slurm_file_general
 from deepmd_iterative.common.filesystem import check_directory
 
+
 def main(
     current_step: str,
     current_phase: str,
@@ -259,6 +260,7 @@ def main(
     logging.debug(f"LOCAL")
     logging.debug(f"{locals()}")
     return 0
+
 
 if __name__ == "__main__":
     if len(sys.argv) == 4:

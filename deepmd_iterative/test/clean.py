@@ -93,7 +93,7 @@ def main(
         logging.info(f"Deleting empty directory: {current_path}")
         current_path.rmdir()
     if current_path.is_dir():
-        total_size = sum(f.stat().st_size for f in current_path.glob('**/*') if f.is_file())
+        total_size = sum(f.stat().st_size for f in current_path.glob("**/*") if f.is_file())
         total_size_mb = total_size / 1048576  # Convert size from bytes to megabytes
         logging.info(f"Size of {current_path}: {total_size_mb:.2f} megabytes")  # Update logging message
         del total_size, total_size_mb
