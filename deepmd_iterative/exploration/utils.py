@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/30
+Last modified: 2024/03/31
 
 Functions
 ---------
@@ -40,6 +40,7 @@ get_last_frame_number(model_deviation: np.ndarray, sigma_high_limit: float, dist
 update_system_nb_steps_factor(previous_json: Dict, system_auto_index: int) -> int
     Calculates a ratio based on information from a dictionary and returns a multiplying factor for system_nb_steps.
 """
+
 # TODO: Homogenize the docstrings for this module
 
 # Standard library modules

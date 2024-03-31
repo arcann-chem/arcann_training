@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/30
+Last modified: 2024/03/31
 
 The xyz module provides functions to manipulate XYZ data (as np.ndarray).
 
@@ -21,6 +21,7 @@ parse_extended_format(comment_line: str) -> Tuple[List[float], bool]
 write_xyz_frame(trajectory_file_path: Path, frame_idx: int, atom_counts: np.ndarray, atomic_symbols: np.ndarray, atomic_coordinates: np.ndarray, cell_info: np.ndarray, comments: List[str]) -> None
     A function to write the XYZ coordinates of a specific frame from a trajectory to a file, including extended format lattice information if provided.
 """
+
 # TODO: Homogenize the docstrings for this module
 
 # Standard library modules
@@ -33,6 +34,7 @@ import numpy as np
 
 # Local imports
 from deepmd_iterative.common.utils import catch_errors_decorator
+
 
 # TODO: Add tests for this function
 @catch_errors_decorator
@@ -77,7 +79,7 @@ def parse_xyz_trajectory_file(trajectory_file_path: Path, is_extended: bool = Tr
 
     # Open the file and read in the file_lines
     with trajectory_file_path.open("r") as f:
-        lines  = f.readlines()
+        lines = f.readlines()
 
         # Loop through each line in the file
         i = 0
@@ -87,7 +89,7 @@ def parse_xyz_trajectory_file(trajectory_file_path: Path, is_extended: bool = Tr
             if not re.match(r"^\d+$", atom_count_str):
                 error_msg = "Incorrect file format: number of atoms must be an integer."
                 raise TypeError(error_msg)
-            atom_count  = int(atom_count_str)
+            atom_count = int(atom_count_str)
             atom_counts.append(atom_count)
 
             # Second line is the comment line (optional)

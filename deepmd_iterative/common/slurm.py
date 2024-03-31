@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/30
+Last modified: 2024/03/31
 
 The slurm module provides functions to manipulate SLURM data (as list of strings).
 
@@ -15,6 +15,7 @@ Functions
 replace_in_slurm_file_general(slurm_file_master: List[str], machine_spec: Dict, walltime_approx_s: int, machine_walltime_format: str, slurm_email: str) -> List[str]
     A function to return a modified version of the provided Slurm file, with certain strings replaced based on the specified machine specifications and walltime.
 """
+
 # TODO: Homogenize the docstrings for this module
 
 # Standard library modules

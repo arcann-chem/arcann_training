@@ -6,8 +6,9 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2024/03/01
-Last modified: 2024/03/30
+Last modified: 2024/03/31
 """
+
 # TODO: Homogenize the docstrings for this module
 
 # Standard library modules

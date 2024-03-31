@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/29
+Last modified: 2024/03/31
 """
 
 # Standard library modules
@@ -264,7 +264,7 @@ def main(
                 average_per_step = (current_input_json["job_walltime_h"][system_auto_index] * 3600) / exploration_json["systems_auto"][system_auto]["nb_steps"]
             else:
                 logging.error(f"Missing input job_walltime_h for '{system_auto}', set to the default to calculcate mean_s_per_step.")
-                average_per_step = 3600. / exploration_json["systems_auto"][system_auto]["nb_steps"]
+                average_per_step = 3600.0 / exploration_json["systems_auto"][system_auto]["nb_steps"]
 
             exploration_json["systems_auto"][system_auto][timings_key] = average_per_step
             for timings_key in ["median_s_per_step", "stdeviation_s_per_step"]:

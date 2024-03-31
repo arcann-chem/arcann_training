@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/30
+Last modified: 2024/03/31
 
 The plumed module provides functions to manipulate PLUMED data (as list of strings).
 
@@ -15,6 +15,7 @@ Functions
 analyze_plumed_file_for_movres(plumed_lines: List[str]) -> Tuple[bool, Union[int, bool]]
     A function to analyze a Plumed file to extract information about the MOVINGRESTRAINT keyword and the last STEP value used.
 """
+
 # TODO: Homogenize the docstrings for this module
 
 # Standard library modules

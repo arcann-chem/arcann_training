@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/30
+Last modified: 2024/03/31
 
 The json module provides functions to manipulate JSON data (as dict).
 
@@ -33,6 +33,7 @@ write_json_file(json_dict: Dict, file_path: Path, enable_logging: bool = True, *
 convert_control_to_input(control_json: Dict, main_json: Dict) -> Dict:
     A functin to convert control JSON data to a input JSON.
 """
+
 # TODO: Homogenize the docstrings for this module
 
 # Standard library modules

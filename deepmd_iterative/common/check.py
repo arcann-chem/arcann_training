@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/30
+Last modified: 2024/03/31
 
 This module contains functions for checking the availability of certain commands on the system, as well as a function for validating the current working directory during the execution of a specific step.
 
@@ -19,6 +19,7 @@ check_vmd(vmd_path: str = None) -> str
 validate_step_folder(step_name: str) -> None
     Check if the current directory matches the expected directory for the given step.
 """
+
 # TODO: Homogenize the docstrings for this module
 
 # Standard library modules
