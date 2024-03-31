@@ -6,8 +6,9 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/30
+Last modified: 2024/03/31
 """
+
 # Standard library modules
 import copy
 import logging
@@ -21,6 +22,7 @@ from deepmd_iterative.common.filesystem import change_directory
 from deepmd_iterative.common.json import load_json_file, write_json_file
 from deepmd_iterative.common.machine import assert_same_machine, get_machine_spec_for_step
 
+
 def main(
     current_step: str,
     current_phase: str,
@@ -33,9 +35,7 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
-    )
+    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
@@ -98,9 +98,7 @@ def main(
     # Check if we can continue
     if labeling_json["is_launched"]:
         logging.critical(f"Already launched...")
-        continuing = input(
-            f"Do you want to continue?\n['Y' for yes, anything else to abort]\n"
-        )
+        continuing = input(f"Do you want to continue?\n['Y' for yes, anything else to abort]\n")
         if continuing == "Y":
             del continuing
         else:
@@ -119,12 +117,12 @@ def main(
 
     for system_auto in labeling_json["systems_auto"]:
         system_path = current_path / system_auto
-        if stop_launch_flag :
+        if stop_launch_flag:
             logging.info(f"Labeling - '{system_auto}' skipped (launch_all_jobs = False).")
             launched_count += 1
             continue
 
-        if (system_path/ f"job-array_{labeling_program_up}_label_{machine_spec['arch_type']}_{machine}_0.sh").is_file():
+        if (system_path / f"job-array_{labeling_program_up}_label_{machine_spec['arch_type']}_{machine}_0.sh").is_file():
             change_directory(system_path)
             try:
                 subprocess.run([machine_launch_command, f"./job-array_{labeling_program_up}_label_{machine_spec['arch_type']}_{machine}_0.sh"])
@@ -156,23 +154,17 @@ def main(
     # End
     logging.info(f"-" * 88)
     if launched_count == len(labeling_json["systems_auto"]):
-        logging.info(
-            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
-        )
+        logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
     else:
-        logging.critical(
-            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!"
-        )
+        logging.critical(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!")
         logging.critical(f"Some jobs did not launch correctly.")
         logging.critical(f"Please launch manually before continuing to the next step.")
-        logging.critical(
-            f"Replace the key 'is_launched' to 'True' in the 'labeling_{padded_curr_iter}.json'."
-        )
+        logging.critical(f"Replace the key 'is_launched' to 'True' in the 'labeling_{padded_curr_iter}.json'.")
     del launched_count
 
     # Cleaning
     del current_path, control_path, training_path
-    del user_input_json_filename,
+    del (user_input_json_filename,)
     del main_json, current_input_json, labeling_json
     del curr_iter, padded_curr_iter
     del machine, machine_walltime_format, machine_job_scheduler, machine_launch_command, user_machine_keyword, machine_spec

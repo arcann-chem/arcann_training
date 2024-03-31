@@ -6,8 +6,9 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/25
+Last modified: 2024/03/31
 """
+
 # Standard library modules
 import importlib
 import logging
@@ -19,27 +20,10 @@ from pathlib import Path
 import numpy as np
 
 # Local imports
-from deepmd_iterative.common.json import (
-    load_json_file,
-    write_json_file,
-)
-from deepmd_iterative.common.list import (
-    textfile_to_string_list,
-    string_list_to_textfile,
-)
-from deepmd_iterative.common.filesystem import (
-    check_file_existence,
-    remove_file,
-    remove_files_matching_glob,
-)
-from deepmd_iterative.common.parsing_labeling import (
-    extract_and_convert_energy,
-    extract_and_convert_forces,
-    extract_and_convert_virial,
-    extract_and_convert_wannier,
-    extract_and_convert_box_volume,
-    extract_and_convert_coordinates
-)
+from deepmd_iterative.common.json import load_json_file, write_json_file
+from deepmd_iterative.common.list import textfile_to_string_list, string_list_to_textfile
+from deepmd_iterative.common.filesystem import check_file_existence
+from deepmd_iterative.common.parsing_labeling import extract_and_convert_energy, extract_and_convert_forces, extract_and_convert_virial, extract_and_convert_wannier, extract_and_convert_box_volume, extract_and_convert_coordinates
 from deepmd_iterative.common.check import validate_step_folder
 
 # Import constants
@@ -50,9 +34,7 @@ try:
     Ha_to_eV = constants.physical_constants["atomic unit of electric potential"][0]
     Bohr_to_A = constants.physical_constants["Bohr radius"][0] / constants.angstrom
     au_to_eV_per_A = np.float64(Ha_to_eV / Bohr_to_A)
-    eV_per_A3_to_GPa = np.float64(
-        constants.eV / constants.angstrom**3 / constants.giga
-    )
+    eV_per_A3_to_GPa = np.float64(constants.eV / constants.angstrom**3 / constants.giga)
 except ImportError:
     import numpy as np
 
@@ -81,9 +63,7 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
-    )
+    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
@@ -101,7 +81,8 @@ def main(
     main_json = load_json_file((control_path / "config.json"))
     labeling_json = load_json_file((control_path / f"labeling_{padded_curr_iter}.json"))
 
-    labeling_program = labeling_json["labeling_json"]
+    labeling_program = labeling_json["labeling_program"]
+    logging.debug(f"labeling_program: {labeling_program}")
 
     # Check if we can continue
     if not labeling_json["is_checked"]:
@@ -113,16 +94,10 @@ def main(
     (training_path / "data").mkdir(exist_ok=True)
 
     for system_auto_index, system_auto in enumerate(labeling_json["systems_auto"]):
-        logging.info(
-            f"Processing system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})"
-        )
+        logging.info(f"Processing system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})")
 
-        system_candidates_count = labeling_json["systems_auto"][system_auto][
-            "candidates_count"
-        ]
-        system_candidates_skipped_count = labeling_json["systems_auto"][system_auto][
-            "candidates_skipped_count"
-        ]
+        system_candidates_count = labeling_json["systems_auto"][system_auto]["candidates_count"]
+        system_candidates_skipped_count = labeling_json["systems_auto"][system_auto]["candidates_skipped_count"]
 
         if system_candidates_count - system_candidates_skipped_count == 0:
             logging.debug(f"No label for this system {system_auto}, skipping")
@@ -134,30 +109,18 @@ def main(
         data_path.mkdir(exist_ok=True)
         (data_path / "set.000").mkdir(exist_ok=True)
 
-        energy_array_raw = np.zeros(
-            (system_candidates_count - system_candidates_skipped_count)
-        )
-        coord_array_raw = np.zeros(
-            (
-                system_candidates_count - system_candidates_skipped_count,
-                main_json["systems_auto"][system_auto]["nb_atm"] * 3,
-            )
-        )
-        box_array_raw = np.zeros(
-            (system_candidates_count - system_candidates_skipped_count, 9)
-        )
-        volume_array_raw = np.zeros(
-            (system_candidates_count - system_candidates_skipped_count)
-        )
+        energy_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count), dtype=np.float64)
+        coord_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, main_json["systems_auto"][system_auto]["nb_atm"] * 3), dtype=np.float64)
+        box_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, 9), dtype=np.float64)
+        volume_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count), dtype=np.float64)
         force_array_raw = np.zeros(
             (
                 system_candidates_count - system_candidates_skipped_count,
                 main_json["systems_auto"][system_auto]["nb_atm"] * 3,
-            )
+            ),
+            dtype=np.float64,
         )
-        virial_array_raw = np.zeros(
-            (system_candidates_count - system_candidates_skipped_count, 9)
-        )
+        virial_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, 9), dtype=np.float64)
 
         # Options
         is_virial = False
@@ -186,7 +149,7 @@ def main(
                     if len(indexes) > 1:
                         for index in [idx for idx, s in enumerate(lammps_data) if "Atoms" in s]:
                             atom_list = [line.strip().split() for line in lammps_data[index + 2 : index + 4]]
-                            if (len(atom_list[0]) == len(atom_list[1]) and lammps_data[index + 1] == " \n" and atom_list[0][0] == "1" and atom_list[1][0] == "2"):
+                            if len(atom_list[0]) == len(atom_list[1]) and lammps_data[index + 1] == " \n" and atom_list[0][0] == "1" and atom_list[1][0] == "2":
                                 idx = index
                                 break
                     else:
@@ -234,17 +197,17 @@ def main(
                     del force_cp2k
 
                     # Virial
-                    if (labeling_step_path/ f"2_labeling_{padded_labeling_step}-Stress_Tensor.st").is_file():
-                        stress_cp2k = textfile_to_string_list(labeling_step_path/ f"2_labeling_{padded_labeling_step}-Stress_Tensor.st")
+                    if (labeling_step_path / f"2_labeling_{padded_labeling_step}-Stress_Tensor.st").is_file():
+                        stress_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}-Stress_Tensor.st")
                         virial_array_raw, is_virial = extract_and_convert_virial(stress_cp2k, virial_array_raw, system_candidates_not_skipped_counter, volume_array_raw, eV_per_A3_to_GPa, labeling_program, program_version)
                         del stress_cp2k
 
                     # Wannier
-                    if (labeling_step_path/ f"2_labeling_{padded_labeling_step}-Wannier.xyz").is_file():
-                        wannier_xyz = textfile_to_string_list(labeling_step_path/ f"2_labeling_{padded_labeling_step}-Wannier.xyz")
-                        wannier_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, len(wannier_xyz) * 3))
+                    if (labeling_step_path / f"2_labeling_{padded_labeling_step}-Wannier.xyz").is_file():
+                        wannier_xyz = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}-Wannier.xyz")
+                        wannier_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, len(wannier_xyz) * 3), dtype=np.float64)
                         wannier_array_raw, is_wannier = extract_and_convert_wannier(wannier_xyz, wannier_array_raw, system_candidates_not_skipped_counter, labeling_program, program_version)
-                        if any("LOCALIZATION! loop did not converge within the maximum number of iterations"in _ for _ in output_cp2k):
+                        if any("LOCALIZATION! loop did not converge within the maximum number of iterations" in _ for _ in output_cp2k):
                             wannier_not_converged.append(f"{system_candidates_not_skipped_counter - 1}\n")
                         del wannier_xyz, output_cp2k
 
@@ -270,7 +233,7 @@ def main(
                     # Wannier
                     # No wannier in ORCA
 
-            del padded_labeling_step, labeling_step, labeling_step_path, system_candidates_not_skipped_counter
+        del padded_labeling_step, labeling_step, labeling_step_path, system_candidates_not_skipped_counter
 
         np.savetxt(system_path / "energy.raw", energy_array_raw, delimiter=" ")
         np.save(data_path / "set.000" / "energy", energy_array_raw)
@@ -297,75 +260,26 @@ def main(
             np.savetxt(system_path / "wannier.raw", wannier_array_raw, delimiter=" ")
             np.save(data_path / "set.000" / "wannier", wannier_array_raw)
             if len(wannier_not_converged) > 1:
-                string_list_to_textfile(
-                    data_path / "set.000" / "wannier_not-converged.txt",
-                    wannier_not_converged,
-                )
+                string_list_to_textfile(data_path / "set.000" / "wannier_not-converged.txt", wannier_not_converged)
             del wannier_not_converged
 
         logging.debug("Extraction done.")
 
-        system_disturbed_candidates_count = labeling_json["systems_auto"][system_auto][
-            "disturbed_candidates_count"
-        ]
-        system_disturbed_candidates_skipped_count = labeling_json["systems_auto"][
-            system_auto
-        ]["disturbed_candidates_skipped_count"]
+        system_disturbed_candidates_count = labeling_json["systems_auto"][system_auto]["disturbed_candidates_count"]
+        system_disturbed_candidates_skipped_count = labeling_json["systems_auto"][system_auto]["disturbed_candidates_skipped_count"]
 
-        if (
-            system_disturbed_candidates_count
-            - system_disturbed_candidates_skipped_count
-            > 0
-        ):
+        if system_disturbed_candidates_count - system_disturbed_candidates_skipped_count > 0:
             logging.debug("Starting extraction for disturbed...")
-            data_path = (
-                training_path
-                / "data"
-                / (system_auto + "-disturbed_" + padded_curr_iter)
-            )
+            data_path = training_path / "data" / (system_auto + "-disturbed_" + padded_curr_iter)
             data_path.mkdir(exist_ok=True)
             (data_path / "set.000").mkdir(exist_ok=True)
 
-            energy_array_raw = np.zeros(
-                (
-                    system_disturbed_candidates_count
-                    - system_disturbed_candidates_skipped_count
-                )
-            )
-            coord_array_raw = np.zeros(
-                (
-                    system_disturbed_candidates_count
-                    - system_disturbed_candidates_skipped_count,
-                    main_json["systems_auto"][system_auto]["nb_atm"] * 3,
-                )
-            )
-            box_array_raw = np.zeros(
-                (
-                    system_disturbed_candidates_count
-                    - system_disturbed_candidates_skipped_count,
-                    9,
-                )
-            )
-            volume_array_raw = np.zeros(
-                (
-                    system_disturbed_candidates_count
-                    - system_disturbed_candidates_skipped_count
-                )
-            )
-            force_array_raw = np.zeros(
-                (
-                    system_disturbed_candidates_count
-                    - system_disturbed_candidates_skipped_count,
-                    main_json["systems_auto"][system_auto]["nb_atm"] * 3,
-                )
-            )
-            virial_array_raw = np.zeros(
-                (
-                    system_disturbed_candidates_count
-                    - system_disturbed_candidates_skipped_count,
-                    9,
-                )
-            )
+            energy_array_raw = np.zeros((system_disturbed_candidates_count - system_disturbed_candidates_skipped_count), dtype=np.float64)
+            coord_array_raw = np.zeros((system_disturbed_candidates_count - system_disturbed_candidates_skipped_count, main_json["systems_auto"][system_auto]["nb_atm"] * 3), dtype=np.float64)
+            box_array_raw = np.zeros((system_disturbed_candidates_count - system_disturbed_candidates_skipped_count, 9), dtype=np.float64)
+            volume_array_raw = np.zeros((system_disturbed_candidates_count - system_disturbed_candidates_skipped_count), dtype=np.float64)
+            force_array_raw = np.zeros((system_disturbed_candidates_count - system_disturbed_candidates_skipped_count, main_json["systems_auto"][system_auto]["nb_atm"] * 3), dtype=np.float64)
+            virial_array_raw = np.zeros((system_disturbed_candidates_count - system_disturbed_candidates_skipped_count, 9), dtype=np.float64)
 
             # Options
             is_virial = False
@@ -377,10 +291,7 @@ def main(
             # counter for non skipped configurations
             system_disturbed_candidates_not_skipped_counter = 0
 
-            for labeling_step in range(
-                system_candidates_count,
-                system_candidates_count + system_disturbed_candidates_count,
-            ):
+            for labeling_step in range(system_candidates_count, system_candidates_count + system_disturbed_candidates_count):
                 padded_labeling_step = str(labeling_step).zfill(5)
                 labeling_step_path = system_path / padded_labeling_step
 
@@ -396,7 +307,7 @@ def main(
                         if len(indexes) > 1:
                             for index in [idx for idx, s in enumerate(lammps_data) if "Atoms" in s]:
                                 atom_list = [line.strip().split() for line in lammps_data[index + 2 : index + 4]]
-                                if (len(atom_list[0]) == len(atom_list[1]) and lammps_data[index + 1] == " \n" and atom_list[0][0] == "1" and atom_list[1][0] == "2"):
+                                if len(atom_list[0]) == len(atom_list[1]) and lammps_data[index + 1] == " \n" and atom_list[0][0] == "1" and atom_list[1][0] == "2":
                                     idx = index
                                     break
                         else:
@@ -422,7 +333,6 @@ def main(
                             output_orca = [_ for _ in output_orca if "Program Version" in _]
                             program_version = float(output_orca[0].split(" ")[2][0])
 
-
                     # Coordinates
                     coordinate_xyz = textfile_to_string_list(labeling_step_path / f"labeling_{padded_labeling_step}.xyz")
                     coord_array_raw = extract_and_convert_coordinates(coordinate_xyz, coord_array_raw, system_disturbed_candidates_not_skipped_counter)
@@ -445,17 +355,17 @@ def main(
                         del force_cp2k
 
                         # Virial
-                        if (labeling_step_path/ f"2_labeling_{padded_labeling_step}-Stress_Tensor.st").is_file():
-                            stress_cp2k = textfile_to_string_list(labeling_step_path/ f"2_labeling_{padded_labeling_step}-Stress_Tensor.st")
+                        if (labeling_step_path / f"2_labeling_{padded_labeling_step}-Stress_Tensor.st").is_file():
+                            stress_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}-Stress_Tensor.st")
                             virial_array_raw, is_virial = extract_and_convert_virial(stress_cp2k, virial_array_raw, system_disturbed_candidates_not_skipped_counter, volume_array_raw, eV_per_A3_to_GPa, labeling_program, program_version)
                             del stress_cp2k
 
                         # Wannier
-                        if (labeling_step_path/ f"2_labeling_{padded_labeling_step}-Wannier.xyz").is_file():
-                            wannier_xyz = textfile_to_string_list(labeling_step_path/ f"2_labeling_{padded_labeling_step}-Wannier.xyz")
-                            wannier_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, len(wannier_xyz) * 3))
+                        if (labeling_step_path / f"2_labeling_{padded_labeling_step}-Wannier.xyz").is_file():
+                            wannier_xyz = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}-Wannier.xyz")
+                            wannier_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, len(wannier_xyz) * 3), dtype=np.float64)
                             wannier_array_raw, is_wannier = extract_and_convert_wannier(wannier_xyz, wannier_array_raw, system_disturbed_candidates_not_skipped_counter, labeling_program, program_version)
-                            if any("LOCALIZATION! loop did not converge within the maximum number of iterations"in _ for _ in output_cp2k):
+                            if any("LOCALIZATION! loop did not converge within the maximum number of iterations" in _ for _ in output_cp2k):
                                 wannier_not_converged.append(f"{system_disturbed_candidates_not_skipped_counter - 1}\n")
                             del wannier_xyz, output_cp2k
 
@@ -505,31 +415,24 @@ def main(
             del virial_array_raw, is_virial
 
             if is_wannier:
-                np.savetxt(
-                    system_path / "wannier.raw", wannier_array_raw, delimiter=" "
-                )
+                np.savetxt(system_path / "wannier.raw", wannier_array_raw, delimiter=" ")
                 np.save(data_path / "set.000" / "wannier", wannier_array_raw)
                 if len(wannier_not_converged) > 1:
-                    string_list_to_textfile(
-                        data_path / "set.000" / "wannier_not-converged.txt",
-                        wannier_not_converged,
-                    )
+                    string_list_to_textfile(data_path / "set.000" / "wannier_not-converged.txt", wannier_not_converged)
                 del wannier_not_converged
             logging.debug("Extraction for disturbed done.")
 
-        logging.info(
-            f"Processed system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})"
-        )
+        logging.info(f"Processed system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})")
+
+    if "output_cp2k" in locals():
+        del output_cp2k
+    if "output_orca" in locals():
+        del output_orca
+
     del system_auto, system_auto_index
     del system_candidates_count, system_candidates_skipped_count, system_path, data_path
-    del (
-        indexes,
-        idx,
-        is_wannier,
-        lammps_data,
-        type_atom_array,
-    )
-    del output_cp2k, cp2k_version
+    del indexes, idx, is_wannier, type_atom_array, lammps_data
+    del program_version
     del system_disturbed_candidates_count, system_disturbed_candidates_skipped_count
 
     logging.info(f"-" * 88)
@@ -541,9 +444,7 @@ def main(
 
     # End
     logging.info(f"-" * 88)
-    logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
-    )
+    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
 
     # Cleaning
     del current_path, control_path, training_path

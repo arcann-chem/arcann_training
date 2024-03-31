@@ -6,8 +6,9 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/25
+Last modified: 2024/03/31
 """
+
 # Standard library modules
 import logging
 import subprocess
@@ -37,9 +38,7 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
-    )
+    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
     logging.debug(f"Current path :{current_path}")
     logging.debug(f"Training path: {training_path}")
     logging.debug(f"Program path: {deepmd_iterative_path}")
@@ -55,9 +54,7 @@ def main(
     # Get control path and load the main config (JSON) and the training config (JSON)
     control_path = training_path / "control"
     main_config = load_json_file((control_path / "config.json"))
-    labeling_config = load_json_file(
-        (control_path / f"labeling_{padded_curr_iter}.json")
-    )
+    labeling_config = load_json_file((control_path / f"labeling_{padded_curr_iter}.json"))
 
     # Check if we can continue
     if not labeling_config["is_extracted"]:
@@ -67,18 +64,12 @@ def main(
     logging.warning(f"This is the cleaning step for labeling step.")
     logging.warning(f"It should be run after labeling extract phase.")
     logging.warning(f"This is will delete:")
-    logging.warning(
-        f"symbolic links, 'job_*.sh', 'job-array_*.sh', 'labeling_*.xyz', 'labeling_*-SCF.wfn', '*labeling*.inp'"
-    )
+    logging.warning(f"symbolic links, 'job_*.sh', 'job-array_*.sh', 'labeling_*.xyz', 'labeling_*-SCF.wfn', '*labeling*.inp'")
     logging.warning(f"CP2K.*")
     logging.warning(f"in the folder: '{current_path}' and all subdirectories.")
-    logging.warning(
-        f"It will also create an tar.bz2 file with all important files (except the binary wavefunction files)."
-    )
+    logging.warning(f"It will also create an tar.bz2 file with all important files (except the binary wavefunction files).")
 
-    continuing = input(
-        f"Do you want to continue? [Enter 'Y' for yes, or any other key to abort]: "
-    )
+    continuing = input(f"Do you want to continue? [Enter 'Y' for yes, or any other key to abort]: ")
     if continuing == "Y":
         del continuing
     else:
@@ -107,23 +98,13 @@ def main(
     archive_name = f"labeling_{padded_curr_iter}_noWFN.tar.bz2"
 
     all_files = Path(".").glob("**/*")
-    files = [
-        str(file)
-        for file in all_files
-        if (
-            file.is_file() and (not (file.name.endswith(".wfn") or ".tar" in file.name))
-        )
-    ]
+    files = [str(file) for file in all_files if (file.is_file() and (not (file.name.endswith(".wfn") or ".tar" in file.name)))]
     if files:
         if (Path(".") / archive_name).is_file():
             logging.info(f"{archive_name} already present, adding .bak extension")
-            (Path(".") / f"{archive_name}.bak").write_bytes(
-                (Path(".") / archive_name).read_bytes()
-            )
+            (Path(".") / f"{archive_name}.bak").write_bytes((Path(".") / archive_name).read_bytes())
 
-        string_list_to_textfile(
-            current_path / archive_name.replace(".tar.bz2", ".lst"), files
-        )
+        string_list_to_textfile(current_path / archive_name.replace(".tar.bz2", ".lst"), files)
         cmd = [
             "tar",
             "-I",
@@ -140,26 +121,14 @@ def main(
     del archive_name, files, all_files
 
     logging.info(f"Done!")
-    logging.info(
-        f"To keep only the wavefunction files form the 2nd step (your reference) in a labeling_{padded_curr_iter}_WFN.tar, execute:"
-    )
-    logging.info(
-        f"\"find ./ -name '2_*.wfn' | tar -cf labeling_{padded_curr_iter}_WFN.tar --files-from -\" (without the double quotes)."
-    )
-    logging.info(
-        f"To keep all wavefunction files in a labeling_{padded_curr_iter}_WFN.tar, execute:"
-    )
-    logging.info(
-        f"\"find ./ -name '*.wfn' | tar -cf labeling_{padded_curr_iter}_WFN.tar --files-from -\" (without the double quotes)."
-    )
-    logging.info(
-        f"You can delete any subsys subfolders if labeling_{padded_curr_iter}_noWFN.tar.bz2 is okay, and you have saved or don't need the wavefunction files."
-    )
+    logging.info(f"To keep only the wavefunction files form the 2nd step (your reference) in a labeling_{padded_curr_iter}_WFN.tar, execute:")
+    logging.info(f"\"find ./ -name '2_*.wfn' | tar -cf labeling_{padded_curr_iter}_WFN.tar --files-from -\" (without the double quotes).")
+    logging.info(f"To keep all wavefunction files in a labeling_{padded_curr_iter}_WFN.tar, execute:")
+    logging.info(f"\"find ./ -name '*.wfn' | tar -cf labeling_{padded_curr_iter}_WFN.tar --files-from -\" (without the double quotes).")
+    logging.info(f"You can delete any subsys subfolders if labeling_{padded_curr_iter}_noWFN.tar.bz2 is okay, and you have saved or don't need the wavefunction files.")
 
     # End
-    logging.info(
-        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
-    )
+    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
 
     # Cleaning
     del current_path, control_path, training_path
