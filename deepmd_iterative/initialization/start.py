@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/30
+Last modified: 2024/03/31
 """
 
 # Standard library modules
@@ -66,7 +66,7 @@ def main(
     properties_dict = check_properties_file(user_files_path / "properties.txt")
 
     # Auto-populate the systems_auto
-    if "system_auto" not in user_input_json:
+    if "systems_auto" not in user_input_json:
         list_of_lmp = [file.stem for file in user_files_path.glob("*.lmp")]
         if not list_of_lmp:
             logging.error(f"No lmp found in {user_files_path}")
