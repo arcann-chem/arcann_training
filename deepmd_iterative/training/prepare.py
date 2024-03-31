@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/29
+Last modified: 2024/03/31
 """
 
 # Standard library modules
@@ -150,6 +150,8 @@ def main(
             if "dptrain" not in file.stem:
                 continue
             dptrain_list.append(file)
+        logging.debug(f"dptrain_list: {dptrain_list}")
+            
         if dptrain_list == []:
             logging.error(f"No dptrain_DEEPMDVERSION.json files found in {(current_path.parent / 'user_files')}")
             logging.error(f"Aborting...")
@@ -159,7 +161,8 @@ def main(
         for dptrain in dptrain_list:
             dptrain_max_version = max(dptrain_max_version, float(dptrain.stem.split("_")[-1]))
 
-        user_input_json["deepmd_model_version"] = dptrain_max_version
+        logging.debug(f"dptrain_max_version: {dptrain_max_version}")
+        current_input_json["deepmd_model_version"] = dptrain_max_version
         del dptrain_list, dptrain_max_version
 
     # Generate/update both the training JSON and the merged input JSON
