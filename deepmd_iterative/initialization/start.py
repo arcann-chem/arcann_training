@@ -64,6 +64,7 @@ def main(
 
     # Check the properties file
     properties_dict = check_properties_file(user_files_path / "properties.txt")
+    logging.debug(f"properties_dict: {properties_dict}")
 
     # Auto-populate the systems_auto
     if "systems_auto" not in user_input_json:
@@ -83,7 +84,7 @@ def main(
                 logging.error(f"Aborting...")
                 return 1
         logging.info(f"Using 'systems_auto' from the input JSON: {user_input_json['systems_auto']}")
-        
+
     logging.debug(f"user_input_json: {user_input_json}")
 
     # Generate the main JSON, the merged input JSON and the padded current iteration
