@@ -82,6 +82,8 @@ def main(
                 logging.error(f"File not found: {user_files_path / f'{system_auto}.lmp'} but requested as system")
                 logging.error(f"Aborting...")
                 return 1
+        logging.info(f"Using 'systems_auto' from the input JSON: {user_input_json['systems_auto']}")
+        
     logging.debug(f"user_input_json: {user_input_json}")
 
     # Generate the main JSON, the merged input JSON and the padded current iteration
