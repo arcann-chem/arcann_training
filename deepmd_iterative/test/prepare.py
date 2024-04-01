@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/31
+Last modified: 2024/04/01
 """
 
 # Standard library modules
@@ -82,18 +82,18 @@ def main(
         testing_json[key] = None
     logging.debug(f"testing_json: {testing_json}")
 
-    # Load the previous testing JSON
-    if curr_iter > 0:
-        prev_iter = curr_iter - 1
-        padded_prev_iter = str(prev_iter).zfill(3)
-        previous_testing_json = load_json_file((control_path / f"test_{padded_prev_iter}.json"))
-    else:
-        previous_testing_json = {}
-
     # Get control path, load the main JSON and the training JSON
     control_path = training_path / "control"
     main_json = load_json_file((control_path / "config.json"))
     training_json = load_json_file((control_path / f"training_{padded_curr_iter}.json"))
+
+    # Load the previous testing JSON
+    if curr_iter > 0:
+        prev_iter = curr_iter - 1
+        padded_prev_iter = str(prev_iter).zfill(3)
+        previous_testing_json = load_json_file((control_path / f"testing_{padded_prev_iter}.json"))
+    else:
+        previous_testing_json = {}
 
     # If the user input JSON is present, update the current input JSON with it (Priority: user > default)
     for key in ["user_machine_keyword_test", "job_email", "job_walltime_h", "deepmd_model_version", "is_compressed"]:
