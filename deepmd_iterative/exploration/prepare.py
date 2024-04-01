@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/29
+Last modified: 2024/04/01
 """
 
 # Standard library modules
@@ -601,9 +601,9 @@ def main(
                         system_lammps_data_fn = starting_point_list[random.randrange(0, len(starting_point_list))]
                         starting_point_list.remove(system_lammps_data_fn)
                         if system_previous_start:
-                            system_lammps_data = textfile_to_string_list(training_path / "starting_structures" / system_lammps_data_fn, read_only=True)
+                            system_lammps_data = textfile_to_string_list(training_path / "starting_structures" / system_lammps_data_fn)
                         else:
-                            system_lammps_data = textfile_to_string_list(training_path / "user_files" / system_lammps_data_fn, read_only=True)
+                            system_lammps_data = textfile_to_string_list(training_path / "user_files" / system_lammps_data_fn)
                         input_replace_dict["_R_DATA_FILE_"] = system_lammps_data_fn
                         # Get again the system_cell and nb_atom
                         system_nb_atm, num_atom_types, box, masses, coords = read_lammps_data(system_lammps_data)
@@ -801,7 +801,7 @@ def main(
                         system_ipi_json["coord_file"] = system_ipi_xyz_fn
                         for it_zzz, zzz in enumerate(main_json["type_map"]):
                             system_ipi_json["atom_type"][str(zzz)] = it_zzz
-                        system_lammps_data = textfile_to_string_list(training_path / "starting_structures" / system_ipi_xyz_fn.replace(".xyz", ".lmp"), read_only=True)
+                        system_lammps_data = textfile_to_string_list(training_path / "starting_structures" / system_ipi_xyz_fn.replace(".xyz", ".lmp"))
                         # Get again the system_cell and nb_atom
                         (system_nb_atm, num_atom_types, box, masses, coords) = read_lammps_data(system_lammps_data)
                         system_cell = [box[1] - box[0], box[3] - box[2], box[5] - box[4]]
