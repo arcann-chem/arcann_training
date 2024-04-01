@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/31
+Last modified: 2024/04/01
 
 The lammps module provides functions to manipulate LAMMPS data (as list of strings).
 
@@ -83,7 +83,7 @@ def read_lammps_data(
     for line in lines:
         if len(line) == 0:
             continue
-        if "Atoms" in line:
+        if "Atoms" in line and "Atomsk" not in line:
             in_atoms_section = True
             in_masses_section = False
             continue
