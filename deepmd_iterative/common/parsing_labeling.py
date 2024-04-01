@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2024/03/01
-Last modified: 2024/03/31
+Last modified: 2024/04/01
 """
 
 # TODO: Homogenize the docstrings for this module
@@ -140,11 +140,11 @@ def extract_and_convert_virial(stress_in, virial_out, system_candidates_not_skip
 
 
 # TODO: Add tests for this function
-def extract_and_convert_wannier(wannier_in, wannier_out, system_candidates_not_skipped_counter, nb_atom, wannier_not_converged, factor=1.0, program=None, version=None):
+def extract_and_convert_wannier(wannier_in, wannier_out, system_candidates_not_skipped_counter, nb_atom, factor=1.0, program=None, version=None):
     if program == "cp2k":
         del wannier_in[0 : 2 + nb_atom]
         wannier_in = [" ".join(_.replace("\n", "").split()) for _ in wannier_in]
         wannier_in = [_.split(" ")[1:] for _ in wannier_in]
         wannier_array = np.asarray(wannier_in, dtype=np.float64).flatten()
-        wannier_out[system_candidates_not_skipped_counter - 1, :] = wannier_array
+        wannier_out[system_candidates_not_skipped_counter - 1, :] = wannier_array * factor
         return wannier_out, True

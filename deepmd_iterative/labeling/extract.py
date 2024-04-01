@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/31
+Last modified: 2024/04/01
 """
 
 # Standard library modules
@@ -181,6 +181,7 @@ def main(
                 del coordinate_xyz
 
                 if labeling_program == "cp2k":
+
                     # Energy
                     energy_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}-Force_Eval.fe")
                     energy_array_raw = extract_and_convert_energy(energy_cp2k, energy_array_raw, system_candidates_not_skipped_counter, Ha_to_eV, labeling_program, program_version)
@@ -204,9 +205,11 @@ def main(
 
                     # Wannier
                     if (labeling_step_path / f"2_labeling_{padded_labeling_step}-Wannier.xyz").is_file():
+                        output_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}.out")
                         wannier_xyz = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}-Wannier.xyz")
-                        wannier_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, len(wannier_xyz) * 3), dtype=np.float64)
-                        wannier_array_raw, is_wannier = extract_and_convert_wannier(wannier_xyz, wannier_array_raw, system_candidates_not_skipped_counter, labeling_program, program_version)
+                        if system_candidates_not_skipped_counter == 1:
+                            wannier_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, (len(wannier_xyz)-2-main_json["systems_auto"][system_auto]["nb_atm"]) * 3), dtype=np.float64)
+                        wannier_array_raw, is_wannier = extract_and_convert_wannier(wannier_xyz, wannier_array_raw, system_candidates_not_skipped_counter, main_json["systems_auto"][system_auto]["nb_atm"], 1.0, labeling_program, program_version)
                         if any("LOCALIZATION! loop did not converge within the maximum number of iterations" in _ for _ in output_cp2k):
                             wannier_not_converged.append(f"{system_candidates_not_skipped_counter - 1}\n")
                         del wannier_xyz, output_cp2k
@@ -261,7 +264,7 @@ def main(
             np.save(data_path / "set.000" / "wannier", wannier_array_raw)
             if len(wannier_not_converged) > 1:
                 string_list_to_textfile(data_path / "set.000" / "wannier_not-converged.txt", wannier_not_converged)
-            del wannier_not_converged
+            del wannier_not_converged, wannier_array_raw, is_wannier
 
         logging.debug("Extraction done.")
 
@@ -362,9 +365,11 @@ def main(
 
                         # Wannier
                         if (labeling_step_path / f"2_labeling_{padded_labeling_step}-Wannier.xyz").is_file():
+                            output_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}.out")
                             wannier_xyz = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}-Wannier.xyz")
-                            wannier_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, len(wannier_xyz) * 3), dtype=np.float64)
-                            wannier_array_raw, is_wannier = extract_and_convert_wannier(wannier_xyz, wannier_array_raw, system_disturbed_candidates_not_skipped_counter, labeling_program, program_version)
+                            if system_disturbed_candidates_not_skipped_counter == 1:
+                                wannier_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, (len(wannier_xyz)-2-main_json["systems_auto"][system_auto]["nb_atm"]) * 3), dtype=np.float64)
+                            wannier_array_raw, is_wannier = extract_and_convert_wannier(wannier_xyz, wannier_array_raw, system_disturbed_candidates_not_skipped_counter, main_json["systems_auto"][system_auto]["nb_atm"], 1.0, labeling_program, program_version)
                             if any("LOCALIZATION! loop did not converge within the maximum number of iterations" in _ for _ in output_cp2k):
                                 wannier_not_converged.append(f"{system_disturbed_candidates_not_skipped_counter - 1}\n")
                             del wannier_xyz, output_cp2k
@@ -419,7 +424,7 @@ def main(
                 np.save(data_path / "set.000" / "wannier", wannier_array_raw)
                 if len(wannier_not_converged) > 1:
                     string_list_to_textfile(data_path / "set.000" / "wannier_not-converged.txt", wannier_not_converged)
-                del wannier_not_converged
+                del wannier_not_converged, wannier_array_raw, is_wannier
             logging.debug("Extraction for disturbed done.")
 
         logging.info(f"Processed system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})")
@@ -431,7 +436,7 @@ def main(
 
     del system_auto, system_auto_index
     del system_candidates_count, system_candidates_skipped_count, system_path, data_path
-    del indexes, idx, is_wannier, type_atom_array, lammps_data
+    del indexes, idx, type_atom_array, lammps_data
     del program_version
     del system_disturbed_candidates_count, system_disturbed_candidates_skipped_count
 
