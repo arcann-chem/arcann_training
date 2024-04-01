@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/29
+Last modified: 2024/04/01
 """
 
 # Standard library modules
@@ -21,7 +21,7 @@ import numpy as np
 # Local imports
 from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.list import textfile_to_string_list
-from deepmd_iterative.common.json import load_json_file, write_json_file
+from deepmd_iterative.common.json import load_json_file, write_json_file, find_key_in_dict
 
 
 def main(
@@ -66,6 +66,9 @@ def main(
     training_times = []
     step_sizes = []
     completed_count = 0
+    min_nbor_dist = None
+    max_nbor_size = None
+    training_input_json = None
 
     for nnp in range(1, main_json["nnp_count"] + 1):
         local_path = current_path / f"{nnp}"
@@ -82,6 +85,21 @@ def main(
 
                 batch_pattern = r"batch\s*(\d+)\s"
                 time_pattern = r"training time (\d+\.\d+) s"
+
+                if min_nbor_dist is None or max_nbor_size is None:
+                    for log_text in training_out:
+                        if "min nbor dist" in log_text:
+                            min_nbor_dist_match = re.search(r"min nbor dist: ([\d\.]+)", log_text)
+                            if min_nbor_dist_match:
+                                min_nbor_dist = float(min_nbor_dist_match.group(1))
+                        elif "max nbor size" in log_text:
+                            max_nbor_size_match = re.search(r"max nbor size: \[([ \d]+)\]", log_text)
+                            if max_nbor_size_match:
+                                max_nbor_size = [int(n) for n in max_nbor_size_match.group(1).split()]
+
+                if training_input_json is None:
+                    training_input_json = load_json_file(local_path / "training.json")
+
                 batch_numbers = []
 
                 for entry in training_out_time:
@@ -114,6 +132,29 @@ def main(
         del local_path
     del nnp
     logging.debug(f"completed_count: {completed_count}")
+
+    # Infos
+    if min_nbor_dist is not None:
+        training_json["min_nbor_dist"] = min_nbor_dist
+        logging.info(f"Your minimum neighbor distance is: {min_nbor_dist:.3f}")
+        if min_nbor_dist < 0.7:
+            logging.warning(f"Your minimum neighbor distance is lower than 0.1 Angstrom.")
+            logging.warning(f"You might have a funky system.")
+
+    if max_nbor_size is not None:
+        training_json["max_nbor_size"] = max_nbor_size
+        logging.info(f"In the training datasets, the maximum number of type-i neighbors of an atom is: {max_nbor_size}")
+        logging.info(f"Your type map was: {main_json['type_map']}")
+        logging.info(f"The total is: {sum(max_nbor_size)}")
+        selection_list = find_key_in_dict(training_input_json, "sel")
+        logging.info(f"In the training parameters, the expected maximum number of type-i neighbors of an atom was: {selection_list[0]} (keyword 'sel').")
+        if sum(max_nbor_size) > sum(selection_list[0]):
+            logging.warning(f"The maximum number of type-i neighbors of an atom is higher than the expected maximum number of type-i neighbors of an atom (keyword 'sel').")
+            logging.warning(f"Please correct this.")
+        if sum(selection_list[0]) > 2.0 * sum(max_nbor_size):
+            logging.warning(f"The expected maximum number of type-i neighbors of an atom is at least 100% larger that the ones present in the training datasets.")
+            logging.warning(f"You may want to decrease the expected maximum number of type-i neighbors of an atom (keyword 'sel').")
+
 
     logging.info(f"-" * 88)
     # Update the boolean in the training JSON

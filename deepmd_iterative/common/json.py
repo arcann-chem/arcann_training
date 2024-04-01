@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/31
+Last modified: 2024/04/01
 
 The json module provides functions to manipulate JSON data (as dict).
 
@@ -42,6 +42,7 @@ import logging
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Union
+
 
 # Local imports
 from deepmd_iterative.common.utils import catch_errors_decorator
@@ -446,3 +447,30 @@ def replace_values_by_key_name(d: Union[Dict[str, Any], List[Any]], key_name: st
         for i, item in enumerate(d):
             new_key = f"{parent_key}[{i}]" if parent_key else f"[{i}]"
             replace_values_by_key_name(item, key_name, new_value, new_key)
+
+
+def find_key_in_dict(d: Dict[str, Any], target_key: str) -> List[Any]:
+    """
+    Recursively search for a key in a nested dictionary and return all values associated with that key.
+
+    Parameters
+    ----------
+    d : Dict[str, Any]
+        The dictionary to search through. It can be nested with multiple levels.
+    target_key : str
+        The key to search for in the dictionary.
+
+    Returns
+    -------
+    List[Any]
+        A list of values found for the specified key across all levels of the nested dictionary. 
+        If the key is not found, an empty list is returned.
+    """
+    found_values = []
+    if isinstance(d, dict):
+        for key, value in d.items():
+            if key == target_key:
+                found_values.append(value)
+            else:
+                found_values += find_key_in_dict(value, target_key)
+    return found_values
