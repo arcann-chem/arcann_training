@@ -1,163 +1,71 @@
 {
-    "jz":
+    "myHPC_keyword_1":
     {
-        "hostname": "jean-zay",
+        "hostname": "myHPC_1",
         "walltime_format": "hours",
+        "job_scheduler": "slurm",
+        "launch_command": "sbatch",
+        "max_jobs" : 200,
+        "max_array_size" : 500,
+        "mykeyword_1": {
+            "project_name": "myproject",
+            "allocation_name": "myallocation_gpu_1",
+            "arch_name": "a100",
+            "arch_type": "gpu",
+            "partition": "mypartition_gpu_1",
+            "subpartition": "mysubpartition_gpu_1",
+            "qos": {"myqos_gpu_1": 72000, "myqos_gpu_2": 360000},
+            "valid_for":  ["training"],
+            "default": ["training"]
+        },
+        "mykeyword_2": {
+            "project_name": "myproject",
+            "allocation_name": "myallocation_gpu_2",
+            "arch_name": "v100",
+            "arch_type": "gpu",
+            "partition": "mypartition_gpu_2",
+            "subpartition": "mysubpartition_gpu_2",
+            "qos": {"myqos_gpu_1": 72000, "myqos_gpu_2": 360000},
+            "valid_for":  ["freezing","compressing","exploration","test"],
+            "default": ["freezing","compressing","exploration","test"]
+        },
+        "mykeyword_3": {
+            "project_name": "myproject",
+            "allocation_name": "myallocation_cpu",
+            "arch_name": "cpu",
+            "arch_type": "cpu",
+            "partition": "mypartition_cpu",
+            "subpartition": null,
+            "qos": {"mypartition_cpu_1": 72000, "mypartition_cpu_2": 360000},
+            "valid_for": ["labeling"],
+            "default": ["labeling"]
+        },
+        "mykeyword_4": {
+            "project_name": "myproject",
+            "allocation_name": "myallocation_gpu_3",
+            "arch_name": "a100",
+            "arch_type": "gpu",
+            "partition": "mypartition_gpu_3",
+            "subpartition": "mysubpartition_gpu_3",
+            "qos": {"myqos_gpu_1": 72000, "myqos_gpu_2": 360000},
+            "valid_for":  ["training"]
+        }
+    },
+    "myHPC_keyword_2": {
+        "hostname": "myHPC_2",
+        "walltime_format": "seconds",
         "job_scheduler": "slurm",
         "launch_command": "sbatch",
         "max_jobs" : -1,
         "max_array_size" : 10000,
-        "a100_kro": {
-            "project_name": "kro",
-            "allocation_name": "a100",
-            "arch_name": "a100",
-            "arch_type": "gpu",
-            "partition": "gpu_p5",
-            "subpartition": "a100",
-            "qos": {"qos_gpu-t3": 72000, "qos_gpu-t4": 360000},
-            "valid_for":  ["training"],
-            "default": ["training"]
-        },
-
-        "cpu_kro": {
-            "project_name": "kro",
-            "allocation_name": "cpu",
+        "mykeyword_1": {
+            "project_name": "myproject",
+            "allocation_name": "myallocation_cpu_1",
             "arch_name": "cpu",
             "arch_type": "cpu",
-            "partition": "cpu_p1",
+            "partition": "mypartition_cpu_1",
             "subpartition": null,
-            "qos": {"qos_cpu-t3": 72000, "qos_cpu-t4": 360000},
-            "valid_for": ["labeling"],
-            "default": ["labeling"]
-        },
-
-        "v100_kro": {
-            "project_name": "kro",
-            "allocation_name": "v100",
-            "arch_name": "v100",
-            "arch_type": "gpu",
-            "partition": "gpu_p13",
-            "subpartition": "[v100-16g|v100-32g]",
-            "qos": {"qos_gpu-t3": 72000, "qos_gpu-t4": 360000},
-            "valid_for":  ["freezing","compressing","exploration","test"],
-            "default": ["freezing","compressing","exploration","test"]
-        },
-
-        "v100_gjv": {
-            "project_name": "gjv",
-            "allocation_name": "v100",
-            "arch_name": "v100",
-            "arch_type": "gpu",
-            "partition": "gpu_p13",
-            "subpartition": "[v100-16g|v100-32g]",
-            "qos": {"qos_gpu-t3": 72000, "qos_gpu-t4": 360000},
-            "valid_for":  ["freezing","compressing","exploration","test"]
-        },
-
-        "v100_nvs": {
-            "project_name": "nvs",
-            "allocation_name": "v100",
-            "arch_name": "v100",
-            "arch_type": "gpu",
-            "partition": "gpu_p13",
-            "subpartition": "[v100-16g|v100-32g]",
-            "qos": {"qos_gpu-t3": 72000, "qos_gpu-t4": 360000},
-            "valid_for":  ["training","freezing","compressing","exploration","test"]
-        },
-
-        "v100_16g_nvs": {
-            "project_name": "nvs",
-            "allocation_name": "v100",
-            "arch_name": "v100",
-            "arch_type": "gpu",
-            "partition": "gpu_p13",
-            "subpartition": "v100-16g",
-            "qos": {"qos_gpu-t3": 72000, "qos_gpu-t4": 360000},
-            "valid_for":  ["training","freezing","compressing","exploration","test"]
-        },
-
-        "v100_32g_nvs": {
-            "project_name": "nvs",
-            "allocation_name": "v100",
-            "arch_name": "v100",
-            "arch_type": "gpu",
-            "partition": "gpu_p13",
-            "subpartition": "v100-32g",
-            "qos": {"qos_gpu-t3": 72000, "qos_gpu-t4": 360000},
-            "valid_for":  ["training","freezing","compressing","exploration","test"]
-        },
-
-        "a100_v100_nvs": {
-            "project_name": "nvs",
-            "allocation_name": "v100",
-            "arch_name": "a100",
-            "arch_type": "gpu",
-            "partition": "gpu_p4",
-            "subpartition": null,
-            "qos": {"qos_gpu-t3": 72000},
-            "valid_for":  ["training","freezing","compressing","exploration","test"]
-        },
-
-        "a100_nvs": {
-            "project_name": "nvs",
-            "allocation_name": "a100",
-            "arch_name": "a100",
-            "arch_type": "gpu",
-            "partition": "gpu_p5",
-            "subpartition": "a100",
-            "qos": {"qos_gpu-t3": 72000, "qos_gpu-t4": 360000},
-            "valid_for":  ["training"]
-        },
-
-        "cpu_nvs": {
-            "project_name": "nvs",
-            "allocation_name": "cpu",
-            "arch_name": "cpu",
-            "arch_type": "cpu",
-            "partition": "cpu_p1",
-            "subpartition": null,
-            "qos": {"qos_cpu-t3": 72000, "qos_cpu-t4": 360000},
-            "valid_for": ["labeling"]
-        }
-    },
-    "ir":
-    {
-        "hostname": "irene",
-        "walltime_format": "seconds",
-        "job_scheduler": "mslurm",
-        "launch_command": "ccc_msub",
-        "max_jobs" : 250,
-        "max_array_size" : 1000,
-        "cpu_rome_gen7156": {
-            "project_name": "gen7156",
-            "allocation_name": "rome",
-            "arch_name": "cpu",
-            "arch_type": "cpu",
-            "partition": null,
-            "subpartition": null,
-            "qos": {"normal": 86400, "long": 259200},
-            "valid_for": ["labeling"],
-            "default": ["labeling"]
-        },
-        "cpu_rome_gen11005": {
-            "project_name": "gen11005",
-            "allocation_name": "rome",
-            "arch_name": "cpu",
-            "arch_type": "cpu",
-            "partition": null,
-            "subpartition": null,
-            "qos": {"normal": 86400, "long": 259200},
-            "valid_for": ["labeling"],
-            "default": ["labeling"]
-        },
-        "cpu_skylake_gen11005": {
-            "project_name": "gen11005",
-            "allocation_name": "skylake",
-            "arch_name": "cpu",
-            "arch_type": "cpu",
-            "partition": null,
-            "subpartition": null,
-            "qos": {"normal": 86400, "long": 259200},
+            "qos": {"myqos_cpu_1": 72000, "myqos_cpu_2": 360000},
             "valid_for": ["labeling"],
             "default": ["labeling"]
         }

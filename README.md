@@ -39,11 +39,11 @@ This repository contains several folders:
   - a `user_files/` folder with:
     - a `machine.json` file containing all the information about your cluster that the code will need (see [Cluster setup](#cluster-setup) below) 
     - a `jobs/` folder with example `Slurm` submission files that will be used by the code to perform the different steps. You **must** to adapt these files so that they work in your machine, but careful not to modify the **replaceable** keywords (every word starting by `_R_`) that the different codes will replace by the user defined values (ex: wall time of labeling calculation, cluster partition to be used, etc.). 
-    - **TO DO:** a `configs/` folder with a typical example of a LAMMPS-compatible configuration file `SYSTEM.lmp` with **replaceable** keywords (see [Usage](#usage))
+    - **TO DO:** a `configs/` folder with a typical example of a LAMMPS-compatible configuration file `SYSTEM.lmp` and a properties.txt file (see [Usage](#usage))
     - **TO DO:** a `MD_inputs/` folder with typical examples of LAMMPS and i-PI input files with **replaceable** keywords (see [Usage](#usage))
     - **TO DO:** a `CP2K_inputs/` folder with typical examples of CP2K input files with **replaceable** keywords (see [Usage](#usage))
     
-- `tools/` contains different scripts needed by the code. We recommend that you do not modify its contents.
+- `tools/` contains different scripts to migrate version. We recommend that you do not modify its contents.
 - `deepmd_iterative/`: contains all the scripts that make the `deepmd_iterative` code. We recommend that you do not modify its contents.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -59,7 +59,7 @@ This repository contains several folders:
 
 <!-- TODO: Prerequisites  -->
 For installation:
-* python >= 3.6 (all steps)
+* python >= 3.7.3 (all steps)
 * numpy>=1.17.3
 * setuptools>=40.8.0
 * wheel>=0.33.1
@@ -67,10 +67,10 @@ For installation:
 
 External requirements for usage:
 * DeePMD-kit 2.0 (at least)
-* CP2K 7.1 (at least)
+* CP2K 6.1 (at least)
 * Slurm >= ? (cluster requirement)
 * VMD >= 1.9.3 (exploration5_extract)
-* Atomsk >= beta-0.11.2 (exploration5_extract)
+* Atomsk >= beta-0.12.2 (exploration5_extract)
 
 
 <div id="installation"></div>
