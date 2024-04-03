@@ -6,7 +6,7 @@
     "vmd_fpath": { "value": null, "_comment": "str", "_default": ""},
     "exploration_type": { "value": null, "_comment": "float, or list of float", "_default": ["lammps"]},
     "traj_count": { "value": null, "_comment": "float, or list of float", "_default": [2]},
-    "temperature_K": { "value": null, "_comment": "float, or list of float", "_default": [298.15, -1]},
+    "temperature_K": { "value": null, "_comment": "float, or list of float", "_default": [300.0, -1]},
     "timestep_ps": { "value": null, "_comment": "float, or list of float", "_default": [0.0005, 0.00025]},
     "previous_start": { "value": null, "_comment": "boolean, or list of boolean", "_default": [true, true]},
     "disturbed_start": { "value": null, "_comment": "boolean, or list of boolean", "_default": [false, false]},

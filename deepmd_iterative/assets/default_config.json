@@ -31,7 +31,7 @@
         "vmd_path": "",
         "exploration_type": ["lammps"],
         "traj_count": [2],
-        "temperature_K": [[298.15, -1]],
+        "temperature_K": [[300.0, -1]],
         "timestep_ps": [[0.0005, 0.00025]],
         "previous_start": [[true, true]],
         "disturbed_start":[[false, false]],
