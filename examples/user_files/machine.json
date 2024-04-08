@@ -1,7 +1,7 @@
 {
-    "myHPC_keyword_1":
+    "myHPCkeyword1":
     {
-        "hostname": "myHPC_1",
+        "hostname": "myHPC1",
         "walltime_format": "hours",
         "job_scheduler": "slurm",
         "launch_command": "sbatch",
@@ -9,50 +9,50 @@
         "max_array_size" : 500,
         "mykeyword_1": {
             "project_name": "myproject",
-            "allocation_name": "myallocation_gpu_1",
+            "allocation_name": "myallocationgpu1",
             "arch_name": "a100",
             "arch_type": "gpu",
-            "partition": "mypartition_gpu_1",
-            "subpartition": "mysubpartition_gpu_1",
+            "partition": "mypartitiongpu1",
+            "subpartition": "mysubpartitiongpu1",
             "qos": {"myqos_gpu_1": 72000, "myqos_gpu_2": 360000},
             "valid_for":  ["training"],
             "default": ["training"]
         },
-        "mykeyword_2": {
+        "mykeyword2": {
             "project_name": "myproject",
-            "allocation_name": "myallocation_gpu_2",
+            "allocation_name": "myallocationgpu2",
             "arch_name": "v100",
             "arch_type": "gpu",
-            "partition": "mypartition_gpu_2",
-            "subpartition": "mysubpartition_gpu_2",
+            "partition": "mypartitiongpu2",
+            "subpartition": "mysubpartitiongpu2",
             "qos": {"myqos_gpu_1": 72000, "myqos_gpu_2": 360000},
             "valid_for":  ["freezing","compressing","exploration","test"],
             "default": ["freezing","compressing","exploration","test"]
         },
-        "mykeyword_3": {
+        "mykeyword3": {
             "project_name": "myproject",
-            "allocation_name": "myallocation_cpu",
+            "allocation_name": "myallocationcpu1",
             "arch_name": "cpu",
             "arch_type": "cpu",
-            "partition": "mypartition_cpu",
+            "partition": "mypartitioncpu",
             "subpartition": null,
             "qos": {"mypartition_cpu_1": 72000, "mypartition_cpu_2": 360000},
             "valid_for": ["labeling"],
             "default": ["labeling"]
         },
-        "mykeyword_4": {
+        "mykeyword4": {
             "project_name": "myproject",
-            "allocation_name": "myallocation_gpu_3",
+            "allocation_name": "myallocationgpu3",
             "arch_name": "a100",
             "arch_type": "gpu",
-            "partition": "mypartition_gpu_3",
-            "subpartition": "mysubpartition_gpu_3",
+            "partition": "mypartitiongpu3",
+            "subpartition": "mysubpartitiongpu3",
             "qos": {"myqos_gpu_1": 72000, "myqos_gpu_2": 360000},
             "valid_for":  ["training"]
         }
     },
-    "myHPC_keyword_2": {
-        "hostname": "myHPC_2",
+    "myHPCkeyword2": {
+        "hostname": "myHPC2",
         "walltime_format": "seconds",
         "job_scheduler": "slurm",
         "launch_command": "sbatch",
@@ -60,10 +60,10 @@
         "max_array_size" : 10000,
         "mykeyword_1": {
             "project_name": "myproject",
-            "allocation_name": "myallocation_cpu_1",
+            "allocation_name": "myallocationcpu1",
             "arch_name": "cpu",
             "arch_type": "cpu",
-            "partition": "mypartition_cpu_1",
+            "partition": "mypartitioncpu1",
             "subpartition": null,
             "qos": {"myqos_cpu_1": 72000, "myqos_cpu_2": 360000},
             "valid_for": ["labeling"],

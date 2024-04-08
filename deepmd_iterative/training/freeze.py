@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/29
+Last modified: 2024/04/08
 """
 
 # Standard library modules
@@ -177,8 +177,12 @@ def main(
 
         job_file = replace_in_slurm_file_general(master_job_file, machine_spec, walltime_approx_s, machine_walltime_format, current_input_json["job_email"])
 
+        # Replace the inputs/variables in the job file
         job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_VERSION_", f"{training_json['deepmd_model_version']}")
-        job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_MODEL_", f"graph_{nnp}_{padded_curr_iter}")
+        job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_MODEL_FILE_", f"graph_{nnp}_{padded_curr_iter}.pb")
+        job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_CKPT_FILE_", "checkpoint")
+        job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_LOG_FILE_", f"graph_{nnp}_{padded_curr_iter}_freeze.log")
+        job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_OUTPUT_FILE_", f"graph_{nnp}_{padded_curr_iter}_freeze.out")
 
         string_list_to_textfile(local_path / f"job_deepmd_freeze_{machine_spec['arch_type']}_{machine}.sh", job_file, read_only=True)
         del job_file

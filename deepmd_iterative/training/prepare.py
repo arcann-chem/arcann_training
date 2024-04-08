@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/31
+Last modified: 2024/04/08
 """
 
 # Standard library modules
@@ -151,7 +151,7 @@ def main(
                 continue
             dptrain_list.append(file)
         logging.debug(f"dptrain_list: {dptrain_list}")
-            
+
         if dptrain_list == []:
             logging.error(f"No dptrain_DEEPMDVERSION.json files found in {(current_path.parent / 'user_files')}")
             logging.error(f"Aborting...")
@@ -469,9 +469,11 @@ def main(
 
         job_file = replace_in_slurm_file_general(master_job_file, machine_spec, walltime_approx_s, machine_walltime_format, training_json["job_email"])
 
+        # Replace the inputs/variables in the job file
         job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_VERSION_", f"{training_json['deepmd_model_version']}")
-        # TODO This feature is not used. Write a way to if the training didn't finish, restart it and relaunch. (probably in check.py, and ask user for confirmation)
-        job_file = replace_substring_in_string_list(job_file, "_R_CHECKPOINT_", f"model.ckpt")
+        job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_INPUT_FILE_", "training.json")
+        job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_LOG_FILE_", "training.log")
+        job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_OUTPUT_FILE_", "training.out")
 
         string_list_to_textfile(local_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh", job_file, read_only=True)
         del job_file, local_path, dp_train_input_file, random_0_1000

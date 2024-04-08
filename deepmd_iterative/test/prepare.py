@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/01
+Last modified: 2024/04/08
 """
 
 # Standard library modules
@@ -221,8 +221,11 @@ def main(
 
         # Prepare the job file and save it
         job_file = replace_in_slurm_file_general(master_job_file, machine_spec, walltime_approx_s, machine_walltime_format, current_input_json["job_email"])
+
+        # Replace the inputs/variables in the job file
         job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_VERSION_", f"{training_json['deepmd_model_version']}")
-        job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_MODEL_", nnp.replace(".pb", ""))
+        job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_MODEL_FILE_", f"${nnp}")
+
         string_list_to_textfile(local_path / f"job_deepmd_test_{machine_spec['arch_type']}_{machine}.sh", job_file, read_only=True)
 
         # Create the symbolic links for the NNP files and the data folder
