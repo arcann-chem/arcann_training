@@ -1,6 +1,6 @@
 ! B3LYP D3BJ 6-31G* TightSCF NoFrozenCore KeepDens Engrad
 
-%MaxCore 1024 end
+%MaxCore 1024
 
 %pal nprocs _R_NB_MPI_ end
 
