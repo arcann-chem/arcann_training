@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/08
+Last modified: 2024/04/09
 """
 
 # Standard library modules
@@ -218,9 +218,9 @@ def main(
     nb_sim = 0
 
     job_array_params_file = {}
-    job_array_params_file["lammps"] = ["PATH/_R_DEEPMD_VERSION_/_R_MODEL_FILES_LIST_/_R_INPUT_FILE_/_R_DATA_FILE_/_R_RERUN_FILE_/_R_PLUMED_FILES_LIST_/"]
-    job_array_params_file["i-PI"] = ["PATH/_R_DEEPMD_VERSION_/_R_MODEL_FILES_LIST_/_R_INPUT_FILE_/_R_DATA_FILE_/_R_RERUN_FILE_/_R_PLUMED_FILES_LIST_/"]
-    job_array_params_file["sander_emle"] = ["PATH/_R_DEEPMD_VERSION_/_R_MODEL_FILES_LIST_/_R_SANDER_IN_FILE_/_R_COORD_FILE_/_R_EMLE_YAML_FILE_/_R_EMLE_MODEL_FILE_/_R_TOP_FILE_/_R_PLUMED_FILES_LIST_/"]
+    job_array_params_file["lammps"] = ["PATH/_R_DEEPMD_VERSION_/_R_MODEL_FILES_/_R_LAMMPS_IN_FILE_/_R_DATA_FILE_/_R_RERUN_FILE_/_R_PLUMED_FILES_/"]
+    job_array_params_file["i-PI"] = ["PATH/_R_DEEPMD_VERSION_/_R_MODEL_FILES_/_R_INPUT_FILE_/_R_DATA_FILE_/_R_RERUN_FILE_/_R_PLUMED_FILES_/"]
+    job_array_params_file["sander_emle"] = ["PATH/_R_DEEPMD_VERSION_/_R_MODEL_FILES_/_R_SANDER_IN_FILE_/_R_TOP_FILE_/_R_COORD_FILE_/_R_EMLE_YAML_FILE_/_R_EMLE_MODEL_FILE_//_R_PLUMED_FILES_/"]
 
     # Loop through each system and set its exploration
     for system_auto_index, system_auto in enumerate(main_json["systems_auto"]):
@@ -592,7 +592,7 @@ def main(
                     input_replace_dict["_R_SEED_THER_"] = f"{nnp_index}{random.randrange(0, 1000)}{traj_index}{padded_curr_iter}"
                     input_replace_dict["_R_DCD_OUT_"] = f"{system_auto}_{nnp_index}_{padded_curr_iter}.dcd"
                     input_replace_dict["_R_RESTART_OUT_"] = f"{system_auto}_{nnp_index}_{padded_curr_iter}.restart"
-                    input_replace_dict["_R_MODEL_FILES_LIST_"] = models_string
+                    input_replace_dict["_R_MODEL_FILES_"] = models_string
                     input_replace_dict["_R_DEVI_OUT_"] = f"model_devi_{system_auto}_{nnp_index}_{padded_curr_iter}.out"
                     # Get data files (starting points) if iteration is > 1
                     if curr_iter > 1:
@@ -637,23 +637,19 @@ def main(
                     job_array_params_line += "" + "/"
 
                     # INDIVIDUAL JOB FILE
-                    job_file = replace_in_slurm_file_general(
-                        master_job_file[system_exploration_type],
-                        machine_spec,
-                        system_walltime_approx_s,
-                        machine_walltime_format,
-                        current_input_json["job_email"],
-                    )
-
+                    job_file = replace_in_slurm_file_general(master_job_file[system_exploration_type], machine_spec, system_walltime_approx_s, machine_walltime_format, current_input_json["job_email"])
+                    # Replace the inputs/variables in the job file
                     job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_VERSION_", f"{exploration_json['deepmd_model_version']}")
-                    job_file = replace_substring_in_string_list(job_file, "_R_MODEL_FILES_LIST_", str(models_string.replace(" ", '" "')))
-                    job_file = replace_substring_in_string_list(job_file, "_R_INPUT_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}")
+                    job_file = replace_substring_in_string_list(job_file, "_R_MODEL_FILES_", str(models_string.replace(" ", '" "')))
+                    job_file = replace_substring_in_string_list(job_file, "_R_LAMMPS_IN_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}.in")
+                    job_file = replace_substring_in_string_list(job_file, "_R_LAMMPS_LOG_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}.log")
+                    job_file = replace_substring_in_string_list(job_file, "_R_LAMMPS_OUT_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}.out")
                     job_file = replace_substring_in_string_list(job_file, "_R_DATA_FILE_", f"{system_lammps_data_fn}")
                     job_file = replace_substring_in_string_list(job_file, ' "_R_RERUN_FILE_"', "")
                     if plumed[0] == 1:
                         for n, it_plumed_input in enumerate(plumed_input):
                             if n == 0:
-                                job_file = replace_substring_in_string_list(job_file, "_R_PLUMED_FILES_LIST_", it_plumed_input)
+                                job_file = replace_substring_in_string_list(job_file, "_R_PLUMED_FILES_", it_plumed_input)
                                 job_array_params_line += it_plumed_input
                             else:
                                 job_file = replace_substring_in_string_list(job_file, prev_plumed, prev_plumed + '" "' + it_plumed_input)
@@ -661,7 +657,7 @@ def main(
                             prev_plumed = it_plumed_input
                         del n, it_plumed_input, prev_plumed
                     else:
-                        job_file = replace_substring_in_string_list(job_file, ' "_R_PLUMED_FILES_LIST_"', "")
+                        job_file = replace_substring_in_string_list(job_file, ' "_R_PLUMED_FILES_"', "")
                         job_array_params_line += ""
 
                     job_array_params_line += "/"
@@ -742,27 +738,31 @@ def main(
                     job_array_params_line = str(system_auto) + "_" + str(nnp_index) + "_" + str(traj_index).zfill(5) + "/"
                     job_array_params_line += f"{exploration_json['deepmd_model_version']}" + "/"
                     job_array_params_line += str(models_string.replace(" ", '" "')) + "/"
-                    job_array_params_line += f"{system_auto}_{nnp_index}_{padded_curr_iter}" + "/"
+                    job_array_params_line += f"{system_auto}_{nnp_index}_{padded_curr_iter}.in" + "/"
+                    job_array_params_line += f"{system_auto}.prmtop" + "/"
                     job_array_params_line += f"{system_sander_emle_data_fn}" + "/"
                     job_array_params_line += f"{system_auto}_{nnp_index}_{padded_curr_iter}.yaml" + "/"
                     job_array_params_line += f"{system_auto}.mat" + "/"
-                    job_array_params_line += f"{system_auto}.prmtop" + "/"
                     job_array_params_line += "" + "/"
 
                     # INDIVIDUAL JOB FILE
                     job_file = replace_in_slurm_file_general(master_job_file[system_exploration_type], machine_spec, system_walltime_approx_s, machine_walltime_format, current_input_json["job_email"])
+                    # Replace the inputs/variables in the job file
                     job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_VERSION_", f"{exploration_json['deepmd_model_version']}")
-                    job_file = replace_substring_in_string_list(job_file, "_R_MODEL_FILES_LIST_", str(models_string.replace(" ", '" "')))
+                    job_file = replace_substring_in_string_list(job_file, "_R_MODEL_FILES_", str(models_string.replace(" ", '" "')))
                     job_file = replace_substring_in_string_list(job_file, "_R_SANDER_IN_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}.in")
-                    job_file = replace_substring_in_string_list(job_file, "_R_SANDER_OUT_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}")
-                    job_file = replace_substring_in_string_list(job_file, "_R_EMLE_YAML_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}.yaml")
-                    job_file = replace_substring_in_string_list(job_file, "_R_COORD_FILE_", f"{system_sander_emle_data_fn}")
+                    job_file = replace_substring_in_string_list(job_file, "_R_EMLE_IN_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}.yaml")
+                    job_file = replace_substring_in_string_list(job_file, "_R_SANDER_LOG_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}.log")
+                    job_file = replace_substring_in_string_list(job_file, "_R_SANDER_OUT_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}.out")
+                    job_file = replace_substring_in_string_list(job_file, "_R_EMLE_OUT_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}_emle.out")
+                    job_file = replace_substring_in_string_list(job_file, "_R_SANDER_TRAJOUT_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}.nc")
                     job_file = replace_substring_in_string_list(job_file, "_R_TOP_FILE_", f"{system_auto}.prmtop")
+                    job_file = replace_substring_in_string_list(job_file, "_R_SANDER_COORD_FILE_", f"{system_sander_emle_data_fn}")
                     job_file = replace_substring_in_string_list(job_file, "_R_EMLE_MODEL_FILE_", f"{system_auto}.mat")
                     if plumed[0] == 1:
                         for n, it_plumed_input in enumerate(plumed_input):
                             if n == 0:
-                                job_file = replace_substring_in_string_list(job_file, "_R_PLUMED_FILES_LIST_", it_plumed_input)
+                                job_file = replace_substring_in_string_list(job_file, "_R_PLUMED_FILES_", it_plumed_input)
                                 job_array_params_line += it_plumed_input
                             else:
                                 job_file = replace_substring_in_string_list(job_file, prev_plumed, prev_plumed + '" "' + it_plumed_input)
@@ -770,7 +770,7 @@ def main(
                             prev_plumed = it_plumed_input
                         del n, it_plumed_input, prev_plumed
                     else:
-                        job_file = replace_substring_in_string_list(job_file, ' "_R_PLUMED_FILES_LIST_"', "")
+                        job_file = replace_substring_in_string_list(job_file, ' "_R_PLUMED_FILES_"', "")
                         job_array_params_line += ""
 
                     job_array_params_line += "/"
@@ -833,21 +833,24 @@ def main(
 
                     # INDIVIDUAL JOB FILE
                     job_file = replace_in_slurm_file_general(master_job_file[system_exploration_type], machine_spec, system_walltime_approx_s, machine_walltime_format, current_input_json["job_email"])
-
+                    # Replace the inputs/variables in the job file
                     job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_VERSION_", f"{exploration_json['deepmd_model_version']}")
-                    job_file = replace_substring_in_string_list(job_file, "_R_MODEL_FILES_LIST_", f"{models_list[0]}")
-                    job_file = replace_substring_in_string_list(job_file, "_R_INPUT_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}")
+                    job_file = replace_substring_in_string_list(job_file, "_R_MODEL_FILES_", f"{models_list[0]}")
+                    job_file = replace_substring_in_string_list(job_file, "_R_IPI_IN_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}.xml")
+                    job_file = replace_substring_in_string_list(job_file, "_R_DPIPI_IN_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}.json")
+                    job_file = replace_substring_in_string_list(job_file, "_R_IPI_OUT_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}.out")
                     job_file = replace_substring_in_string_list(job_file, "_R_DATA_FILE_", f"{system_ipi_xyz_fn}")
+
                     if plumed[0] == 1:
                         for n, it_plumed_input in enumerate(plumed_input):
                             if n == 0:
-                                job_file = replace_substring_in_string_list(job_file, "_R_PLUMED_FILES_LIST_", it_plumed_input)
+                                job_file = replace_substring_in_string_list(job_file, "_R_PLUMED_FILES_", it_plumed_input)
                             else:
                                 job_file = replace_substring_in_string_list(job_file, prev_plumed, prev_plumed + '" "' + it_plumed_input)
                             prev_plumed = it_plumed_input
                         del n, it_plumed_input, prev_plumed
                     else:
-                        job_file = replace_substring_in_string_list(job_file, ' "_R_PLUMED_FILES_LIST_"', "")
+                        job_file = replace_substring_in_string_list(job_file, ' "_R_PLUMED_FILES_"', "")
                     string_list_to_textfile(local_path / f"job_{system_exploration_type}-deepmd_explore_{arch_type}_{machine}.sh", job_file, read_only=True)
 
                     del system_ipi_xml_aslist, system_ipi_xml, system_ipi_json
