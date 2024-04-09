@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 # Created: 2022/01/01
-# Last modified: 2024/04/08
+# Last modified: 2024/04/09
 #----------------------------------------------
 # You must keep the _R_VARIABLES_ in the file.
 # You must keep the name file as job_deepmd_test_ARCHTYPE_myHPCkeyword.sh.
@@ -77,4 +77,5 @@ for dataset in data/*/ ; do
 done
 echo "# [$(date)] DeepMD test finished."
 
+sleep 2
 exit

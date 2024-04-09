@@ -35,6 +35,7 @@
 #SBATCH --mail-user _R_EMAIL_
 #
 #SBATCH --array=_R_ARRAY_START_-_R_ARRAY_END_%300
+#
 
 #----------------------------------------------
 # This part use the job-array-params_lammps-deepmd_explore_ARCHTYPE_myHPCkeyword.lst created

@@ -53,7 +53,6 @@ DeepMD_OUT_FILE="_R_DEEPMD_OUTPUT_FILE_"
 cd "${SLURM_SUBMIT_DIR}" || { echo "Could not go to ${SLURM_SUBMIT_DIR}. Aborting..."; exit 1; }
 
 # Check
-[ -f ${DeepMD_MODEL_FILE} ] || { echo "${DeepMD_MODEL_FILE} does not exist. Aborting..."; exit 1; }
 [ -f ${DeepMD_CKPT_FILE} ] || { echo "${DeepMD_CKPT_FILE} does not exist. Aborting..."; exit 1; }
 
 # Example to use the DeepMD_MODEL_VERSION variable

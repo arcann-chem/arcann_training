@@ -33,7 +33,7 @@
 #SBATCH --mail-type FAIL,BEGIN,END,ALL
 #SBATCH --mail-user _R_EMAIL_
 # Array
-#SBATCH --array=_R_ARRAY_START_-_R_ARRAY_END_%300
+#SBATCH --array=_R_ARRAY_START_-_R_ARRAY_END_%250
 #
 
 #----------------------------------------------
