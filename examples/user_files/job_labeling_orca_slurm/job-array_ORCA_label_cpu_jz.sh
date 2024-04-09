@@ -6,7 +6,11 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 # Created: 2022/01/01
-# Last modified: 2024/02/16
+# Last modified: 2024/04/09
+#----------------------------------------------
+# You must keep the _R_VARIABLES_ in the file.
+# You must keep the name file as job-array_ORCA_label_ARCHTYPE_myHPCkeyword1.sh.
+#----------------------------------------------
 # Project/Account
 #SBATCH --account=_R_PROJECT_@_R_ALLOC_
 # QoS/Partition/SubPartition
@@ -21,10 +25,10 @@
 # Walltime
 #SBATCH -t _R_WALLTIME_
 # Merge Output/Error
-#SBATCH -o CP2K.%A_%a
-#SBATCH -e CP2K.%A_%a
+#SBATCH -o ORCA.%A_%a
+#SBATCH -e ORCA.%A_%a
 # Name of job
-#SBATCH -J _R_CP2K_JOBNAME_
+#SBATCH -J _R_ORCA_JOBNAME_
 # Email
 #SBATCH --mail-type FAIL,BEGIN,END,ALL
 #SBATCH --mail-user _R_EMAIL_
@@ -32,15 +36,77 @@
 #SBATCH --array=_R_ARRAY_START_-_R_ARRAY_END_%300
 #
 
+#----------------------------------------------
+# Input files (variables) - They should not be changed
+#----------------------------------------------
+SLURM_ARRAY_TASK_ID_LARGE=$((SLURM_ARRAY_TASK_ID + _R_NEW_START_))
+SLURM_ARRAY_TASK_ID_PADDED=$(printf "%05d\n" "${SLURM_ARRAY_TASK_ID_LARGE}")
+
+ORCA_IN_FILE1="1_labeling__R_PADDEDSTEP_.inp"
+ORCA_OUT_FILE1="1_labeling__R_PADDEDSTEP_.out"
+ORCA_XYZ_FILE="labeling__R_PADDEDSTEP_.xyz"
+
+#----------------------------------------------
+# Adapt the following lines to your HPC system
+# It should be the close to the job_ORCA_label_ARCHTYPE_myHPCkeyword1.sh
+# Don't forget to replace the job_labeling_array_ARCHTYPE_myHPCkeyword1.sh at the end of the file (replacling ARCHTYPE and myHPCkeyword1)
+#----------------------------------------------
+
+# Go where the job has been launched
+cd "${SLURM_SUBMIT_DIR}/${SLURM_ARRAY_TASK_ID_PADDED}" || { echo "Could not go to ${SLURM_SUBMIT_DIR}/${SLURM_ARRAY_TASK_ID_PADDED}. Aborting..."; exit 1; }
+
+# Check
+[ -f "${ORCA_IN_FILE1}" ] || { echo "${ORCA_IN_FILE1} does not exist. Aborting..."; exit 1; }
+[ -f "${ORCA_XYZ_FILE}" ] || { echo "${ORCA_XYZ_FILE} does not exist. Aborting..."; exit 1; }
+
+# Example if your run in a scratch folder
+export TEMPWORKDIR=${SCRATCH}/JOB-${SLURM_JOBID}
+mkdir -p "${TEMPWORKDIR}"
+ln -s "${TEMPWORKDIR}" "${SLURM_SUBMIT_DIR}/${SLURM_ARRAY_TASK_ID_PADDED}/JOB-${SLURM_JOBID}"
+
+cp "${ORCA_IN_FILE1}" "${TEMPWORKDIR}" && echo "${ORCA_IN_FILE1} copied successfully"
+cp "${ORCA_XYZ_FILE}" "${TEMPWORKDIR}" && echo "${ORCA_XYZ_FILE} copied successfully"
+
+# Go to the temporary work directory
+cd "${TEMPWORKDIR}" || { echo "Could not go to ${TEMPWORKDIR}. Aborting..."; exit 1; }
+
+echo "# [$(date)] Running ORCA..."
+orca "${ORCA_IN_FILE1}" > "${ORCA_OUT_FILE1}" 2>&1
+echo "# [$(date)] ORCA job finished."
+
+# Move back data from the temporary work directory and scratch, and clean-up
+mv ./* "${SLURM_SUBMIT_DIR}/${SLURM_ARRAY_TASK_ID_PADDED}"
+cd "${SLURM_SUBMIT_DIR}/${SLURM_ARRAY_TASK_ID_PADDED}" || { echo "Could not go to ${SLURM_SUBMIT_DIR}/${SLURM_ARRAY_TASK_ID_PADDED}. Aborting..."; exit 1; }
+rmdir "${TEMPWORKDIR}" 2> /dev/null || echo "Leftover files on ${TEMPWORKDIR}"
+[ ! -d "${TEMPWORKDIR}" ] && { [ -h JOB-"${SLURM_JOBID}" ] && rm JOB-"${SLURM_JOBID}"; }
+
+# Logic to launch the next job
+if [ "${SLURM_ARRAY_TASK_ID}" == "_R_ARRAY_END_" ]; then
+    if [ "_R_LAUNCHNEXT_" == "1" ]; then
+        cd "_R_CD_WHERE_" || { echo "Could not go to _R_CD_WHERE_. Aborting..."; exit 1;}
+        sbatch job_labeling_array_ARCHTYPE_myHPCkeyword1__R_NEXT_JOB_FILE_.sh
+    fi
+fi
+exit
+
+
+
+
+
+
+
+
+
+
+
+
 # Array specifics
 SLURM_ARRAY_TASK_ID_LARGE=$((SLURM_ARRAY_TASK_ID + _R_NEW_START_))
 SLURM_ARRAY_TASK_ID_PADDED=$(printf "%05d\n" "${SLURM_ARRAY_TASK_ID_LARGE}")
 
 # Input file (extension is automatically added as .inp for INPUT, wfn for WFRST, restart for MDRST)
-CP2K_INPUT_F1="1_labeling_${SLURM_ARRAY_TASK_ID_PADDED}"
-CP2K_INPUT_F2="2_labeling_${SLURM_ARRAY_TASK_ID_PADDED}"
-CP2K_WFRST_F="labeling_${SLURM_ARRAY_TASK_ID_PADDED}-SCF"
-CP2K_XYZ_F="labeling_${SLURM_ARRAY_TASK_ID_PADDED}.xyz"
+ORCA_INPUT_F="1_labeling_${SLURM_ARRAY_TASK_ID_PADDED}"
+ORCA_XYZ_F="labeling_${SLURM_ARRAY_TASK_ID_PADDED}.xyz"
 
 #----------------------------------------------
 # Nothing needed to be changed past this point
@@ -58,23 +124,16 @@ cd "${SLURM_SUBMIT_DIR}"/"${SLURM_ARRAY_TASK_ID_PADDED}" || exit 1
 
 # Load the environment depending on the version
 module purge
-module load cp2k/6.1-mpi-popt
+module load orca/5.0.3-mpi
 
-if [ "$(command -v cp2k.psmp)" ]; then
-    CP2K_EXE=$(command -v cp2k.psmp)
-elif [ "$(command -v cp2k.popt)" ]; then
-    if [ "${SLURM_CPUS_PER_TASK}" -lt 2 ]; then
-        CP2K_EXE=$(command -v cp2k.popt)
-    else
-        echo "Only executable (cp2k.popt) was found and OpenMP was requested. Aborting..."
-    fi
+if [ "$(command -v orca)" ]; then
+    ORCA_EXE=$(command -v orca)
 else
-    echo "Executable (cp2k.popt/cp2k.psmp) not found. Aborting..."
+    echo "Executable orca not found. Aborting..."
 fi
 
 # Test if input file is present
-if [ ! -f "${CP2K_INPUT_F1}".inp ]; then echo "No input file found. Aborting..."; exit 1; fi
-if [ ! -f "${CP2K_INPUT_F2}".inp ]; then echo "No input file found. Aborting..."; exit 1; fi
+if [ ! -f "${ORCA_INPUT_F}".inp ]; then echo "No input file found. Aborting..."; exit 1; fi
 
 # Set the temporary work directory
 export TEMPWORKDIR=${SCRATCH}/JOB-${SLURM_JOBID}
@@ -82,10 +141,8 @@ mkdir -p "${TEMPWORKDIR}"
 ln -s "${TEMPWORKDIR}" "${SLURM_SUBMIT_DIR}"/"${SLURM_ARRAY_TASK_ID_PADDED}"/JOB-"${SLURM_JOBID}"
 
 # Copy files to the temporary work directory
-cp "${CP2K_INPUT_F1}".inp "${TEMPWORKDIR}" && echo "${CP2K_INPUT_F1}.inp copied successfully"
-cp "${CP2K_INPUT_F2}".inp "${TEMPWORKDIR}" && echo "${CP2K_INPUT_F2}.inp copied successfully"
-[ -f "${CP2K_XYZ_F}" ] && cp "${CP2K_XYZ_F}" "${TEMPWORKDIR}" && echo "${CP2K_XYZ_F} copied successfully"
-[ -f "${CP2K_WFRST_F}".wfn ] && cp "${CP2K_WFRST_F}".wfn "${TEMPWORKDIR}" && echo "${CP2K_WFRST_F}.wfn copied successfully"
+cp "${ORCA_INPUT_F}".inp "${TEMPWORKDIR}" && echo "${ORCA_INPUT_F}.inp copied successfully"
+[ -f "${ORCA_XYZ_F}" ] && cp "${ORCA_XYZ_F}" "${TEMPWORKDIR}" && echo "${ORCA_XYZ_F} copied successfully"
 cd "${TEMPWORKDIR}" || exit 1
 
 # MPI/OpenMP setup
@@ -104,14 +161,9 @@ echo "Running ${SLURM_NTASKS} task(s), with ${SLURM_NTASKS_PER_NODE} task(s) per
 echo "Running with ${SLURM_CPUS_PER_TASK} thread(s) per task."
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 
-SRUN_CP2K_EXE="srun --ntasks=${SLURM_NTASKS} --nodes=${SLURM_NNODES} --ntasks-per-node=${SLURM_NTASKS_PER_NODE} --cpus-per-task=${SLURM_CPUS_PER_TASK} ${CP2K_EXE}"
-
 # Launch command
 export EXIT_CODE="0"
-${SRUN_CP2K_EXE} -i "${CP2K_INPUT_F1}".inp > "${CP2K_INPUT_F1}".out || export EXIT_CODE="1"
-cp "${CP2K_WFRST_F}.wfn" "1_${CP2K_WFRST_F}.wfn"
-${SRUN_CP2K_EXE} -i "${CP2K_INPUT_F2}".inp > "${CP2K_INPUT_F2}".out || export EXIT_CODE="1"
-cp "${CP2K_WFRST_F}.wfn" "2_${CP2K_WFRST_F}.wfn"
+${ORCA_EXE} "${ORCA_INPUT_F}".inp > "${ORCA_INPUT_F}".out || export EXIT_CODE="1"
 echo "# [$(date)] Ended"
 
 # Move back data from the temporary work directory and scratch, and clean-up

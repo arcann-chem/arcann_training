@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/30
+Last modified: 2024/04/09
 """
 
 # Standard library modules
@@ -356,7 +356,7 @@ def main(
             labeling_step_path.mkdir(exist_ok=True)
 
             first_job_input_t = deepcopy(system_first_job_input)
-            first_job_input_t = replace_substring_in_string_list(first_job_input_t, "XXXXX", padded_labeling_step)
+            first_job_input_t = replace_substring_in_string_list(first_job_input_t, "_R_PADDEDSTEP_", padded_labeling_step)
             first_job_input_t = replace_substring_in_string_list(first_job_input_t, "_R_CELL_", " ".join([str(_) for _ in [cell_info[0][i] for i in [0, 4, 8]]]))
 
             string_list_to_textfile(labeling_step_path / f"1_labeling_{padded_labeling_step}.inp", first_job_input_t)
@@ -364,14 +364,14 @@ def main(
 
             if labeling_program == "cp2k":
                 second_job_input_t = deepcopy(system_second_job_input)
-                second_job_input_t = replace_substring_in_string_list(second_job_input_t, "XXXXX", padded_labeling_step)
+                second_job_input_t = replace_substring_in_string_list(second_job_input_t, "_R_PADDEDSTEP_", padded_labeling_step)
                 second_job_input_t = replace_substring_in_string_list(second_job_input_t, "_R_CELL_", " ".join([str(_) for _ in [cell_info[0][i] for i in [0, 4, 8]]]))
 
                 string_list_to_textfile(labeling_step_path / f"2_labeling_{padded_labeling_step}.inp", second_job_input_t)
                 del second_job_input_t
 
             job_file_t = deepcopy(system_master_job_file[1])
-            job_file_t = replace_substring_in_string_list(job_file_t, "XXXXX", padded_labeling_step)
+            job_file_t = replace_substring_in_string_list(job_file_t, "_R_PADDEDSTEP_", padded_labeling_step)
             job_file_t = replace_substring_in_string_list(job_file_t, f"_R_{labeling_program_up}_JOBNAME_", f"{labeling_program_up}_{system_auto}_{padded_curr_iter}")
             string_list_to_textfile(labeling_step_path / f"job_{labeling_program_up}_label_{padded_labeling_step}_{machine_spec['arch_type']}_{machine}.sh", job_file_t)
             del job_file_t
@@ -410,19 +410,19 @@ def main(
                 labeling_step_path.mkdir(exist_ok=True)
 
                 first_job_input_t = deepcopy(system_first_job_input)
-                first_job_input_t = replace_substring_in_string_list(first_job_input_t, "XXXXX", padded_labeling_step)
+                first_job_input_t = replace_substring_in_string_list(first_job_input_t, "_R_PADDEDSTEP_", padded_labeling_step)
                 first_job_input_t = replace_substring_in_string_list(first_job_input_t, "_R_CELL_", " ".join([str(_) for _ in [cell_info[0][i] for i in [0, 4, 8]]]))
                 string_list_to_textfile(labeling_step_path / f"1_labeling_{padded_labeling_step}.inp", first_job_input_t)
                 del first_job_input_t
                 if labeling_program == "cp2k":
                     second_job_input_t = deepcopy(system_second_job_input)
-                    second_job_input_t = replace_substring_in_string_list(second_job_input_t, "XXXXX", padded_labeling_step)
+                    second_job_input_t = replace_substring_in_string_list(second_job_input_t, "_R_PADDEDSTEP_", padded_labeling_step)
                     second_job_input_t = replace_substring_in_string_list(second_job_input_t, "_R_CELL_", " ".join([str(_) for _ in [cell_info[0][i] for i in [0, 4, 8]]]))
                     string_list_to_textfile(labeling_step_path / f"2_labeling_{padded_labeling_step}.inp", second_job_input_t)
                     del second_job_input_t
 
                 job_file_t = deepcopy(system_master_job_file[1])
-                job_file_t = replace_substring_in_string_list(job_file_t, "XXXXX", padded_labeling_step)
+                job_file_t = replace_substring_in_string_list(job_file_t, "_R_PADDEDSTEP_", padded_labeling_step)
                 job_file_t = replace_substring_in_string_list(job_file_t, f"_R_{labeling_program_up}_JOBNAME_", f"{labeling_program_up}_{system_auto}_{padded_curr_iter}")
                 string_list_to_textfile(labeling_step_path / f"job_{labeling_program_up}_label_{padded_labeling_step}_{machine_spec['arch_type']}_{machine}.sh", job_file_t)
                 del job_file_t
