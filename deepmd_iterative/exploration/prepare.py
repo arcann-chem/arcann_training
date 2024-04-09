@@ -754,6 +754,7 @@ def main(
                     job_file = replace_substring_in_string_list(job_file, "_R_EMLE_IN_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}.yaml")
                     job_file = replace_substring_in_string_list(job_file, "_R_SANDER_LOG_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}.log")
                     job_file = replace_substring_in_string_list(job_file, "_R_SANDER_OUT_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}.out")
+                    job_file = replace_substring_in_string_list(job_file, "_R_SANDER_RESTART_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}.ncrst")
                     job_file = replace_substring_in_string_list(job_file, "_R_EMLE_OUT_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}_emle.out")
                     job_file = replace_substring_in_string_list(job_file, "_R_SANDER_TRAJOUT_FILE_", f"{system_auto}_{nnp_index}_{padded_curr_iter}.nc")
                     job_file = replace_substring_in_string_list(job_file, "_R_TOP_FILE_", f"{system_auto}.prmtop")
