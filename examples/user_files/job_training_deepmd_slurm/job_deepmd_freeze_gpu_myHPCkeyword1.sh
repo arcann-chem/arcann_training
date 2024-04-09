@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 # Created: 2022/01/01
-# Last modified: 2024/04/08
+# Last modified: 2024/04/09
 #----------------------------------------------
 # You must keep the _R_VARIABLES_ in the file.
 # You must keep the name file as job_deepmd_freeze_ARCHTYPE_myHPCkeyword.sh.
@@ -73,4 +73,5 @@ echo "# [$(date)] Running DeepMD freeze..."
 dp freeze -o ${DeepMD_MODEL_FILE} --log-path ${DeepMD_LOG_FILE} > ${DeepMD_OUT_FILE} 2>&1
 echo "# [$(date)] DeepMD freeze finished."
 
+sleep 2
 exit

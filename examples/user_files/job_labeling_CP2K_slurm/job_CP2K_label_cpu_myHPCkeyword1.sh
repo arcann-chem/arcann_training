@@ -71,11 +71,11 @@ cp "${CP2K_XYZ_FILE}" "${TEMPWORKDIR}" && echo "${CP2K_XYZ_FILE} copied successf
 cd "${TEMPWORKDIR}" || { echo "Could not go to ${TEMPWORKDIR}. Aborting..."; exit 1; }
 
 echo "# [$(date)] Running CP2K first job..."
-cp2k.popt -i "${CP2K_IN_FILE1}" > "${CP2K_OUT_FILE1}" 2>&1
+cp2k.popt -i "${CP2K_IN_FILE1}" > "${CP2K_OUT_FILE1}"
 cp "${CP2K_WFRST_FILE}" "1_${CP2K_WFRST_FILE}"
 echo "# [$(date)] CP2K first job finished."
 echo "# [$(date)] Running CP2K second job..."
-cp2k.popt -i "${CP2K_IN_FILE2}" > "${CP2K_OUT_FILE2}" 2>&1
+cp2k.popt -i "${CP2K_IN_FILE2}" > "${CP2K_OUT_FILE2}"
 cp "${CP2K_WFRST_FILE}" "2_${CP2K_WFRST_FILE}"
 echo "# [$(date)] CP2K second job finished."
 
@@ -86,4 +86,5 @@ cd "${SLURM_SUBMIT_DIR}" || { echo "Could not go to ${SLURM_SUBMIT_DIR}. Abortin
 rmdir "${TEMPWORKDIR}" 2> /dev/null || echo "Leftover files on ${TEMPWORKDIR}"
 [ ! -d "${TEMPWORKDIR}" ] && { [ -h JOB-"${SLURM_JOBID}" ] && rm JOB-"${SLURM_JOBID}"; }
 
+sleep 2
 exit

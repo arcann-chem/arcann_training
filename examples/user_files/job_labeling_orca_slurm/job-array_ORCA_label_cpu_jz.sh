@@ -87,6 +87,7 @@ if [ "${SLURM_ARRAY_TASK_ID}" == "_R_ARRAY_END_" ]; then
         sbatch job_labeling_array_ARCHTYPE_myHPCkeyword1__R_NEXT_JOB_FILE_.sh
     fi
 fi
+sleep 2
 exit
 
 
