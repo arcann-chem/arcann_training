@@ -56,6 +56,7 @@ SANDER_IN_FILE=${array_param[3]}
 EMLE_IN_FILE=${array_param[6]}
 SANDER_LOG_FILE=${SANDER_IN_FILE/.in/.log}
 SANDER_OUT_FILE=${SANDER_IN_FILE/.in/.out}
+SANDER_RESTART_FILE=${SANDER_IN_FILE/.in/.ncrst}
 EMLE_OUT_FILE=${EMLE_IN_FILE/.yaml/_emle.out}
 SANDER_TRAJOUT_FILE=${SANDER_IN_FILE/.in/.nc}
 EXTRA_FILES=()
@@ -108,7 +109,7 @@ cd "${TEMPWORKDIR}" || { echo "Could not go to ${TEMPWORKDIR}. Aborting..."; exi
 echo "# [$(date)] Running SANDER-EMLE..."
 emle-server --config "${EMLE_IN_FILE}" > "${EMLE_OUT_FILE}" 2>&1 &
 wait 5
-sander -O -i "${SANDER_IN_FILE}" -o "${SANDER_LOG_FILE}" -p _R_TOP_FILE_ -c _R_SANDER_COORD_FILE_ -r _R_SANDER_COORD_FILE_ -x "${SANDER_TRAJOUT_FILE}" > "${SANDER_OUT_FILE}" 2>&1
+sander -O -i "${SANDER_IN_FILE}" -o "${SANDER_LOG_FILE}" -p _R_TOP_FILE_ -c _R_SANDER_COORD_FILE_ -r "${SANDER_RESTART_FILE}" -x "${SANDER_TRAJOUT_FILE}" > "${SANDER_OUT_FILE}" 2>&1
 echo "# [$(date)] SANDER-EMLE finished."
 
 # Move back data from the temporary work directory and scratch, and clean-up
