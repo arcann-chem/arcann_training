@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/09
+Last modified: 2024/04/13
 """
 
 # Standard library modules
@@ -632,7 +632,7 @@ def main(
                     job_array_params_line = str(system_auto) + "_" + str(nnp_index) + "_" + str(traj_index).zfill(5) + "/"
                     job_array_params_line += f"{exploration_json['deepmd_model_version']}" + "/"
                     job_array_params_line += str(models_string.replace(" ", '" "')) + "/"
-                    job_array_params_line += f"{system_auto}_{nnp_index}_{padded_curr_iter}" + "/"
+                    job_array_params_line += f"{system_auto}_{nnp_index}_{padded_curr_iter}.in" + "/"
                     job_array_params_line += f"{system_lammps_data_fn}" + "/"
                     job_array_params_line += "" + "/"
 
