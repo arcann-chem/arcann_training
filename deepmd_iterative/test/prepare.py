@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/08
+Last modified: 2024/04/13
 """
 
 # Standard library modules
@@ -224,7 +224,7 @@ def main(
 
         # Replace the inputs/variables in the job file
         job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_VERSION_", f"{training_json['deepmd_model_version']}")
-        job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_MODEL_FILE_", f"${nnp}")
+        job_file = replace_substring_in_string_list(job_file, "_R_DEEPMD_MODEL_FILE_", f"{nnp}")
 
         string_list_to_textfile(local_path / f"job_deepmd_test_{machine_spec['arch_type']}_{machine}.sh", job_file, read_only=True)
 
