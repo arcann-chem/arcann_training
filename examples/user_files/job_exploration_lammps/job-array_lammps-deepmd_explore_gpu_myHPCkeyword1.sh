@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 # Created: 2022/01/01
-# Last modified: 2024/04/09
+# Last modified: 2024/04/13
 #----------------------------------------------
 # You must keep the _R_VARIABLES_ in the file.
 # You must keep the name file as job-array_lammps-deepmd_explore_ARCHTYPE_myHPCkeyword.sh.

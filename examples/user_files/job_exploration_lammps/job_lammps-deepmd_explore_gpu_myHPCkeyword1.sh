@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 # Created: 2022/01/01
-# Last modified: 2024/04/09
+# Last modified: 2024/04/13
 #----------------------------------------------
 # You must keep the _R_VARIABLES_ in the file.
 # You must keep the name file as job_lammps-deepmd_explore_ARCHTYPE_myHPCkeyword.sh.
@@ -41,9 +41,9 @@
 
 DeepMD_MODEL_VERSION="_R_DEEPMD_VERSION_"
 DeepMD_MODEL_FILES=("_R_MODEL_FILES_")
-LAMMPS_IN_FILE=_R_LAMMPS_IN_FILE_
-LAMMPS_LOG_FILE=_R_LAMMPS_LOG_FILE_
-LAMMPS_OUT_FILE=_R_LAMMPS_OUT_FILE_
+LAMMPS_IN_FILE="_R_LAMMPS_IN_FILE_"
+LAMMPS_LOG_FILE="_R_LAMMPS_LOG_FILE_"
+LAMMPS_OUT_FILE="_R_LAMMPS_OUT_FILE_"
 EXTRA_FILES=("_R_DATA_FILE_" "_R_PLUMED_FILES_" "_R_RERUN_FILE_")
 
 #----------------------------------------------

@@ -7,7 +7,7 @@ neigh_modify every 10 delay 0 check no
 
 read_data _R_DATA_FILE_
 
-pair_style deepmd _R_MODEL_FILES_LIST_ out_freq _R_PRINT_FREQ_ out_file _R_DEVI_OUT_
+pair_style deepmd _R_MODEL_FILES_ out_freq _R_PRINT_FREQ_ out_file _R_DEVI_OUT_
 pair_coeff * *
 
 timestep _R_TIMESTEP_
