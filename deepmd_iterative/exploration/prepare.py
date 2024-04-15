@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/13
+Last modified: 2024/04/15
 """
 
 # Standard library modules
@@ -447,8 +447,9 @@ def main(
 
                 walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
 
-                system_nb_atm = main_json["systems_auto"][system_auto]["nb_atm"]
-                system_cell = main_json["systems_auto"][system_auto]["cell"]
+                                # Get the cell and nb of atoms: It can be done now because the starting point is the same by NNP and by traj
+                system_nb_atm, num_atom_types, box, masses, coords = read_lammps_data(training_path / "user_files" / (system_auto + ".lmp"))
+                system_cell = [box[1] - box[0], box[3] - box[2], box[5] - box[4]]
 
             # Subsequent ones
             else:

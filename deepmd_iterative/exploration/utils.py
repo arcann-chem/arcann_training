@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/31
+Last modified: 2024/04/15
 
 Functions
 ---------
@@ -138,10 +138,13 @@ def generate_input_exploration_json(
                 merged_input_json[key] = [value[0]] * system_count
                 exploration_dep = 0
             elif value == "lammps":
+                merged_input_json[key] = [value] * system_count
                 exploration_dep = 0
             elif value == "i-PI":
+                merged_input_json[key] = [value] * system_count
                 exploration_dep = 1
             elif value == "sander_emle":
+                merged_input_json[key] = [value] * system_count
                 exploration_dep = 0
             elif isinstance(value, List):
                 exploration_dep = []
