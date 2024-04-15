@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/29
+Last modified: 2024/04/15
 """
 
 # Standard library modules
@@ -191,71 +191,88 @@ def main(
                     elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
                         traj_file = local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.dcd"
                         min_index = int(QbC_stats["minimum_index"])
+                    elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
+                        traj_file = local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}_QM.xyz"
+                        min_index = int(QbC_stats["minimum_index"])
+
                     (local_path / "min.vmd").write_text(f"{min_index}")
                     padded_min_index = str(min_index).zfill(5)
 
-                    min_file_name = f"{padded_curr_iter}_{system_auto}_{it_nnp}_{str(it_number).zfill(5)}"
-                    vmd_tcl = copy.deepcopy(master_vmd_tcl)
-                    vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_PDB_FILE_", str(topo_file))
-                    vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_DCD_FILE_", str(traj_file))
-                    vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_FRAME_INDEX_FILE_", str(local_path / "min.vmd"))
-                    vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_XYZ_OUT_", str(starting_structures_path / f"{min_file_name}"))
-                    string_list_to_textfile(local_path / "vmd.tcl", vmd_tcl)
-                    del vmd_tcl, traj_file
+                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps" or exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
 
-                    # VMD DCD -> XYZ
-                    remove_file(starting_structures_path / f"{min_file_name}_{padded_min_index}.xyz")
-                    subprocess.run([vmd_bin, "-e", str(local_path / "vmd.tcl"), "-dispdev", "text"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-                    xyz_string = textfile_to_string_list(starting_structures_path / f"{min_file_name}_{padded_min_index}.xyz")
-                    if not is_cell_constant:
-                        extended_xyz_header = f'Lattice="{cella[min_index]} 0.0000 0.0000 0.0000 {cellb[min_index]} 0.0000 0.0000 0.0000 {cellc[min_index]}" Properties=species:S:1:pos:R:3 Frame={min_index}'
-                    else:
-                        extended_xyz_header = f'Lattice="{cella} 0.0000 0.0000 0.0000 {cellb} 0.0000 0.0000 0.0000 {cellc}" Properties=species:S:1:pos:R:3 Frame={min_index}'
-                    xyz_string = [xyz_string[0]] + [extended_xyz_header] + xyz_string[2:]
-                    string_list_to_textfile(starting_structures_path / f"{min_file_name}_{padded_min_index}.xyz", xyz_string)
-                    del xyz_string, extended_xyz_header
 
-                    remove_file((local_path / "vmd.tcl"))
-                    remove_file((local_path / "min.vmd"))
+                        min_file_name = f"{padded_curr_iter}_{system_auto}_{it_nnp}_{str(it_number).zfill(5)}"
+                        vmd_tcl = copy.deepcopy(master_vmd_tcl)
+                        vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_PDB_FILE_", str(topo_file))
+                        vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_DCD_FILE_", str(traj_file))
+                        vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_FRAME_INDEX_FILE_", str(local_path / "min.vmd"))
+                        vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_XYZ_OUT_", str(starting_structures_path / f"{min_file_name}"))
+                        string_list_to_textfile(local_path / "vmd.tcl", vmd_tcl)
+                        del vmd_tcl, traj_file
 
-                    # Atomsk XYZ -> LMP
-                    remove_file(starting_structures_path / f"{min_file_name}_{padded_min_index}.lmp")
-                    subprocess.run([atomsk_bin, "-ow", "-properties", str(Path("..") / "user_files" / "properties.txt"), str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}.xyz"), str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}.lmp")], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-                    # Add a mass to any 0.0000 mass in the LMP file
-                    lmp_file = textfile_to_string_list(starting_structures_path / f"{min_file_name}_{padded_min_index}.lmp")
-                    lmp_file = replace_substring_in_string_list(lmp_file, "0.00000000              # XX", "1.00000000              # XX")
-                    string_list_to_textfile(starting_structures_path / f"{min_file_name}_{padded_min_index}.lmp", lmp_file)
-                    del lmp_file
-
-                    # If the a minium value was set by the user or previous, enable disturbed min structures
-                    if disturbed_start_value != 0:
-                        # or (curr_iter > 1 and previous_exploration_json["systems_auto"][system_auto]["disturbed_start"]):
-
-                        # Atomsk XYZ ==> XYZ_disturbed
-                        remove_file((starting_structures_path / f"{min_file_name}_{padded_min_index}_disturbed.xyz"))
-                        (starting_structures_path / f"{min_file_name}_{padded_min_index}_disturbed.xyz").write_text((starting_structures_path / f"{min_file_name}_{padded_min_index}.xyz").read_text())
-
-                        if not disturbed_start_indexes:
-                            subprocess.run([atomsk_bin, "-ow", str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}_disturbed.xyz"), "-disturb", str(disturbed_start_value), "exyz"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                        # VMD DCD -> XYZ
+                        remove_file(starting_structures_path / f"{min_file_name}_{padded_min_index}.xyz")
+                        subprocess.run([vmd_bin, "-e", str(local_path / "vmd.tcl"), "-dispdev", "text"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                        xyz_string = textfile_to_string_list(starting_structures_path / f"{min_file_name}_{padded_min_index}.xyz")
+                        if not is_cell_constant:
+                            extended_xyz_header = f'Lattice="{cella[min_index]} 0.0000 0.0000 0.0000 {cellb[min_index]} 0.0000 0.0000 0.0000 {cellc[min_index]}" Properties=species:S:1:pos:R:3 Frame={min_index}'
                         else:
-                            subprocess.run([atomsk_bin, "-ow", str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}_disturbed.xyz"), "-select", ",".join([str(idx) for idx in disturbed_start_indexes]), "-disturb", str(disturbed_start_value), "exyz"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                            extended_xyz_header = f'Lattice="{cella} 0.0000 0.0000 0.0000 {cellb} 0.0000 0.0000 0.0000 {cellc}" Properties=species:S:1:pos:R:3 Frame={min_index}'
+                        xyz_string = [xyz_string[0]] + [extended_xyz_header] + xyz_string[2:]
+                        string_list_to_textfile(starting_structures_path / f"{min_file_name}_{padded_min_index}.xyz", xyz_string)
+                        del xyz_string, extended_xyz_header
+
+                        remove_file((local_path / "vmd.tcl"))
+                        remove_file((local_path / "min.vmd"))
 
                         # Atomsk XYZ -> LMP
-                        remove_file(starting_structures_path / f"{min_file_name}_{padded_min_index}_disturbed.lmp")
-                        subprocess.run([atomsk_bin, "-ow", "-properties", str(Path("..") / "user_files" / "properties.txt"), str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}_disturbed.xyz"), str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}_disturbed.lmp")], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                        remove_file(starting_structures_path / f"{min_file_name}_{padded_min_index}.lmp")
+                        subprocess.run([atomsk_bin, "-ow", "-properties", str(Path("..") / "user_files" / "properties.txt"), str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}.xyz"), str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}.lmp")], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
                         # Add a mass to any 0.0000 mass in the LMP file
-                        lmp_file = textfile_to_string_list(starting_structures_path / f"{min_file_name}_{padded_min_index}_disturbed.lmp")
+                        lmp_file = textfile_to_string_list(starting_structures_path / f"{min_file_name}_{padded_min_index}.lmp")
                         lmp_file = replace_substring_in_string_list(lmp_file, "0.00000000              # XX", "1.00000000              # XX")
-                        string_list_to_textfile(starting_structures_path / f"{min_file_name}_{padded_min_index}_disturbed.lmp", lmp_file)
+                        string_list_to_textfile(starting_structures_path / f"{min_file_name}_{padded_min_index}.lmp", lmp_file)
                         del lmp_file
 
-                        exploration_json["systems_auto"][system_auto]["disturbed_start_value"] = disturbed_start_value
-                        exploration_json["systems_auto"][system_auto]["disturbed_start_indexes"] = disturbed_start_indexes
-                    else:
-                        exploration_json["systems_auto"][system_auto]["disturbed_start_value"] = 0
-                        exploration_json["systems_auto"][system_auto]["disturbed_start_indexes"] = []
+                        # If the a minium value was set by the user or previous, enable disturbed min structures
+                        if disturbed_start_value != 0:
+                            # or (curr_iter > 1 and previous_exploration_json["systems_auto"][system_auto]["disturbed_start"]):
 
-                    del min_index, padded_min_index, min_file_name
+                            # Atomsk XYZ ==> XYZ_disturbed
+                            remove_file((starting_structures_path / f"{min_file_name}_{padded_min_index}_disturbed.xyz"))
+                            (starting_structures_path / f"{min_file_name}_{padded_min_index}_disturbed.xyz").write_text((starting_structures_path / f"{min_file_name}_{padded_min_index}.xyz").read_text())
+
+                            if not disturbed_start_indexes:
+                                subprocess.run([atomsk_bin, "-ow", str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}_disturbed.xyz"), "-disturb", str(disturbed_start_value), "exyz"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                            else:
+                                subprocess.run([atomsk_bin, "-ow", str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}_disturbed.xyz"), "-select", ",".join([str(idx) for idx in disturbed_start_indexes]), "-disturb", str(disturbed_start_value), "exyz"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+
+                            # Atomsk XYZ -> LMP
+                            remove_file(starting_structures_path / f"{min_file_name}_{padded_min_index}_disturbed.lmp")
+                            subprocess.run([atomsk_bin, "-ow", "-properties", str(Path("..") / "user_files" / "properties.txt"), str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}_disturbed.xyz"), str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}_disturbed.lmp")], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                            # Add a mass to any 0.0000 mass in the LMP file
+                            lmp_file = textfile_to_string_list(starting_structures_path / f"{min_file_name}_{padded_min_index}_disturbed.lmp")
+                            lmp_file = replace_substring_in_string_list(lmp_file, "0.00000000              # XX", "1.00000000              # XX")
+                            string_list_to_textfile(starting_structures_path / f"{min_file_name}_{padded_min_index}_disturbed.lmp", lmp_file)
+                            del lmp_file
+
+                            exploration_json["systems_auto"][system_auto]["disturbed_start_value"] = disturbed_start_value
+                            exploration_json["systems_auto"][system_auto]["disturbed_start_indexes"] = disturbed_start_indexes
+                        else:
+                            exploration_json["systems_auto"][system_auto]["disturbed_start_value"] = 0
+                            exploration_json["systems_auto"][system_auto]["disturbed_start_indexes"] = []
+
+                        del min_index, padded_min_index, min_file_name
+
+                    elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
+
+                        # This part should read the nc file and convert it
+                        # But for now, it is deactivated
+
+                        if disturbed_start_value != 0:
+                            logging.warning("Disturbed start value is not supported for sander_emle")
+                            exploration_json["systems_auto"][system_auto]["disturbed_start_value"] = 0
+                            exploration_json["systems_auto"][system_auto]["disturbed_start_indexes"] = []
 
                 # Selection of labeling XYZ
                 if QbC_stats["selected_count"] > 0:
@@ -267,59 +284,80 @@ def main(
                     elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
                         traj_file = local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.dcd"
                         candidate_indexes = candidate_indexes
+                    elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
+                        traj_file = local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}_QM.xyz"
 
                     candidate_indexes = candidate_indexes.astype(int).astype(str).tolist()
-                    string_list_to_textfile((local_path / "label.vmd"), candidate_indexes)
 
-                    vmd_tcl = copy.deepcopy(master_vmd_tcl)
-                    vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_PDB_FILE_", str(topo_file))
-                    vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_DCD_FILE_", str(traj_file))
-                    vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_FRAME_INDEX_FILE_", str(local_path / "label.vmd"))
-                    vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_XYZ_OUT_", str(local_path / ("candidates")))
-                    string_list_to_textfile((local_path / "vmd.tcl"), vmd_tcl)
-                    del vmd_tcl, traj_file
+                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps" or exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
+                        string_list_to_textfile((local_path / "label.vmd"), candidate_indexes)
 
-                    # VMD DCD ->  A lot of XYZ
-                    subprocess.run([vmd_bin, "-e", str(local_path / "vmd.tcl"), "-dispdev", "text"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-                    for xyz_files in local_path.glob("candidates_*.xyz"):
-                        if "disturbed" in xyz_files.stem:
-                            continue
-                        index_xyz = int(xyz_files.stem.split("_")[-1])
-                        xyz_string = textfile_to_string_list(xyz_files)
-                        if not is_cell_constant:
-                            extended_xyz_header = f'Lattice="{cella[index_xyz]} 0.0000 0.0000 0.0000 {cellb[index_xyz]} 0.0000 0.0000 0.0000 {cellc[index_xyz]}" Properties=species:S:1:pos:R:3 Frame={index_xyz}'
-                        else:
-                            extended_xyz_header = f'Lattice="{cella} 0.0000 0.0000 0.0000 {cellb} 0.0000 0.0000 0.0000 {cellc}" Properties=species:S:1:pos:R:3 Frame={index_xyz}'
-                        xyz_string = [xyz_string[0]] + [extended_xyz_header] + xyz_string[2:]
-                        string_list_to_textfile(xyz_files, xyz_string)
-                        del xyz_string, extended_xyz_header, index_xyz
-                    del xyz_files
+                        vmd_tcl = copy.deepcopy(master_vmd_tcl)
+                        vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_PDB_FILE_", str(topo_file))
+                        vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_DCD_FILE_", str(traj_file))
+                        vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_FRAME_INDEX_FILE_", str(local_path / "label.vmd"))
+                        vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_XYZ_OUT_", str(local_path / ("candidates")))
+                        string_list_to_textfile((local_path / "vmd.tcl"), vmd_tcl)
+                        del vmd_tcl, traj_file
 
-                    remove_file((local_path / "label.vmd"))
-                    remove_file((local_path / "vmd.tcl"))
-
-                    candidate_indexes_padded = [_.zfill(5) for _ in candidate_indexes]
-                    candidates_files.extend([str(Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / ("candidates_" + _ + ".xyz")) for _ in candidate_indexes_padded])
-
-                    # If the a minium value was set by the user or previous, enable disturbed min structures
-                    if disturbed_candidate_value != 0:
-                        remove_files_matching_glob(local_path, "_disturbed.xyz")
-                        for candidate_index_padded in candidate_indexes_padded:
-                            (local_path / f"candidates_{candidate_index_padded}_disturbed.xyz").write_text((local_path / f"candidates_{candidate_index_padded}.xyz").read_text())
-                            if not disturbed_candidate_indexes:
-                                subprocess.run([atomsk_bin, "-ow", str(Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / (f"candidates_{candidate_index_padded}_disturbed.xyz")), "-disturb", str(disturbed_candidate_value), "exyz"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                        # VMD DCD ->  A lot of XYZ
+                        subprocess.run([vmd_bin, "-e", str(local_path / "vmd.tcl"), "-dispdev", "text"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                        for xyz_files in local_path.glob("candidates_*.xyz"):
+                            if "disturbed" in xyz_files.stem:
+                                continue
+                            index_xyz = int(xyz_files.stem.split("_")[-1])
+                            xyz_string = textfile_to_string_list(xyz_files)
+                            if not is_cell_constant:
+                                extended_xyz_header = f'Lattice="{cella[index_xyz]} 0.0000 0.0000 0.0000 {cellb[index_xyz]} 0.0000 0.0000 0.0000 {cellc[index_xyz]}" Properties=species:S:1:pos:R:3 Frame={index_xyz}'
                             else:
-                                subprocess.run([atomsk_bin, "-ow", str(Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / (f"candidates_{candidate_index_padded}_disturbed.xyz")), "-select", ",".join([str(idx) for idx in disturbed_candidate_indexes]), "-disturb", str(disturbed_candidate_value), "exyz"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                                extended_xyz_header = f'Lattice="{cella} 0.0000 0.0000 0.0000 {cellb} 0.0000 0.0000 0.0000 {cellc}" Properties=species:S:1:pos:R:3 Frame={index_xyz}'
+                            xyz_string = [xyz_string[0]] + [extended_xyz_header] + xyz_string[2:]
+                            string_list_to_textfile(xyz_files, xyz_string)
+                            del xyz_string, extended_xyz_header, index_xyz
+                        del xyz_files
 
-                        candidates_disturbed_files.extend([str(Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / ("candidates_" + _ + "_disturbed.xyz")) for _ in candidate_indexes_padded])
-                        exploration_json["systems_auto"][system_auto]["disturbed_candidate_value"] = disturbed_candidate_value
-                        exploration_json["systems_auto"][system_auto]["disturbed_candidate_indexes"] = disturbed_candidate_indexes
-                        del candidate_index_padded
+                        remove_file((local_path / "label.vmd"))
+                        remove_file((local_path / "vmd.tcl"))
 
-                    else:
-                        exploration_json["systems_auto"][system_auto]["disturbed_candidate_value"] = 0
-                        exploration_json["systems_auto"][system_auto]["disturbed_candidate_indexes"] = []
-                    del candidate_indexes, candidate_indexes_padded
+                        candidate_indexes_padded = [_.zfill(5) for _ in candidate_indexes]
+                        candidates_files.extend([str(Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / ("candidates_" + _ + ".xyz")) for _ in candidate_indexes_padded])
+
+                        # If the a minium value was set by the user or previous, enable disturbed min structures
+                        if disturbed_candidate_value != 0:
+                            remove_files_matching_glob(local_path, "_disturbed.xyz")
+                            for candidate_index_padded in candidate_indexes_padded:
+                                (local_path / f"candidates_{candidate_index_padded}_disturbed.xyz").write_text((local_path / f"candidates_{candidate_index_padded}.xyz").read_text())
+                                if not disturbed_candidate_indexes:
+                                    subprocess.run([atomsk_bin, "-ow", str(Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / (f"candidates_{candidate_index_padded}_disturbed.xyz")), "-disturb", str(disturbed_candidate_value), "exyz"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                                else:
+                                    subprocess.run([atomsk_bin, "-ow", str(Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / (f"candidates_{candidate_index_padded}_disturbed.xyz")), "-select", ",".join([str(idx) for idx in disturbed_candidate_indexes]), "-disturb", str(disturbed_candidate_value), "exyz"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+
+                            candidates_disturbed_files.extend([str(Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / ("candidates_" + _ + "_disturbed.xyz")) for _ in candidate_indexes_padded])
+                            exploration_json["systems_auto"][system_auto]["disturbed_candidate_value"] = disturbed_candidate_value
+                            exploration_json["systems_auto"][system_auto]["disturbed_candidate_indexes"] = disturbed_candidate_indexes
+                            del candidate_index_padded
+
+                        else:
+                            exploration_json["systems_auto"][system_auto]["disturbed_candidate_value"] = 0
+                            exploration_json["systems_auto"][system_auto]["disturbed_candidate_indexes"] = []
+                        del candidate_indexes, candidate_indexes_padded
+
+                    elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
+
+                        candidate_indexes_padded = [_.zfill(5) for _ in candidate_indexes]
+                        atom_counts, atomic_symbols, atomic_coordinates, comments, lattice_info, pbc_info, properties_info, max_f_std_info = parse_xyz_trajectory_file(local_path / traj_file)
+
+                        for _ in candidate_indexes_padded:
+                            write_xyz_frame(local_path / f"candidates_{_}.xyz", int(_), atom_counts, atomic_symbols, atomic_coordinates, [], comments)
+                            candidates_files.append(str(Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / ("candidates_" + _ + ".xyz")))
+
+                        if disturbed_candidate_value != 0:
+                            logging.warning("Disturbed start value is not supported for sander_emle")
+                            exploration_json["systems_auto"][system_auto]["disturbed_candidate_value"] = 0
+                            exploration_json["systems_auto"][system_auto]["disturbed_candidate_indexes"] = []
+                        else:
+                            exploration_json["systems_auto"][system_auto]["disturbed_candidate_value"] = 0
+                            exploration_json["systems_auto"][system_auto]["disturbed_candidate_indexes"] = []
                 else:
                     exploration_json["systems_auto"][system_auto]["disturbed_candidate_value"] = 0
                     exploration_json["systems_auto"][system_auto]["disturbed_candidate_indexes"] = []

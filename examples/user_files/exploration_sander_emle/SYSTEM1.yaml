@@ -23,3 +23,5 @@ qm_indices: null
 rascal_model: null
 restart: false
 sqm_theory: null
+qm_xyz_file: null
+qm_xyz_frequency: null

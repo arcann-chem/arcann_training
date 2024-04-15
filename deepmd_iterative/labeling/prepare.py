@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/09
+Last modified: 2024/04/15
 """
 
 # Standard library modules
@@ -340,7 +340,7 @@ def main(
 
         # Regular
         xyz_file = training_path / f"{padded_curr_iter}-exploration" / system_auto / f"candidates_{padded_curr_iter}_{system_auto}.xyz"
-        num_atoms, atom_symbols, atom_coords, cell_info, comments = parse_xyz_trajectory_file(xyz_file, True)
+        num_atoms, atom_symbols, atom_coords, comments, cell_info, pbc_info, properties_info, max_f_std_info = parse_xyz_trajectory_file(xyz_file)
         del xyz_file
 
         if atom_coords.shape[0] != candidates_count:
@@ -391,12 +391,12 @@ def main(
             del padded_labeling_step, labeling_step_path
 
         del labeling_step
-        del num_atoms, atom_symbols, atom_coords, cell_info, comments
+        del num_atoms, atom_symbols, atom_coords, cell_info, comments, pbc_info, properties_info, max_f_std_info
 
         # Disturbed
         xyz_file_disturbed = training_path / f"{padded_curr_iter}-exploration" / system_auto / f"candidates_{padded_curr_iter}_{system_auto}_disturbed.xyz"
         if xyz_file_disturbed.is_file():
-            num_atoms, atom_symbols, atom_coords, cell_info, comments = parse_xyz_trajectory_file(xyz_file, True)
+            num_atoms, atom_symbols, atom_coords, comments, cell_info, pbc_info, properties_info, max_f_std_info = parse_xyz_trajectory_file(xyz_file)
             del xyz_file_disturbed
 
             if atom_coords.shape[0] != candidates_count:
@@ -444,7 +444,7 @@ def main(
                 del padded_labeling_step, labeling_step_path
 
             del labeling_step
-            del num_atoms, atom_symbols, atom_coords, cell_info, comments
+            del num_atoms, atom_symbols, atom_coords, cell_info, comments, pbc_info, properties_info, max_f_std_info
 
         # Update labeling JSON
         labeling_json["systems_auto"][system_auto]["walltime_first_job_h"] = system_walltime_first_job_h

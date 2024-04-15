@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/29
+Last modified: 2024/04/15
 """
 
 # Standard library modules
@@ -31,7 +31,7 @@ from deepmd_iterative.exploration.utils import (
     generate_input_exploration_deviation_json,
     get_system_deviation,
 )
-
+from deepmd_iterative.common.xyz import parse_xyz_trajectory_file
 
 def main(
     current_step: str,
@@ -162,6 +162,7 @@ def main(
                 # Get the local path and the name of model_deviation file
                 local_path = Path(".").resolve() / str(system_auto) / str(it_nnp) / str(it_number).zfill(5)
                 model_deviation_filename = f"model_devi_{system_auto}_{it_nnp}_{padded_curr_iter}.out"
+                xyz_qm_filename = f"{system_auto}_{it_nnp}_{padded_curr_iter}_QM.xyz"
 
                 # Create the JSON data for Query-by-Committee
                 QbC_stats = load_json_file(local_path / "QbC_stats.json", False, False)
@@ -178,11 +179,20 @@ def main(
 
                 # If it was not skipped
                 if not (local_path / "skip").is_file():
-                    model_deviation = np.genfromtxt(str(local_path / model_deviation_filename))
-                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps":
-                        total_row_number = model_deviation.shape[0]
-                    elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
-                        total_row_number = model_deviation.shape[0] + 1
+                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "samder_emle":
+                        num_atoms, atom_symbols, atom_coords, comments, cell_info, pbc_info, properties_info, max_f_std_info = parse_xyz_trajectory_file(local_path / xyz_qm_filename)
+                        model_deviation = np.array(max_f_std_info)
+                        total_row_number = len(max_f_std_info)
+                    elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps" or exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
+                        model_deviation = np.genfromtxt(str(local_path / model_deviation_filename))
+                        if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps":
+                            total_row_number = model_deviation.shape[0]
+                        elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
+                            total_row_number = model_deviation.shape[0] + 1
+                    else:
+                        logging.error("Unknown exploration type. Please BUG REPORT!")
+                        logging.error("Aborting...")
+                        return 1
 
                     if nb_steps_expected > (total_row_number - start_row_number):
                         QbC_stats["total_count"] = nb_steps_expected
@@ -207,54 +217,120 @@ def main(
                     if (local_path / "force").is_file():
                         end_row_number = end_row_number - 1
 
-                    # This part is when sigma_high_limit was never crossed
-                    if end_row_number < 0:
-                        mean_deviation_max_f = np.mean(model_deviation[start_row_number:, 4])
-                        median_deviation_max_f = np.median(model_deviation[start_row_number:, 4])
-                        stdeviation_deviation_max_f = np.std(model_deviation[start_row_number:, 4])
-                        good = model_deviation[start_row_number:, :][model_deviation[start_row_number:, 4] <= sigma_low]
-                        rejected = model_deviation[start_row_number:, :][model_deviation[start_row_number:, 4] >= sigma_high]
-                        candidates = model_deviation[start_row_number:, :][(model_deviation[start_row_number:, 4] > sigma_low) & (model_deviation[start_row_number:, 4] < sigma_high)]
+                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps" or exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
 
-                    # This part is when sigma_high_limit was crossed during ignore_first_x_ps (SKIP everything for stats)
-                    elif end_row_number <= start_row_number:
-                        mean_deviation_max_f = 999.0
-                        median_deviation_max_f = 999.0
-                        stdeviation_deviation_max_f = 999.0
-                        good = np.array([])
-                        rejected = model_deviation[start_row_number:, :]
-                        candidates = np.array([])
-                        # In this case, it is skipped
-                        skipped_traj_stats += 1
+                        # This part is when sigma_high_limit was never crossed
+                        if end_row_number < 0:
+                            mean_deviation_max_f = np.mean(model_deviation[start_row_number:, 4])
+                            median_deviation_max_f = np.median(model_deviation[start_row_number:, 4])
+                            stdeviation_deviation_max_f = np.std(model_deviation[start_row_number:, 4])
+                            good = model_deviation[start_row_number:, :][model_deviation[start_row_number:, 4] <= sigma_low]
+                            rejected = model_deviation[start_row_number:, :][model_deviation[start_row_number:, 4] >= sigma_high]
+                            candidates = model_deviation[start_row_number:, :][(model_deviation[start_row_number:, 4] > sigma_low) & (model_deviation[start_row_number:, 4] < sigma_high)]
 
-                    # This part is when sigma_high_limit was crossed (Gets stats before)
+                        # This part is when sigma_high_limit was crossed during ignore_first_x_ps (SKIP everything for stats)
+                        elif end_row_number <= start_row_number:
+                            mean_deviation_max_f = 999.0
+                            median_deviation_max_f = 999.0
+                            stdeviation_deviation_max_f = 999.0
+                            good = np.array([])
+                            rejected = model_deviation[start_row_number:, :]
+                            candidates = np.array([])
+                            # In this case, it is skipped
+                            skipped_traj_stats += 1
+
+                        # This part is when sigma_high_limit was crossed (Gets stats before)
+                        else:
+                            mean_deviation_max_f = np.mean(model_deviation[start_row_number:end_row_number, 4])
+                            median_deviation_max_f = np.median(model_deviation[start_row_number:end_row_number, 4])
+                            stdeviation_deviation_max_f = np.std(model_deviation[start_row_number:end_row_number, 4])
+                            good = model_deviation[start_row_number:end_row_number, :][model_deviation[start_row_number:end_row_number, 4] <= sigma_low]
+                            rejected = model_deviation[start_row_number:end_row_number, :][model_deviation[start_row_number:end_row_number, 4] >= sigma_high]
+                            candidates = model_deviation[start_row_number:end_row_number, :][(model_deviation[start_row_number:end_row_number, 4] > sigma_low) & (model_deviation[start_row_number:end_row_number, 4] < sigma_high)]
+                            # Add the rest to rejected
+                            rejected = np.vstack((rejected, model_deviation[end_row_number:, :]))
+
+                    elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "samder_emle":
+
+                        # This part is when sigma_high_limit was never crossed
+                        if end_row_number < 0:
+                            mean_deviation_max_f = np.mean(model_deviation[start_row_number:])
+                            median_deviation_max_f = np.median(model_deviation[start_row_number:])
+                            stdeviation_deviation_max_f = np.std(model_deviation[start_row_number:])
+                            good = np.where(model_deviation[start_row_number:] <= sigma_low)
+                            rejected = np.where(model_deviation[start_row_number:] >= sigma_high)
+                            candidates = np.where((model_deviation[start_row_number:] > sigma_low) & (model_deviation[start_row_number:] < sigma_high))
+
+                        # This part is when sigma_high_limit was crossed during ignore_first_x_ps (SKIP everything for stats)
+                        elif end_row_number <= start_row_number:
+                            mean_deviation_max_f = 999.0
+                            median_deviation_max_f = 999.0
+                            stdeviation_deviation_max_f = 999.0
+                            good = np.array([])
+                            rejected = model_deviation[start_row_number:, :]
+                            candidates = np.array([])
+                            # In this case, it is skipped
+                            skipped_traj_stats += 1
+
+                        # This part is when sigma_high_limit was crossed (Gets stats before)
+                        else:
+                            mean_deviation_max_f = np.mean(model_deviation[start_row_number:end_row_number])
+                            median_deviation_max_f = np.median(model_deviation[start_row_number:end_row_number])
+                            stdeviation_deviation_max_f = np.std(model_deviation[start_row_number:end_row_number])
+                            good = np.where(model_deviation[start_row_number:end_row_number] <= sigma_low)
+                            rejected = np.where(model_deviation[start_row_number:end_row_number] >= sigma_high)
+                            candidates = np.where((model_deviation[start_row_number:end_row_number] > sigma_low) & (model_deviation[start_row_number:end_row_number] < sigma_high))
+                            # Add the rest to rejected
+                            rejected = np.vastack((rejected, model_deviation[end_row_number:]))
                     else:
-                        mean_deviation_max_f = np.mean(model_deviation[start_row_number:end_row_number, 4])
-                        median_deviation_max_f = np.median(model_deviation[start_row_number:end_row_number, 4])
-                        stdeviation_deviation_max_f = np.std(model_deviation[start_row_number:end_row_number, 4])
-                        good = model_deviation[start_row_number:end_row_number, :][model_deviation[start_row_number:end_row_number, 4] <= sigma_low]
-                        rejected = model_deviation[start_row_number:end_row_number, :][model_deviation[start_row_number:end_row_number, 4] >= sigma_high]
-                        candidates = model_deviation[start_row_number:end_row_number, :][(model_deviation[start_row_number:end_row_number, 4] > sigma_low) & (model_deviation[start_row_number:end_row_number, 4] < sigma_high)]
-                        # Add the rest to rejected
-                        rejected = np.vstack((rejected, model_deviation[end_row_number:, :]))
+                        logging.error("Unknown exploration type. Please BUG REPORT!")
+                        logging.error("Aborting...")
+                        return 1
 
                     # Fill JSON files
-                    QbC_indexes = {
-                        **QbC_indexes,
-                        "good_indexes": good[:, 0].astype(int).tolist() if good.size > 0 else [],
-                        "rejected_indexes": rejected[:, 0].astype(int).tolist() if rejected.size > 0 else [],
-                        "candidate_indexes": candidates[:, 0].astype(int).tolist() if candidates.size > 0 else [],
-                    }
+                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "samder_emle":
+                        QbC_indexes = {
+                            **QbC_indexes,
+                            "good_indexes": good.astype(int).tolist() if good.size > 0 else [],
+                            "rejected_indexes": rejected.astype(int).tolist() if rejected.size > 0 else [],
+                            "candidate_indexes": candidates.astype(int).tolist() if candidates.size > 0 else [],
+                        }
+                    elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps" or exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
+                        QbC_indexes = {
+                            **QbC_indexes,
+                            "good_indexes": good[:, 0].astype(int).tolist() if good.size > 0 else [],
+                            "rejected_indexes": rejected[:, 0].astype(int).tolist() if rejected.size > 0 else [],
+                            "candidate_indexes": candidates[:, 0].astype(int).tolist() if candidates.size > 0 else [],
+                        }
+                    else:
+                        logging.error("Unknown exploration type. Please BUG REPORT!")
+                        logging.error("Aborting...")
+                        return 1
 
-                    QbC_stats = {
-                        **QbC_stats,
-                        "mean_deviation_max_f": mean_deviation_max_f,
-                        "median_deviation_max_f": median_deviation_max_f,
-                        "stdeviation_deviation_max_f": stdeviation_deviation_max_f,
-                        "good_count": len(good[:, 0].astype(int).tolist()) if good.size > 0 else 0,
-                        "rejected_count": len(rejected[:, 0].astype(int).tolist()) if rejected.size > 0 else 0,
-                        "candidates_count": len(candidates[:, 0].astype(int).tolist()) if candidates.size > 0 else 0,
-                    }
+                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "samder_emle":
+                        QbC_stats = {
+                            **QbC_stats,
+                            "mean_deviation_max_f": mean_deviation_max_f,
+                            "median_deviation_max_f": median_deviation_max_f,
+                            "stdeviation_deviation_max_f": stdeviation_deviation_max_f,
+                            "good_count": len(good.astype(int).tolist()) if good.size > 0 else 0,
+                            "rejected_count": len(rejected.astype(int).tolist()) if rejected.size > 0 else 0,
+                            "candidates_count": len(candidates.astype(int).tolist()) if candidates.size > 0 else 0,
+                        }
+                    elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps" or exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
+                        QbC_stats = {
+                            **QbC_stats,
+                            "mean_deviation_max_f": mean_deviation_max_f,
+                            "median_deviation_max_f": median_deviation_max_f,
+                            "stdeviation_deviation_max_f": stdeviation_deviation_max_f,
+                            "good_count": len(good[:, 0].astype(int).tolist()) if good.size > 0 else 0,
+                            "rejected_count": len(rejected[:, 0].astype(int).tolist()) if rejected.size > 0 else 0,
+                            "candidates_count": len(candidates[:, 0].astype(int).tolist()) if candidates.size > 0 else 0,
+                        }
+                    else:
+                        logging.error("Unknown exploration type. Please BUG REPORT!")
+                        logging.error("Aborting...")
+                        return 1
 
                     # If the traj is smaller than expected (forced case) add the missing as rejected
                     if (QbC_stats["good_count"] + QbC_stats["rejected_count"] + QbC_stats["candidates_count"]) < nb_steps_expected:
@@ -314,7 +390,7 @@ def main(
             logging.critical("Aborting...")
             return 1
         else:
-            if exploitable_traj / exploration_json["nnp_count"] * exploration_json["systems_auto"][system_auto]["traj_count"] < 0.25:
+            if exploitable_traj / (exploration_json["nnp_count"] * exploration_json["systems_auto"][system_auto]["traj_count"]) < 0.25:
                 logging.warning("Less than 25% of your exploration trajectories are exploitable. Be careful for the next one.")
             exploration_json["systems_auto"][system_auto]["mean_deviation_max_f"] = exploration_json["systems_auto"][system_auto]["mean_deviation_max_f"] / exploitable_traj
             exploration_json["systems_auto"][system_auto]["median_deviation_max_f"] = exploration_json["systems_auto"][system_auto]["median_deviation_max_f"] / exploitable_traj
@@ -356,7 +432,9 @@ def main(
             for it_number in range(1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1):
                 # Get the local path and the name of model_deviation file
                 local_path = Path(".").resolve() / str(system_auto) / str(it_nnp) / str(it_number).zfill(5)
+
                 model_deviation_filename = f"model_devi_{system_auto}_{it_nnp}_{padded_curr_iter}.out"
+                xyz_qm_filename = f"{system_auto}_{it_nnp}_{padded_curr_iter}_QM.xyz"
 
                 # Create the JSON data for Query-by-Committee
                 QbC_stats = load_json_file(local_path / "QbC_stats.json", True, False)
@@ -404,10 +482,17 @@ def main(
                     # Now we get the starting point (the min of selected, or the last good)
                     # Min of selected
                     if selected_indexes.shape[0] > 0:
-                        model_deviation = np.genfromtxt(str(local_path / model_deviation_filename))
+                        if exploration_json["systems_auto"][system_auto]["exploration_type"] == "samder_emle":
+                            num_atoms, atom_symbols, atom_coords, comments, cell_info, pbc_info, properties_info, max_f_std_info = parse_xyz_trajectory_file(local_path / xyz_qm_filename)
+                            model_deviation = np.array(max_f_std_info)
+                        elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps" or exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
+                            model_deviation = np.genfromtxt(str(local_path / model_deviation_filename))
                         min_val = 1e30
                         for selected_idx in selected_indexes:
-                            temp_min = model_deviation[:, 4][np.where(model_deviation[:, 0] == selected_idx)]
+                            if exploration_json["systems_auto"][system_auto]["exploration_type"] == "samder_emle":
+                                temp_min = model_deviation[selected_idx]
+                            else:
+                                temp_min = model_deviation[:, 4][np.where(model_deviation[:, 0] == selected_idx)]
                             if temp_min < min_val:
                                 min_val = temp_min
                                 min_index = selected_idx

@@ -744,12 +744,16 @@ def get_last_frame_number(model_deviation: np.ndarray, sigma_high_limit: float, 
         start_frame = 1
     else:
         start_frame = 0
-
-    # Check if any deviation values are over the sigma_high_limit threshold
-    if np.any(model_deviation[start_frame:, 4] >= sigma_high_limit):
-        last_frame = np.argmax(model_deviation[start_frame:, 4] >= sigma_high_limit)
+    if len(model_deviation.shape) == 1:
+        if np.any(model_deviation[start_frame:] >= sigma_high_limit):
+            last_frame = np.argmax(model_deviation[start_frame:] >= sigma_high_limit)
+        else:
+            last_frame = -1
     else:
-        last_frame = -1
+        if np.any(model_deviation[start_frame:, 4] >= sigma_high_limit):
+            last_frame = np.argmax(model_deviation[start_frame:, 4] >= sigma_high_limit)
+        else:
+            last_frame = -1
 
     return last_frame
 

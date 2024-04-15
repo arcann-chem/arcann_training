@@ -732,6 +732,8 @@ def main(
                     system_sander_emle_yaml["energy_file"] = f"{system_auto}_{nnp_index}_{padded_curr_iter}_emle.en"
                     system_sander_emle_yaml["log_file"] = f"{system_auto}_{nnp_index}_{padded_curr_iter}_emle.log"
                     system_sander_emle_yaml["model"] = f"{system_auto}.mat"
+                    system_sander_emle_yaml["qm_xyz_file"] = f"{system_auto}_{nnp_index}_{padded_curr_iter}_QM.xyz"
+                    system_sander_emle_yaml["qm_xyz_frequency"] = int(system_print_every_x_steps)
 
                     with (local_path / f"{system_auto}_{nnp_index}_{padded_curr_iter}.yaml").open("w") as f:
                         yaml.dump(system_sander_emle_yaml, f)

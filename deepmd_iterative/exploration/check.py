@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/31
+Last modified: 2024/04/15
 """
 
 # Standard library modules
@@ -200,13 +200,13 @@ def main(
                         exploration_json["systems_auto"][system_auto]["forced_count"] += 1
                         logging.warning(f"'{local_path}' forced.")
                     # TODO : Check if the output is valid
-                    elif any("Total wall time:" in f for f in sander_emle_ouput):
-                        system_count += 1
-                        completed_count += 1
-                        exploration_json["systems_auto"][system_auto]["completed_count"] += 1
-                        timings_str = [zzz for zzz in sander_emle_ouput if "Loop time of" in zzz]
-                        timings.append(float(timings_str[0].split(" ")[3]))
-                        del timings_str
+                    # elif any("Total wall time:" in f for f in sander_emle_ouput):
+                    #     system_count += 1
+                    #     completed_count += 1
+                    #     exploration_json["systems_auto"][system_auto]["completed_count"] += 1
+                    #     timings_str = [zzz for zzz in sander_emle_ouput if "Loop time of" in zzz]
+                    #     timings.append(float(timings_str[0].split(" ")[3]))
+                    #     del timings_str
                     else:
                         logging.critical(f"'{sander_emle_output_file}' failed. Check manually.")
                     del sander_emle_ouput, sander_emle_output_file, traj_file, model_deviation_filename

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/31
+Last modified: 2024/04/15
 
 The xyz module provides functions to manipulate XYZ data (as np.ndarray).
 
@@ -27,7 +27,7 @@ write_xyz_frame(trajectory_file_path: Path, frame_idx: int, atom_counts: np.ndar
 # Standard library modules
 import re
 from pathlib import Path
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 # Third-party modules
 import numpy as np
@@ -38,98 +38,98 @@ from deepmd_iterative.common.utils import catch_errors_decorator
 
 # TODO: Add tests for this function
 @catch_errors_decorator
-def parse_xyz_trajectory_file(trajectory_file_path: Path, is_extended: bool = True) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, List]:
+def parse_xyz_trajectory_file(trajectory_file_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray, List[str], Optional[np.ndarray], Optional[List[bool]], Optional[bool], Optional[float]]:
     """
-    Parses an XYZ format trajectory file, returning information about the atomic structure throughout the trajectory.
+    Parses an XYZ format trajectory file, extracting atomic structure and optional extended properties such as lattice information,
+    periodic boundary conditions (PBC), and additional properties if they are provided in the comments.
 
     Parameters
     ----------
     trajectory_file_path : Path
         The path to the trajectory file.
-    is_extended : bool, optional
-        Indicates if the file is in extended XYZ format which includes lattice information and properties.
 
     Returns
     -------
-    Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, List[str]]
-        A tuple containing the following:
+    Tuple[np.ndarray, np.ndarray, np.ndarray, List[str], Optional[np.ndarray], Optional[List[bool]], Optional[bool], Optional[float]]
         - atom_counts: An array of the number of atoms for each frame.
-        - atomic_symbols: An array of atomic symbols for each frame, with each symbol up to 3 characters.
+        - atomic_symbols: An array of atomic symbols for each frame, each symbol up to 3 characters.
         - atomic_coordinates: An array of atomic coordinates for each frame.
-        - cell_info: An array of cell lattice information for each frame (only if is_extended is True and valid).
         - comments: A list of comments for each frame.
+        - lattice: Optional array of lattice parameters for each frame if provided.
+        - pbc: Optional list of booleans indicating periodic boundary conditions if provided and valid (True/False for each axis).
+        - properties: Optional boolean indicating if specific properties like 'species:S:1:pos:R:3' are present.
+        - max_f_std: Optional float representing maximum force standard deviation if provided.
 
     Raises
     ------
     FileNotFoundError
         If the trajectory file does not exist.
     TypeError
-        If the number of atoms is not an integer or extended format is incorrect.
+        If the number of atoms is not an integer.
     ValueError
         If the number of atoms changes throughout the file or if the file format is incorrect.
     """
-    # Check if the file exists
     if not trajectory_file_path.is_file():
-        # If the file does not exist, log an error message and abort
-        error_msg = f"File not found {trajectory_file_path.name} not in {trajectory_file_path.parent}"
-        raise FileNotFoundError(error_msg)
+        raise FileNotFoundError(f"File not found: {trajectory_file_path}")
 
-    # Initialize the output lists
-    atom_counts, atomic_symbols, atomic_coordinates, cell_info, comments = [], [], [], [], []
+    atom_counts, atomic_symbols, atomic_coordinates, comments, lattice_info, pbc_info, properties_info, max_f_std_info = [], [], [], [], [], [], [], []
 
-    # Open the file and read in the file_lines
-    with trajectory_file_path.open("r") as f:
-        lines = f.readlines()
+    with trajectory_file_path.open("r") as file:
+        lines = file.readlines()
 
-        # Loop through each line in the file
-        i = 0
-        while i < len(lines):
-            # First line contains the total number of atoms in the molecule
-            atom_count_str = lines[i].strip()
-            if not re.match(r"^\d+$", atom_count_str):
-                error_msg = "Incorrect file format: number of atoms must be an integer."
-                raise TypeError(error_msg)
-            atom_count = int(atom_count_str)
-            atom_counts.append(atom_count)
+    i = 0
+    while i < len(lines):
+        atom_count_str = lines[i].strip()
+        if not atom_count_str.isdigit():
+            raise TypeError("Incorrect file format: number of atoms must be an integer.")
+        atom_count = int(atom_count_str)
+        atom_counts.append(atom_count)
 
-            # Second line is the comment line (optional)
-            comment = lines[i + 1].strip()
-            comments.append(comment)
+        comment = lines[i + 1].strip()
+        comments.append(comment)
 
-            if is_extended:
-                lattice, properties = parse_extended_format(comment)
-                cell_info.append(lattice)
+        lattice, properties, pbc, max_f_std = parse_extended_format(comment)
 
-            # Initialize arrays to store the symbols and coordinates for the current timeframe
-            symbols_frame = np.zeros((atom_count,), dtype="<U3")
-            coordinates_frame = np.zeros((atom_count, 3))
+        lattice_info.append(np.array([float(x) for x in lattice]) if lattice else None)
+        if pbc:
+            if len(pbc) == 3:
+                pbc_info.append(pbc)
+            else:
+                raise ValueError("PBC data must consist of three boolean values (True or False for each axis).")
+        else:
+            pbc_info.append(None)
 
-            for j in range(atom_count):
-                line = lines[i + j + 2].split()
+        properties_info.append(properties if properties else None)
+        max_f_std_info.append(max_f_std if max_f_std else None)
 
-                if len(line) != 4:
-                    raise ValueError("Incorrect file format: expected an atomic symbol followed by three coordinates.")
+        symbols_frame = np.zeros(atom_count, dtype='<U3')
+        coordinates_frame = np.zeros((atom_count, 3))
 
-                symbol, x, y, z = line[0], float(line[1]), float(line[2]), float(line[3])
-                symbols_frame[j] = symbol
-                coordinates_frame[j] = [x, y, z]
+        for j in range(atom_count):
+            line_elements = lines[i + 2 + j].split()
+            if len(line_elements) != 4:
+                raise ValueError("Incorrect file format: expected an atomic symbol followed by three coordinates.")
+            symbol, x, y, z = line_elements
+            symbols_frame[j] = symbol
+            coordinates_frame[j] = [float(x), float(y), float(z)]
 
-            atomic_symbols.append(symbols_frame)
-            atomic_coordinates.append(coordinates_frame)
+        atomic_symbols.append(symbols_frame)
+        atomic_coordinates.append(coordinates_frame)
 
-            i += atom_count + 2
+        i += atom_count + 2
 
     if len(set(atom_counts)) > 1:
         raise ValueError("Number of atoms is not constant throughout the trajectory file.")
 
-    return (np.array(atom_counts), np.array(atomic_symbols), np.array(atomic_coordinates), np.array(cell_info) if is_extended else np.array([]), comments)
+    return np.array(atom_counts), np.array(atomic_symbols), np.array(atomic_coordinates), comments, lattice_info, pbc_info, properties_info, max_f_std_info
 
 
 # TODO: Add tests for this function
 @catch_errors_decorator
-def parse_extended_format(comment_line: str) -> Tuple[List[float], bool]:
+def parse_extended_format(comment_line: str) -> Tuple[Optional[List[float]], bool, Optional[List[bool]], Optional[float]]:
     """
-    Parses the comment line of an extended XYZ file for lattice and properties information.
+    Parses the comment line of an extended XYZ file for lattice, properties, periodic boundary conditions (PBC),
+    and max force standard deviation.
 
     Parameters
     ----------
@@ -138,22 +138,28 @@ def parse_extended_format(comment_line: str) -> Tuple[List[float], bool]:
 
     Returns
     -------
-    Tuple[List[float], bool]
-        Lattice information as a list of floats and a boolean indicating if properties are correctly formatted.
+    Tuple[Optional[List[float]], bool, Optional[List[bool]], Optional[float]]
+        - Lattice information as an optional list of floats.
+        - Boolean indicating if properties are correctly formatted.
+        - PBC as an optional list of booleans.
+        - Max force standard deviation as an optional float.
     """
     lattice_regex = r"Lattice=\"((?:[-\d\.]+\s+){8}[-\d\.]+)\""
     properties_regex = r"Properties=species:S:1:pos:R:3"
+    pbc_regex = r'pbc="([^"]*)"'
+    max_f_std_regex = r"max_f_std=([\d.]+)"
 
     lattice_match = re.search(lattice_regex, comment_line)
     properties_match = re.search(properties_regex, comment_line)
+    pbc_match = re.search(pbc_regex, comment_line)
+    max_f_std_match = re.search(max_f_std_regex, comment_line)
 
-    if lattice_match and properties_match:
-        lattice_floats = [float(value) for value in lattice_match.group(1).split()]
-        return lattice_floats, True
-    else:
-        error_msg = f"Incorrect extended format: comment '{comment_line}'."
-        raise ValueError(error_msg)
+    lattice_values = [float(value) for value in lattice_match.group(1).split()] if lattice_match else None
+    properties_present = bool(properties_match)
+    pbc_values = [v.lower() in ['true', 't'] for v in pbc_match.group(1).split()] if pbc_match else None
+    max_f_std_value = float(max_f_std_match.group(1)) if max_f_std_match else None
 
+    return lattice_values, properties_present, pbc_values, max_f_std_value
 
 # TODO: Add tests for this function
 @catch_errors_decorator
