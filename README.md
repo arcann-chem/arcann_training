@@ -77,12 +77,15 @@ External requirements for usage:
 
 ## Installation
 
+### If your machine has access to the Internet
+
 To use `deepmd_iterative_py` you first need to clone or download this repository using the `Code` green button on top right corner of the main page of this repository. We recommend that you keep a local copy of this repository on each computer that will be used to prepare, run or analyze any part of the iterative training process. This repository contains important files that are required at different stages of the process and should remain available at all time.
 
-After the download is complete, go to the main folder of the repository. Create a `python` environment (version 3.7.3 at least) containing `pip` with the following command:
+After the download is complete, go to the main folder of the repository. Create a `python` environment with all required packages indicated in the `examples/arcann_environment.txt` file with the following command:
 ```bash
-conda create -n ENVNAME python=3.7.3 pip
+conda create --name <ENVNAME> --file examples/arcann_environment.txt
 ```
+
 Load this environment with `conda activate ENVNAME` and run:
 ```bash
 pip install .
@@ -98,6 +101,23 @@ which should print the basic usage message of the code.
 pip install -e .
 ```
 so that any modifications of the source files will be immediately effective on the execution of the program. This is **only** recommended if you plan to modify the source files.
+
+### If your machine does not have access to the Internet
+
+Download the repository in a machine that has access to the Internet and to your offline working computer. In a `tmp/` folder (outside of the repository) copy the `deepmd_iterative_py/examples/download_arcann_environment.sh` and `deepmd_iterative_py/examples/arcann_environment.txt` files and run:
+```bash
+chmod +x download_arcann_environment.sh ; ./download_arcann_environment.sh
+```
+This script will download all the required Python packages into a `download/` folder and create a `arcann_environment_offline.txt` file. Then upload this to the working computer along with the `deepmd_iterative_py` repository:
+```bash
+rsync -rvu tmp/* USER@WORKMACHINE:/PATH/TO/INSTALLATION/FOLDER/.
+rsync -rvu deepmd_iterative_py USER@WORKMACHINE:/PATH/TO/INSTALLATION/FOLDER/.
+```
+Now you can simply create the required Python environment:
+```bash
+conda create --name <ENVNAME> --file arcann_environment_offline.txt
+```
+and install the repository as a Python module as detailed above.
 
 <div id="machine"></div>
 
