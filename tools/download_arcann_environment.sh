@@ -6,14 +6,15 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 # Created: 2024/04/16
-# Last modified: 2024/04/17
+# Last modified: 2024/04/20
 #----------------------------------------------
 
 # Create a directory for storing downloaded files
-mkdir -p ./downloads
+download_folder=${1/.txt/}_offline_files
+mkdir -p ./${download_folder}
 
 # Define the output text file for listing downloaded files
-output_file="arcann_environment_offline.txt"
+output_file="${1/.txt/}_offline.txt"
 
 # Initialize the output file with a header
 echo "@EXPLICIT" > "$output_file"
@@ -24,7 +25,7 @@ while IFS= read -r url; do
     filename=$(basename "$url")
     
     # Full path for the file to be checked and/or downloaded
-    filepath="./downloads/$filename"
+    filepath="./${download_folder}/$filename"
     
     # Check if the file already exists
     if [ -f "$filepath" ]; then
@@ -32,7 +33,7 @@ while IFS= read -r url; do
         echo "$filepath" >> "$output_file"
     else
         # Download the file if it does not exist
-        wget -P ./downloads "$url" --no-check-certificate
+        wget -P ./${download_folder} "$url" --no-check-certificate
 
         # Check if the download was successful (file exists)
         if [ -f "$filepath" ]; then
@@ -43,4 +44,4 @@ while IFS= read -r url; do
             echo "Failed to download $url" >&2
         fi
     fi
-done < arcann_environment.txt
+done < ${1}
