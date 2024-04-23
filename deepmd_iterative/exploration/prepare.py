@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/15
+Last modified: 2024/04/23
 """
 
 # Standard library modules
@@ -342,13 +342,13 @@ def main(
 
             # First exploration
             if curr_iter == 1:
-                if "job_walltime_h" in user_input_json:
-                    system_job_walltime_h = user_input_json["job_walltime_h"]
+                if "job_walltime_h" in user_input_json and system_job_walltime_h != -1:
+                    system_job_walltime_h = system_job_walltime_h
                 else:
                     # Default value
                     system_job_walltime_h = 1.0
-                if "exp_time_ps" in user_input_json:
-                    system_exp_time_ps = user_input_json["exp_time_ps"]
+                if "exp_time_ps" in user_input_json and system_exp_time_ps != -1:
+                    system_exp_time_ps = system_exp_time_ps
                 else:
                     # Default value
                     system_exp_time_ps = 10.0
@@ -381,7 +381,7 @@ def main(
                 if plumed[1]:
                     system_nb_steps = plumed[2]
                 # User inputs
-                elif "exp_time_ps" in user_input_json and user_input_json["exp_time_ps"] != -1:
+                elif "exp_time_ps" in user_input_json and system_exp_time_ps != -1:
                     system_nb_steps = system_exp_time_ps / system_timestep_ps
                 # Auto value
                 else:
@@ -418,13 +418,13 @@ def main(
 
             # First exploration
             if curr_iter == 1:
-                if "job_walltime_h" in user_input_json:
-                    system_job_walltime_h = user_input_json["job_walltime_h"]
+                if "job_walltime_h" in user_input_json and system_job_walltime_h != -1:
+                    system_job_walltime_h = system_job_walltime_h
                 else:
                     # Default value
                     system_job_walltime_h = 1.0
-                if "exp_time_ps" in user_input_json:
-                    system_exp_time_ps = user_input_json["exp_time_ps"]
+                if "exp_time_ps" in user_input_json and system_exp_time_ps != -1:
+                    system_exp_time_ps = system_exp_time_ps
                 else:
                     # Default value
                     system_exp_time_ps = 10.0
@@ -457,7 +457,7 @@ def main(
                 if plumed[1]:
                     system_nb_steps = plumed[2]
                 # User inputs
-                elif "exp_time_ps" in user_input_json and user_input_json["exp_time_ps"] != -1:
+                elif "exp_time_ps" in user_input_json and system_exp_time_ps != -1:
                     system_nb_steps = system_exp_time_ps / system_timestep_ps
                 # Auto value
                 else:
@@ -508,13 +508,13 @@ def main(
                 subprocess.run([atomsk_bin, str(Path("../") / "user_files" / system_lammps_data_fn), "xyz", str(Path("../") / "user_files" / system_auto), "-ow"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
                 system_ipi_xyz = textfile_to_string_list(training_path / "user_files" / system_ipi_xyz_fn)
 
-                if "job_walltime_h" in user_input_json:
-                    system_job_walltime_h = user_input_json["job_walltime_h"]
+                if "job_walltime_h" in user_input_json and system_job_walltime_h != -1:
+                    system_job_walltime_h = system_job_walltime_h
                 else:
                     # Default value
                     system_job_walltime_h = 1.0
-                if "exp_time_ps" in user_input_json:
-                    system_exp_time_ps = user_input_json["exp_time_ps"]
+                if "exp_time_ps" in user_input_json and system_exp_time_ps != -1:
+                    system_exp_time_ps = system_exp_time_ps
                 else:
                     # Default value
                     system_exp_time_ps = 10.0
