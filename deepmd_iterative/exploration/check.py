@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/15
+Last modified: 2024/04/24
 """
 
 # Standard library modules
@@ -172,15 +172,15 @@ def main(
                         logging.critical(f"'{lammps_output_file}' failed. Check manually.")
                     del lammps_output, lammps_output_file, traj_file, model_deviation_filename
 
-                elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_ml":
+                elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
                     traj_file = local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.nc"
                     sander_emle_output_file = local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.out"
                     model_deviation_filename = local_path / f"model_devi_{system_auto}_{it_nnp}_{padded_curr_iter}.out"
 
                     # Log if files are missing.
-                    if not all([traj_file.is_file(), lammps_output_file.is_file(), model_deviation_filename.is_file()]):
+                    if not all([traj_file.is_file(), sander_emle_output_file.is_file(), model_deviation_filename.is_file()]):
                         logging.critical(f"'{local_path}': missing files. Check manually.")
-                        del lammps_output_file, traj_file, model_deviation_filename
+                        del sander_emle_output_file, traj_file, model_deviation_filename
                         continue
 
                     # Check if NC is unreadable
