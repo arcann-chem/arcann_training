@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/10/15
+Last modified: 2024/04/26
 """
 
 # Standard library modules
@@ -70,7 +70,8 @@ def main(
     logging.warning(f"It should be run after exploration extract phase.")
     logging.warning(f"This is will delete:")
     logging.warning(f"symbolic links, 'job_*.sh', 'job-array_*.sh', 'job-array-params*.lst', '*.in', '*.lmp', 'plumed_*.dat'")
-    logging.warning(f"LAMMPS_*, 'i-PI_DeepMD*', '*.DP-i-PI.client_*.log', '*.DP-i-PI.client_*.err', 'plumed_*.dat'")
+    logging.warning(f"'LAMMPS_*', 'i-PI_DeepMD*', '*.DP-i-PI.client_*.log', '*.DP-i-PI.client_*.err', 'plumed_*.dat'")
+    logging.warning(f"'emle_pid.txt', 'emle_port.txt', 'mdinfo', 'old.*'")
     logging.warning(f"in the folder: '{current_path}' and all subdirectories.")
     logging.warning(f"It will also create a tar.bz2 file with all starting structures from the previous exploration")
     continuing = input(f"Do you want to continue? [Enter 'Y' for yes, or any other key to abort]: ")
@@ -100,6 +101,10 @@ def main(
     logging.info("Deleting extra files...")
     remove_files_matching_glob(current_path, "**/*.DP-i-PI.client_*.log")
     remove_files_matching_glob(current_path, "**/*.DP-i-PI.client_*.err")
+    remove_files_matching_glob(current_path, "**/emle_pid.txt")
+    remove_files_matching_glob(current_path, "**/emle_port.txt")
+    remove_files_matching_glob(current_path, "**/mdinfo")
+    remove_files_matching_glob(current_path, "**/old.*")
 
     if prev_iter > 0:
         logging.info(f"Compressing into a bzip2 tar archive...")
@@ -107,33 +112,34 @@ def main(
         starting_structures_xyz = list(Path(".").glob(f"{padded_prev_iter}_*.xyz"))
         starting_structures_lmp = list(Path(".").glob(f"{padded_prev_iter}_*.lmp"))
         starting_structures = starting_structures_xyz + starting_structures_lmp
-        starting_structures = [str(_) for _ in starting_structures]
-        archive_name = f"starting_structures_{padded_prev_iter}.tar.bz2"
         if starting_structures:
-            if (Path(".") / archive_name).is_file():
-                logging.info(f"{archive_name} already present, adding .bak extension")
-                (Path(".") / f"{archive_name}.bak").write_bytes((Path(".") / archive_name).read_bytes())
-            string_list_to_textfile(
-                training_path / "starting_structures" / archive_name.replace(".tar.bz2", ".lst"),
-                starting_structures,
-            )
+            starting_structures = [str(_) for _ in starting_structures]
+            archive_name = f"starting_structures_{padded_prev_iter}.tar.bz2"
+            if starting_structures:
+                if (Path(".") / archive_name).is_file():
+                    logging.info(f"{archive_name} already present, adding .bak extension")
+                    (Path(".") / f"{archive_name}.bak").write_bytes((Path(".") / archive_name).read_bytes())
+                string_list_to_textfile(
+                    training_path / "starting_structures" / archive_name.replace(".tar.bz2", ".lst"),
+                    starting_structures,
+                )
 
-            cmd = [
-                "tar",
-                "-I",
-                "bzip2",
-                "--exclude=*.tar.bz2",
-                "-cf",
-                archive_name,
-                "-T",
-                archive_name.replace(".tar.bz2", ".lst"),
-            ]
-            subprocess.run(cmd)
-            remove_file(training_path / "starting_structures" / archive_name.replace(".tar.bz2", ".lst"))
+                cmd = [
+                    "tar",
+                    "-I",
+                    "bzip2",
+                    "--exclude=*.tar.bz2",
+                    "-cf",
+                    archive_name,
+                    "-T",
+                    archive_name.replace(".tar.bz2", ".lst"),
+                ]
+                subprocess.run(cmd)
+                remove_file(training_path / "starting_structures" / archive_name.replace(".tar.bz2", ".lst"))
 
-            del starting_structures, starting_structures_xyz, starting_structures_lmp
-            logging.info(f"If the tar.bz2 is good, you can remove all files starting with {padded_prev_iter}_ in {training_path / 'starting_structures'}")
-        change_directory(current_path)
+                del starting_structures, starting_structures_xyz, starting_structures_lmp
+                logging.info(f"If the tar.bz2 is good, you can remove all files starting with {padded_prev_iter}_ in {training_path / 'starting_structures'}")
+            change_directory(current_path)
 
     logging.info(f"Cleaning done!")
 
