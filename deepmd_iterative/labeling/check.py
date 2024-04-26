@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/31
+Last modified: 2024/04/26
 """
 
 # Standard library modules
@@ -92,7 +92,7 @@ def main(
         system_disturbed_candidates_skipped = []
 
         # Because two steps and we care of the status of both
-        system_tinings_sum = {0: 0, 1: 0}
+        system_timings_sum = {0: 0, 1: 0}
         system_timings = {0: [], 1: []}
         system_candidates_converged_count = {0: 0, 1: 0}
         system_candidates_not_converged = {0: [], 1: []}
@@ -133,7 +133,7 @@ def main(
                                 system_candidates_converged_count[step] += 1
                                 if any("T I M I N G" in _ for _ in system_output_cp2k[step]):
                                     system_timings[step] = [_ for _ in system_output_cp2k[step] if "CP2K                                 1  1.0" in _]
-                                    system_tinings_sum[step] += float(system_timings[step][0].split(" ")[-1])
+                                    system_timings_sum[step] += float(system_timings[step][0].split(" ")[-1])
 
                             elif any("SCF run NOT converged" in _ for _ in system_output_cp2k[step]):
                                 system_candidates_not_converged[step].append(f"{system_output_cp2k_file[step]}")
@@ -152,11 +152,12 @@ def main(
                             candidates_step_count[0] += 1
                             system_candidates_converged_count[0] += 1
                             if any("Sum of individual times" in _ for _ in system_output_orca):
-                                system_timings[0] = [_ for _ in system_output_orca if "Sum of individual times" in _]
+                                logging.debug(f"ORCA")
+                                system_timings[0] = [_ for _ in system_output_orca if "Sum of individual times" in _][-1]
                                 pattern = r"(\d+\.\d+) sec"
-                                matches = re.search(pattern, system_timings)
+                                matches = re.search(pattern, system_timings[0])
                                 if matches:
-                                    system_tinings_sum[0] += float(matches.group(1))
+                                    system_timings_sum[0] += float(matches.group(1))
                         else:
                             system_candidates_failed[0].append(f"{system_output_orca_file}")
                     else:
@@ -185,7 +186,7 @@ def main(
                                     system_candidates_converged_count[step] += 1
                                     if any("T I M I N G" in _ for _ in system_output_cp2k[step]):
                                         system_timings[step] = [_ for _ in system_output_cp2k[step] if "CP2K                                 1  1.0" in _]
-                                        system_tinings_sum[step] += float(system_timings[step][0].split(" ")[-1])
+                                        system_timings_sum[step] += float(system_timings[step][0].split(" ")[-1])
                                 elif any("SCF run NOT converged" in _ for _ in system_output_cp2k[step]):
                                     system_candidates_not_converged[step].append(f"{system_output_cp2k_file[step]}")
                                 else:
@@ -202,11 +203,11 @@ def main(
                                 candidates_step_count[0] += 1
                                 system_candidates_converged_count[0] += 1
                                 if any("Sum of individual times" in _ for _ in system_output_orca):
-                                    system_timings[0] = [_ for _ in system_output_orca if "Sum of individual times" in _]
+                                    system_timings[0] = [_ for _ in system_output_orca if "Sum of individual times" in _][-1]
                                     pattern = r"(\d+\.\d+) sec"
-                                    matches = re.search(pattern, system_timings)
+                                    matches = re.search(pattern, system_timings[0])
                                     if matches:
-                                        system_tinings_sum[0] += float(matches.group(1))
+                                        system_timings_sum[0] += float(matches.group(1))
                             else:
                                 system_candidates_failed[0].append(f"{system_output_orca_file}")
                         else:
@@ -229,11 +230,11 @@ def main(
         # For the very special case where there are no converged subsystems (e.g., if you skipped all jobs)
         for step, default_timing in enumerate([900.0, 3600.0]):
             if system_candidates_converged_count[step] != 0:
-                timings[step] = system_tinings_sum[step] / system_candidates_converged_count[step]
+                timings[step] = system_timings_sum[step] / system_candidates_converged_count[step]
             else:
                 timings[step] = default_timing
         del step, default_timing
-        del system_tinings_sum, system_candidates_converged_count, system_timings
+        del system_timings_sum, system_candidates_converged_count, system_timings
 
         labeling_json["systems_auto"][system_auto]["timings_s"] = [timings[0], timings[1]]
         labeling_json["systems_auto"][system_auto]["candidates_skipped_count"] = system_candidates_skipped_count
@@ -299,7 +300,12 @@ def main(
 
     logging.info(f"-" * 88)
     # Update the booleans in the exploration JSON
-    if candidates_expected_count == (candidates_step_count[1] + candidates_skipped_count):
+    logging.debug(f"candidates_expected_count: {candidates_expected_count}")
+    logging.debug(f"candidates_skipped_count: {candidates_skipped_count}")
+    logging.debug(f"candidates_step_count: {candidates_step_count}")
+    if candidates_expected_count == (candidates_step_count[1] + candidates_skipped_count) and labeling_program == "cp2k":
+        labeling_json["is_checked"] = True
+    elif candidates_expected_count == (candidates_step_count[0] + candidates_skipped_count) and labeling_program == "orca":
         labeling_json["is_checked"] = True
     del candidates_expected_count, candidates_skipped_count, candidates_step_count
 
