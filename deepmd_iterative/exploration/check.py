@@ -6,11 +6,12 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/24
+Last modified: 2024/04/26
 """
 
 # Standard library modules
 import logging
+import re
 import sys
 from pathlib import Path
 
@@ -174,7 +175,7 @@ def main(
 
                 elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
                     traj_file = local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.nc"
-                    sander_emle_output_file = local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.out"
+                    sander_emle_output_file = local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.log"
                     model_deviation_filename = local_path / f"model_devi_{system_auto}_{it_nnp}_{padded_curr_iter}.out"
 
                     # Log if files are missing.
@@ -199,14 +200,15 @@ def main(
                         forced_count += 1
                         exploration_json["systems_auto"][system_auto]["forced_count"] += 1
                         logging.warning(f"'{local_path}' forced.")
-                    # TODO : Check if the output is valid
-                    # elif any("Total wall time:" in f for f in sander_emle_ouput):
-                    #     system_count += 1
-                    #     completed_count += 1
-                    #     exploration_json["systems_auto"][system_auto]["completed_count"] += 1
-                    #     timings_str = [zzz for zzz in sander_emle_ouput if "Loop time of" in zzz]
-                    #     timings.append(float(timings_str[0].split(" ")[3]))
-                    #     del timings_str
+                    elif any("Average timings for all steps" in f for f in sander_emle_ouput):
+                        system_count += 1
+                        completed_count += 1
+                        exploration_json["systems_auto"][system_auto]["completed_count"] += 1
+                        timings_str = [zzz for zzz in sander_emle_ouput if "Elapsed(s) = " in zzz]
+                        pattern = r'Elapsed\(s\) =\s*([\d.]+)'
+                        matches = re.findall(pattern, timings_str[0])
+                        timings.append(float(matches[0]))
+                        del timings_str
                     else:
                         logging.critical(f"'{sander_emle_output_file}' failed. Check manually.")
                     del sander_emle_ouput, sander_emle_output_file, traj_file, model_deviation_filename
@@ -248,6 +250,8 @@ def main(
 
         if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps":
             average_per_step = np.array(timings) / exploration_json["systems_auto"][system_auto]["nb_steps"]
+        elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
+            average_per_step = np.array(timings) / exploration_json["systems_auto"][system_auto]["nb_steps"]
         elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
             average_per_step = np.array(timings)
         else:
@@ -266,7 +270,7 @@ def main(
                 logging.error(f"Missing input job_walltime_h for '{system_auto}', set to the default to calculcate mean_s_per_step.")
                 average_per_step = 3600.0 / exploration_json["systems_auto"][system_auto]["nb_steps"]
 
-            exploration_json["systems_auto"][system_auto][timings_key] = average_per_step
+            exploration_json["systems_auto"][system_auto]["mean_s_per_step"] = average_per_step
             for timings_key in ["median_s_per_step", "stdeviation_s_per_step"]:
                 exploration_json["systems_auto"][system_auto][timings_key] = 0
             del timings_key
