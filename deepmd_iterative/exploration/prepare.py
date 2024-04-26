@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/23
+Last modified: 2024/04/26
 """
 
 # Standard library modules
@@ -407,6 +407,9 @@ def main(
 
             # Get print freq
             system_print_every_x_steps = system_nb_steps * system_print_mult
+            if int(system_print_every_x_steps) < 1:
+                logging.warning(f"Print frequency is less than 1 step. Setting it to 1 step.")
+                system_print_every_x_steps = 1
             input_replace_dict["_R_PRINT_FREQ_"] = f"{int(system_print_every_x_steps)}"
 
         # END OF LAMMPS
@@ -483,6 +486,9 @@ def main(
 
             # Get print freq
             system_print_every_x_steps = system_nb_steps * system_print_mult
+            if int(system_print_every_x_steps) < 1:
+                logging.warning(f"Print frequency is less than 1 step. Setting it to 1 step.")
+                system_print_every_x_steps = 1
             input_replace_dict["_R_PRINT_FREQ_"] = f"{int(system_print_every_x_steps)}"
         # END OF SANDER-EMLE
 
@@ -571,6 +577,9 @@ def main(
 
             # Get print freq
             system_print_every_x_steps = system_nb_steps * system_print_mult
+            if int(system_print_every_x_steps) < 1:
+                logging.warning(f"Print frequency is less than 1 step. Setting it to 1 step.")
+                system_print_every_x_steps = 1
             input_replace_dict["_R_PRINT_FREQ_"] = f"{int(system_print_every_x_steps)}"
         # END OF i-PI
 

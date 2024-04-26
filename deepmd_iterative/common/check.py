@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/31
+Last modified: 2024/04/26
 
 This module contains functions for checking the availability of certain commands on the system, as well as a function for validating the current working directory during the execution of a specific step.
 
@@ -223,17 +223,13 @@ def check_nc_is_valid(nc_path: Path, vmd_bin: Path) -> bool:
     """
     vmd_script = f"""
     # Load your trajectory file
-    mol addfile {nc_path} type netctf waitfor all
+    mol addfile {nc_path} type netcdf waitfor all
 
     # Get the number of frames
     set numFrames [molinfo top get numframes]
 
     # Output the number of frames
     puts "Number of frames: $numFrames"
-    
-    # Convert to dcd
-    set dcd_path [string map {{".nc" ".dcd"}} {nc_path}]
-    animate write dcd $dcd_path beg 0 end [expr {{$numFrames - 1}}] waitfor all
 
     # Quit VMD
     quit

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/24
+Last modified: 2024/04/26
 """
 
 # Standard library modules
@@ -151,9 +151,18 @@ def main(
         skipped_traj_stats = 0
         start_row_number = 0
 
+        logging.debug(f"{exploration_json['systems_auto'][system_auto]['print_every_x_steps']},{exploration_json['systems_auto'][system_auto]['timestep_ps']}")
+        logging.debug(f"{exploration_json['systems_auto'][system_auto]['ignore_first_x_ps']}")
+
         while start_row_number * exploration_json["systems_auto"][system_auto]["print_every_x_steps"] * exploration_json["systems_auto"][system_auto]["timestep_ps"] < exploration_json["systems_auto"][system_auto]["ignore_first_x_ps"]:
             start_row_number = start_row_number + 1
+
         logging.debug(f"start_row_number: {start_row_number}")
+        if start_row_number > exploration_json["systems_auto"][system_auto]["nb_steps"] // exploration_json["systems_auto"][system_auto]["print_every_x_steps"]:
+            start_row_number = 0
+            logging.warning(f"Your 'ignore_first_x_ps' value is too high.")
+            logging.warning(f"Please reduce it to a value lower than {start_row_number * exploration_json['systems_auto'][system_auto]['print_every_x_steps'] * exploration_json['systems_auto'][system_auto]['timestep_ps']}.")
+            logging.warning(f"Temporarily setting it to 0.")
 
         for it_nnp in range(1, main_json["nnp_count"] + 1):
             for it_number in range(1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1):
@@ -176,12 +185,13 @@ def main(
 
                 # Get the number of exptected steps
                 nb_steps_expected = (exploration_json["systems_auto"][system_auto]["nb_steps"] // exploration_json["systems_auto"][system_auto]["print_every_x_steps"]) + 1 - start_row_number
+                logging.debug(f"nb_steps_expected: {nb_steps_expected}")
 
                 # If it was not skipped
                 if not (local_path / "skip").is_file():
                     if exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
                         num_atoms, atom_symbols, atom_coords, comments, cell_info, pbc_info, properties_info, max_f_std_info = parse_xyz_trajectory_file(local_path / xyz_qm_filename)
-                        model_deviation = np.array(max_f_std_info)
+                        model_deviation = np.vstack(([_ for _ in range(0, len(max_f_std_info), exploration_json["systems_auto"][system_auto]["print_every_x_steps"])], max_f_std_info)).T
                         total_row_number = len(max_f_std_info)
                     elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps" or exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
                         model_deviation = np.genfromtxt(str(local_path / model_deviation_filename))
@@ -257,9 +267,9 @@ def main(
                             mean_deviation_max_f = np.mean(model_deviation[start_row_number:])
                             median_deviation_max_f = np.median(model_deviation[start_row_number:])
                             stdeviation_deviation_max_f = np.std(model_deviation[start_row_number:])
-                            good = np.where(model_deviation[start_row_number:] <= sigma_low)
-                            rejected = np.where(model_deviation[start_row_number:] >= sigma_high)
-                            candidates = np.where((model_deviation[start_row_number:] > sigma_low) & (model_deviation[start_row_number:] < sigma_high))
+                            good = model_deviation[start_row_number:, :][model_deviation[start_row_number:, 1] <= sigma_low]
+                            rejected = model_deviation[start_row_number:, :][model_deviation[start_row_number:, 1] >= sigma_high]
+                            candidates = model_deviation[start_row_number:, :][(model_deviation[start_row_number:, 1] > sigma_low) & (model_deviation[start_row_number:, 1] < sigma_high)]
 
                         # This part is when sigma_high_limit was crossed during ignore_first_x_ps (SKIP everything for stats)
                         elif end_row_number <= start_row_number:
@@ -277,11 +287,11 @@ def main(
                             mean_deviation_max_f = np.mean(model_deviation[start_row_number:end_row_number])
                             median_deviation_max_f = np.median(model_deviation[start_row_number:end_row_number])
                             stdeviation_deviation_max_f = np.std(model_deviation[start_row_number:end_row_number])
-                            good = np.where(model_deviation[start_row_number:end_row_number] <= sigma_low)
-                            rejected = np.where(model_deviation[start_row_number:end_row_number] >= sigma_high)
-                            candidates = np.where((model_deviation[start_row_number:end_row_number] > sigma_low) & (model_deviation[start_row_number:end_row_number] < sigma_high))
+                            good = model_deviation[start_row_number:end_row_number][model_deviation[start_row_number:end_row_number] <= sigma_low]
+                            rejected = model_deviation[start_row_number:end_row_number][model_deviation[start_row_number:end_row_number] >= sigma_high]
+                            candidates = model_deviation[start_row_number:end_row_number][(model_deviation[start_row_number:end_row_number] > sigma_low) & (model_deviation[start_row_number:end_row_number] < sigma_high)]
                             # Add the rest to rejected
-                            rejected = np.vstack((rejected, model_deviation[end_row_number:]))
+                            rejected = np.vstack((rejected, model_deviation[end_row_number:, :]))
                     else:
                         logging.error("Unknown exploration type. Please BUG REPORT!")
                         logging.error("Aborting...")
@@ -291,9 +301,9 @@ def main(
                     if exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
                         QbC_indexes = {
                             **QbC_indexes,
-                            "good_indexes": good.astype(int).tolist() if good.size > 0 else [],
-                            "rejected_indexes": rejected.astype(int).tolist() if rejected.size > 0 else [],
-                            "candidate_indexes": candidates.astype(int).tolist() if candidates.size > 0 else [],
+                            "good_indexes": good[:, 0].astype(int).tolist() if good.size > 0 else [],
+                            "rejected_indexes": rejected[:, 0].astype(int).tolist() if rejected.size > 0 else [],
+                            "candidate_indexes": candidates[:, 0].astype(int).tolist() if candidates.size > 0 else [],
                         }
                     elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps" or exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
                         QbC_indexes = {
@@ -386,7 +396,7 @@ def main(
         if exploitable_traj == 0:
             logging.critical("All trajectories were skipped (either by you or discarded by ArcaNN).")
             logging.critical("You should either change the 'ignore_first_x_ps' value to a lower value to ensure some structure for this exploration.")
-            logging.critical("For the next run (or if you redo one), you should reduce 'timestep_ps' and 'print_every_x_steps'.")
+            logging.critical("For the next run (or if you redo one), you should reduce 'timestep_ps' and 'print_interval_mult'.")
             logging.critical("Aborting...")
             return 1
         else:
