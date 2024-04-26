@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/15
+Last modified: 2024/04/24
 """
 
 # Standard library modules
@@ -179,7 +179,7 @@ def main(
 
                 # If it was not skipped
                 if not (local_path / "skip").is_file():
-                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "samder_emle":
+                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
                         num_atoms, atom_symbols, atom_coords, comments, cell_info, pbc_info, properties_info, max_f_std_info = parse_xyz_trajectory_file(local_path / xyz_qm_filename)
                         model_deviation = np.array(max_f_std_info)
                         total_row_number = len(max_f_std_info)
@@ -250,7 +250,7 @@ def main(
                             # Add the rest to rejected
                             rejected = np.vstack((rejected, model_deviation[end_row_number:, :]))
 
-                    elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "samder_emle":
+                    elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
 
                         # This part is when sigma_high_limit was never crossed
                         if end_row_number < 0:
@@ -281,14 +281,14 @@ def main(
                             rejected = np.where(model_deviation[start_row_number:end_row_number] >= sigma_high)
                             candidates = np.where((model_deviation[start_row_number:end_row_number] > sigma_low) & (model_deviation[start_row_number:end_row_number] < sigma_high))
                             # Add the rest to rejected
-                            rejected = np.vastack((rejected, model_deviation[end_row_number:]))
+                            rejected = np.vstack((rejected, model_deviation[end_row_number:]))
                     else:
                         logging.error("Unknown exploration type. Please BUG REPORT!")
                         logging.error("Aborting...")
                         return 1
 
                     # Fill JSON files
-                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "samder_emle":
+                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
                         QbC_indexes = {
                             **QbC_indexes,
                             "good_indexes": good.astype(int).tolist() if good.size > 0 else [],
@@ -307,7 +307,7 @@ def main(
                         logging.error("Aborting...")
                         return 1
 
-                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "samder_emle":
+                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
                         QbC_stats = {
                             **QbC_stats,
                             "mean_deviation_max_f": mean_deviation_max_f,
@@ -482,14 +482,14 @@ def main(
                     # Now we get the starting point (the min of selected, or the last good)
                     # Min of selected
                     if selected_indexes.shape[0] > 0:
-                        if exploration_json["systems_auto"][system_auto]["exploration_type"] == "samder_emle":
+                        if exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
                             num_atoms, atom_symbols, atom_coords, comments, cell_info, pbc_info, properties_info, max_f_std_info = parse_xyz_trajectory_file(local_path / xyz_qm_filename)
                             model_deviation = np.array(max_f_std_info)
                         elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps" or exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
                             model_deviation = np.genfromtxt(str(local_path / model_deviation_filename))
                         min_val = 1e30
                         for selected_idx in selected_indexes:
-                            if exploration_json["systems_auto"][system_auto]["exploration_type"] == "samder_emle":
+                            if exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
                                 temp_min = model_deviation[selected_idx]
                             else:
                                 temp_min = model_deviation[:, 4][np.where(model_deviation[:, 0] == selected_idx)]
