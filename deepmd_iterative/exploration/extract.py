@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/15
+Last modified: 2024/04/26
 """
 
 # Standard library modules
@@ -25,7 +25,7 @@ from deepmd_iterative.common.filesystem import check_file_existence, remove_file
 from deepmd_iterative.common.list import replace_substring_in_string_list, string_list_to_textfile, textfile_to_string_list
 from deepmd_iterative.common.check import validate_step_folder, check_atomsk, check_vmd
 from deepmd_iterative.exploration.utils import generate_input_exploration_disturbed_json, get_system_disturb
-
+from deepmd_iterative.common.xyz import parse_xyz_trajectory_file, write_xyz_frame
 
 def main(
     current_step: str,
@@ -266,6 +266,7 @@ def main(
 
                     elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
 
+                        remove_file((local_path / "min.vmd"))
                         # This part should read the nc file and convert it
                         # But for now, it is deactivated
 
@@ -348,7 +349,8 @@ def main(
                         atom_counts, atomic_symbols, atomic_coordinates, comments, lattice_info, pbc_info, properties_info, max_f_std_info = parse_xyz_trajectory_file(local_path / traj_file)
 
                         for _ in candidate_indexes_padded:
-                            write_xyz_frame(local_path / f"candidates_{_}.xyz", int(_), atom_counts, atomic_symbols, atomic_coordinates, [], comments)
+                            print(f"Processing candidate: {system_auto} / {it_nnp} / {it_number} / {_}")
+                            write_xyz_frame(local_path / f"candidates_{_}.xyz", int(_), atom_counts, atomic_symbols, atomic_coordinates, np.array([]), comments)
                             candidates_files.append(str(Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / ("candidates_" + _ + ".xyz")))
 
                         if disturbed_candidate_value != 0:
@@ -364,7 +366,7 @@ def main(
 
             del cella, cellb, cellc, is_cell_constant, local_path, QbC_stats, QbC_indexes
 
-        del it_nnp, it_number, topo_file
+        del it_nnp, it_number
 
         if candidates_files:
             candidates_xyz_file = current_path / system_auto / f"candidates_{padded_curr_iter}_{system_auto}.xyz"
