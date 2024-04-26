@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/31
+Last modified: 2024/04/26
 """
 
 # Standard library modules
@@ -98,7 +98,7 @@ def main(
     archive_name = f"labeling_{padded_curr_iter}_noWFN.tar.bz2"
 
     all_files = Path(".").glob("**/*")
-    files = [str(file) for file in all_files if (file.is_file() and (not (file.name.endswith(".wfn") or ".tar" in file.name)))]
+    files = [str(file) for file in all_files if (file.is_file() and (not (file.name.endswith(".wfn") or file.name.endswith(".gbw") or ".tar" in file.name)))]
     if files:
         if (Path(".") / archive_name).is_file():
             logging.info(f"{archive_name} already present, adding .bak extension")
@@ -121,11 +121,20 @@ def main(
     del archive_name, files, all_files
 
     logging.info(f"Done!")
-    logging.info(f"To keep only the wavefunction files form the 2nd step (your reference) in a labeling_{padded_curr_iter}_WFN.tar, execute:")
-    logging.info(f"\"find ./ -name '2_*.wfn' | tar -cf labeling_{padded_curr_iter}_WFN.tar --files-from -\" (without the double quotes).")
-    logging.info(f"To keep all wavefunction files in a labeling_{padded_curr_iter}_WFN.tar, execute:")
-    logging.info(f"\"find ./ -name '*.wfn' | tar -cf labeling_{padded_curr_iter}_WFN.tar --files-from -\" (without the double quotes).")
-    logging.info(f"You can delete any subsys subfolders if labeling_{padded_curr_iter}_noWFN.tar.bz2 is okay, and you have saved or don't need the wavefunction files.")
+    logging.info(f"Please note that the wavefunction files are not included in the archive.")
+    if labeling_config["labeling_program"] == "cp2k":
+        logging.info(f"To keep only the wavefunction files from the 2nd step (your reference) in a labeling_{padded_curr_iter}_WFN.tar, execute:")
+        logging.info(f"\"find ./ -name '2_*.wfn' | tar -cf labeling_{padded_curr_iter}_WFN.tar --files-from -\" (without the double quotes).")
+        logging.info(f"To keep all wavefunction files in a labeling_{padded_curr_iter}_WFN.tar, execute:")
+        logging.info(f"\"find ./ -name '*.wfn' | tar -cf labeling_{padded_curr_iter}_WFN.tar --files-from -\" (without the double quotes).")
+        logging.info(f"For cp2k labeling, wavefunction files are in .wfn format.")
+        logging.info(f"You can delete any subsys subfolders if labeling_{padded_curr_iter}_noWFN.tar.bz2 is okay, and you have saved or don't need the wavefunction files.")
+
+    elif labeling_config["labeling_program"] == "orca":
+        logging.info(f"To keep only the wavefunction files from the 1st and only step (your reference) in a labeling_{padded_curr_iter}_WFN.tar, execute:")
+        logging.info(f"\"find ./ -name '1_*.gbw' | tar -cf labeling_{padded_curr_iter}_WFN.tar --files-from -\" (without the double quotes).")
+        logging.info(f"For orca labeling, wavefunction files are in .gbw format.")
+        logging.info(f"You can delete any subsys subfolders if labeling_{padded_curr_iter}_noWFN.tar.bz2 is okay, and you have saved or don't need the wavefunction files.")
 
     # End
     logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
