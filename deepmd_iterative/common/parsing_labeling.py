@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2024/03/01
-Last modified: 2024/04/01
+Last modified: 2024/04/26
 """
 
 # TODO: Homogenize the docstrings for this module
@@ -26,7 +26,6 @@ from deepmd_iterative.common.utils import catch_errors_decorator
 def extract_and_convert_energy(energy_in, energy_out, system_candidates_not_skipped_counter, factor=1.0, program=None, version=None):
     if program == "cp2k":
         pattern = r"ENERGY\|.*?([-+]?\d*\.\d+(?:[eE][-+]?\d+)?)"
-
         for line in energy_in:
             match = re.search(pattern, line)
             if match:
@@ -38,7 +37,7 @@ def extract_and_convert_energy(energy_in, energy_out, system_candidates_not_skip
         energy_line_index = energy_in.index("# The current total energy in Eh") + 2
         energy = float(energy_in[energy_line_index].strip())
         energy_out[system_candidates_not_skipped_counter - 1] = energy
-
+        return energy_out
 
 # TODO: Add tests for this function
 def extract_and_convert_coordinates(coordinates_in, coordinates_out, system_candidates_not_skipped_counter, factor=1.0):
@@ -85,7 +84,7 @@ def extract_and_convert_forces(forces_in, forces_out, system_candidates_not_skip
         except ValueError:
             end_index = len(forces_in)
         gradient_values = forces_in[start_index:end_index]
-        forces_array = np.asarray([float(value.strip()) for value in gradient_values], dytpe=np.float64)
+        forces_array = np.asarray([float(value.strip()) for value in gradient_values], dtype=np.float64)
         forces_out[system_candidates_not_skipped_counter - 1, :] = forces_array * factor
         return forces_out
 

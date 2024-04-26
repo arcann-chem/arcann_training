@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/01
+Last modified: 2024/04/26
 """
 
 # Standard library modules
@@ -113,15 +113,9 @@ def main(
         coord_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, main_json["systems_auto"][system_auto]["nb_atm"] * 3), dtype=np.float64)
         box_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, 9), dtype=np.float64)
         volume_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count), dtype=np.float64)
-        force_array_raw = np.zeros(
-            (
-                system_candidates_count - system_candidates_skipped_count,
-                main_json["systems_auto"][system_auto]["nb_atm"] * 3,
-            ),
-            dtype=np.float64,
-        )
+        force_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, main_json["systems_auto"][system_auto]["nb_atm"] * 3,), dtype=np.float64)
         virial_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, 9), dtype=np.float64)
-
+        print(energy_array_raw)
         # Options
         is_virial = False
         is_wannier = False
@@ -139,7 +133,6 @@ def main(
 
             if not (labeling_step_path / "skip").is_file():
                 system_candidates_not_skipped_counter += 1
-
                 # With the first, we create a type.raw and get the CP2K version
                 if system_candidates_not_skipped_counter == 1:
                     check_file_existence(training_path / "user_files" / f"{system_auto}.lmp", True, True, "Input data file (lmp) not present.")
@@ -162,7 +155,7 @@ def main(
                     type_atom_array = type_atom_array - 1
                     np.savetxt(f"{system_path}/type.raw", type_atom_array, delimiter=" ", newline=" ", fmt="%d")
                     np.savetxt(f"{data_path}/type.raw", type_atom_array, delimiter=" ", newline=" ", fmt="%d")
-
+    
                     # Get the CP2K/Orca version
                     if labeling_program == "cp2k":
                         output_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}.out")
@@ -216,17 +209,18 @@ def main(
 
                 elif labeling_program == "orca":
                     # Energy
-                    energy_orca = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}.engrad")
+                    energy_orca = textfile_to_string_list(labeling_step_path / f"1_labeling_{padded_labeling_step}.engrad")
                     energy_array_raw = extract_and_convert_energy(energy_orca, energy_array_raw, system_candidates_not_skipped_counter, Ha_to_eV, labeling_program, program_version)
                     del energy_orca
-
+                    
                     # Box / Volume
+                    # TODO
                     system_cell = main_json["systems_auto"][system_auto]["cell"]
-                    box_array_raw, volume_array_raw = extract_and_convert_box_volume(input_cp2k, box_array_raw, volume_array_raw, system_candidates_not_skipped_counter, 1.0, labeling_program, program_version)
+                    box_array_raw, volume_array_raw = extract_and_convert_box_volume(system_cell, box_array_raw, volume_array_raw, system_candidates_not_skipped_counter, 1.0, labeling_program, program_version)
                     del system_cell
 
                     # Forces
-                    force_orca = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}.engrad")
+                    force_orca = textfile_to_string_list(labeling_step_path / f"1_labeling_{padded_labeling_step}.engrad")
                     force_array_raw = extract_and_convert_forces(force_orca, force_array_raw, system_candidates_not_skipped_counter, au_to_eV_per_A, labeling_program, program_version)
                     del force_orca
 
@@ -381,8 +375,12 @@ def main(
                         del energy_orca
 
                         # Box / Volume
+                        # TODO
                         system_cell = main_json["systems_auto"][system_auto]["cell"]
-                        box_array_raw, volume_array_raw = extract_and_convert_box_volume(input_cp2k, box_array_raw, volume_array_raw, system_candidates_not_skipped_counter, 1.0, labeling_program, program_version)
+                        #box_array_raw, volume_array_raw = extract_and_convert_box_volume(energy_orca, box_array_raw, volume_array_raw, system_candidates_not_skipped_counter, 1.0, labeling_program, program_version)
+                        box_array_raw[system_candidates_not_skipped_counter, 0] = system_cell[0]
+                        box_array_raw[system_candidates_not_skipped_counter, 4] = system_cell[1]
+                        box_array_raw[system_candidates_not_skipped_counter, 8] = system_cell[2]
                         del system_cell
 
                         # Forces
