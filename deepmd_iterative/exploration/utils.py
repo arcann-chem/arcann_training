@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/26
+Last modified: 2024/04/29
 
 Functions
 ---------
@@ -624,6 +624,9 @@ def generate_starting_points(
         file_extension = "lmp"
     elif exploration_type == "i-PI":
         file_extension = "xyz"
+    # TODO: Implement the starting points for SANDER-EMLE
+    elif exploration_type == "sander_emle":
+        return None, None, False, False
 
     # Get list of starting point file names for system and iteration
     starting_points_path = list(Path(training_path / "starting_structures").glob(f"{padded_prev_iter}_{system_auto}_*.{file_extension}"))

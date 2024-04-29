@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/26
+Last modified: 2024/04/29
 """
 
 # Standard library modules
@@ -692,14 +692,22 @@ def main(
 
                     # Get data files (starting points) if iteration is > 1
                     if curr_iter > 1:
-                        if len(starting_point_list) == 0:
-                            starting_point_list = copy.deepcopy(starting_point_list_bckp)
-                        system_sander_emle_data_fn = starting_point_list[random.randrange(0, len(starting_point_list))]
-                        starting_point_list.remove(system_sander_emle_data_fn)
-                        if system_previous_start:
-                            system_sander_emle_data_path = training_path / "starting_structures" / system_sander_emle_data_fn
-                        else:
-                            system_sander_emle_data_path = training_path / "user_files" / system_sander_emle_data_fn
+                        
+                        # TODO: Implement the starting points for SANDER-EMLE
+                        logging.warning(f"Starting points are not implemented for SANDER-EMLE. Using the same starting point as the first exploration.")
+                        system_previous_start = False
+                        # if len(starting_point_list) == 0:
+                        #     starting_point_list = copy.deepcopy(starting_point_list_bckp)
+                        # system_sander_emle_data_fn = starting_point_list[random.randrange(0, len(starting_point_list))]
+                        # starting_point_list.remove(system_sander_emle_data_fn)
+                        # if system_previous_start:
+                        #     system_sander_emle_data_path = training_path / "starting_structures" / system_sander_emle_data_fn
+                        # else:
+                        #     system_sander_emle_data_path = training_path / "user_files" / system_sander_emle_data_fn
+                        # system_sander_emle_data_path = training_path / "user_files" / system_sander_emle_data_fn
+                        
+                        system_sander_emle_data_fn = system_auto + ".ncrst"
+                        system_sander_emle_data_path = training_path / "user_files" / system_sander_emle_data_fn
                         input_replace_dict["_R_COORD_FILE_"] = system_sander_emle_data_fn
 
                         system_nb_atm = main_json["systems_auto"][system_auto]["nb_atm"]
