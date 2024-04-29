@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/26
+Last modified: 2024/04/29
 """
 
 # Standard library modules
@@ -373,7 +373,6 @@ def main(
 
             job_file_t = deepcopy(system_master_job_file[1])
             job_file_t = replace_substring_in_string_list(job_file_t, "_R_PADDEDSTEP_", padded_labeling_step)
-            print(job_file_t)
             job_file_t = replace_substring_in_string_list(job_file_t, f"_R_{labeling_program_up}_JOBNAME_", f"{labeling_program_up}_{system_auto}_{padded_curr_iter}")
             string_list_to_textfile(labeling_step_path / f"job_{labeling_program_up}_label_{padded_labeling_step}_{machine_spec['arch_type']}_{machine}.sh", job_file_t)
             del job_file_t
@@ -431,6 +430,8 @@ def main(
                 string_list_to_textfile(labeling_step_path / f"job_{labeling_program_up}_label_{padded_labeling_step}_{machine_spec['arch_type']}_{machine}.sh", job_file_t)
                 del job_file_t
 
+                if np.any(cell_info) == None:
+                    cell_info = np.array([])
                 write_xyz_frame(labeling_step_path / f"labeling_{padded_labeling_step}.xyz", labeling_step_idx, num_atoms, atom_symbols, atom_coords, cell_info, comments)
 
                 job_array_params_line = f":{system_auto}:"
