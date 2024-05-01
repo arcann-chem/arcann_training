@@ -23,7 +23,7 @@ natural_sort_key(s: str) -> List[Union[int, str]]
 # Standard library modules
 import logging
 import re
-from typing import Any, Callable, Union
+from typing import Any, Callable, List, Union
 
 
 # Unittested
@@ -90,7 +90,7 @@ def convert_seconds_to_hh_mm_ss(seconds: float) -> str:
 
 # TODO: Add tests for this function
 @catch_errors_decorator
-def natural_sort_key(s: str) -> list[Union[int, str]]:
+def natural_sort_key(s: str) -> List[Union[int, str]]:
     """
     Provides a natural sorting key for alphanumeric strings.
 
