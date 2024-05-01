@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/30
+Last modified: 2024/05/01
 
 Functions
 ---------
@@ -67,6 +67,7 @@ def generate_input_labeling_json(
     ValueError
         If the length of the value list is not equal to the system count.
     """
+    arcann_logger = logging.getLogger("ArcaNN")
 
     system_count = len(main_json.get("systems_auto", []))
 
@@ -102,7 +103,7 @@ def generate_input_labeling_json(
         # This is not system dependent and should be a string and should not change from previous iteration (but issue just a warning if it does).
         if key == "labeling_program":
             if key in previous_input_json and value != previous_input_json[key]:
-                logging.critical(f"Labeling program changed from {previous_input_json[key]} to {value}!")
+                arcann_logger.critical(f"Labeling program changed from {previous_input_json[key]} to {value}!")
 
             if default_used:
                 merged_input_json[key] = value

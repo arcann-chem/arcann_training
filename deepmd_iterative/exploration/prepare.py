@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/29
+Last modified: 2024/05/01
 """
 
 # Standard library modules
@@ -41,6 +41,9 @@ def main(
     fake_machine=None,
     user_input_json_filename: str = "input.json",
 ):
+    # Get the logger
+    arcann_logger = logging.getLogger("ArcaNN")
+
     # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
     training_path = current_path.parent
@@ -692,7 +695,7 @@ def main(
 
                     # Get data files (starting points) if iteration is > 1
                     if curr_iter > 1:
-                        
+
                         # TODO: Implement the starting points for SANDER-EMLE
                         logging.warning(f"Starting points are not implemented for SANDER-EMLE. Using the same starting point as the first exploration.")
                         system_previous_start = False
@@ -705,7 +708,7 @@ def main(
                         # else:
                         #     system_sander_emle_data_path = training_path / "user_files" / system_sander_emle_data_fn
                         # system_sander_emle_data_path = training_path / "user_files" / system_sander_emle_data_fn
-                        
+
                         system_sander_emle_data_fn = system_auto + ".ncrst"
                         system_sander_emle_data_path = training_path / "user_files" / system_sander_emle_data_fn
                         input_replace_dict["_R_COORD_FILE_"] = system_sander_emle_data_fn

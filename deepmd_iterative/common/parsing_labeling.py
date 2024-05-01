@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2024/03/01
-Last modified: 2024/04/26
+Last modified: 2024/05/01
 """
 
 # TODO: Homogenize the docstrings for this module
@@ -91,6 +91,7 @@ def extract_and_convert_forces(forces_in, forces_out, system_candidates_not_skip
 
 # TODO: Add tests for this function
 def extract_and_convert_virial(stress_in, virial_out, system_candidates_not_skipped_counter, volume, factor=1.0, program=None, version=None):
+    logger = logging.getLogger("ArcaNN")
     if program == "cp2k":
         if version < 8 and version >= 6:
             matching_index = None
@@ -134,7 +135,7 @@ def extract_and_convert_virial(stress_in, virial_out, system_candidates_not_skip
                 return virial_out, False
 
         else:
-            logging.info(f"This version of CP2K is not supported for tensor: {version}")
+            logger.info(f"This version of CP2K is not supported for tensor: {version}")
             return virial_out, False
 
 

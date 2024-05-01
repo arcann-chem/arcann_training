@@ -6,13 +6,12 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/26
+Last modified: 2024/05/01
 """
 
 # Standard library modules
 import importlib
 import logging
-import re
 import sys
 from pathlib import Path
 
@@ -58,16 +57,19 @@ def main(
     fake_machine=None,
     user_input_json_filename: str = "input.json",
 ):
+    # Get the logger
+    arcann_logger = logging.getLogger("ArcaNN")
+
     # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
-    logging.debug(f"Current path :{current_path}")
-    logging.debug(f"Training path: {training_path}")
-    logging.debug(f"Program path: {deepmd_iterative_path}")
-    logging.info(f"-" * 88)
+    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
+    arcann_logger.debug(f"Current path :{current_path}")
+    arcann_logger.debug(f"Training path: {training_path}")
+    arcann_logger.debug(f"Program path: {deepmd_iterative_path}")
+    arcann_logger.info(f"-" * 88)
 
     # Check if the current folder is correct for the current step
     validate_step_folder(current_step)
@@ -82,25 +84,25 @@ def main(
     labeling_json = load_json_file((control_path / f"labeling_{padded_curr_iter}.json"))
 
     labeling_program = labeling_json["labeling_program"]
-    logging.debug(f"labeling_program: {labeling_program}")
+    arcann_logger.debug(f"labeling_program: {labeling_program}")
 
     # Check if we can continue
     if not labeling_json["is_checked"]:
-        logging.error(f"Lock found. Execute first: labeling launch.")
-        logging.error(f"Aborting...")
+        arcann_logger.error(f"Lock found. Execute first: labeling launch.")
+        arcann_logger.error(f"Aborting...")
         return 1
 
     # Create if it doesn't exists the data path.
     (training_path / "data").mkdir(exist_ok=True)
 
     for system_auto_index, system_auto in enumerate(labeling_json["systems_auto"]):
-        logging.info(f"Processing system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})")
+        arcann_logger.info(f"Processing system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})")
 
         system_candidates_count = labeling_json["systems_auto"][system_auto]["candidates_count"]
         system_candidates_skipped_count = labeling_json["systems_auto"][system_auto]["candidates_skipped_count"]
 
         if system_candidates_count - system_candidates_skipped_count == 0:
-            logging.debug(f"No label for this system {system_auto}, skipping")
+            arcann_logger.debug(f"No label for this system {system_auto}, skipping")
             continue
 
         system_path = current_path / system_auto
@@ -126,7 +128,7 @@ def main(
         # counter for non skipped configurations
         system_candidates_not_skipped_counter = 0
 
-        logging.debug("Starting extraction...")
+        arcann_logger.debug("Starting extraction...")
         for labeling_step in range(system_candidates_count):
             padded_labeling_step = str(labeling_step).zfill(5)
             labeling_step_path = system_path / padded_labeling_step
@@ -260,13 +262,13 @@ def main(
                 string_list_to_textfile(data_path / "set.000" / "wannier_not-converged.txt", wannier_not_converged)
             del wannier_not_converged, wannier_array_raw, is_wannier
 
-        logging.debug("Extraction done.")
+        arcann_logger.debug("Extraction done.")
 
         system_disturbed_candidates_count = labeling_json["systems_auto"][system_auto]["disturbed_candidates_count"]
         system_disturbed_candidates_skipped_count = labeling_json["systems_auto"][system_auto]["disturbed_candidates_skipped_count"]
 
         if system_disturbed_candidates_count - system_disturbed_candidates_skipped_count > 0:
-            logging.debug("Starting extraction for disturbed...")
+            arcann_logger.debug("Starting extraction for disturbed...")
             data_path = training_path / "data" / (system_auto + "-disturbed_" + padded_curr_iter)
             data_path.mkdir(exist_ok=True)
             (data_path / "set.000").mkdir(exist_ok=True)
@@ -423,9 +425,9 @@ def main(
                 if len(wannier_not_converged) > 1:
                     string_list_to_textfile(data_path / "set.000" / "wannier_not-converged.txt", wannier_not_converged)
                 del wannier_not_converged, wannier_array_raw, is_wannier
-            logging.debug("Extraction for disturbed done.")
+            arcann_logger.debug("Extraction for disturbed done.")
 
-        logging.info(f"Processed system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})")
+        arcann_logger.info(f"Processed system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})")
 
     if "output_cp2k" in locals():
         del output_cp2k
@@ -438,7 +440,7 @@ def main(
     del program_version
     del system_disturbed_candidates_count, system_disturbed_candidates_skipped_count
 
-    logging.info(f"-" * 88)
+    arcann_logger.info(f"-" * 88)
     # Update the booleans in the exploration JSON
     labeling_json["is_extracted"] = True
 
@@ -446,8 +448,8 @@ def main(
     write_json_file(labeling_json, (control_path / f"labeling_{padded_curr_iter}.json"))
 
     # End
-    logging.info(f"-" * 88)
-    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
+    arcann_logger.info(f"-" * 88)
+    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
 
     # Cleaning
     del current_path, control_path, training_path
@@ -455,8 +457,8 @@ def main(
     del main_json, labeling_json
     del curr_iter, padded_curr_iter
 
-    logging.debug(f"LOCAL")
-    logging.debug(f"{locals()}")
+    arcann_logger.debug(f"LOCAL")
+    arcann_logger.debug(f"{locals()}")
     return 0
 
 

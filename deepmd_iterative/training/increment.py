@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/28
+Last modified: 2024/05/01
 """
 
 # Standard library modules
@@ -28,16 +28,19 @@ def main(
     fake_machine=None,
     user_input_json_filename: str = "input.json",
 ):
+    # Get the logger
+    arcann_logger = logging.getLogger("ArcaNN")
+
     # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
-    logging.debug(f"Current path :{current_path}")
-    logging.debug(f"Training path: {training_path}")
-    logging.debug(f"Program path: {deepmd_iterative_path}")
-    logging.info(f"-" * 88)
+    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
+    arcann_logger.debug(f"Current path :{current_path}")
+    arcann_logger.debug(f"Training path: {training_path}")
+    arcann_logger.debug(f"Program path: {deepmd_iterative_path}")
+    arcann_logger.info(f"-" * 88)
 
     # Check if the current folder is correct for the current step
     validate_step_folder(current_step)
@@ -53,8 +56,8 @@ def main(
 
     # Check if we can continue
     if not training_json["is_frozen"]:
-        logging.error(f"Lock found. Please execute 'training check_freeze' first.")
-        logging.error(f"Aborting...")
+        arcann_logger.error(f"Lock found. Please execute 'training check_freeze' first.")
+        arcann_logger.error(f"Aborting...")
         return 1
 
     # Check if pb files are present and delete temp files
@@ -92,7 +95,7 @@ def main(
         check_directory(training_path / f"{padded_next_iter}-{step}")
     del step
 
-    logging.info(f"-" * 88)
+    arcann_logger.info(f"-" * 88)
     # Update the boolean in the training JSON
     training_json["is_incremented"] = True
 
@@ -101,7 +104,7 @@ def main(
     write_json_file(main_json, (control_path / "config.json"), read_only=True)
 
     # End
-    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
+    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
 
     # Cleaning
     del current_path, control_path, training_path
@@ -109,8 +112,8 @@ def main(
     del main_json, training_json
     del curr_iter, padded_curr_iter, next_iter, padded_next_iter
 
-    logging.debug(f"LOCAL")
-    logging.debug(f"{locals()}")
+    arcann_logger.debug(f"LOCAL")
+    arcann_logger.debug(f"{locals()}")
     return 0
 
 

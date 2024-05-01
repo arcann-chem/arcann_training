@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/08
+Last modified: 2024/05/01
 """
 
 # Standard library modules
@@ -37,16 +37,19 @@ def main(
     fake_machine=None,
     user_input_json_filename: str = "input.json",
 ):
+    # Get the logger
+    arcann_logger = logging.getLogger("ArcaNN")
+
     # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
-    logging.debug(f"Current path :{current_path}")
-    logging.debug(f"Training path: {training_path}")
-    logging.debug(f"Program path: {deepmd_iterative_path}")
-    logging.info(f"-" * 88)
+    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
+    arcann_logger.debug(f"Current path :{current_path}")
+    arcann_logger.debug(f"Training path: {training_path}")
+    arcann_logger.debug(f"Program path: {deepmd_iterative_path}")
+    arcann_logger.info(f"-" * 88)
 
     # Check if the current folder is correct for the current step
     validate_step_folder(current_step)
@@ -54,15 +57,15 @@ def main(
     # Get the current iteration number
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
-    logging.debug(f"curr_iter, padded_curr_iter: {curr_iter}, {padded_curr_iter}")
+    arcann_logger.debug(f"curr_iter, padded_curr_iter: {curr_iter}, {padded_curr_iter}")
 
     # Load the default input JSON
     default_input_json = load_default_json_file(deepmd_iterative_path / "assets" / "default_config.json")[current_step]
     default_input_json_present = bool(default_input_json)
     if default_input_json_present and not (current_path / "default_input.json").is_file():
         write_json_file(default_input_json, (current_path / "default_input.json"), read_only=True)
-    logging.debug(f"default_input_json: {default_input_json}")
-    logging.debug(f"default_input_json_present: {default_input_json_present}")
+    arcann_logger.debug(f"default_input_json: {default_input_json}")
+    arcann_logger.debug(f"default_input_json_present: {default_input_json_present}")
 
     # Load the user input JSON
     if (current_path / user_input_json_filename).is_file():
@@ -70,8 +73,8 @@ def main(
     else:
         user_input_json = {}
     user_input_json_present = bool(user_input_json)
-    logging.debug(f"user_input_json: {user_input_json}")
-    logging.debug(f"user_input_json_present: {user_input_json_present}")
+    arcann_logger.debug(f"user_input_json: {user_input_json}")
+    arcann_logger.debug(f"user_input_json_present: {user_input_json_present}")
 
     # Make a deepcopy of it to create the used input JSON
     current_input_json = copy.deepcopy(user_input_json)
@@ -93,7 +96,7 @@ def main(
     user_machine_keyword = get_machine_keyword(current_input_json, previous_training_json, default_input_json, "train")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
     user_machine_keyword = None if isinstance(user_machine_keyword, bool) else user_machine_keyword
-    logging.debug(f"user_machine_keyword: {user_machine_keyword}")
+    arcann_logger.debug(f"user_machine_keyword: {user_machine_keyword}")
 
     # From the keyword (or default), get the machine spec (or for the fake one)
     (
@@ -112,30 +115,30 @@ def main(
         fake_machine,
         user_machine_keyword,
     )
-    logging.debug(f"machine: {machine}")
-    logging.debug(f"machine_walltime_format: {machine_walltime_format}")
-    logging.debug(f"machine_job_scheduler: {machine_job_scheduler}")
-    logging.debug(f"machine_launch_command: {machine_launch_command}")
-    logging.debug(f"machine_max_jobs: {machine_max_jobs}")
-    logging.debug(f"machine_max_array_size: {machine_max_array_size}")
-    logging.debug(f"user_machine_keyword: {user_machine_keyword}")
-    logging.debug(f"machine_spec: {machine_spec}")
+    arcann_logger.debug(f"machine: {machine}")
+    arcann_logger.debug(f"machine_walltime_format: {machine_walltime_format}")
+    arcann_logger.debug(f"machine_job_scheduler: {machine_job_scheduler}")
+    arcann_logger.debug(f"machine_launch_command: {machine_launch_command}")
+    arcann_logger.debug(f"machine_max_jobs: {machine_max_jobs}")
+    arcann_logger.debug(f"machine_max_array_size: {machine_max_array_size}")
+    arcann_logger.debug(f"user_machine_keyword: {user_machine_keyword}")
+    arcann_logger.debug(f"machine_spec: {machine_spec}")
 
     current_input_json["user_machine_keyword_train"] = user_machine_keyword
-    logging.debug(f"current_input_json: {current_input_json}")
+    arcann_logger.debug(f"current_input_json: {current_input_json}")
 
     if fake_machine is not None:
-        logging.info(f"Pretending to be on: '{fake_machine}'.")
+        arcann_logger.info(f"Pretending to be on: '{fake_machine}'.")
     else:
-        logging.info(f"Machine identified: '{machine}'.")
+        arcann_logger.info(f"Machine identified: '{machine}'.")
     del fake_machine
 
     # Check if we can continue
     if curr_iter > 0:
         labeling_json = load_json_file((control_path / f"labeling_{padded_curr_iter}.json"))
         if not labeling_json["is_extracted"]:
-            logging.error(f"Lock found. Please execute 'labeling extract' first.")
-            logging.error(f"Aborting...")
+            arcann_logger.error(f"Lock found. Please execute 'labeling extract' first.")
+            arcann_logger.error(f"Aborting...")
             return 1
         exploration_json = load_json_file((control_path / f"exploration_{padded_curr_iter}.json"))
     else:
@@ -150,38 +153,38 @@ def main(
             if "dptrain" not in file.stem:
                 continue
             dptrain_list.append(file)
-        logging.debug(f"dptrain_list: {dptrain_list}")
+        arcann_logger.debug(f"dptrain_list: {dptrain_list}")
 
         if dptrain_list == []:
-            logging.error(f"No dptrain_DEEPMDVERSION.json files found in {(current_path.parent / 'user_files')}")
-            logging.error(f"Aborting...")
+            arcann_logger.error(f"No dptrain_DEEPMDVERSION.json files found in {(current_path.parent / 'user_files')}")
+            arcann_logger.error(f"Aborting...")
             return 1
 
         dptrain_max_version = 0
         for dptrain in dptrain_list:
             dptrain_max_version = max(dptrain_max_version, float(dptrain.stem.split("_")[-1]))
 
-        logging.debug(f"dptrain_max_version: {dptrain_max_version}")
+        arcann_logger.debug(f"dptrain_max_version: {dptrain_max_version}")
         current_input_json["deepmd_model_version"] = dptrain_max_version
         del dptrain_list, dptrain_max_version
 
     # Generate/update both the training JSON and the merged input JSON
     # Priority: user/current > previous > default
     training_json, current_input_json = generate_training_json(current_input_json, previous_training_json, default_input_json)
-    logging.info(f"Using DeePMD version: {current_input_json['deepmd_model_version']}")
-    logging.debug(f"training_json: {training_json}")
-    logging.debug(f"current_input_json: {current_input_json}")
+    arcann_logger.info(f"Using DeePMD version: {current_input_json['deepmd_model_version']}")
+    arcann_logger.debug(f"training_json: {training_json}")
+    arcann_logger.debug(f"current_input_json: {current_input_json}")
 
     # Check if the job file exists
     job_file_name = f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh"
     if (current_path.parent / "user_files" / job_file_name).is_file():
         master_job_file = textfile_to_string_list(current_path.parent / "user_files" / job_file_name)
     else:
-        logging.error(f"No JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine.")
-        logging.error(f"Aborting...")
+        arcann_logger.error(f"No JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine.")
+        arcann_logger.error(f"Aborting...")
         return 1
 
-    logging.debug(f"master_job_file: {master_job_file[0:5]}, {master_job_file[-5:-1]}")
+    arcann_logger.debug(f"master_job_file: {master_job_file[0:5]}, {master_job_file[-5:-1]}")
     current_input_json["job_email"] = get_key_in_dict("job_email", user_input_json, previous_training_json, default_input_json)
     del job_file_name
 
@@ -200,19 +203,19 @@ def main(
 
     # Make sure they are the same
     if dp_train_input["model"]["type_map"] != main_json["type_map"]:
-        logging.error(f"Type map in {dp_train_input_path} does not match the one in config.json.")
-        logging.error(f"Aborting...")
+        arcann_logger.error(f"Type map in {dp_train_input_path} does not match the one in config.json.")
+        arcann_logger.error(f"Aborting...")
         return 1
 
     # main_json["type_map"] = {}
     # main_json["type_map"] = dp_train_input["model"]["type_map"]
     del dp_train_input_path
-    logging.debug(f"dp_train_input: {dp_train_input}")
-    logging.debug(f"main_json: {main_json}")
+    arcann_logger.debug(f"dp_train_input: {dp_train_input}")
+    arcann_logger.debug(f"main_json: {main_json}")
 
     # Check the initial sets json file
     initial_datasets_info = check_initial_datasets(training_path)
-    logging.debug(f"initial_datasets_info: {initial_datasets_info}")
+    arcann_logger.debug(f"initial_datasets_info: {initial_datasets_info}")
 
     # Let us find what is in data
     data_path = training_path / "data"
@@ -333,8 +336,8 @@ def main(
 
     # Total
     trained_count = initial_count + added_auto_count + added_adhoc_count + extra_count
-    logging.debug(f"trained_count: {trained_count} = {initial_count} + {added_auto_count} + {added_adhoc_count} + {extra_count}")
-    logging.debug(f"dp_train_input_datasets: {dp_train_input_datasets}")
+    arcann_logger.debug(f"trained_count: {trained_count} = {initial_count} + {added_auto_count} + {added_adhoc_count} + {extra_count}")
+    arcann_logger.debug(f"dp_train_input_datasets: {dp_train_input_datasets}")
 
     # Update the inputs with the sets
     dp_train_input["training"]["training_data"]["systems"] = dp_train_input_datasets
@@ -351,7 +354,7 @@ def main(
         "added_adhoc_iter_count": added_adhoc_iter_count,
         "extra_count": extra_count,
     }
-    logging.debug(f"training_json: {training_json}")
+    arcann_logger.debug(f"training_json: {training_json}")
 
     del training_datasets
     del trained_count, initial_count, extra_count
@@ -359,23 +362,23 @@ def main(
 
     # Here calculate the parameters
     # decay_steps it auto-recalculated as funcion of trained_count
-    logging.debug(f"training_json - decay_steps: {training_json['decay_steps']}")
-    logging.debug(f"current_input_json - decay_steps: {current_input_json['decay_steps']}")
+    arcann_logger.debug(f"training_json - decay_steps: {training_json['decay_steps']}")
+    arcann_logger.debug(f"current_input_json - decay_steps: {current_input_json['decay_steps']}")
     if not training_json["decay_steps_fixed"]:
         decay_steps = calculate_decay_steps(training_json["trained_count"], training_json["decay_steps"])
-        logging.debug(f"Recalculating decay_steps")
+        arcann_logger.debug(f"Recalculating decay_steps")
         # Update the training JSON and the merged input JSON
         training_json["decay_steps"] = decay_steps
         current_input_json["decay_steps"] = decay_steps
     else:
         decay_steps = training_json["decay_steps"]
-    logging.debug(f"decay_steps: {decay_steps}")
-    logging.debug(f"training_json - decay_steps: {training_json['decay_steps']}")
-    logging.debug(f"current_input_json - decay_steps: {current_input_json['decay_steps']}")
+    arcann_logger.debug(f"decay_steps: {decay_steps}")
+    arcann_logger.debug(f"training_json - decay_steps: {training_json['decay_steps']}")
+    arcann_logger.debug(f"current_input_json - decay_steps: {current_input_json['decay_steps']}")
 
     # numb_steps and decay_rate
-    logging.debug(f"training_json - numb_steps / decay_rate: {training_json['numb_steps']} / {training_json['decay_rate']}")
-    logging.debug(f"current_input_json - numb_steps / decay_rate: {current_input_json['numb_steps']} / {current_input_json['decay_rate']}")
+    arcann_logger.debug(f"training_json - numb_steps / decay_rate: {training_json['numb_steps']} / {training_json['decay_rate']}")
+    arcann_logger.debug(f"current_input_json - numb_steps / decay_rate: {current_input_json['numb_steps']} / {current_input_json['decay_rate']}")
     numb_steps = training_json["numb_steps"]
     decay_rate_new = calculate_decay_rate(numb_steps, training_json["start_lr"], training_json["stop_lr"], training_json["decay_steps"])
     while decay_rate_new < training_json["decay_rate"]:
@@ -386,10 +389,10 @@ def main(
     training_json["decay_rate"] = decay_rate_new
     current_input_json["numb_steps"] = int(numb_steps)
     current_input_json["decay_rate"] = decay_rate_new
-    logging.debug(f"numb_steps: {numb_steps}")
-    logging.debug(f"decay_rate: {decay_rate_new}")
-    logging.debug(f"training_json - numb_steps / decay_rate: {training_json['numb_steps']} / {training_json['decay_rate']}")
-    logging.debug(f"current_input_json - numb_steps / decay_rate: {current_input_json['numb_steps']} / {current_input_json['decay_rate']}")
+    arcann_logger.debug(f"numb_steps: {numb_steps}")
+    arcann_logger.debug(f"decay_rate: {decay_rate_new}")
+    arcann_logger.debug(f"training_json - numb_steps / decay_rate: {training_json['numb_steps']} / {training_json['decay_rate']}")
+    arcann_logger.debug(f"current_input_json - numb_steps / decay_rate: {current_input_json['numb_steps']} / {current_input_json['decay_rate']}")
 
     del decay_steps, numb_steps, decay_rate_new
 
@@ -421,11 +424,11 @@ def main(
     dp_train_input["training"]["disp_file"] = "lcurve.out"
     dp_train_input["training"]["save_ckpt"] = "model.ckpt"
 
-    logging.debug(f"training_json: {training_json}")
-    logging.debug(f"user_input_json: {user_input_json}")
-    logging.debug(f"current_input_json: {current_input_json}")
-    logging.debug(f"default_input_json: {default_input_json}")
-    logging.debug(f"previous_training_json: {previous_training_json}")
+    arcann_logger.debug(f"training_json: {training_json}")
+    arcann_logger.debug(f"user_input_json: {user_input_json}")
+    arcann_logger.debug(f"current_input_json: {current_input_json}")
+    arcann_logger.debug(f"default_input_json: {default_input_json}")
+    arcann_logger.debug(f"previous_training_json: {previous_training_json}")
 
     # Create the inputs/jobfiles for each NNP with random SEED
 
@@ -433,11 +436,11 @@ def main(
     if "job_walltime_train_h" in user_input_json and user_input_json["job_walltime_train_h"] > 0:
         walltime_approx_s = int(user_input_json["job_walltime_train_h"] * 3600)
         mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
-        logging.debug(f"job_walltime_train_h: {user_input_json['job_walltime_train_h']}")
+        arcann_logger.debug(f"job_walltime_train_h: {user_input_json['job_walltime_train_h']}")
     elif "mean_s_per_step" in user_input_json and user_input_json["mean_s_per_step"] > 0:
         walltime_approx_s = int(np.ceil((training_json["numb_steps"] * user_input_json["mean_s_per_step"])))
         mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
-        logging.debug(f"mean_s_per_step: {user_input_json['mean_s_per_step']}")
+        arcann_logger.debug(f"mean_s_per_step: {user_input_json['mean_s_per_step']}")
     else:
         if curr_iter == 0:
             walltime_approx_s = int(max(np.ceil(training_json["numb_steps"] * default_input_json["mean_s_per_step"]), default_input_json["job_walltime_train_h"] * 3600))
@@ -450,8 +453,8 @@ def main(
     current_input_json["mean_s_per_step"] = mean_s_per_step
     training_json["job_walltime_train_h"] = float(walltime_approx_s / 3600)
     training_json["mean_s_per_step"] = mean_s_per_step
-    logging.debug(f"walltime_approx_s: {walltime_approx_s}")
-    logging.debug(f"mean_s_per_step: {mean_s_per_step}")
+    arcann_logger.debug(f"walltime_approx_s: {walltime_approx_s}")
+    arcann_logger.debug(f"mean_s_per_step: {mean_s_per_step}")
 
     for nnp in range(1, main_json["nnp_count"] + 1):
         local_path = current_path / f"{nnp}"
@@ -481,14 +484,14 @@ def main(
     del nnp, walltime_approx_s, dp_train_input
 
     # Dump the JSON files (main, training and current input)
-    logging.info(f"-" * 88)
+    arcann_logger.info(f"-" * 88)
     write_json_file(main_json, (control_path / "config.json"), read_only=True)
     write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"), read_only=True)
     backup_and_overwrite_json_file(current_input_json, (current_path / "used_input.json"), read_only=True)
 
     # End
-    logging.info(f"-" * 88)
-    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
+    arcann_logger.info(f"-" * 88)
+    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
 
     # Cleaning
     del current_path, control_path, training_path, data_path
@@ -499,8 +502,8 @@ def main(
     del machine, machine_spec, machine_walltime_format, machine_job_scheduler, machine_launch_command, machine_max_jobs, machine_max_array_size
     del master_job_file
 
-    logging.debug(f"LOCAL")
-    logging.debug(f"{locals()}")
+    arcann_logger.debug(f"LOCAL")
+    arcann_logger.debug(f"{locals()}")
     return 0
 
 

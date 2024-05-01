@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/26
+Last modified: 2024/05/01
 
 This module contains functions for checking the availability of certain commands on the system, as well as a function for validating the current working directory during the execution of a specific step.
 
@@ -64,24 +64,26 @@ def check_atomsk(atomsk_path: str = None) -> str:
     FileNotFoundError
         If the 'atomsk' command is not found in the system path.
     """
+    logger = logging.getLogger("ArcaNN")
+
     # Check if atomsk_path is provided and is valid
     if atomsk_path is not None:
         if Path(atomsk_path).is_file():
             return str(Path(atomsk_path).resolve())
         else:
-            logging.warning(f"Atomsk path '{atomsk_path}' is invalid. Deleting the atomsk_path variable. Checking environment variable and system path...")
+            logger.warning(f"Atomsk path '{atomsk_path}' is invalid. Deleting the atomsk_path variable. Checking environment variable and system path...")
             del atomsk_path
 
     # Check if ATOMSK_PATH is defined and is valid
     atomsk_path = os.environ.get("ATOMSK_PATH")
     if atomsk_path is not None and atomsk_path != "" and Path(atomsk_path).is_file():
-        logging.info(f"Atomsk found in $ATOMSK_PATH.")
+        logger.info(f"Atomsk found in $ATOMSK_PATH.")
         return str(Path(atomsk_path).resolve())
 
     # Check if atomsk is available in system path
     atomsk = shutil.which("atomsk")
     if atomsk is not None:
-        logging.info(f"Atomsk found in $PATH.")
+        logger.info(f"Atomsk found in $PATH.")
         atomsk_path = Path(atomsk).resolve()
         return f"{atomsk_path}"
     else:
@@ -119,23 +121,25 @@ def check_vmd(vmd_path: str = None) -> str:
     FileNotFoundError
         If the 'vmd' command is not found in the system path.
     """
+    logger = logging.getLogger("ArcaNN")
+
     # Check if vmd_path is provided and is valid
     if vmd_path is not None and vmd_path != "" and Path(vmd_path).is_file():
         return str(Path(vmd_path).resolve())
     else:
-        logging.warning(f"VMD path '{vmd_path}' is invalid. Deleting the vmd_path variable. Checking environment variable and system path...")
+        logger.warning(f"VMD path '{vmd_path}' is invalid. Deleting the vmd_path variable. Checking environment variable and system path...")
         del vmd_path
 
     # Check if VMD_PATH is defined and is valid
     vmd_path = os.environ.get("VMD_PATH")
     if vmd_path is not None and vmd_path != "" and Path(vmd_path).is_file():
-        logging.info(f"Atomsk found in $VMD_PATH.")
+        logger.info(f"Atomsk found in $VMD_PATH.")
         return str(Path(vmd_path).resolve())
 
     # Check if vmd is available in system path
     vmd = shutil.which("vmd")
     if vmd is not None:
-        logging.info(f"VMD found in $PATH.")
+        logger.info(f"VMD found in $PATH.")
         vmd_path = Path(vmd).resolve()
         return f"{vmd_path}"
     else:

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/29
+Last modified: 2024/05/01
 """
 
 # Standard library modules
@@ -29,16 +29,19 @@ def main(
     fake_machine=None,
     user_input_json_filename: str = "input.json",
 ):
+    # Get the logger
+    arcann_logger = logging.getLogger("ArcaNN")
+
     # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
-    logging.debug(f"Current path :{current_path}")
-    logging.debug(f"Training path: {training_path}")
-    logging.debug(f"Program path: {deepmd_iterative_path}")
-    logging.info(f"-" * 88)
+    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
+    arcann_logger.debug(f"Current path :{current_path}")
+    arcann_logger.debug(f"Training path: {training_path}")
+    arcann_logger.debug(f"Program path: {deepmd_iterative_path}")
+    arcann_logger.info(f"-" * 88)
 
     # Check if the current folder is correct for the current step
     validate_step_folder(current_step)
@@ -49,7 +52,7 @@ def main(
 
     # If the used input JSON is present, load it
     current_input_json = load_json_file((current_path / "used_input.json"), abort_on_error=True)
-    logging.debug(f"current_input_json: {current_input_json}")
+    arcann_logger.debug(f"current_input_json: {current_input_json}")
 
     # Get control path and load the main JSON and the training JSON
     control_path = training_path / "control"
@@ -74,19 +77,19 @@ def main(
         fake_machine,
         user_machine_keyword,
     )
-    logging.debug(f"machine: {machine}")
-    logging.debug(f"machine_walltime_format: {machine_walltime_format}")
-    logging.debug(f"machine_job_scheduler: {machine_job_scheduler}")
-    logging.debug(f"machine_launch_command: {machine_launch_command}")
-    logging.debug(f"machine_max_jobs: {machine_max_jobs}")
-    logging.debug(f"machine_max_array_size: {machine_max_array_size}")
-    logging.debug(f"user_machine_keyword: {user_machine_keyword}")
-    logging.debug(f"machine_spec: {machine_spec}")
+    arcann_logger.debug(f"machine: {machine}")
+    arcann_logger.debug(f"machine_walltime_format: {machine_walltime_format}")
+    arcann_logger.debug(f"machine_job_scheduler: {machine_job_scheduler}")
+    arcann_logger.debug(f"machine_launch_command: {machine_launch_command}")
+    arcann_logger.debug(f"machine_max_jobs: {machine_max_jobs}")
+    arcann_logger.debug(f"machine_max_array_size: {machine_max_array_size}")
+    arcann_logger.debug(f"user_machine_keyword: {user_machine_keyword}")
+    arcann_logger.debug(f"machine_spec: {machine_spec}")
 
     if fake_machine is not None:
-        logging.info(f"Pretending to be on: '{fake_machine}'.")
+        arcann_logger.info(f"Pretending to be on: '{fake_machine}'.")
     else:
-        logging.info(f"Machine identified: '{machine}'.")
+        arcann_logger.info(f"Machine identified: '{machine}'.")
     del fake_machine
 
     # Check prep/launch
@@ -94,16 +97,16 @@ def main(
 
     # Check if we can continue
     if training_json["is_launched"]:
-        logging.critical(f"Already launched...")
+        arcann_logger.critical(f"Already launched...")
         continuing = input(f"Do you want to continue?\n['Y' for yes, anything else to abort]\n")
         if continuing == "Y":
             del continuing
         else:
-            logging.error(f"Aborting...")
+            arcann_logger.error(f"Aborting...")
             return 0
     if not training_json["is_prepared"]:
-        logging.error(f"Lock found. Please execute 'training prepare' first.")
-        logging.error(f"Aborting...")
+        arcann_logger.error(f"Lock found. Please execute 'training prepare' first.")
+        arcann_logger.error(f"Aborting...")
         return 1
 
     # Launch the jobs
@@ -114,17 +117,17 @@ def main(
             change_directory(local_path)
             try:
                 subprocess.run([machine_launch_command, f"./job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh"])
-                logging.info(f"DP Train - '{nnp}' launched.")
+                arcann_logger.info(f"DP Train - '{nnp}' launched.")
                 completed_count += 1
             except FileNotFoundError:
-                logging.critical(f"DP Train - '{nnp}' NOT launched - '{machine_launch_command}' not found.")
+                arcann_logger.critical(f"DP Train - '{nnp}' NOT launched - '{machine_launch_command}' not found.")
             change_directory(local_path.parent)
         else:
-            logging.critical(f"DP Train - '{nnp}' NOT launched - No job file.")
+            arcann_logger.critical(f"DP Train - '{nnp}' NOT launched - No job file.")
         del local_path
     del nnp
 
-    logging.info(f"-" * 88)
+    arcann_logger.info(f"-" * 88)
     # Update the boolean in the training JSON
     if completed_count == main_json["nnp_count"]:
         training_json["is_launched"] = True
@@ -133,14 +136,14 @@ def main(
     write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"), read_only=True)
 
     # End
-    logging.info(f"-" * 88)
+    arcann_logger.info(f"-" * 88)
     if completed_count == main_json["nnp_count"]:
-        logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
+        arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
     else:
-        logging.critical(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!")
-        logging.critical(f"Some jobs did not launch correctly.")
-        logging.critical(f"Please launch manually before continuing to the next step.")
-        logging.critical(f"Replace the key 'is_launched' to 'True' in the 'training_{padded_curr_iter}.json'.")
+        arcann_logger.critical(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!")
+        arcann_logger.critical(f"Some jobs did not launch correctly.")
+        arcann_logger.critical(f"Please launch manually before continuing to the next step.")
+        arcann_logger.critical(f"Replace the key 'is_launched' to 'True' in the 'training_{padded_curr_iter}.json'.")
     del completed_count
 
     # Cleaning
@@ -151,8 +154,8 @@ def main(
     del curr_iter, padded_curr_iter
     del machine, machine_spec, machine_walltime_format, machine_launch_command, machine_job_scheduler, machine_max_jobs, machine_max_array_size
 
-    logging.debug(f"LOCAL")
-    logging.debug(f"{locals()}")
+    arcann_logger.debug(f"LOCAL")
+    arcann_logger.debug(f"{locals()}")
     return 0
 
 

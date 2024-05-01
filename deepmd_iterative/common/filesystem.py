@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/31
+Last modified: 2024/05/01
 
 The filesystem module provides functions to handle file and directory management
 
@@ -105,6 +105,8 @@ def check_directory(directory_path: Path, abort_on_error: bool = True, error_msg
     FileNotFoundError
         If the directory does not exist and `abort_on_error` is True.
     """
+    logger = logging.getLogger("ArcaNN")
+    
     # Check if the directory exists
     if not directory_path.is_dir():
         # Create error message
@@ -115,7 +117,7 @@ def check_directory(directory_path: Path, abort_on_error: bool = True, error_msg
         if abort_on_error:
             raise FileNotFoundError(error_msg)
         else:
-            logging.warning(error_msg)
+            logger.warning(error_msg)
 
 
 # Unittested
@@ -151,7 +153,8 @@ def check_file_existence(
     FileExistsError
         If the file is expected not to exist but does, and `abort_on_error` is True.
     """
-
+    logger = logging.getLogger("ArcaNN")
+    
     exists = file_path.is_file()
 
     if exists != expected_existence:
@@ -160,13 +163,13 @@ def check_file_existence(
             if abort_on_error:
                 raise FileNotFoundError(message if error_msg == "default" else error_msg)
             else:
-                logging.warning(message if error_msg == "default" else error_msg)
+                logger.warning(message if error_msg == "default" else error_msg)
         else:
             message = f"File found: `{file_path.name}` in `{file_path.parent}`"
             if abort_on_error:
                 raise FileExistsError(message if error_msg == "default" else error_msg)
             else:
-                logging.warning(message if error_msg == "default" else error_msg)
+                logger.warning(message if error_msg == "default" else error_msg)
 
 
 # Unittested
@@ -218,6 +221,7 @@ def remove_files_matching_glob(directory_path: Path, file_glob: str) -> None:
     Exception
         If there is an error in removing the files.
     """
+    logger = logging.getLogger("ArcaNN")
 
     # Remove the matching files
     if not directory_path.is_dir():
@@ -227,7 +231,7 @@ def remove_files_matching_glob(directory_path: Path, file_glob: str) -> None:
     for file_path in directory_path.glob(file_glob):
         try:
             file_path.unlink()
-            logging.debug(f"Removed file: `{file_path}`")
+            logger.debug(f"Removed file: `{file_path}`")
         except Exception as e:
             error_msg = f"Failed to remove file `{file_path}`: `{e}`"
             raise Exception(error_msg)

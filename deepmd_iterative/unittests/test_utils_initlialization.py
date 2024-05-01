@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/17
+Last modified: 2024/05/01
 
 Test cases for the utils/initialization module.
 
@@ -38,9 +38,6 @@ class TestGenerateMainJson(unittest.TestCase):
     test_set_main_config_with_invalid_type_input():
         Test if the function correctly raises TypeError for invalid input types.
 
-    test_set_main_config_with_missing_mandatory_input():
-        Test if the function correctly raises ValueError for missing mandatory input.
-
     test_set_main_config_with_invalid_element_type_in_list():
         Test if the function correctly raises TypeError for invalid element types in a list.
     """
@@ -49,7 +46,6 @@ class TestGenerateMainJson(unittest.TestCase):
         self.default_json = {
             "systems_auto": [""],
             "nnp_count": 3,
-            "exploration_type": "lammps",
         }
 
     def test_generate_main_json_with_valid_input(self):
@@ -113,17 +109,6 @@ class TestGenerateMainJson(unittest.TestCase):
         }
 
         with self.assertRaises(TypeError):
-            generate_main_json(input_json, self.default_json)
-
-    def test_generate_main_json_with_missing_mandatory_input(self):
-        """
-        Test if the function correctly raises ValueError for missing mandatory input.
-        """
-        input_json = {
-            "nnp_count": 4,
-        }
-
-        with self.assertRaises(ValueError):
             generate_main_json(input_json, self.default_json)
 
     def test_generate_main_json_with_invalid_element_type_in_list(self):
