@@ -35,9 +35,9 @@ would definitely be the best definition of this repository. It aims at simplifyi
 
 This repository contains several folders:
 - `examples/` contains all the necessary files to set up the iterative training procedure for your system:
-  - an `inputs/` folder with 4 json files, one per "step". These files contain all the keywords that used to control each step of an iteration (namely **initialization**, **exploration**, **labeling** and **training**), as well as their type and the default values taken by the code in case the keyword is not provided by the user. If the default is a list containing a single value it means that this value will be used for every **system** (see below). For the exploration step some keywords have 2 default values, the first one will be used if the exploration is conducted with LAMMPS and the second one will be used with i-PI.  
+  - an `inputs/` folder with 4 json files, one per "step". These files contain all the keywords that are used to control each step of an iteration (namely **initialization**, **exploration**, **labeling** and **training**), as well as their type and the default values taken by the code in case the keyword is not provided by the user. If the default is a list containing a single value it means that this value will be used for every **system** (see below). For the exploration step some keywords have 2 default values, the first one will be used if the exploration is conducted with LAMMPS and the second one will be used with i-PI.  
   - a `user_files/` folder with:
-    - a `machine.json` file that will contain all the information about your cluster that the code will need (see [Cluster setup](#cluster-setup) below) 
+    - a `machine.json` file that will contain all the information about your cluster that the code will need (see [Cluster setup](#cluster-setup) below).
     - an inputs folder for each step : `exploration_lammps/`, `labeling_cp2k/` and `training_deepmd/` where you will store all the input files and eventually some complementary files to perform the **exploration** with LAMMPS, the **labeling** with CP2K and the **training** with DeePMD (see [Exploration](#exploration), [Labeling](#usage) and [Training](#training) for a detailed description of the **tunneable** keywords)
     - a job folder for each step : `job_exploration_lammps_slurm/`, `job_labeling_CP2K_slurm`, `job_training_deepmd_slurm` and the optional step `job_test_deepmd_slurm` containing example `Slurm` submission files that will be used by the code to launch the different phases in each step. 
   You **must** to adapt these files so that they work in your machine (see [Usage](#usage-req)), but careful not to modify the **replaceable** keywords (every word starting by `_R_`) that the different codes will replace by the user defined values (ex: wall time of labeling calculation, cluster partition to be used, etc.). 
@@ -133,7 +133,7 @@ This repository was designed for use on Jean Zay (mainly) and Irene Rome, two na
         "cpu_gen7156": {
             "project_name": "gen7156",
             "allocation_name": "rome",
-            "arch_name": "cpu",
+            "arch_name": "cpu",s
             "arch_type": "cpu",
             "partition": null,
             "subpartition": null,
@@ -182,20 +182,23 @@ You get the idea, you need a subsystem for every kind of chemical composition, p
 Because of that, everytime you would like to include a new subsystem (such as self-dissociated structures in the first example or transition state structures in the SN2 example), you will need to initialize the procedure again. This is very simple and you only need to create a new `$WORK_DIR` and include the necessary files in `user_files/` for each extra subsystem that you want to add. 
 
 
-To initiate the iterative training procedure you will need to prepare several files. You can start from the examples given in `examples/user_files/` : 
+To initiate the iterative training procedure you will need to prepare several files. You can start from the examples given in `examples/user_files/`. You will create a `$WORK_DIR/user_files/` folder and place all the files there. 
+
+* The LAMMPS (or i-PI) and CP2K files used for carrying out the exploration and labeling phases of each subsystem should also be prepared before the initialization and follow the required naming scheme (`SYSNAME.in` for the LAMMPS input file, `SYSNAME.xml` for i-PI and `[1-2]_SYSNAME_labeling_XXXXX_[cluster].inp` for the 2 CP2K files required per subsystem, where `[cluster]` refers to the short string selected for the labeling cluster in the `machine_file.json`, see [Labeling](#labeling)). We **strongly** advise you to create these files starting from the ones given in the `examples/user_files/` folder, since they must contain replaceable strings for the key parameters that will be updated by the procedure. 
 
 
 
-* If a subsystem requires the use of PLUMED for the explorations you will also need to prepare some PLUMED files :   `plumed_SYSNAME.dat` where `SYSNAME` refers to the subsystem name (additional PLUMED files can be used as `plumed_*_SYSNAME.dat` that will also be taken into account for explorations). 
 
 
 You will also need some additional files specific to your system : 
+* If a subsystem requires the use of PLUMED for the explorations you will also need to prepare some PLUMED files :   `plumed_SYSNAME.dat` where `SYSNAME` refers to the subsystem name (additional PLUMED files can be used as `plumed_*_SYSNAME.dat` that will also be taken into account for explorations). 
+
 * a representative **configuration** for each subsystem (which you will name `SYSNAME.lmp`, where `SYSNAME` refers to the subsystem name). A configuration of the subsystem in `.lmp` format contains a given atomic geometry of your subsystem (it will be used as starting point for the first exploration), the number of atoms, the simulation cell dimensions and the atomic masses, all in a LAMMPS compatible format. You will include this file in `$WORKDIR/user_files/exploration_lammps/`.
 * 
 **Please note** that the order of the atoms in the .lmp files **must** be the identical between files and match the order given to DeePMD-kit in the training file (see below). If you are preparing these files with [atomsk](https://atomsk.univ-lille.fr/) from xyz files, you can set the correct simulation cell and atom ordering by providing them in a [properties file](https://atomsk.univ-lille.fr/tutorial_properties.php).
 
 
-* The LAMMPS (or i-PI) and CP2K files used for carrying out the exploration and labeling phases of each subsystem should also be prepared before the initialization and follow the required naming scheme (`SYSNAME.in` for the LAMMPS input file, `SYSNAME.xml` for i-PI and `[1-2]_SYSNAME_labeling_XXXXX_[cluster].inp` for the 2 CP2K files required per subsystem, where `[cluster]` refers to the short string selected for the labeling cluster in the `machine_file.json`, see [Labeling](#labeling)). We **strongly** advise you to create these files starting from the ones given in the `examples/user_files/` folder, since they must contain replaceable strings for the key parameters that will be updated by the procedure. 
+
 * A DeePMD-kit `.json` file for training needs also to be prepared and named as `dptrain_VERSION_DESCRIPTOR.json` where `VERSION` is the DeePMD-kit version that you will use (ex: `2.1`, currently supported versions are `2.0`, `2.1` and `2.2`) and `DESCRIPTOR` is the [smooth-edition](https://papers.nips.cc/paper_files/paper/2018/hash/e2ad76f2326fbc6b56a45a56c59fafdb-Abstract.html) strategy used for creating the atomic configuration descriptor (ex: `se2_a` for two-body descriptors with radial and angular information, currently supported descriptors are `se_a`, `se_ar` and `se_e2_a`). Please note that the atom order indicated in the `"type_map"` keyword of this file must match those in the .lmp files !
 * **Important:** all these files must be stored in the `$WORK_DIR/user_files/` folder that you created (**not** in the `examples/user_files/` folder of the repo !)
 
