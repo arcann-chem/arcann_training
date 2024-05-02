@@ -6,17 +6,28 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/01
+Last modified: 2024/05/02
 
+Functions
+---------
 generate_main_json(user_input_json: Dict, default_input_json: Dict) -> Tuple[Dict, Dict, str]
     A function to generate the main JSON by combining values from the user input JSON and the default JSON.
+check_properties_file(file_path: Path) -> dict
+    A function to validate and extract the properties from a file containing types and masses.
+check_lmp_properties(lmp_file: Path, properties: Dict) -> bool
+    A function to validate that the properties in a LAMMPS data file match those specified in a properties dictionary.
+check_dptrain_properties(user_files_path: Path, properties_dict: Dict)
+    A function to check the properties in dptrain files.
+check_typeraw_properties(type_raw_path, properties_dict)
+    A function to check the properties in type.raw files.
 """
+
 # TODO: Homogenize the docstrings for this module
 
 # Standard library modules
 from copy import deepcopy
 from pathlib import Path
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple
 
 # Third-party modules
 import numpy as np
@@ -79,7 +90,6 @@ def generate_main_json(user_input_json: Dict, default_input_json: Dict) -> Tuple
     return main_json, merged_input_json, str(main_json["current_iteration"]).zfill(3)
 
 
-# TODO: Add tests for this function
 @catch_errors_decorator
 def check_properties_file(file_path: Path) -> dict:
     """
@@ -105,15 +115,20 @@ def check_properties_file(file_path: Path) -> dict:
         If the file structure is incorrect, or line formats in the 'type' or 'masses' sections are invalid.
     """
 
-    content = file_path.read_text()
+    if not file_path.exists():
+        error_msg = f"File not found: {file_path}"
+        raise FileNotFoundError(error_msg)
 
+    content = file_path.read_text()
     lines = [line.strip() for line in content.split("\n") if line.strip()]
+
     if "type" not in lines or "masses" not in lines:
         error_msg = f"Both 'type' and 'masses' sections are required in the properties file {file_path}."
         raise ValueError(error_msg)
 
     type_index = lines.index("type")
     masses_index = lines.index("masses")
+
     if type_index >= masses_index:
         error_msg = f"'type' section should come before 'masses'. Check your properties file."
         raise ValueError(error_msg)
@@ -152,12 +167,11 @@ def check_properties_file(file_path: Path) -> dict:
         raise ValueError(error_msg)
 
     # Combining types and masses into one dictionary
-    combined = {}
-    combined = {}
+    type_mass_dictionary = {}
     for symbol, type_id in types.items():
-        combined[type_id] = {"symbol": symbol, "mass": masses[symbol]}
+        type_mass_dictionary[type_id] = {"symbol": symbol, "mass": masses[symbol]}
 
-    return combined
+    return type_mass_dictionary
 
 
 # TODO: Add tests for this function
@@ -185,6 +199,7 @@ def check_lmp_properties(lmp_file: Path, properties: Dict) -> bool:
     """
 
     num_atoms, num_atom_types, cell, masses, atoms = read_lammps_data(lmp_file)
+    del num_atoms, cell, atoms
 
     if num_atom_types > len(properties):
         error_msg = f"In LMP file {lmp_file}, there are more atom types compared to the properties file."
@@ -229,6 +244,7 @@ def check_dptrain_properties(user_files_path: Path, properties_dict: Dict):
             if type_dptrain != properties_dict[idx + 1]["symbol"]:
                 error_msg = f"Type {type_dptrain} not in properties or order is incorrect. Check your {dptrain}"
                 raise ValueError(error_msg)
+
 
 # TODO: Add tests for this function
 @catch_errors_decorator

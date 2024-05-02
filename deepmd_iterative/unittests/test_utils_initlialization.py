@@ -6,40 +6,41 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/01
+Last modified: 2024/05/02
 
-Test cases for the utils/initialization module.
+This module contains unit tests for the 'utils' module in the 'initialization' package.
 
 Classes
 -------
 TestGenerateMainJson
-    Test cases for the 'generate_main_json' function.
+    Test suite for the 'generate_main_json' function.
+TestCheckPropertiesFile
+    Test suite for the 'check_properties_file' function.
 """
 
 # Standard library modules
+import tempfile
 import unittest
+from pathlib import Path
 
 # Local imports
-from deepmd_iterative.initialization.utils import generate_main_json
+from deepmd_iterative.initialization.utils import generate_main_json, check_properties_file
 
 
 class TestGenerateMainJson(unittest.TestCase):
     """
-    Test cases for the 'generate_main_json' function.
+    Test suite for the 'generate_main_json' function.
 
     Methods
     -------
     test_set_main_config_with_valid_input():
-        Test if the function correctly generates main and merged input JSON with valid input.
-
+        Tests correct JSON generation and merging with complete and valid input.
     test_set_main_config_with_minimal_input():
-        Test if the function correctly generates main and merged input JSON with minimal input.
-
+        Tests JSON generation and merging using minimal input, relying on default settings.
     test_set_main_config_with_invalid_type_input():
-        Test if the function correctly raises TypeError for invalid input types.
-
+        Tests response to input with incorrect data types, expecting a TypeError.
     test_set_main_config_with_invalid_element_type_in_list():
-        Test if the function correctly raises TypeError for invalid element types in a list.
+        Tests handling of invalid element types within list structures, expecting a TypeError.
     """
 
     def setUp(self):
@@ -50,7 +51,7 @@ class TestGenerateMainJson(unittest.TestCase):
 
     def test_generate_main_json_with_valid_input(self):
         """
-        Test if the function correctly generates main and merged input JSON with valid input.
+        Tests correct JSON generation and merging with complete and valid input.
         """
         input_json = {
             "systems_auto": ["subsys1", "subsys2"],
@@ -76,7 +77,7 @@ class TestGenerateMainJson(unittest.TestCase):
 
     def test_generate_main_json_with_minimal_input(self):
         """
-        Test if the function correctly generates main and merged input JSON with minimal input.
+        Tests JSON generation and merging using minimal input, relying on default settings.
         """
         input_json = {
             "systems_auto": ["subsys1", "subsys2"],
@@ -101,7 +102,7 @@ class TestGenerateMainJson(unittest.TestCase):
 
     def test_generate_main_json_with_invalid_type_input(self):
         """
-        Test if the function correctly raises TypeError for invalid input types.
+        Tests response to input with incorrect data types, expecting a TypeError.
         """
         input_json = {
             "systems_auto": ["subsys1", 2],
@@ -113,7 +114,7 @@ class TestGenerateMainJson(unittest.TestCase):
 
     def test_generate_main_json_with_invalid_element_type_in_list(self):
         """
-        Test if the function correctly raises TypeError for invalid element types in a list.
+        Tests handling of invalid element types within list structures, expecting a TypeError.
         """
         input_json = {
             "systems_auto": ["subsys1", 2],
@@ -122,6 +123,133 @@ class TestGenerateMainJson(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             generate_main_json(input_json, self.default_json)
+
+
+class TestCheckPropertiesFile(unittest.TestCase):
+    """
+    Test suite for the 'check_properties_file' function.
+
+    Methods
+    -------
+    test_correct_file():
+        Tests parsing of a correctly formatted properties file.
+    test_file_not_found():
+        Tests the function's response to a non-existent file, expecting a FileNotFoundError.
+    test_missing_type_section():
+        Tests handling of a file missing the 'type' section, expecting a ValueError.
+    test_missing_masses_section():
+        Tests handling of a file missing the 'masses' section, expecting a ValueError.
+    test_incorrect_order_sections():
+        Tests file parsing when sections are in the incorrect order, expecting a ValueError.
+    test_incorrect_data_types_type():
+        Tests handling of incorrect data types in the 'type' section, expecting a ValueError.
+    test_incorrect_data_types_mass():
+        Tests handling of incorrect data types in the 'masses' section, expecting a ValueError.
+    """
+
+    def setUp(self):
+        self.test_dir = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self.test_dir.cleanup()
+
+    def create_temp_file(self, content):
+        temp_file = Path(self.test_dir.name) / "temp_properties_file.txt"
+        with open(temp_file, "w") as file:
+            file.write(content)
+        return temp_file
+
+    def test_correct_file(self):
+        """
+        Tests parsing of a correctly formatted properties file.
+        """
+        content = """type
+H 1
+He 2
+masses
+H 1.007
+He 4.002
+"""
+        temp_file = self.create_temp_file(content)
+        result = check_properties_file(temp_file)
+        self.assertEqual(result, {1: {"symbol": "H", "mass": 1.007}, 2: {"symbol": "He", "mass": 4.002}})
+
+    def test_file_not_found(self):
+        """
+        Tests the function's response to a non-existent file, expecting a FileNotFoundError.
+        """
+        non_existent_file = Path(self.test_dir.name) / "non_existent_file.txt"
+        with self.assertRaises(FileNotFoundError):
+            check_properties_file(non_existent_file)
+
+    def test_missing_type_section(self):
+        """
+        Tests handling of a file missing the 'type' section, expecting a ValueError.
+        """
+        content = """masses
+H 1.007
+He 4.002
+"""
+        temp_file = self.create_temp_file(content)
+        with self.assertRaises(ValueError):
+            check_properties_file(temp_file)
+
+    def test_missing_masses_section(self):
+        """
+        Tests handling of a file missing the 'masses' section, expecting a ValueError.
+        """
+        content = """type
+H 1
+He 2
+"""
+        temp_file = self.create_temp_file(content)
+        with self.assertRaises(ValueError):
+            check_properties_file(temp_file)
+
+    def test_incorrect_order_sections(self):
+        """
+        Tests file parsing when sections are in the incorrect order, expecting a ValueError.
+        """
+        content = """masses
+H 1.007
+He 4.002
+type
+H 1
+He 2
+"""
+        temp_file = self.create_temp_file(content)
+        with self.assertRaises(ValueError):
+            check_properties_file(temp_file)
+
+    def test_incorrect_data_types_type(self):
+        """
+        Tests handling of incorrect data types in the 'type' section, expecting a ValueError.
+        """
+        content = """type
+H one
+He two
+masses
+H 1.007
+He four.002
+"""
+        temp_file = self.create_temp_file(content)
+        with self.assertRaises(ValueError):
+            check_properties_file(temp_file)
+
+    def test_incorrect_data_types_mass(self):
+        """
+        Tests handling of incorrect data types in the 'masses' section, expecting a ValueError.
+        """
+        content = """type
+H 1
+He 2
+masses
+H 1.007
+He four.002
+"""
+        temp_file = self.create_temp_file(content)
+        with self.assertRaises(ValueError):
+            check_properties_file(temp_file)
 
 
 if __name__ == "__main__":
