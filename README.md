@@ -122,34 +122,53 @@ and install the repository as a Python module as detailed above.
 
 ## Cluster setup
 
-This repository was designed for use on Jean Zay (mainly) and Irene Rome, two national French calculators. For a different computer/supercomputer, only some changes need to be made as long as it runs on `Slurm` (if it does not, good luck...):
-- generate a `machine_file.json` for your cluster with the various parameters required to submit a `Slurm` job. This file will be placed in your iterative training working directory within the `user_files/` folder (NOT IN THE REPO's `user_files/` FOLDER ! see [Usage](#Usage)). To create this `machine_file.json` file you can copy the one installed with the github repo in your working directory. Let's have a look at a typical machine entry of a `machine_file.json` file:
+This repository was designed for use on one or several HPC machines whose specificities must be indicated by the user through a `machine.json` file. You can find a general example file in `deepmd_iterative_py/examples/user_files/machine.json` that you should modify to adapt it to your setup and that you will need to copy to the `user_files/` folder of your working directory (see [Usage](#Usage) below). This file is organized as a `JSON` dictionary with one or several keys that designate the different HPC machines, the typical structure looks like this:
 ```json
-    "ir":
-    {
-        "hostname": "irene",
-        "walltime_format": "seconds",
-        "launch_command": "ccc_msub",
-        "cpu_gen7156": {
-            "project_name": "gen7156",
-            "allocation_name": "rome",
-            "arch_name": "cpu",s
-            "arch_type": "cpu",
-            "partition": null,
-            "subpartition": null,
-            "qos": {"normal": 86400, "long": 259200},
-            "valid_for": ["labeling"],
-            "default": ["labeling"]
-        }
-    },
+{
+    "myHPCkeyword1":
+        {ENTRIES THAT DESCRIBE HPC 1},
+    "myHPCkeyword2":
+        {ENTRIES THAT DESCRIBE HPC 2},
+    etc.
+}
 ```
-Each entry of the `.json` file is a short string designating the name of the machine (here "ir" for Irene-Rome). The associated entry contains several keywords:
+Each key of the `JSON` file is a short string designating the name of the machine (here `"myHPCkeyword1"`, `"myHPCkeyword2"`, etc.). The associated entry is also a dictionary whose keys are keywords (or further dictionaries of keywords) associated with information needed to run jobs in the corresponding HPC machine. Let's have a look at the first few entries of the `"myHPCkeyword1"` machine:
+```json
+{
+    "myHPCkeyword1":
+    {
+        "hostname": "myHPC1",
+        "walltime_format": "hours",
+        "job_scheduler": "slurm",
+        "launch_command": "sbatch",
+        "max_jobs" : 200,
+        "max_array_size" : 500,
+        "mykeyword_1": {
+            "project_name": "myproject",
+            "allocation_name": "myallocationgpu1",
+            "arch_name": "a100",
+            "arch_type": "gpu",
+            "partition": "mypartitiongpu1",
+            "subpartition": "mysubpartitiongpu1",
+            "qos": {"myqos_gpu_1": 72000, "myqos_gpu_2": 360000},
+            "valid_for":  ["training"],
+            "default": ["training"]
+        },
+        "mykeyword2": { etc. },
+        etc.
+    }
+    etc.
+}
+```
   - `"hostname"` is a substring contained in the output of the following command `python -c "import socket ; print(socket.gethostname())"` which should be indicative of your machine's name.
   - `"walltime_format"` is the time unit in which the wall time must be indicated to the cluster.
-  - `"launch_command"` is the `bash` command used for submitting jobs to your cluster (typically `sbatch` in normal `Slurm` setups, but as you see in the example you can adapt it to match your cluster requirements)
-  - The next keyword is the key name of a partition, it should contain all the information needed to run a job in that partition of your cluster (the names of the keywords are quite self explanatory). The keyword `"valid_for"` indicates the steps of the procedures that can be performed in this partition (possible options are: `["training","freezing","compressing","exploration","test","test_graph","labeling"]`). The `"default"` keyword indicates that this partition of the machine is the default to be used (if not indicated by the user) for the indicated steps. You can add as many partition keywords as you want.
+  - `"job_scheduler"` is the name of the job scheduler used in your HPC machine (the code has been extensively used with `Slurm` and has been tested with some other schedulers).
+  - `"launch_command"` is the `bash` command used for submitting jobs to your cluster (typically `sbatch` in normal `Slurm` setups, but you can adapt it to match your cluster requirements, for example `qsub` if your machine runs with `PBS/Torque`)
+  - `"max_jobs"` is the maximal number of jobs per user allowed by the job scheduler of your HPC machine (you can also use it to define a maximum number of jobs for safety reasons if your scheduler does not do this by default)
+  - `"max_array_size"` is the maximal number of jobs that can be submitted in a single job array (in `Slurm` the preferred usage of the `deepmd_iterative_py` suit relies heavily on arrays to submit jobs)
+  - The next keyword is the key name of a partition, it should contain all the information needed to run a job in that partition of your cluster (the names of the keywords are quite self explanatory). The keyword `"valid_for"` indicates the steps of the procedures that can be performed in this partition (possible options are: `["training","freezing","compressing","exploration","test","test_graph","labeling"]`). The `"default"` keyword indicates that this partition of the machine is the default to be used (if not indicated by the user) for the indicated steps. You can add as many partition keywords as you want. In the above example `"mykeyword_1"` is a GPU partition that uses A100 GPU nodes, which we will use in every iteration (unless the user explicitly indicates something different) for the `"training"` step. It is worth noting that in this example we assume that the HPC machine is divided in different projects with given time allocations (indicated in `"project_name"` and "`allocation_name`"), as it typically done in large HPC facilities used by different groups (if this is not the case for your HPC machine you do not need to provide these keywords! In the same way, if there are not different partitions and subpartitions the corresponding keywords need not be provided).
 
-Finally, in order to use your cluster you will need to provide example submission files adequate for your machine (in the same style as those provided in `examples/user_files/jobs/` and **keeping the replaceable strings**) in the `user_files/` folder that you will need to create to use `deepmd_iterative` for a given system (see [Usage](#Usage).) 
+Finally, in order to use your cluster you will need to provide example submission files adequate for your machine (in the same style as those provided in `examples/user_files/job*` files and **keeping the replaceable strings** indicated by a `_R_` prefix) in the `$WORK_DIR/user_files/` folder that you will need to create to use `deepmd_iterative_py` for a given system (see [Usage](#Usage).) 
 
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -213,7 +232,7 @@ As will be described in more detail below, training the NNP proceeds by iteratio
 ```
 python -m deepmd_iterative STEP_NAME PHASE_NAME 
 ```
-where `STEP_NAME` is the name of the step that you are currently undergoing (`initialization`, `exploration`, `labeling` and `training`) and `PHASE_NAME` is the task that needs to be performed at this point of the step (it will be clearer with some examples, see the sections corresponding to each step below). In the following tables we briefly describe the phases available in each step in the order in which they must be performed:
+where `STEP_NAME` is the name of the step that you are currently undergoing (`initialization`, `exploration`, `labeling`, `training` or `test`) and `PHASE_NAME` is the task that needs to be performed at this point of the step (it will be clearer with some examples, see the sections corresponding to each step below). In the following tables we briefly describe the phases available in each step in the order in which they must be performed (since `initialization` only has the `start` phase, which is rather self-explanatory, it will described in the example below):
 
 ### Exploration
 
@@ -250,7 +269,17 @@ where `STEP_NAME` is the name of the step that you are currently undergoing (`in
 | `increment` | Change the iteration number in `control` and create new `exploration`, `labeling` and `training` folders for the next iteration|
 | `clean` | Remove files that will no longer be necessary (optional) |
 
-Parameters will need to be defined for most phases of each step (ex: length of MD simulations, temperature, number of cpu tasks for labeling calculations, etc.). This is done via input files in the `.json` format. Executing the `prepare` phase of each step (except initialization) without an input file will use all the default values (see the `exploration.json` file in `examples/inputs`) and write them to an `input.json` file. You can then modify this file and repeat the `prepare` phase.
+### Test
+
+| Phase | Description |
+| --- | --- |
+| `prepare` | Prepare the folders and files for testing the performance of the current iteration NNP over each of the datasets include in the training set |
+| `launch` | Submit the testing calculations. Uses the `dp test` code of DeePMD-kit (if you want the ["detail files"](https://docs.deepmodeling.com/projects/deepmd/en/r2/test/test.html) that can be generated by `dp test` you should include this directly in the `job_test_deepmd_slurm` file) |
+| `check` | Verify whether the calculations have ended correctly. Collects the output of all the `dp test` calculations into a `test_XXX.json` file in the `control/` folder.|
+| `clean` | Remove files that will no longer be necessary (optional). If you did not request "detail files", the `XXX-test/` folder will be removed, as all the information of this step will be contained in the `control/test_XXX.json` file. Otherwise, the "detail files" will be compressed into `.npy` format and stored in `XXX-test/`.|
+
+
+Parameters will need to be defined for most phases of each step (ex: length of MD simulations, temperature, number of cpu tasks for labeling calculations, etc.). This is done via input files in the `.json` format. Executing the `prepare` phase of each step without an input file will use all the default values (see the `exploration.json` file in `examples/inputs`) and write them to a `used_input.json` file. If you want to modify these parameters you can simply `cp used_input.json input.json` and modify this latter file indicating the parameter values of your choice. You can then rerun the `prepare` phase. The parameters indicated in a `input.json` file will **always override** the default ones, which are written to a `default_input.json` file.
 
 We will now describe in detail each of the steps of the active learning procedure.
 
