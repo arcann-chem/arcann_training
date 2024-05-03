@@ -143,7 +143,7 @@ Each key of the `JSON` file is a short string designating the name of the machin
         "launch_command": "sbatch",
         "max_jobs" : 200,
         "max_array_size" : 500,
-        "mykeyword_1": {
+        "mykeyword1": {
             "project_name": "myproject",
             "allocation_name": "myallocationgpu1",
             "arch_name": "a100",
@@ -201,38 +201,33 @@ You get the idea, you need a subsystem for every kind of chemical composition, p
 Because of that, everytime you would like to include a new subsystem (such as self-dissociated structures in the first example or transition state structures in the SN2 example), you will need to initialize the procedure again. This is very simple and you only need to create a new `$WORK_DIR` and include the necessary files in `user_files/` for each extra subsystem that you want to add. 
 
 
-To initiate the iterative training procedure you will need to prepare several files. You can start from the examples given in `examples/user_files/`. You will create a `$WORK_DIR/user_files/` folder and place all the files there. 
+To initiate the iterative training procedure you will need to prepare several files.  You must create a `$WORK_DIR/user_files/` folder and store all the files there (**not** in the `examples/user_files/` folder of the repo !). You can start from the examples given in `examples/user_files/` :
 
 * The LAMMPS (or i-PI) and CP2K files used for carrying out the exploration and labeling phases of each subsystem should also be prepared before the initialization and follow the required naming scheme (`SYSNAME.in` for the LAMMPS input file, `SYSNAME.xml` for i-PI and `[1-2]_SYSNAME_labeling_XXXXX_[cluster].inp` for the 2 CP2K files required per subsystem, where `[cluster]` refers to the short string selected for the labeling cluster in the `machine_file.json`, see [Labeling](#labeling)). We **strongly** advise you to create these files starting from the ones given in the `examples/user_files/` folder, since they must contain replaceable strings for the key parameters that will be updated by the procedure. 
 
 
-
-
-
 You will also need some additional files specific to your system : 
-* If a subsystem requires the use of PLUMED for the explorations you will also need to prepare some PLUMED files :   `plumed_SYSNAME.dat` where `SYSNAME` refers to the subsystem name (additional PLUMED files can be used as `plumed_*_SYSNAME.dat` that will also be taken into account for explorations). 
+* If a subsystem requires the use of PLUMED for the explorations you will need : a `plumed_SYSNAME.dat` where `SYSNAME` refers to the subsystem name (additional PLUMED files can be used as `plumed_*_SYSNAME.dat` that will also be taken into account for explorations). 
 
-* a representative **configuration** for each subsystem (which you will name `SYSNAME.lmp`, where `SYSNAME` refers to the subsystem name). A configuration of the subsystem in `.lmp` format contains a given atomic geometry of your subsystem (it will be used as starting point for the first exploration), the number of atoms, the simulation cell dimensions and the atomic masses, all in a LAMMPS compatible format. You will include this file in `$WORKDIR/user_files/exploration_lammps/`.
-* 
-**Please note** that the order of the atoms in the .lmp files **must** be the identical between files and match the order given to DeePMD-kit in the training file (see below). If you are preparing these files with [atomsk](https://atomsk.univ-lille.fr/) from xyz files, you can set the correct simulation cell and atom ordering by providing them in a [properties file](https://atomsk.univ-lille.fr/tutorial_properties.php).
+* A DeePMD-kit .json file for training needs also to be prepared and named as `dptrain_VERSION.json` where `VERSION` is the DeePMD-kit version that you will use (ex: `2.1`, currently supported versions are `2.0`, `2.1` and `2.2`). Please note that the atom order indicated in the `"type_map"` keyword of this file must match those in the .lmp files !
+
+* a representative **configuration** file in LAMMPS format for each subsystem (which you will name `SYSNAME.lmp`, where `SYSNAME` refers to the subsystem name). A configuration of the subsystem in `.lmp` format contains a given atomic geometry of your subsystem (that will be used as starting point for the first exploration), the number of atoms, the simulation cell dimensions and the atomic masses, all in a LAMMPS compatible format. You will include this file in `$WORKDIR/user_files/exploration_lammps/`.
+
+**Please note** that the order of the atoms in the .lmp files **must** be the identical for every system and match the order indicated in the `"type_map"` keyword of the DeePMD-kit `dptrain_VERSION.json` training file. If you are preparing these files with [atomsk](https://atomsk.univ-lille.fr/) from xyz files, you can set the correct simulation cell and atom ordering by providing them in a [properties file](https://atomsk.univ-lille.fr/tutorial_properties.php).
 
 
-
-* A DeePMD-kit `.json` file for training needs also to be prepared and named as `dptrain_VERSION_DESCRIPTOR.json` where `VERSION` is the DeePMD-kit version that you will use (ex: `2.1`, currently supported versions are `2.0`, `2.1` and `2.2`) and `DESCRIPTOR` is the [smooth-edition](https://papers.nips.cc/paper_files/paper/2018/hash/e2ad76f2326fbc6b56a45a56c59fafdb-Abstract.html) strategy used for creating the atomic configuration descriptor (ex: `se2_a` for two-body descriptors with radial and angular information, currently supported descriptors are `se_a`, `se_ar` and `se_e2_a`). Please note that the atom order indicated in the `"type_map"` keyword of this file must match those in the .lmp files !
-* **Important:** all these files must be stored in the `$WORK_DIR/user_files/` folder that you created (**not** in the `examples/user_files/` folder of the repo !)
-
-Finally, you also need to prepare at least one initial training dataset which will be used for your neural networks training. This follows DeePMD-kit standards and should contain a `type.raw` file and `set.000/` folder with `box.npy`, `coord.npy`, `energy.npy` and `force.npy` (see [DeePMD-kit documentation](https://docs.deepmodeling.com/projects/deepmd/en/master/)) You can prepare as many initial sets as you wish and they should all be stored in the `$WORK_DIR/data/` folder with a folder name starting with `init_`.
+Finally, you also need to prepare at least one initial training dataset which will be used for your first neural networks training. This follows DeePMD-kit standards and should contain a `type.raw` file and `set.000/` folder with `box.npy`, `coord.npy`, `energy.npy` and `force.npy` (see [DeePMD-kit documentation](https://docs.deepmodeling.com/projects/deepmd/en/master/)) You can prepare as many initial sets as you wish and they should all be stored in the `$WORK_DIR/data/` folder with a folder name starting with `init_`.
 
 
 <div id="usage-steps"></div>
 
 ## Iterations, Steps and Phases of the Iterative Procedure
 
-As will be described in more detail below, training the NNP proceeds by iterations composed of 3 steps (exploration, labeling and training). Here we decomposed each step into elementary tasks, which we call "phases". Every iteration will be associated with three folders: `XXX-exploration`, `XXX-labeling` and `XXX-training` (ex: `XXX` is `003` for the 3rd iteration). Each step is performed in its corresponding folder by executing, **in order** the corresponding phases with the following command:
+As it will be described in more detail below, training the NNP proceeds by iterations composed of 3 steps (exploration, labeling and training). Here we decomposed each step into elementary tasks, which we call "phases". Every iteration will be associated with three folders: `XXX-exploration`, `XXX-labeling` and `XXX-training` (ex: `XXX` is `003` for the 3rd iteration). Each step is performed in its corresponding folder by executing, **in order** the corresponding phases with the following command:
 ```
 python -m deepmd_iterative STEP_NAME PHASE_NAME 
 ```
-where `STEP_NAME` is the name of the step that you are currently undergoing (`initialization`, `exploration`, `labeling`, `training` or `test`) and `PHASE_NAME` is the task that needs to be performed at this point of the step (it will be clearer with some examples, see the sections corresponding to each step below). In the following tables we briefly describe the phases available in each step in the order in which they must be performed (since `initialization` only has the `start` phase, which is rather self-explanatory, it will described in the example below):
+where `STEP_NAME` is the name of the step that you are currently undergoing (`initialization`, `exploration`, `labeling`, `training` or `test`) and `PHASE_NAME` is the task that needs to be performed at this point of the step (it will be clearer with some examples, see the sections corresponding to each step below). In the following tables we briefly describe the phases available in each step in the order in which they must be performed (since `initialization` only has the `start` phase, which is rather self-explanatory, it will described directly in the example below):
 
 ### Exploration
 
@@ -287,24 +282,26 @@ We will now describe in detail each of the steps of the active learning procedur
 
 ## Initialization
 
-Now that you have decided the subsystems that you want to train your NNP on and prepared all the files and DeePMD systems required you can initialize the `deepmd_iterative_py` procedure. For this go to `$WORK_DIR` and prepare an input `input.json` file of the form:
+Now that you have decided the subsystems that you want to train your NNP on and prepared all the required files you can initialize the `deepmd_iterative_py` procedure by running:
+```
+python -m deepmd_iterative initialization start 
+```
+Now it should have generated your first `000-training` directory. In `$WORK_DIR` you will also find a `default_input.json` file that lools like this :
 ```json
 {
     "systems_auto": ["SYSNAME1", "SYSNAME2", "SYSNAME3"],
     "nnp_count": 3
 }
 ```
-where in `"systems_auto"` you indicate the name of all the subsystems that you want to employ and `"nnp_count"` is the number of NNP that should be used in the committee. Now we only need to execute the only phase of the `initialization` procedure:
-```
-python -m deepmd_iterative initialization start
-```
-which will create several folders. The most important one is the `control/` folder, in which essential data files will be stored throughout the iterative procedure. These files will be written in `.json` format and should NOT be modified. Right after initialization the only file in `control/` is `config.json`, which contains the essential information about your initialization choices (or defaults), such as your subsystem names and options.
+The `"systems_auto"` keyword contains the name of all the subsystems that were find in your `$WORK_DIR/data/` directory and `"nnp_count"` is the number of NNP that is used by default in the committee. 
 
-Finally the `000-training` empty folder should also have been created by the execution of the python script, where you will perform the first iteration of [training](#training).
+The initialization will create several folders. The most important one is the `control/` folder, in which essential data files will be stored throughout the iterative procedure. These files will be written in `.json` format and should NOT be modified. Right after initialization the only file in `control/` is `config.json`, which contains the essential information about your initialization choices (or defaults), such as your subsystem names and options. Finally the `000-training` empty folder should also have been created by the execution of the python script, where you will perform the first iteration of [training](#training).
+
+If at this point you want to modify the datasets used for the first training you simply have to create an `input.json` from the `default_input.json` file and remove or add the system names to the list. You could also change the number of NNP if you wish. Then you only have have to execute the command of the initialization phase again and your `000-training` directory will be updated. 
 
 ### EXAMPLE
 
-Let's use the above example of a NNP for water and ice that is able to describe water self-dissociation. Suppose that you want 3 subsystems (ice, un-dissociated liquid water, water with a dissociated pair) ypur `input.json` file might look like this:
+Let's use the above example of a NNP for water and ice that is able to describe water self-dissociation. Suppose that you want 3 subsystems (ice, un-dissociated liquid water, water with a dissociated pair) your `defaut_input.json` file might look like this:
 
 ```json
 {
@@ -313,11 +310,15 @@ Let's use the above example of a NNP for water and ice that is able to describe 
 }
 ```
 Before executing this phase, you will have prepared a data set for each subsystem (not compulsory, but recommended), stored in the data directory: `data/init_ice`, `data/init_water` and `data/init_water-reactive`. In the `user_files/` folder you will have the following scripts:
-- `dp_train_2.1_se2_a.json` for the DeePMD-kit trainings (or any other version/descriptor with the corresponding name)
+- `dp_train_2.1.json` for the DeePMD-kit trainings (or any other version with the corresponding name)
+- `machine.json` file containing the cluster parameters 
 - `ice.in`, `water.in` and `water-reactive.in` LAMMPS inputs
 - `ice.lmp`, `water.lmp` and `water-reactive.lmp` starting configurations
-- `1_ice_labeling_XXXXX_ir.inp`, `2_ice_labeling_XXXXX_ir.inp`, `1_water_labeling_XXXXX_ir.inp`, `2_water_labeling_XXXXX_ir.inp`, `1_water-reactive_labeling_XXXXX_ir.inp` and `2_water-reactive_labeling_XXXXX_ir.inp` CP2K files (there are 2 input files per subsystem, see details in [labeling](#labeling), here we assume that labeling is performed in a machine indicated with the keyword "ir" in the `machine.json` file)
 - `plumed_water-reactive.dat` plumed file used for biasing only in the reactive system
+- `1_ice_labeling_XXXXX_[cluster].inp`, `2_ice_labeling_XXXXX_[cluster].inp`, `1_water_labeling_XXXXX_[cluster].inp`, `2_water_labeling_XXXXX_[cluster].inp`, `1_water-reactive_labeling_XXXXX_[cluster].inp` and `2_water-reactive_labeling_XXXXX_[cluster].inp` CP2K files (there are 2 input files per subsystem, see details in [labeling](#labeling)), where "[cluster]" is the machine keyword indicated in the `machine.json` file.
+- `job_lammps-deepmd_explore_gpu_myHPCkeyword1.sh` and `job-array_lammps-deepmd_explore_gpu_myHPCkeyword1.sh` job scripts for exploration, `job_CP2K_label_cpu_myHPCkeyword1.sh` and `job-array_CP2K_label_cpu_myHPCkeyword1.sh` job scripts for labeling, `job_deepmd_compress_gpu_myHPCkeyword1.sh`, `job_deepmd_freeze_gpu_myHPCkeyword1.sh` and `job_deepmd_train_gpu_myHPCkeyword1.sh` job scripts for training
+- `dptrain_2.1.json` input for DeePMD /!\ il s'appelle training_2.1.json dans examples/user_files/training_deepmd
+
 
 
 <div id="usage-training"></div>
@@ -325,24 +326,26 @@ Before executing this phase, you will have prepared a data set for each subsyste
 ## Training
 
 During the training procedure you will use DeePMD-kit to train neural networks on the data sets that you have thus far generated (or on the initial ones only for the 000 iteration). In order to do this go to the current iteration training folder `XXX-training`. 
-There are 9 phases (see [Steps](#usage-steps`) above) that you must now execute in order after having optionally modified the `input.json` file to define the relevant parameters (in case you want something different from the defaults, which are written to `input.json` in the `prepare` phase). The input keywords that you should check the most carefully are those related to the first phase `prepare`, as this sets all the important parameters for the training. Some phases will simply submit `Slurm` jobs (model training, freezing and compressing). You must wait for the jobs to finish before executing the next phase (generally this will be a check phase that will tell you that jobs have failed or are currently running). Once you have executed the first 8 phases the training iteration is done! Executing the 9-th phases is optional, as this will only remove intermediary files.
+There are 9 phases (see [Steps](#usage-steps) above) that you must now execute in order after having optionally modified the `input.json` file to define the relevant parameters (in case you want something different from the defaults, which are written to `default_input.json` in the `prepare` phase). The input keywords that you should check the most carefully are those related to the first phase `prepare`, as this sets all the important parameters for the training. Some phases will simply submit `Slurm` jobs (model training, freezing and compressing). You must wait for the jobs to finish before executing the next phase (generally this will be a check phase that will tell you that jobs have failed or are currently running). Once you have executed the first 8 phases the training iteration is done! Executing the 9-th phases is optional, as this will only remove intermediary files.
+
+
 
 ### EXAMPLE
 
-Suppose that you just ran the `initialization` step described in the previous example. You must now perform the first training phase in Jean-Zay. Update (or copy for the first time) the full `$WORK_DIR` from your local machine to Jean-Zay (where you must have also a copy of this repository and an environment in which it is installed):
+Suppose that you just ran the `initialization` step described in the previous example. You must now perform the first training phase. Update (or copy for the first time) the full `$WORK_DIR` from your local machine to your HPC machine (where you must have also a copy of this repository and an environment in which it is installed):
 ```
-rsync -rvu $WORK_DIR USER@jean-zay.idris.fr:/PATH/TO/JZ/WORK_DIR
+rsync -rvu $WORK_DIR USER@HPC-MACHINE:/PATH/TO/WORK_DIR
 ```
 Now go to the empty `000-training` folder created by the script execute the `prepare` phase:
 ```bash
 python -m deepmd_iterative training prepare
 ```
-This will create three folders `1/`, `2/` and `3/` and a copy of your `data/` folder. You might want to modify some of the default values and re-execute this command. For example you might want to use the following input file:
+This will create three folders `1/`, `2/` and `3/` and a copy of your `data/` folder, as well as a `default_input.json` file containing the default training parameters. If you want to modify some of the default values you can create a `input.json` file from the `default_input.json` file that looks like this:
 ```json
 {
-    "user_machine_keyword_train": "a100_nvs",
-    "user_machine_keyword_freeze": "v100_nvs",
-    "user_machine_keyword_compress": "v100_nvs",
+    "user_machine_keyword_train": "mykeyword1",
+    "user_machine_keyword_freeze": "mykeyword1",
+    "user_machine_keyword_compress": "mykeyword1",
     "job_email": "",
     "use_initial_datasets": true,
     "use_extra_datasets": false,
@@ -359,16 +362,20 @@ This will create three folders `1/`, `2/` and `3/` and a copy of your `data/` fo
     "mean_s_per_step": -1
 }
 ```
-Here we changed the GPU partition to be used for training (default is `v100`, indicated in the `machine.json` file) and used a user chosen walltime of 4 h (instead of the default indicated by `-1`). We can then execute all the other phases in order (waiting for `Slurm` jobs to finish!). That's it! Now you just need to update the local folder:
+
+Here the `"user_machine_keyword"` should match the `"myHPCkeyword1"` keyword in the `machine.json` (see [Cluster Setup](#machine) above). Note that the more performant GPUs should ideally be used for training, while the other steps could be alllocated to less performant GPUs or even to CPUs. 
+The `"deepmd_model_version"` `2.2` indicates the DeePMD version used and the `deepmd_model_type_descriptor` `se_e2_a` is the [smooth-edition](https://papers.nips.cc/paper_files/paper/2018/hash/e2ad76f2326fbc6b56a45a56c59fafdb-Abstract.html) strategy used for creating the atomic configuration descriptor (ex: `se2_a` for two-body descriptors with radial and angular information, currently supported descriptors are `se_a`, `se_ar` and `se_e2_a`). The followiing keywords are the DeePMD training parameters, that you can eventually modify or keep the default values. 
+
+Here we used a user chosen walltime of 4 h (instead of the default indicated by `-1`, which will calculate the job walltime automatically based on your previous trainings). We can then execute all the other phases in order (waiting for `Slurm` jobs to finish!). That's it! Now you just need to update the local folder:
 ```
-rsync -rvu USER@jean-zay.idris.fr:/PATH/TO/JZ/WORK_DIR $WORK_DIR
+rsync -rvu USER@HPC-MACHINE.fr:/PATH/TO/WORK_DIR $WORK_DIR
 ```
 and you are ready to move on to the exploration phase!
 
 **Notes:**
 - At some point during the iterative procedure we might want to get rid of our initial data sets, we would only need to set the `use_initial_datasets` variable to `False`
 - We might also have generated some data independently from the iterative procedure that we might want to start using, this can be done by copying the corresponding DeePMD-kit systems to `data/`, prefixing their names by `extra_` and setting the `use_extra_datasets` variable to `True`
-- At the end of the step the last phase `increment` will create the folders needed for the next iteration, save the current NNPs (stored as graph files `graph_?_XXX[_compressed].pb`) into the `$WORK_DIR/NNP` folder and write a `control/training_XXX.json` file with all parameters used during training.
+- At the end of the step the last phase `increment` will create the folders needed for the next iteration, save the current NNPs (stored as graph files `graph_[nnp_count]_XXX[_compressed].pb`) into the `$WORK_DIR/NNP` folder and write a `control/training_XXX.json` file with all parameters used during training.
 
 <div id="usage-exploration"></div>
 
