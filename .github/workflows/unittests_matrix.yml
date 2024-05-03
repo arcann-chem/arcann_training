@@ -55,7 +55,11 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install numpy${{ matrix.numpy-version }} setuptools${{ matrix.setuptools-version }} pip${{ matrix.pip-version }} wheel${{ matrix.wheel-version }} pyyaml${{ matrix.pyyaml-version }}
+        pip install pip${{ matrix.pip-version }}
+        pip install setuptools${{ matrix.setuptools-version }}
+        pip install wheel${{ matrix.wheel-version }}
+        pip install numpy${{ matrix.numpy-version }}
+        pip install pyyaml${{ matrix.pyyaml-version }}
         
     - name: Run unit tests
       run: |
