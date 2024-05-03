@@ -289,6 +289,7 @@ python -m deepmd_iterative initialization start
 Now it should have generated your first `000-training` directory. In `$WORK_DIR` you will also find a `default_input.json` file that lools like this :
 ```json
 {
+    "step_name": "initialization",
     "systems_auto": ["SYSNAME1", "SYSNAME2", "SYSNAME3"],
     "nnp_count": 3
 }
@@ -305,6 +306,7 @@ Let's use the above example of a NNP for water and ice that is able to describe 
 
 ```json
 {
+    "step_name": "initialization",
     "systems_auto": ["ice", "water", "water-reactive"],
     "nnp_count": 3
 }
@@ -343,30 +345,29 @@ python -m deepmd_iterative training prepare
 This will create three folders `1/`, `2/` and `3/` and a copy of your `data/` folder, as well as a `default_input.json` file containing the default training parameters. If you want to modify some of the default values you can create a `input.json` file from the `default_input.json` file that looks like this:
 ```json
 {
+    "step_name": "training",
     "user_machine_keyword_train": "mykeyword1",
-    "user_machine_keyword_freeze": "mykeyword1",
-    "user_machine_keyword_compress": "mykeyword1",
-    "job_email": "",
+    "user_machine_keyword_freeze": "mykeyword2",
+    "user_machine_keyword_compress": "mykeyword2",
+    "slurm_email": "",
     "use_initial_datasets": true,
     "use_extra_datasets": false,
     "deepmd_model_version": 2.2,
-    "deepmd_model_type_descriptor": "se_e2_a",
+    "job_walltime_train_h": 4,
+    "mean_s_per_step": -1,
     "start_lr": 0.001,
     "stop_lr": 1e-06,
     "decay_rate": 0.9172759353897796,
     "decay_steps": 5000,
     "decay_steps_fixed": false,
     "numb_steps": 400000,
-    "numb_test": 0,
-    "job_walltime_train_h": 4,
-    "mean_s_per_step": -1
+    "numb_test": 0,  
 }
 ```
 
-Here the `"user_machine_keyword"` should match the `"myHPCkeyword1"` keyword in the `machine.json` (see [Cluster Setup](#machine) above). Note that the more performant GPUs should ideally be used for training, while the other steps could be alllocated to less performant GPUs or even to CPUs. 
-The `"deepmd_model_version"` `2.2` indicates the DeePMD version used and the `deepmd_model_type_descriptor` `se_e2_a` is the [smooth-edition](https://papers.nips.cc/paper_files/paper/2018/hash/e2ad76f2326fbc6b56a45a56c59fafdb-Abstract.html) strategy used for creating the atomic configuration descriptor (ex: `se2_a` for two-body descriptors with radial and angular information, currently supported descriptors are `se_a`, `se_ar` and `se_e2_a`). The followiing keywords are the DeePMD training parameters, that you can eventually modify or keep the default values. 
-
-Here we used a user chosen walltime of 4 h (instead of the default indicated by `-1`, which will calculate the job walltime automatically based on your previous trainings). We can then execute all the other phases in order (waiting for `Slurm` jobs to finish!). That's it! Now you just need to update the local folder:
+Here the `"user_machine_keyword"` should match the `"myHPCkeyword1"` keyword in the `machine.json` (see [Cluster Setup](#machine) above). Note that the more performant GPUs should ideally be used for training, while the other steps could be alllocated to less performant GPUs or even to CPUs. Here we used a user chosen walltime of 4 h (instead of the default indicated by `-1`, which will calculate the job walltime automatically based on your previous trainings).
+The followiing keywords are the DeePMD training parameters, that you can eventually modify or keep the default values. 
+ We can then execute all the other phases in order (waiting for `Slurm` jobs to finish!). That's it! Now you just need to update the local folder:
 ```
 rsync -rvu USER@HPC-MACHINE.fr:/PATH/TO/WORK_DIR $WORK_DIR
 ```
@@ -381,49 +382,50 @@ and you are ready to move on to the exploration phase!
 
 ## Exploration
 
-In the exploration phase we will generate new configurations (referred to as **candidates**) to include in the training set. For this we will perform MD simulations with either the LAMMPS (classical nuclei) or i-PI (quantum nuclei) softwares. Go to the current iteration exploration folder `XXX-exploration` created at the end of the previous training phase. Copy the `input.json` file of a previous exploration step and modify it if necessary or execute the `prepare` phase without input to use the defaults (which you can then modify if you want). The phase is slightly different if you use LAMMPS or i-PI, both phase workflows are detailed below.
+In the exploration phase we will generate new configurations (referred to as **candidates**) to include in the training set. For this we will perform MD simulations with either the LAMMPS (classical nuclei) or i-PI (quantum nuclei) softwares. Go to the current iteration exploration folder `XXX-exploration` created at the end of the previous training phase and execute the `prepare` phase to initialize the exploration. As for the Initialization and Training steps, you could change the default parameters of the exploration by creating a `input.json` file from the `default_input.json` file, modifying the desired values and running the `prepare` phase again. If you want to keep the default values you only need to run the `prepare` phase once. Some of the phases are slightly different if you use LAMMPS or i-PI, both phase workflows are detailed below.
 
 ### LAMMPS classical nuclei simulations
 
-Once you are satisfied with your exploration parameters (see example below) you can execute the exploration phases 1 to 3 (once the `Slurm` MD jobs are done!) to run MD trajectories with each subsystem. In the `deviate` phase you can set important parameters for candidate selection, once you are satisfied you may execute it. See the example below for the important keywords, these are not written at the `prepare` phase but if you run the `deviate` phase with the defaults they will be written to `input.json` (you can then modify them and re-execute the phase). In the `extract` phase an important choice can be made: whether to include "disturbed" candidates in the training set or not. This is done by changing the `disturbed_start_value` and `disturbed_candidate_value` variables from the defaults (0.0) and will include a set of candidates generated by applying a random perturbation to those obtained in the MD trajectories (this will multiply by 2 the number of selected candidates, make sure that the `disturbed_start_value` that you choose will still give physically meaningful configurations, otherwise you will deteriorate your NNP!). Once you execute this script a `candidates_SUBSYS_XXX.xyz` file will be created in each subsystem directory containing the candidate configurations that will be added to the training set (you might want to check that they make sense!). You can also only disturb some atoms in the configuration in which case you will need to write their (zero-based) atomic indices in the `disturbed_candidate_indexes` variable. The `clean` phase can be executed to clean up all the temporary files. A `control/exploration_XXX.json` file will be written recording all the exploration parameters.
+Once you are satisfied with your exploration parameters (see example below) you can execute the next exploration phases : `launch` to run MD trajectories with each subsystem  and `check` (once the `Slurm` MD jobs are done!). If the `check` phase is succesfull, you can move on to the `deviate` phase, where you can set important parameters for candidate selection. Once again you can modify these keywors by the creation (or modification if you already created one for a previous phase) of a `default_input.json` file and re-executing the `deviate` phase. In the `extract` phase an important choice can be made: whether to include "disturbed" candidates in the training set or not. This is done by changing the `disturbed_start_value` and `disturbed_candidate_value` variables from the defaults (0.0) and will include a set of candidates generated by applying a random perturbation to those obtained in the MD trajectories (this will multiply by 2 the number of selected candidates, make sure that the `disturbed_start_value` that you choose will still give physically meaningful configurations, otherwise you will deteriorate your NNP!). Once you execute this phase a `candidates_SUBSYS_XXX.xyz` file will be created in each subsystem directory containing the candidate configurations that will be added to the training set (you might want to check that they make sense!). You can also disturb only some atoms in the configuration in which case you will need to write their (zero-based) atomic indices in the `disturbed_candidate_indexes` variable. The `clean` phase can be executed to clean up all the temporary files. A `control/exploration_XXX.json` file will be written recording all the exploration parameters.
 
 ### EXAMPLE
 
-After the first training phase of your ice&water NNP you now have starting models that can be used to propagate reactive MD. For this go to the `$WORK_DIR/001-exploration` folder (in Jean-Zay!) and execute the `prepare` phase to obtain an `input.json` file with default values. For the first iteration we might be satisfied with the defaults (2 simulations per NNP and per subsystem, 10 ps simulations with the LAMMPS time-step of 0.5 fs, etc.) so we might directly run exploration phases 2 and 3 right away (waiting for the `Slurm` jobs to finish as always). These will have created 3 directories (one per subsystem) `ice/`, `water/` and `water-reactive/`, in which there will be 3 subdirectories (one per trained NNP) `1/`, `2/` and `3/`, in which again there will be 2 subdirectories (default) `0001/` and `0002/`. This means that a total of 18 MD trajectories will be performed for this first iteration (180 ps total simulation time). Be careful, the total exploration time can quickly become huge, especially if you have many subsystems.
+After the first training phase of your ice & water NNP you now have starting models that can be used to propagate reactive MD. For this go to the `$WORK_DIR/001-exploration` folder (in your HPC machine!) and execute the `prepare` phase to obtain an `defauld_input.json` file with default values. For the first iteration we might be satisfied with the defaults (2 simulations per NNP and per subsystem, 10 ps simulations with the LAMMPS time-step of 0.5 fs, etc.) so we might directly run exploration phases 2 and 3 right away (waiting for the `Slurm` jobs to finish as always). These will have created 3 directories (one per subsystem) `ice/`, `water/` and `water-reactive/`, in which there will be 3 subdirectories (one per trained NNP) `1/`, `2/` and `3/`, in which again there will be 2 subdirectories (default) `0001/` and `0002/`. This means that a total of 18 MD trajectories will be performed for this first iteration (180 ps total simulation time). Be careful, the total exploration time can quickly become huge, especially if you have many subsystems.
 
 Since this is the first exploration phase we might want to generate only a few candidate configurations to check whether our initial NNP are stable enough to give physically meaningful configurations, we might as well want to use a relatively strict error criterion for candidate selection. All this can be done by modifying the default values written to `input.json` at the `deviate` phase and re-running this phase. In the end, your input file might look like this:
 ```json
 {
-    "atomsk_path": "/gpfsdswork/projects/rech/nvs/commun/programs/apps/atomsk/0.11.2/atomsk",
-    "user_machine_keyword_exp": "v100_nvs",
+    "step_name": "exploration",
+    "user_machine_keyword_exp": "mykeyword1",
+    "slurm_email": "",
+    "atomsk_fpath": "/gpfsdswork/projects/rech/nvs/commun/programs/apps/atomsk/0.11.2/atomsk",
+    "vmd_fpath": "/gpfs7kro/gpfslocalsup/prod/vmd/1.9.4a43/bin/vmd_LINUXAMD64",
     "exploration_type": ["lammps", "lammps", "lammps"],
     "traj_count": [2, 2, 2],
-    "timestep_ps": [0.0005, 0.0005, 0.0005],
     "temperature_K": [273.0, 300.0, 300.0],
-    "exp_time_ps": [10, 10, 10],
-    "max_exp_time_ps": [400, 400, 400],
-    "job_walltime_h": [-1, -1, -1],
-    "init_exp_time_ps": [-1, -1, -1],
-    "init_job_walltime_h": [-1, -1, -1],
-    "print_interval_mult": [0.01, 0.01, 0.01],
+    "timestep_ps": [0.0005, 0.0005, 0.0005],
     "previous_start": [true, true, true],
     "disturbed_start": [false, false, false],
-    "job_email": "",
+    "print_interval_mult": [0.01, 0.01, 0.01],
+    "job_walltime_h": [-1, -1, -1],
+    "exp_time_ps": [10, 10, 10],
+    "max_exp_time_ps": [400, 400, 400],
     "max_candidates": [50, 50, 100],
     "sigma_low": [0.1, 0.1, 0.1],
     "sigma_high": [0.8, 0.8, 0.8],
     "sigma_high_limit": [1.5, 1.5, 1.5],
     "ignore_first_x_ps": [0.5, 0.5, 0.5],
-    "vmd_path": "/gpfs7kro/gpfslocalsup/prod/vmd/1.9.4a43/bin/vmd_LINUXAMD64",
-```
-Note that here we allow slightly larger deviations (0.8 eV/Ang) and collect a larger number of candidates (max 100) for the more complex third system (reactive water). Once we have performed this phase all that is left is to decide wether we want to include disturbed candidates in the training set. Here we might want to do so only for the ice system, since explorations at lower temperature explore a more reduced zone of the phase space and it is easier to be trapped in meta-stable states. This can be done by adding the following keywords at the end of the input file before the `extract` phase:
-```json
+    "init_exp_time_ps": [-1, -1, -1],
+    "init_job_walltime_h": [-1, -1, -1],
     "disturbed_candidate_value": [0.5, 0, 0],
-    "disturbed_start_value": [0.0, 0.0, 0.0],  # this is used to disturb next starting config, not used here
-    "disturbed_start_indexes": [[], [], []], # if empty, all indices will be disturbed
-    "disturbed_candidate_indexes": [[], [], []]
+    "disturbed_start_value": [0.0, 0.0, 0.0],  
+    "disturbed_start_indexes": [[], [], []], 
+    "disturbed_candidate_indexes": [[], [], []]    
+}
 ```
-where we had indicated the path to the `Atomsk` code used for creating the disturbed geometries at the beginning of the input file. `disturbed_start_value` and `disturbed_candidate_value` can be set to `0.0` to avoid disturbance. A non-zero value sets the maximal amplitude of the random translation vector that will be applied to each atom (a different vector for each atom) in Å. The values in `disturbed_start_value` are used to disturb the starting structures for the next iteration. The values in `disturbed_candidate_value` are applied to each candidate.
+
+We have indicated the path to the `Atomsk` code used for creating the disturbed geometries at the beginning of the input file. We allow for slightly larger deviations (`"sigma_high"` keyword set to 0.8 eV/Ang) and collect a larger number of candidates (`"max_candidates"` set to 100) for the more complex third system (reactive water). 
+At this stage we should decide wether we want to include disturbed candidates in the training set. Here we might want to do so only for the ice system, since explorations at lower temperature explore a more reduced zone of the phase space and it is easier to be trapped in meta-stable states. This can be done by setting `disturbed_start_value` to `0.5`. The values in `disturbed_start_value` are used to disturb the starting structures for the next iteration. For the 2 other systems `disturbed_start_value` and `disturbed_candidate_value` are set to `0.0` in order to avoid disturbance. A non-zero value sets the maximal amplitude of the random translation vector that will be applied to each atom (a different vector for each atom) in Å.  
 
 **Note:** we have indicated the path to a `VMD` executable, this is not needed if `vmd` is inmediately available in our path when executing the `extract` phase (loaded as a module for example). Similarly, we can remove `atomsk_path` if `atomsk` is already in the path.
 
