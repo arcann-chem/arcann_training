@@ -1,4 +1,4 @@
-name: Matrix Python Unit Tests
+name: Unit Tests Matrix
 
 on: [push, pull_request]
 
@@ -55,8 +55,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install pip wheel setuptools numpy pyyaml
-
+        pip install numpy${{ matrix.numpy-version }} setuptools${{ matrix.setuptools-version }} pip${{ matrix.pip-version }} wheel${{ matrix.wheel-version }} pyyaml${{ matrix.pyyaml-version }}
+        
     - name: Run unit tests
       run: |
         python -m unittest discover deepmd_iterative/unittests
