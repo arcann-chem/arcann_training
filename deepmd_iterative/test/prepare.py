@@ -6,17 +6,14 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/01
+Last modified: 2024/05/04
 """
 
 # Standard library modules
 import logging
 import sys
-import subprocess
 from pathlib import Path
-
-# Non-standard library imports
-import numpy as np
+import subprocess
 
 # Local imports
 from deepmd_iterative.common.check import validate_step_folder

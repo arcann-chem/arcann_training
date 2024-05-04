@@ -6,20 +6,20 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/01
+Last modified: 2024/05/04
 """
 
 # Standard library modules
 import logging
-import subprocess
 import sys
 from pathlib import Path
+import subprocess
 
 # Local imports
 from deepmd_iterative.common.check import validate_step_folder
 from deepmd_iterative.common.filesystem import change_directory
-from deepmd_iterative.common.json import backup_and_overwrite_json_file, load_default_json_file, load_json_file, write_json_file
-from deepmd_iterative.common.machine import assert_same_machine, get_machine_keyword, get_machine_spec_for_step
+from deepmd_iterative.common.json import load_json_file, write_json_file
+from deepmd_iterative.common.machine import assert_same_machine, get_machine_spec_for_step
 
 
 def main(

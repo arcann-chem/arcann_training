@@ -6,16 +6,16 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/01
+Last modified: 2024/05/04
 """
 
 # Standard library modules
-import copy
 import logging
-import random
-import subprocess
 import sys
 from pathlib import Path
+from copy import deepcopy
+import random
+import subprocess
 
 # Non-standard library imports
 import numpy as np
@@ -77,7 +77,7 @@ def main(
     arcann_logger.debug(f"user_input_json_present: {user_input_json_present}")
 
     # Make a deepcopy of it to create the used input JSON
-    current_input_json = copy.deepcopy(user_input_json)
+    current_input_json = deepcopy(user_input_json)
 
     # Get control path and load the main JSON
     control_path = training_path / "control"

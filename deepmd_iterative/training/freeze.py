@@ -6,14 +6,14 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/01
+Last modified: 2024/05/04
 """
 
 # Standard library modules
 import logging
-import subprocess
 import sys
 from pathlib import Path
+import subprocess
 
 # Local imports
 from deepmd_iterative.common.check import validate_step_folder
@@ -22,7 +22,6 @@ from deepmd_iterative.common.json import load_json_file, write_json_file, load_d
 from deepmd_iterative.common.list import replace_substring_in_string_list, string_list_to_textfile, textfile_to_string_list
 from deepmd_iterative.common.machine import get_machine_keyword, get_machine_spec_for_step
 from deepmd_iterative.common.slurm import replace_in_slurm_file_general
-from deepmd_iterative.training.utils import generate_training_json
 
 
 def main(

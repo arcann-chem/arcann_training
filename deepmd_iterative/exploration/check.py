@@ -6,14 +6,14 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/01
+Last modified: 2024/05/04
 """
 
 # Standard library modules
 import logging
-import re
 import sys
 from pathlib import Path
+import re
 
 # Non-standard library imports
 import numpy as np

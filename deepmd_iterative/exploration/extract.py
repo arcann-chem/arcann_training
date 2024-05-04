@@ -6,15 +6,15 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/01
+Last modified: 2024/05/04
 """
 
 # Standard library modules
-import copy
 import logging
-import subprocess
 import sys
 from pathlib import Path
+from copy import deepcopy
+import subprocess
 
 # Non-standard library imports
 import numpy as np
@@ -205,7 +205,7 @@ def main(
 
 
                         min_file_name = f"{padded_curr_iter}_{system_auto}_{it_nnp}_{str(it_number).zfill(5)}"
-                        vmd_tcl = copy.deepcopy(master_vmd_tcl)
+                        vmd_tcl = deepcopy(master_vmd_tcl)
                         vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_PDB_FILE_", str(topo_file))
                         vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_DCD_FILE_", str(traj_file))
                         vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_FRAME_INDEX_FILE_", str(local_path / "min.vmd"))
@@ -296,7 +296,7 @@ def main(
                     if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps" or exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
                         string_list_to_textfile((local_path / "label.vmd"), candidate_indexes)
 
-                        vmd_tcl = copy.deepcopy(master_vmd_tcl)
+                        vmd_tcl = deepcopy(master_vmd_tcl)
                         vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_PDB_FILE_", str(topo_file))
                         vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_DCD_FILE_", str(traj_file))
                         vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_FRAME_INDEX_FILE_", str(local_path / "label.vmd"))

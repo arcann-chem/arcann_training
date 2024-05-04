@@ -6,11 +6,10 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/01
+Last modified: 2024/05/04
 """
 
 # Standard library modules
-import copy
 import logging
 import sys
 from pathlib import Path
@@ -19,18 +18,9 @@ from pathlib import Path
 import numpy as np
 
 # Local imports
-from deepmd_iterative.common.json import (
-    load_json_file,
-    write_json_file,
-    load_default_json_file,
-    backup_and_overwrite_json_file,
-)
+from deepmd_iterative.common.json import load_json_file, write_json_file, load_default_json_file, backup_and_overwrite_json_file
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.exploration.utils import (
-    get_last_frame_number,
-    generate_input_exploration_deviation_json,
-    get_system_deviation,
-)
+from deepmd_iterative.exploration.utils import get_last_frame_number, generate_input_exploration_deviation_json, get_system_deviation
 from deepmd_iterative.common.xyz import parse_xyz_trajectory_file
 
 def main(

@@ -6,22 +6,18 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/01
+Last modified: 2024/05/04
 """
 
 # Standard library modules
 import logging
-import subprocess
 import sys
 from pathlib import Path
+import subprocess
 
 # Local imports
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.common.filesystem import (
-    remove_file,
-    remove_files_matching_glob,
-    remove_all_symlink,
-)
+from deepmd_iterative.common.filesystem import remove_file, remove_files_matching_glob, remove_all_symlink
 from deepmd_iterative.common.list import string_list_to_textfile
 from deepmd_iterative.common.json import load_json_file
 

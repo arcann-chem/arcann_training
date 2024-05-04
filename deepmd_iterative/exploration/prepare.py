@@ -6,16 +6,17 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/01
+Last modified: 2024/05/04
 """
 
 # Standard library modules
-import copy
 import logging
-import random
-import subprocess
 import sys
 from pathlib import Path
+from copy import deepcopy
+import random
+import subprocess
+
 
 # Non-standard library imports
 import numpy as np
@@ -600,7 +601,7 @@ def main(
 
                 # LAMMPS
                 if system_exploration_type == "lammps":
-                    system_lammps_in = copy.deepcopy(master_system_lammps_in)
+                    system_lammps_in = deepcopy(master_system_lammps_in)
                     input_replace_dict["_R_SEED_VEL_"] = f"{nnp_index}{random.randrange(0, 1000)}{traj_index}{padded_curr_iter}"
                     input_replace_dict["_R_SEED_THER_"] = f"{nnp_index}{random.randrange(0, 1000)}{traj_index}{padded_curr_iter}"
                     input_replace_dict["_R_DCD_OUT_"] = f"{system_auto}_{nnp_index}_{padded_curr_iter}.dcd"
@@ -610,7 +611,7 @@ def main(
                     # Get data files (starting points) if iteration is > 1
                     if curr_iter > 1:
                         if len(starting_point_list) == 0:
-                            starting_point_list = copy.deepcopy(starting_point_list_bckp)
+                            starting_point_list = deepcopy(starting_point_list_bckp)
                         system_lammps_data_fn = starting_point_list[random.randrange(0, len(starting_point_list))]
                         starting_point_list.remove(system_lammps_data_fn)
                         if system_previous_start:
@@ -685,8 +686,8 @@ def main(
 
                 # SANDER-EMLE
                 elif system_exploration_type == "sander_emle":
-                    system_sander_emle_in = copy.deepcopy(master_system_sander_emle_in)
-                    system_sander_emle_yaml = copy.deepcopy(master_system_sander_emle_yaml)
+                    system_sander_emle_in = deepcopy(master_system_sander_emle_in)
+                    system_sander_emle_yaml = deepcopy(master_system_sander_emle_yaml)
 
                     input_replace_dict["_R_SEED_VEL_"] = f"{nnp_index}{random.randrange(0, 1000)}{traj_index}{padded_curr_iter}"
                     input_replace_dict["_R_NC_OUT_"] = f"{system_auto}_{nnp_index}_{padded_curr_iter}.nc"
@@ -809,14 +810,14 @@ def main(
 
                 # i-PI
                 elif system_exploration_type == "i-PI":
-                    system_ipi_json = copy.deepcopy(master_system_ipi_json)
-                    system_ipi_xml_aslist = copy.deepcopy(master_system_ipi_xml_aslist)
+                    system_ipi_json = deepcopy(master_system_ipi_json)
+                    system_ipi_xml_aslist = deepcopy(master_system_ipi_xml_aslist)
                     input_replace_dict["_R_SEED_"] = f"{nnp_index}{random.randrange(0, 1000)}{traj_index}{padded_curr_iter}"
                     input_replace_dict["_R_SYS_"] = f"{system_auto}_{nnp_index}_{padded_curr_iter}"
                     # Get data files (starting points) and number of steps
                     if curr_iter > 1:
                         if len(starting_points) == 0:
-                            starting_point_list = copy.deepcopy(starting_point_list_bckp)
+                            starting_point_list = deepcopy(starting_point_list_bckp)
                         system_ipi_xyz_fn = starting_point_list[random.randrange(0, len(starting_point_list))]
                         starting_point_list.remove(system_lammps_data_fn)
 

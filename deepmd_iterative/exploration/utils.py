@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/29
+Last modified: 2024/05/04
 
 Functions
 ---------
@@ -44,10 +44,10 @@ update_system_nb_steps_factor(previous_json: Dict, system_auto_index: int) -> in
 # TODO: Homogenize the docstrings for this module
 
 # Standard library modules
-import subprocess
-from copy import deepcopy
 from pathlib import Path
+from copy import deepcopy
 from typing import Dict, List, Tuple, Union
+import subprocess
 
 # Third-party modules
 import numpy as np

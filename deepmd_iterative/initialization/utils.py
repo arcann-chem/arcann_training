@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/02
+Last modified: 2024/05/04
 
 Functions
 ---------
@@ -25,8 +25,8 @@ check_typeraw_properties(type_raw_path, properties_dict)
 # TODO: Homogenize the docstrings for this module
 
 # Standard library modules
-from copy import deepcopy
 from pathlib import Path
+from copy import deepcopy
 from typing import Dict, Tuple
 
 # Third-party modules
