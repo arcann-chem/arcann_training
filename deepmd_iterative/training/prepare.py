@@ -88,6 +88,7 @@ def main(
         prev_iter = curr_iter - 1
         padded_prev_iter = str(prev_iter).zfill(3)
         previous_training_json = load_json_file((control_path / f"training_{padded_prev_iter}.json"))
+        del prev_iter, padded_prev_iter
     else:
         previous_training_json = {}
 
@@ -140,9 +141,9 @@ def main(
             arcann_logger.error(f"Lock found. Please execute 'labeling extract' first.")
             arcann_logger.error(f"Aborting...")
             return 1
-        exploration_json = load_json_file((control_path / f"exploration_{padded_curr_iter}.json"))
+        #exploration_json = load_json_file((control_path / f"exploration_{padded_curr_iter}.json"))
     else:
-        exploration_json = {}
+        #exploration_json = {}
         labeling_json = {}
 
     if "deepmd_model_version" not in user_input_json:
@@ -154,6 +155,7 @@ def main(
                 continue
             dptrain_list.append(file)
         arcann_logger.debug(f"dptrain_list: {dptrain_list}")
+        del file
 
         if dptrain_list == []:
             arcann_logger.error(f"No dptrain_DEEPMDVERSION.json files found in {(current_path.parent / 'user_files')}")
@@ -163,7 +165,8 @@ def main(
         dptrain_max_version = 0
         for dptrain in dptrain_list:
             dptrain_max_version = max(dptrain_max_version, float(dptrain.stem.split("_")[-1]))
-
+        del dptrain
+    
         arcann_logger.debug(f"dptrain_max_version: {dptrain_max_version}")
         current_input_json["deepmd_model_version"] = dptrain_max_version
         del dptrain_list, dptrain_max_version
@@ -443,10 +446,11 @@ def main(
         arcann_logger.debug(f"mean_s_per_step: {user_input_json['mean_s_per_step']}")
     else:
         if curr_iter == 0:
-            walltime_approx_s = int(max(np.ceil(training_json["numb_steps"] * default_input_json["mean_s_per_step"]), default_input_json["job_walltime_train_h"] * 3600))
+            # This is rounded up to the next hour
+            walltime_approx_s = int( np.ceil(training_json["numb_steps"] * default_input_json["mean_s_per_step"] / 3600 ) * 3600 )
             mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
         else:
-            walltime_approx_s = int(max(np.ceil(training_json["numb_steps"] * previous_training_json["mean_s_per_step"] * 1.2), default_input_json["job_walltime_train_h"] * 3600))
+            walltime_approx_s = int( np.ceil(training_json["numb_steps"] * previous_training_json["mean_s_per_step"] * 1.5 / 3600 ) * 3600 )
             mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
 
     current_input_json["job_walltime_train_h"] = float(walltime_approx_s / 3600)
@@ -481,7 +485,7 @@ def main(
         string_list_to_textfile(local_path / f"job_deepmd_train_{machine_spec['arch_type']}_{machine}.sh", job_file, read_only=True)
         del job_file, local_path, dp_train_input_file, random_0_1000
 
-    del nnp, walltime_approx_s, dp_train_input
+    del nnp, walltime_approx_s, dp_train_input, mean_s_per_step
 
     # Dump the JSON files (main, training and current input)
     arcann_logger.info(f"-" * 88)
@@ -498,7 +502,7 @@ def main(
     del default_input_json, default_input_json_present, user_input_json, user_input_json_present, user_input_json_filename
     del main_json, current_input_json, training_json, previous_training_json, labeling_json
     del user_machine_keyword
-    del curr_iter, padded_curr_iter
+    del curr_iter, padded_curr_iter 
     del machine, machine_spec, machine_walltime_format, machine_job_scheduler, machine_launch_command, machine_max_jobs, machine_max_array_size
     del master_job_file
 
