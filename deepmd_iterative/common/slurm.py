@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/31
+Last modified: 2024/05/01
 
 The slurm module provides functions to manipulate SLURM data (as list of strings).
 
@@ -71,6 +71,8 @@ def replace_in_slurm_file_general(
     ------
     None
     """
+    logger = logging.getLogger("ArcaNN")
+
     slurm_file = deepcopy(slurm_file_master)
 
     slurm_file = replace_substring_in_string_list(slurm_file, "_R_PROJECT_", machine_spec["project_name"])
@@ -94,8 +96,8 @@ def replace_in_slurm_file_general(
     del it_qos
 
     if not qos_ok:
-        logging.warning("Approximate wall time superior than the maximun time allowed by the QoS")
-        logging.warning(f"Settign the maximum QoS time as walltime: '{convert_seconds_to_hh_mm_ss(max_qos_time)}'")
+        logger.warning("Approximate wall time superior than the maximun time allowed by the QoS")
+        logger.warning(f"Settign the maximum QoS time as walltime: '{convert_seconds_to_hh_mm_ss(max_qos_time)}'")
         slurm_file = replace_substring_in_string_list(slurm_file, "_R_WALLTIME_", convert_seconds_to_hh_mm_ss(max_qos_time)) if "hours" in machine_walltime_format else replace_substring_in_string_list(slurm_file, "_R_WALLTIME_", str(max_qos_time))
     else:
         slurm_file = (

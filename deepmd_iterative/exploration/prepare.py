@@ -6,16 +6,17 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/15
+Last modified: 2024/05/04
 """
 
 # Standard library modules
-import copy
 import logging
-import random
-import subprocess
 import sys
 from pathlib import Path
+from copy import deepcopy
+import random
+import subprocess
+
 
 # Non-standard library imports
 import numpy as np
@@ -41,6 +42,9 @@ def main(
     fake_machine=None,
     user_input_json_filename: str = "input.json",
 ):
+    # Get the logger
+    arcann_logger = logging.getLogger("ArcaNN")
+
     # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
     training_path = current_path.parent
@@ -342,13 +346,13 @@ def main(
 
             # First exploration
             if curr_iter == 1:
-                if "job_walltime_h" in user_input_json:
-                    system_job_walltime_h = user_input_json["job_walltime_h"]
+                if "job_walltime_h" in user_input_json and system_job_walltime_h != -1:
+                    system_job_walltime_h = system_job_walltime_h
                 else:
                     # Default value
                     system_job_walltime_h = 1.0
-                if "exp_time_ps" in user_input_json:
-                    system_exp_time_ps = user_input_json["exp_time_ps"]
+                if "exp_time_ps" in user_input_json and system_exp_time_ps != -1:
+                    system_exp_time_ps = system_exp_time_ps
                 else:
                     # Default value
                     system_exp_time_ps = 10.0
@@ -381,7 +385,7 @@ def main(
                 if plumed[1]:
                     system_nb_steps = plumed[2]
                 # User inputs
-                elif "exp_time_ps" in user_input_json and user_input_json["exp_time_ps"] != -1:
+                elif "exp_time_ps" in user_input_json and system_exp_time_ps != -1:
                     system_nb_steps = system_exp_time_ps / system_timestep_ps
                 # Auto value
                 else:
@@ -407,6 +411,9 @@ def main(
 
             # Get print freq
             system_print_every_x_steps = system_nb_steps * system_print_mult
+            if int(system_print_every_x_steps) < 1:
+                logging.warning(f"Print frequency is less than 1 step. Setting it to 1 step.")
+                system_print_every_x_steps = 1
             input_replace_dict["_R_PRINT_FREQ_"] = f"{int(system_print_every_x_steps)}"
 
         # END OF LAMMPS
@@ -418,13 +425,13 @@ def main(
 
             # First exploration
             if curr_iter == 1:
-                if "job_walltime_h" in user_input_json:
-                    system_job_walltime_h = user_input_json["job_walltime_h"]
+                if "job_walltime_h" in user_input_json and system_job_walltime_h != -1:
+                    system_job_walltime_h = system_job_walltime_h
                 else:
                     # Default value
                     system_job_walltime_h = 1.0
-                if "exp_time_ps" in user_input_json:
-                    system_exp_time_ps = user_input_json["exp_time_ps"]
+                if "exp_time_ps" in user_input_json and system_exp_time_ps != -1:
+                    system_exp_time_ps = system_exp_time_ps
                 else:
                     # Default value
                     system_exp_time_ps = 10.0
@@ -457,7 +464,7 @@ def main(
                 if plumed[1]:
                     system_nb_steps = plumed[2]
                 # User inputs
-                elif "exp_time_ps" in user_input_json and user_input_json["exp_time_ps"] != -1:
+                elif "exp_time_ps" in user_input_json and system_exp_time_ps != -1:
                     system_nb_steps = system_exp_time_ps / system_timestep_ps
                 # Auto value
                 else:
@@ -483,6 +490,9 @@ def main(
 
             # Get print freq
             system_print_every_x_steps = system_nb_steps * system_print_mult
+            if int(system_print_every_x_steps) < 1:
+                logging.warning(f"Print frequency is less than 1 step. Setting it to 1 step.")
+                system_print_every_x_steps = 1
             input_replace_dict["_R_PRINT_FREQ_"] = f"{int(system_print_every_x_steps)}"
         # END OF SANDER-EMLE
 
@@ -508,13 +518,13 @@ def main(
                 subprocess.run([atomsk_bin, str(Path("../") / "user_files" / system_lammps_data_fn), "xyz", str(Path("../") / "user_files" / system_auto), "-ow"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
                 system_ipi_xyz = textfile_to_string_list(training_path / "user_files" / system_ipi_xyz_fn)
 
-                if "job_walltime_h" in user_input_json:
-                    system_job_walltime_h = user_input_json["job_walltime_h"]
+                if "job_walltime_h" in user_input_json and system_job_walltime_h != -1:
+                    system_job_walltime_h = system_job_walltime_h
                 else:
                     # Default value
                     system_job_walltime_h = 1.0
-                if "exp_time_ps" in user_input_json:
-                    system_exp_time_ps = user_input_json["exp_time_ps"]
+                if "exp_time_ps" in user_input_json and system_exp_time_ps != -1:
+                    system_exp_time_ps = system_exp_time_ps
                 else:
                     # Default value
                     system_exp_time_ps = 10.0
@@ -571,6 +581,9 @@ def main(
 
             # Get print freq
             system_print_every_x_steps = system_nb_steps * system_print_mult
+            if int(system_print_every_x_steps) < 1:
+                logging.warning(f"Print frequency is less than 1 step. Setting it to 1 step.")
+                system_print_every_x_steps = 1
             input_replace_dict["_R_PRINT_FREQ_"] = f"{int(system_print_every_x_steps)}"
         # END OF i-PI
 
@@ -588,7 +601,7 @@ def main(
 
                 # LAMMPS
                 if system_exploration_type == "lammps":
-                    system_lammps_in = copy.deepcopy(master_system_lammps_in)
+                    system_lammps_in = deepcopy(master_system_lammps_in)
                     input_replace_dict["_R_SEED_VEL_"] = f"{nnp_index}{random.randrange(0, 1000)}{traj_index}{padded_curr_iter}"
                     input_replace_dict["_R_SEED_THER_"] = f"{nnp_index}{random.randrange(0, 1000)}{traj_index}{padded_curr_iter}"
                     input_replace_dict["_R_DCD_OUT_"] = f"{system_auto}_{nnp_index}_{padded_curr_iter}.dcd"
@@ -598,7 +611,7 @@ def main(
                     # Get data files (starting points) if iteration is > 1
                     if curr_iter > 1:
                         if len(starting_point_list) == 0:
-                            starting_point_list = copy.deepcopy(starting_point_list_bckp)
+                            starting_point_list = deepcopy(starting_point_list_bckp)
                         system_lammps_data_fn = starting_point_list[random.randrange(0, len(starting_point_list))]
                         starting_point_list.remove(system_lammps_data_fn)
                         if system_previous_start:
@@ -673,8 +686,8 @@ def main(
 
                 # SANDER-EMLE
                 elif system_exploration_type == "sander_emle":
-                    system_sander_emle_in = copy.deepcopy(master_system_sander_emle_in)
-                    system_sander_emle_yaml = copy.deepcopy(master_system_sander_emle_yaml)
+                    system_sander_emle_in = deepcopy(master_system_sander_emle_in)
+                    system_sander_emle_yaml = deepcopy(master_system_sander_emle_yaml)
 
                     input_replace_dict["_R_SEED_VEL_"] = f"{nnp_index}{random.randrange(0, 1000)}{traj_index}{padded_curr_iter}"
                     input_replace_dict["_R_NC_OUT_"] = f"{system_auto}_{nnp_index}_{padded_curr_iter}.nc"
@@ -683,14 +696,22 @@ def main(
 
                     # Get data files (starting points) if iteration is > 1
                     if curr_iter > 1:
-                        if len(starting_point_list) == 0:
-                            starting_point_list = copy.deepcopy(starting_point_list_bckp)
-                        system_sander_emle_data_fn = starting_point_list[random.randrange(0, len(starting_point_list))]
-                        starting_point_list.remove(system_sander_emle_data_fn)
-                        if system_previous_start:
-                            system_sander_emle_data_path = training_path / "starting_structures" / system_sander_emle_data_fn
-                        else:
-                            system_sander_emle_data_path = training_path / "user_files" / system_sander_emle_data_fn
+
+                        # TODO: Implement the starting points for SANDER-EMLE
+                        logging.warning(f"Starting points are not implemented for SANDER-EMLE. Using the same starting point as the first exploration.")
+                        system_previous_start = False
+                        # if len(starting_point_list) == 0:
+                        #     starting_point_list = copy.deepcopy(starting_point_list_bckp)
+                        # system_sander_emle_data_fn = starting_point_list[random.randrange(0, len(starting_point_list))]
+                        # starting_point_list.remove(system_sander_emle_data_fn)
+                        # if system_previous_start:
+                        #     system_sander_emle_data_path = training_path / "starting_structures" / system_sander_emle_data_fn
+                        # else:
+                        #     system_sander_emle_data_path = training_path / "user_files" / system_sander_emle_data_fn
+                        # system_sander_emle_data_path = training_path / "user_files" / system_sander_emle_data_fn
+
+                        system_sander_emle_data_fn = system_auto + ".ncrst"
+                        system_sander_emle_data_path = training_path / "user_files" / system_sander_emle_data_fn
                         input_replace_dict["_R_COORD_FILE_"] = system_sander_emle_data_fn
 
                         system_nb_atm = main_json["systems_auto"][system_auto]["nb_atm"]
@@ -789,14 +810,14 @@ def main(
 
                 # i-PI
                 elif system_exploration_type == "i-PI":
-                    system_ipi_json = copy.deepcopy(master_system_ipi_json)
-                    system_ipi_xml_aslist = copy.deepcopy(master_system_ipi_xml_aslist)
+                    system_ipi_json = deepcopy(master_system_ipi_json)
+                    system_ipi_xml_aslist = deepcopy(master_system_ipi_xml_aslist)
                     input_replace_dict["_R_SEED_"] = f"{nnp_index}{random.randrange(0, 1000)}{traj_index}{padded_curr_iter}"
                     input_replace_dict["_R_SYS_"] = f"{system_auto}_{nnp_index}_{padded_curr_iter}"
                     # Get data files (starting points) and number of steps
                     if curr_iter > 1:
                         if len(starting_points) == 0:
-                            starting_point_list = copy.deepcopy(starting_point_list_bckp)
+                            starting_point_list = deepcopy(starting_point_list_bckp)
                         system_ipi_xyz_fn = starting_point_list[random.randrange(0, len(starting_point_list))]
                         starting_point_list.remove(system_lammps_data_fn)
 

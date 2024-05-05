@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/15
+Last modified: 2024/05/04
 
 Functions
 ---------
@@ -44,10 +44,10 @@ update_system_nb_steps_factor(previous_json: Dict, system_auto_index: int) -> in
 # TODO: Homogenize the docstrings for this module
 
 # Standard library modules
-import subprocess
-from copy import deepcopy
 from pathlib import Path
+from copy import deepcopy
 from typing import Dict, List, Tuple, Union
+import subprocess
 
 # Third-party modules
 import numpy as np
@@ -624,6 +624,9 @@ def generate_starting_points(
         file_extension = "lmp"
     elif exploration_type == "i-PI":
         file_extension = "xyz"
+    # TODO: Implement the starting points for SANDER-EMLE
+    elif exploration_type == "sander_emle":
+        return None, None, False, False
 
     # Get list of starting point file names for system and iteration
     starting_points_path = list(Path(training_path / "starting_structures").glob(f"{padded_prev_iter}_{system_auto}_*.{file_extension}"))
@@ -744,9 +747,9 @@ def get_last_frame_number(model_deviation: np.ndarray, sigma_high_limit: float, 
         start_frame = 1
     else:
         start_frame = 0
-    if len(model_deviation.shape) == 1:
-        if np.any(model_deviation[start_frame:] >= sigma_high_limit):
-            last_frame = np.argmax(model_deviation[start_frame:] >= sigma_high_limit)
+    if model_deviation.shape[1] == 2:
+        if np.any(model_deviation[start_frame: 1] >= sigma_high_limit):
+            last_frame = np.argmax(model_deviation[start_frame:, 1] >= sigma_high_limit)
         else:
             last_frame = -1
     else:

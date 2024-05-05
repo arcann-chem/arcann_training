@@ -6,11 +6,10 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/15
+Last modified: 2024/05/04
 """
 
 # Standard library modules
-import copy
 import logging
 import sys
 from pathlib import Path
@@ -19,18 +18,9 @@ from pathlib import Path
 import numpy as np
 
 # Local imports
-from deepmd_iterative.common.json import (
-    load_json_file,
-    write_json_file,
-    load_default_json_file,
-    backup_and_overwrite_json_file,
-)
+from deepmd_iterative.common.json import load_json_file, write_json_file, load_default_json_file, backup_and_overwrite_json_file
 from deepmd_iterative.common.check import validate_step_folder
-from deepmd_iterative.exploration.utils import (
-    get_last_frame_number,
-    generate_input_exploration_deviation_json,
-    get_system_deviation,
-)
+from deepmd_iterative.exploration.utils import get_last_frame_number, generate_input_exploration_deviation_json, get_system_deviation
 from deepmd_iterative.common.xyz import parse_xyz_trajectory_file
 
 def main(
@@ -40,16 +30,19 @@ def main(
     fake_machine=None,
     user_input_json_filename: str = "input.json",
 ):
+    # Get the logger
+    arcann_logger = logging.getLogger("ArcaNN")
+
     # Get the current path and set the training path as the parent of the current path
     current_path = Path(".").resolve()
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
-    logging.debug(f"Current path :{current_path}")
-    logging.debug(f"Training path: {training_path}")
-    logging.debug(f"Program path: {deepmd_iterative_path}")
-    logging.info(f"-" * 88)
+    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
+    arcann_logger.debug(f"Current path :{current_path}")
+    arcann_logger.debug(f"Training path: {training_path}")
+    arcann_logger.debug(f"Program path: {deepmd_iterative_path}")
+    arcann_logger.info(f"-" * 88)
 
     # Check if the current folder is correct for the current step
     validate_step_folder(current_step)
@@ -61,8 +54,8 @@ def main(
     # Load the default input JSON
     default_input_json = load_default_json_file(deepmd_iterative_path / "assets" / "default_config.json")[current_step]
     default_input_json_present = bool(default_input_json)
-    logging.debug(f"default_input_json: {default_input_json}")
-    logging.debug(f"default_input_json_present: {default_input_json_present}")
+    arcann_logger.debug(f"default_input_json: {default_input_json}")
+    arcann_logger.debug(f"default_input_json_present: {default_input_json_present}")
 
     # Load the user input JSON
     if (current_path / user_input_json_filename).is_file():
@@ -70,17 +63,17 @@ def main(
     else:
         user_input_json = {}
     user_input_json_present = bool(user_input_json)
-    logging.debug(f"user_input_json: {user_input_json}")
-    logging.debug(f"user_input_json_present: {user_input_json_present}")
+    arcann_logger.debug(f"user_input_json: {user_input_json}")
+    arcann_logger.debug(f"user_input_json_present: {user_input_json_present}")
 
     # If the used input JSON is present, load it
     if (current_path / "used_input.json").is_file():
         current_input_json = load_json_file((current_path / "used_input.json"))
     else:
-        logging.warning(f"No used_input.json found. Starting with empty one.")
-        logging.warning(f"You should avoid this by not deleting the used_input.json file.")
+        arcann_logger.warning(f"No used_input.json found. Starting with empty one.")
+        arcann_logger.warning(f"You should avoid this by not deleting the used_input.json file.")
         current_input_json = {}
-    logging.debug(f"current_input_json: {current_input_json}")
+    arcann_logger.debug(f"current_input_json: {current_input_json}")
 
     # Get control path, load the main JSON and the exploration JSON
     control_path = training_path / "control"
@@ -102,12 +95,12 @@ def main(
 
     # Check if we can continue
     if not exploration_json["is_checked"]:
-        logging.error(f"Lock found. Execute first: exploration check.")
-        logging.error(f"Aborting...")
+        arcann_logger.error(f"Lock found. Execute first: exploration check.")
+        arcann_logger.error(f"Aborting...")
         return 1
     if "is_rechecked" in exploration_json and not exploration_json["is_rechecked"]:
-        logging.critical(f"Lock found. Execute first: exploration recheck.")
-        logging.critical(f"Aborting...")
+        arcann_logger.critical(f"Lock found. Execute first: exploration recheck.")
+        arcann_logger.critical(f"Aborting...")
         return 1
 
     # Generate/update the merged input JSON
@@ -119,7 +112,7 @@ def main(
         current_input_json,
         main_json,
     )
-    logging.debug(f"current_input_json: {current_input_json}")
+    arcann_logger.debug(f"current_input_json: {current_input_json}")
 
     for system_auto_index, system_auto in enumerate(main_json["systems_auto"]):
         # Set the system params for deviation selection
@@ -151,13 +144,22 @@ def main(
         skipped_traj_stats = 0
         start_row_number = 0
 
+        arcann_logger.debug(f"{exploration_json['systems_auto'][system_auto]['print_every_x_steps']},{exploration_json['systems_auto'][system_auto]['timestep_ps']}")
+        arcann_logger.debug(f"{exploration_json['systems_auto'][system_auto]['ignore_first_x_ps']}")
+
         while start_row_number * exploration_json["systems_auto"][system_auto]["print_every_x_steps"] * exploration_json["systems_auto"][system_auto]["timestep_ps"] < exploration_json["systems_auto"][system_auto]["ignore_first_x_ps"]:
             start_row_number = start_row_number + 1
-        logging.debug(f"start_row_number: {start_row_number}")
+
+        arcann_logger.debug(f"start_row_number: {start_row_number}")
+        if start_row_number > exploration_json["systems_auto"][system_auto]["nb_steps"] // exploration_json["systems_auto"][system_auto]["print_every_x_steps"]:
+            start_row_number = 0
+            arcann_logger.warning(f"Your 'ignore_first_x_ps' value is too high.")
+            arcann_logger.warning(f"Please reduce it to a value lower than {start_row_number * exploration_json['systems_auto'][system_auto]['print_every_x_steps'] * exploration_json['systems_auto'][system_auto]['timestep_ps']}.")
+            arcann_logger.warning(f"Temporarily setting it to 0.")
 
         for it_nnp in range(1, main_json["nnp_count"] + 1):
             for it_number in range(1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1):
-                logging.debug(f"{system_auto} / {it_nnp} / {it_number}")
+                arcann_logger.debug(f"{system_auto} / {it_nnp} / {it_number}")
 
                 # Get the local path and the name of model_deviation file
                 local_path = Path(".").resolve() / str(system_auto) / str(it_nnp) / str(it_number).zfill(5)
@@ -176,12 +178,13 @@ def main(
 
                 # Get the number of exptected steps
                 nb_steps_expected = (exploration_json["systems_auto"][system_auto]["nb_steps"] // exploration_json["systems_auto"][system_auto]["print_every_x_steps"]) + 1 - start_row_number
+                arcann_logger.debug(f"nb_steps_expected: {nb_steps_expected}")
 
                 # If it was not skipped
                 if not (local_path / "skip").is_file():
-                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "samder_emle":
+                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
                         num_atoms, atom_symbols, atom_coords, comments, cell_info, pbc_info, properties_info, max_f_std_info = parse_xyz_trajectory_file(local_path / xyz_qm_filename)
-                        model_deviation = np.array(max_f_std_info)
+                        model_deviation = np.vstack(([_ for _ in range(0, len(max_f_std_info), exploration_json["systems_auto"][system_auto]["print_every_x_steps"])], max_f_std_info)).T
                         total_row_number = len(max_f_std_info)
                     elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps" or exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
                         model_deviation = np.genfromtxt(str(local_path / model_deviation_filename))
@@ -190,22 +193,22 @@ def main(
                         elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
                             total_row_number = model_deviation.shape[0] + 1
                     else:
-                        logging.error("Unknown exploration type. Please BUG REPORT!")
-                        logging.error("Aborting...")
+                        arcann_logger.error("Unknown exploration type. Please BUG REPORT!")
+                        arcann_logger.error("Aborting...")
                         return 1
 
                     if nb_steps_expected > (total_row_number - start_row_number):
                         QbC_stats["total_count"] = nb_steps_expected
-                        logging.critical(f"Exploration '{system_auto}' / '{it_nnp}' / '{it_number}'.")
-                        logging.critical(f"Mismatch between expected ('{nb_steps_expected}') number of steps.")
-                        logging.critical(f"and actual ('{total_row_number - start_row_number}') number of steps in the deviation file.")
+                        arcann_logger.critical(f"Exploration '{system_auto}' / '{it_nnp}' / '{it_number}'.")
+                        arcann_logger.critical(f"Mismatch between expected ('{nb_steps_expected}') number of steps.")
+                        arcann_logger.critical(f"and actual ('{total_row_number - start_row_number}') number of steps in the deviation file.")
                         if (local_path / "force").is_file():
-                            logging.warning("but it has been forced, so it should be ok.")
+                            arcann_logger.warning("but it has been forced, so it should be ok.")
                     elif nb_steps_expected == (total_row_number - start_row_number):
                         QbC_stats["total_count"] = total_row_number - start_row_number
                     else:
-                        logging.error("Unknown error. Please BUG REPORT!")
-                        logging.error("Aborting...")
+                        arcann_logger.error("Unknown error. Please BUG REPORT!")
+                        arcann_logger.error("Aborting...")
                         return 1
 
                     end_row_number = get_last_frame_number(
@@ -213,7 +216,7 @@ def main(
                         sigma_high_limit,
                         exploration_json["systems_auto"][system_auto]["disturbed_start"],
                     )
-                    logging.debug(f"end_row_number: {end_row_number}, start_row_number: {start_row_number}")
+                    arcann_logger.debug(f"end_row_number: {end_row_number}, start_row_number: {start_row_number}")
                     if (local_path / "force").is_file():
                         end_row_number = end_row_number - 1
 
@@ -250,16 +253,16 @@ def main(
                             # Add the rest to rejected
                             rejected = np.vstack((rejected, model_deviation[end_row_number:, :]))
 
-                    elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "samder_emle":
+                    elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
 
                         # This part is when sigma_high_limit was never crossed
                         if end_row_number < 0:
                             mean_deviation_max_f = np.mean(model_deviation[start_row_number:])
                             median_deviation_max_f = np.median(model_deviation[start_row_number:])
                             stdeviation_deviation_max_f = np.std(model_deviation[start_row_number:])
-                            good = np.where(model_deviation[start_row_number:] <= sigma_low)
-                            rejected = np.where(model_deviation[start_row_number:] >= sigma_high)
-                            candidates = np.where((model_deviation[start_row_number:] > sigma_low) & (model_deviation[start_row_number:] < sigma_high))
+                            good = model_deviation[start_row_number:, :][model_deviation[start_row_number:, 1] <= sigma_low]
+                            rejected = model_deviation[start_row_number:, :][model_deviation[start_row_number:, 1] >= sigma_high]
+                            candidates = model_deviation[start_row_number:, :][(model_deviation[start_row_number:, 1] > sigma_low) & (model_deviation[start_row_number:, 1] < sigma_high)]
 
                         # This part is when sigma_high_limit was crossed during ignore_first_x_ps (SKIP everything for stats)
                         elif end_row_number <= start_row_number:
@@ -277,23 +280,23 @@ def main(
                             mean_deviation_max_f = np.mean(model_deviation[start_row_number:end_row_number])
                             median_deviation_max_f = np.median(model_deviation[start_row_number:end_row_number])
                             stdeviation_deviation_max_f = np.std(model_deviation[start_row_number:end_row_number])
-                            good = np.where(model_deviation[start_row_number:end_row_number] <= sigma_low)
-                            rejected = np.where(model_deviation[start_row_number:end_row_number] >= sigma_high)
-                            candidates = np.where((model_deviation[start_row_number:end_row_number] > sigma_low) & (model_deviation[start_row_number:end_row_number] < sigma_high))
+                            good = model_deviation[start_row_number:end_row_number][model_deviation[start_row_number:end_row_number] <= sigma_low]
+                            rejected = model_deviation[start_row_number:end_row_number][model_deviation[start_row_number:end_row_number] >= sigma_high]
+                            candidates = model_deviation[start_row_number:end_row_number][(model_deviation[start_row_number:end_row_number] > sigma_low) & (model_deviation[start_row_number:end_row_number] < sigma_high)]
                             # Add the rest to rejected
-                            rejected = np.vastack((rejected, model_deviation[end_row_number:]))
+                            rejected = np.vstack((rejected, model_deviation[end_row_number:, :]))
                     else:
-                        logging.error("Unknown exploration type. Please BUG REPORT!")
-                        logging.error("Aborting...")
+                        arcann_logger.error("Unknown exploration type. Please BUG REPORT!")
+                        arcann_logger.error("Aborting...")
                         return 1
 
                     # Fill JSON files
-                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "samder_emle":
+                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
                         QbC_indexes = {
                             **QbC_indexes,
-                            "good_indexes": good.astype(int).tolist() if good.size > 0 else [],
-                            "rejected_indexes": rejected.astype(int).tolist() if rejected.size > 0 else [],
-                            "candidate_indexes": candidates.astype(int).tolist() if candidates.size > 0 else [],
+                            "good_indexes": good[:, 0].astype(int).tolist() if good.size > 0 else [],
+                            "rejected_indexes": rejected[:, 0].astype(int).tolist() if rejected.size > 0 else [],
+                            "candidate_indexes": candidates[:, 0].astype(int).tolist() if candidates.size > 0 else [],
                         }
                     elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps" or exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
                         QbC_indexes = {
@@ -303,11 +306,11 @@ def main(
                             "candidate_indexes": candidates[:, 0].astype(int).tolist() if candidates.size > 0 else [],
                         }
                     else:
-                        logging.error("Unknown exploration type. Please BUG REPORT!")
-                        logging.error("Aborting...")
+                        arcann_logger.error("Unknown exploration type. Please BUG REPORT!")
+                        arcann_logger.error("Aborting...")
                         return 1
 
-                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "samder_emle":
+                    if exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
                         QbC_stats = {
                             **QbC_stats,
                             "mean_deviation_max_f": mean_deviation_max_f,
@@ -328,8 +331,8 @@ def main(
                             "candidates_count": len(candidates[:, 0].astype(int).tolist()) if candidates.size > 0 else 0,
                         }
                     else:
-                        logging.error("Unknown exploration type. Please BUG REPORT!")
-                        logging.error("Aborting...")
+                        arcann_logger.error("Unknown exploration type. Please BUG REPORT!")
+                        arcann_logger.error("Aborting...")
                         return 1
 
                     # If the traj is smaller than expected (forced case) add the missing as rejected
@@ -384,14 +387,14 @@ def main(
         # Average for the system (with adjustment, remove the skipped ones)
         exploitable_traj = (exploration_json["nnp_count"] * exploration_json["systems_auto"][system_auto]["traj_count"]) - (skipped_traj_user + skipped_traj_stats)
         if exploitable_traj == 0:
-            logging.critical("All trajectories were skipped (either by you or discarded by ArcaNN).")
-            logging.critical("You should either change the 'ignore_first_x_ps' value to a lower value to ensure some structure for this exploration.")
-            logging.critical("For the next run (or if you redo one), you should reduce 'timestep_ps' and 'print_every_x_steps'.")
-            logging.critical("Aborting...")
+            arcann_logger.critical("All trajectories were skipped (either by you or discarded by ArcaNN).")
+            arcann_logger.critical("You should either change the 'ignore_first_x_ps' value to a lower value to ensure some structure for this exploration.")
+            arcann_logger.critical("For the next run (or if you redo one), you should reduce 'timestep_ps' and 'print_interval_mult'.")
+            arcann_logger.critical("Aborting...")
             return 1
         else:
             if exploitable_traj / (exploration_json["nnp_count"] * exploration_json["systems_auto"][system_auto]["traj_count"]) < 0.25:
-                logging.warning("Less than 25% of your exploration trajectories are exploitable. Be careful for the next one.")
+                arcann_logger.warning("Less than 25% of your exploration trajectories are exploitable. Be careful for the next one.")
             exploration_json["systems_auto"][system_auto]["mean_deviation_max_f"] = exploration_json["systems_auto"][system_auto]["mean_deviation_max_f"] / exploitable_traj
             exploration_json["systems_auto"][system_auto]["median_deviation_max_f"] = exploration_json["systems_auto"][system_auto]["median_deviation_max_f"] / exploitable_traj
             exploration_json["systems_auto"][system_auto]["stdeviation_deviation_max_f"] = exploration_json["systems_auto"][system_auto]["stdeviation_deviation_max_f"] / exploitable_traj
@@ -482,14 +485,14 @@ def main(
                     # Now we get the starting point (the min of selected, or the last good)
                     # Min of selected
                     if selected_indexes.shape[0] > 0:
-                        if exploration_json["systems_auto"][system_auto]["exploration_type"] == "samder_emle":
+                        if exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
                             num_atoms, atom_symbols, atom_coords, comments, cell_info, pbc_info, properties_info, max_f_std_info = parse_xyz_trajectory_file(local_path / xyz_qm_filename)
                             model_deviation = np.array(max_f_std_info)
                         elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps" or exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
                             model_deviation = np.genfromtxt(str(local_path / model_deviation_filename))
                         min_val = 1e30
                         for selected_idx in selected_indexes:
-                            if exploration_json["systems_auto"][system_auto]["exploration_type"] == "samder_emle":
+                            if exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
                                 temp_min = model_deviation[selected_idx]
                             else:
                                 temp_min = model_deviation[:, 4][np.where(model_deviation[:, 0] == selected_idx)]
@@ -531,10 +534,10 @@ def main(
         del max_candidates, sigma_low, sigma_high, sigma_high_limit, ignore_first_x_ps
     del system_auto_index, system_auto
 
-    logging.info(f"A total of {total_candidates_selected} structures have been selected for labeling...")
+    arcann_logger.info(f"A total of {total_candidates_selected} structures have been selected for labeling...")
     del total_candidates_selected
 
-    logging.info(f"-" * 88)
+    arcann_logger.info(f"-" * 88)
     # Update the booleans in the exploration JSON
     exploration_json["is_deviated"] = True
 
@@ -543,8 +546,8 @@ def main(
     backup_and_overwrite_json_file(current_input_json, (current_path / "used_input.json"), read_only=True)
 
     # End
-    logging.info(f"-" * 88)
-    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
+    arcann_logger.info(f"-" * 88)
+    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
 
     # Cleaning
     del control_path
@@ -553,8 +556,8 @@ def main(
     del exploration_json
     del training_path, current_path
 
-    logging.debug(f"LOCAL")
-    logging.debug(f"{locals()}")
+    arcann_logger.debug(f"LOCAL")
+    arcann_logger.debug(f"{locals()}")
     return 0
 
 

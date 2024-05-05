@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 # Created: 2022/01/01
-# Last modified: 2024/04/09
+# Last modified: 2024/04/29
 #----------------------------------------------
 # You must keep the _R_VARIABLES_ in the file.
 # You must keep the name file as job_sander_emle-deepmd_explore_ARCHTYPE_myHPCkeyword.sh.
@@ -44,6 +44,8 @@ SANDER_IN_FILE="_R_SANDER_IN_FILE_"
 EMLE_IN_FILE="_R_EMLE_IN_FILE_"
 SANDER_LOG_FILE="_R_SANDER_LOG_FILE_"
 SANDER_OUT_FILE="_R_SANDER_OUT_FILE_"
+SANDER_PRMTOP_FILE="_R_TOP_FILE_"
+SANDER_COORD_FILE="_R_SANDER_COORD_FILE_"
 SANDER_RESTART_FILE="_R_SANDER_RESTART_FILE_"
 EMLE_OUT_FILE="_R_EMLE_OUT_FILE_"
 SANDER_TRAJOUT_FILE="_R_SANDER_TRAJOUT_FILE_"
@@ -88,7 +90,7 @@ cd "${TEMPWORKDIR}" || { echo "Could not go to ${TEMPWORKDIR}. Aborting..."; exi
 echo "# [$(date)] Running SANDER-EMLE..."
 emle-server --config "${EMLE_IN_FILE}" > "${EMLE_OUT_FILE}" 2>&1 &
 wait 5
-sander -O -i "${SANDER_IN_FILE}" -o "${SANDER_LOG_FILE}" -p _R_TOP_FILE_ -c _R_SANDER_COORD_FILE_ -r "${SANDER_RESTART_FILE}" -x "${SANDER_TRAJOUT_FILE}" > "${SANDER_OUT_FILE}" 2>&1
+sander -O -i "${SANDER_IN_FILE}" -o "${SANDER_LOG_FILE}" -p "${SANDER_PRMTOP_FILE}" -c "${SANDER_COORD_FILE}" -r "${SANDER_RESTART_FILE}" -x "${SANDER_TRAJOUT_FILE}" > "${SANDER_OUT_FILE}" 2>&1
 echo "# [$(date)] SANDER-EMLE finished."
 
 # Move back data from the temporary work directory and scratch, and clean-up

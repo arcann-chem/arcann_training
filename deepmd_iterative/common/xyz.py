@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/15
+Last modified: 2024/04/29
 
 The xyz module provides functions to manipulate XYZ data (as np.ndarray).
 
@@ -200,7 +200,7 @@ def write_xyz_frame(trajectory_file_path: Path, frame_idx: int, atom_counts: np.
         file.write(f"{atom_counts[frame_idx]}\n")
 
         # Write the comment line with cell information if available
-        if cell_info.size > 0:
+        if len(cell_info) > 0:
             cell_line = " ".join(map(str, cell_info[frame_idx]))
             comment_line = f'Lattice="{cell_line}" Properties=species:S:1:pos:R:3'
         else:

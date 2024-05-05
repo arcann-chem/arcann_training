@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/31
+Last modified: 2024/05/04
 
 The utils module provides functions for the training step.
 
@@ -35,10 +35,10 @@ validate_deepmd_config(training_config) -> None
 # TODO: Homogenize the docstrings for this module
 
 # Standard library modules
-import copy
-import json
 from pathlib import Path
+from copy import deepcopy
 from typing import Dict, Tuple
+import json
 
 # Third-party modules
 import numpy as np
@@ -84,8 +84,8 @@ def generate_training_json(
     """
 
     # We copy the default to get the order of the keys constant.
-    merged_input_json = copy.deepcopy(default_input_json)
-    training_json = copy.deepcopy(default_input_json)
+    merged_input_json = deepcopy(default_input_json)
+    training_json = deepcopy(default_input_json)
 
     # Update the training JSON with values from the current JSON, the previous training JSON, and the default JSON.
     for key in default_input_json:

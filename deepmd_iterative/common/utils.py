@@ -6,32 +6,30 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/31
+Last modified: 2024/05/01
 
-The utils module provides helper functions.
+Utility module providing helper functions.
 
 Functions
 ---------
 catch_errors_decorator(func: Callable[..., Any]) -> Callable[..., Any]
-    A decorator to wrap a function and catch exceptions raised during its execution.
-
+    Decorator to wrap a function and catch exceptions during execution.
 convert_seconds_to_hh_mm_ss(seconds: float) -> str
-    A function to convert a time duration in seconds to the format of HH:MM:SS.
+    Converts a time duration in seconds to the format HH:MM:SS.
+natural_sort_key(s: str) -> List[Union[int, str]]
+    Provides a natural sorting key for alphanumeric strings.
 """
-
-# TODO: Homogenize the docstrings for this module
-
 
 # Standard library modules
 import logging
 import re
-from typing import Any, Callable
+from typing import Any, Callable, List, Union
 
 
 # Unittested
 def catch_errors_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
     """
-    A decorator to wrap a function and catch exceptions raised during its execution.
+    Decorator to wrap a function and catch exceptions during execution.
 
     Parameters
     ----------
@@ -44,18 +42,19 @@ def catch_errors_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         The wrapped function.
 
     Raises
-    -------
+    ------
     Exception
-        If an error occurs during the execution of the decorated function.
+        If an error occurs during execution of the decorated function.
     """
+    logger = logging.getLogger("ArcaNN")
 
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            logging.debug(f"An error occurred while executing '{func.__name__}': '{e.__class__.__name__}'")
-            logging.error(f"{e}")
-            logging.error(f"Aborting...")
+            logger.error(f"{e}")
+            logger.debug(f"Error in '{func.__name__}': {e}", exc_info=True)
+            logger.error("Aborting the program due to an error.")
             raise
 
     return wrapper
@@ -65,7 +64,7 @@ def catch_errors_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
 @catch_errors_decorator
 def convert_seconds_to_hh_mm_ss(seconds: float) -> str:
     """
-    A function to convert a time duration in seconds to the format of HH:MM:SS.
+    Converts a time duration in seconds to the format HH:MM:SS.
 
     Parameters
     ----------
@@ -75,7 +74,7 @@ def convert_seconds_to_hh_mm_ss(seconds: float) -> str:
     Returns
     -------
     str
-        The equivalent time duration in hours, minutes, and seconds in the format of HH:MM:SS.
+        The equivalent time duration in HH:MM:SS format.
 
     Raises
     ------
@@ -91,10 +90,32 @@ def convert_seconds_to_hh_mm_ss(seconds: float) -> str:
 
 # TODO: Add tests for this function
 @catch_errors_decorator
-def natural_sort_key(s):
+def natural_sort_key(s: str) -> List[Union[int, str]]:
+    """
+    Provides a natural sorting key for alphanumeric strings.
+
+    Parameters
+    ----------
+    s : str
+        The string to generate the sorting key for.
+
+    Returns
+    -------
+    List[Union[int, str]]
+        The sorting key.
+
+    Raises
+    ------
+    TypeError
+        If the input is not a string.
+    """
     if not isinstance(s, str):
         raise TypeError("Input must be a string")
     if s == "":
         return []
     _nsre = re.compile("([0-9]+)")
-    return [format(int(text), '020d') if text.isdigit() else text.lower() for text in re.split(_nsre, s) if text]
+    return [
+        format(int(text), "020d") if text.isdigit() else text.lower()
+        for text in re.split(_nsre, s)
+        if text
+    ]

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/01
+Last modified: 2024/05/01
 
 The json module provides functions to manipulate JSON data (as dict).
 
@@ -182,8 +182,13 @@ def backup_and_overwrite_json_file(
     if file_path.is_file() and not file_path.is_symlink() and not backup_path.is_file():
         file_path.rename(backup_path)
     elif file_path.is_file() and not file_path.is_symlink() and backup_path.is_file():
+        current_permissions = backup_path.stat().st_mode
+        new_permissions = current_permissions | 0o200
+        backup_path.chmod(new_permissions)
         backup_path.unlink()
         file_path.rename(backup_path)
+        backup_path.chmod(current_permissions)
+
     # If the file is a symbolic link, remove it
     elif file_path.is_symlink():
         file_path.unlink()
@@ -331,7 +336,9 @@ def write_json_file(
         raise TypeError(error_msg)
 
     if file_path.is_file():
-        file_path.chmod(0o644)
+        current_permissions = file_path.stat().st_mode
+        new_permissions = current_permissions | 0o200
+        file_path.chmod(new_permissions)
 
     try:
         # Open the file specified by the file_path argument in write mode
@@ -463,7 +470,7 @@ def find_key_in_dict(d: Dict[str, Any], target_key: str) -> List[Any]:
     Returns
     -------
     List[Any]
-        A list of values found for the specified key across all levels of the nested dictionary. 
+        A list of values found for the specified key across all levels of the nested dictionary.
         If the key is not found, an empty list is returned.
     """
     found_values = []
