@@ -1,7 +1,8 @@
 {
     "step_name": "labeling",
-    "user_machine_keyword_label": { "value": null, "_comment": "null (use machine.json default), str (shortcut used in machine.json (ex: v100), list of str (project,allocation,arch, ex [nvs,v100,v100]) ", "_default": null},
-    "slurm_email": { "value": null, "_comment": "str", "_default": ""},
+    "user_machine_keyword_label": { "value": null, "_comment": "null (use machine.json default), str (shortcut used in machine.json (ex: v100), list of str (project,allocation,arch, ex [myproject,myalloc,v100]) ", "_default": null},
+    "job_email": { "value": null, "_comment": "str", "_default": ""},
+    "labeling_program": { "value": null, "_comment": "str", "_default": "cp2k"},
     "walltime_first_job_h" : { "value": null, "_comment": "float or list of float", "_default": [0.5]},
     "walltime_second_job_h" : { "value": null, "_comment": "float or list of float", "_default": [1.0]},
     "nb_nodes" : { "value": null, "_comment": "int or list of int", "_default": [1]},

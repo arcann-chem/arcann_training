@@ -63,7 +63,6 @@
     "test":
     {
         "user_machine_keyword_test": false,
-        "user_machine_keyword_extract_test": false,
         "job_email": "",
         "job_walltime_h": 2.0,
         "is_compressed": false,

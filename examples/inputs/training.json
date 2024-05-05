@@ -1,9 +1,9 @@
 {
     "step_name": "training",
-    "user_machine_keyword_train": { "value": null, "_comment": "null (use machine.json default), str (shortcut used in machine.json (ex: v100), list of str (project,allocation,arch, ex [nvs,v100,v100]) ", "_default": null},
-    "user_machine_keyword_freeze": { "value": null, "_comment": "null (use machine.json default), str (shortcut used in machine.json (ex: v100), list of str (project,allocation,arch, ex [nvs,v100,v100]) ", "_default": null},
-    "user_machine_keyword_compress": { "value": null, "_comment": "null (use machine.json default), str (shortcut used in machine.json (ex: v100), list of str (project,allocation,arch, ex [nvs,v100,v100]) ", "_default": null},
-    "slurm_email": { "value": null, "_comment": "str", "_default": ""},
+    "user_machine_keyword_train": { "value": null, "_comment": "null (use machine.json default), str (shortcut used in machine.json (ex: a100), list of str (project,allocation,arch, ex [myproject,myalloc,a100]) ", "_default": null},
+    "user_machine_keyword_freeze": { "value": null, "_comment": "null (use machine.json default), str (shortcut used in machine.json (ex: v100), list of str (project,allocation,arch, ex [myproject,myalloc,v100]) ", "_default": null},
+    "user_machine_keyword_compress": { "value": null, "_comment": "null (use machine.json default), str (shortcut used in machine.json (ex: v100), list of str (project,allocation,arch, ex [myproject,myalloc,v100]) ", "_default": null},
+    "job_email": { "value": null, "_comment": "str", "_default": ""},
     "use_initial_datasets": { "value": null, "_comment": "boolean", "_default": true},
     "use_extra_datasets": { "value": null, "_comment": "boolean", "_default": false},
     "deepmd_model_version": { "value": null, "_comment": "float, values: 2.0 or 2.1 or 2.2, -1 will take the highest dptrain_VERSION.json in the user_files folder", "_default": -1},
