@@ -282,7 +282,7 @@ We will now describe in detail each of the steps of the active learning procedur
 
 ## Initialization
 
-Now that you have decided the subsystems that you want to train your NNP on and prepared all the required files you can initialize the `deepmd_iterative_py` procedure by running:
+Now that you have decided the subsystems that you want to train your NNP on and prepared all the required files you can initialize the `deepmd_iterative_py` procedure by running (from the $WORK_DIR folder):
 ```
 python -m deepmd_iterative initialization start 
 ```
@@ -294,7 +294,7 @@ Now it should have generated your first `000-training` directory. In `$WORK_DIR`
     "nnp_count": 3
 }
 ```
-The `"systems_auto"` keyword contains the name of all the subsystems that were find in your `$WORK_DIR/data/` directory and `"nnp_count"` is the number of NNP that is used by default in the committee. 
+The `"systems_auto"` keyword contains the name of all the subsystems that were found in your `$WORK_DIR/user_files/` (i.e. all files lmp files) directory and `"nnp_count"` is the number of NNP that is used by default in the committee.
 
 The initialization will create several folders. The most important one is the `control/` folder, in which essential data files will be stored throughout the iterative procedure. These files will be written in `.json` format and should NOT be modified. Right after initialization the only file in `control/` is `config.json`, which contains the essential information about your initialization choices (or defaults), such as your subsystem names and options. Finally the `000-training` empty folder should also have been created by the execution of the python script, where you will perform the first iteration of [training](#training).
 
@@ -398,8 +398,8 @@ Since this is the first exploration phase we might want to generate only a few c
     "step_name": "exploration",
     "user_machine_keyword_exp": "mykeyword1",
     "slurm_email": "",
-    "atomsk_fpath": "/gpfsdswork/projects/rech/nvs/commun/programs/apps/atomsk/0.11.2/atomsk",
-    "vmd_fpath": "/gpfs7kro/gpfslocalsup/prod/vmd/1.9.4a43/bin/vmd_LINUXAMD64",
+    "atomsk_path": "PATH_TO_THE_ATOMSK_BINARY",
+    "vmd_path": "PATH_TO_THE_VMD_BINARY",
     "exploration_type": ["lammps", "lammps", "lammps"],
     "traj_count": [2, 2, 2],
     "temperature_K": [273.0, 300.0, 300.0],
@@ -445,7 +445,7 @@ In the labeling phase we will use the `CP2K` code to compute the electronic ener
 
 After the first exploration phase we recovered 47, 50 and 92 candidates for our `ice`, `water` and `water-reactive` systems for which we must now compute the electronic structure at our chosen reference level of theory (for example revPBE0-D3). We will have prepared (during initialization) 2 `CP2K` scripts for each system, a first quick calculation at a lower level of theory (for example PBE) and then that at our reference level. We will first copy all this data to the HPC machine were we will perform the labeling (where we must have another copy of this repo as well, with a python environment in which the module was installed):
 ```
-rsync -rvu $WORK_DIR USER@HPC-MACHINE:PATH/TO/IRENE/WORK_DIR
+rsync -rvu $WORK_DIR USER@OTHER_HPC_MACHINE:PATH_TO_WORKDIR
 ```
 
  If we are using a larger number of atoms for the reactive system to ensure proper solvation and separation of the ion pair we might need to use more resources for those calculations. In this example we are using 128 CPU nodes of a `"mykeyword1"` partition and the `input.json` file might look something like this:
