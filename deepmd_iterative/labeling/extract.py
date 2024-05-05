@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/04
+Last modified: 2024/05/05
 """
 
 # Standard library modules
@@ -117,7 +117,6 @@ def main(
         volume_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count), dtype=np.float64)
         force_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, main_json["systems_auto"][system_auto]["nb_atm"] * 3,), dtype=np.float64)
         virial_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, 9), dtype=np.float64)
-        print(energy_array_raw)
         # Options
         is_virial = False
         is_wannier = False
