@@ -82,9 +82,9 @@ External programs needed by ArcaNN for trajectories/structures manipulations:
 - VMD >= 1.9.3
 - Atomsk >= b0.12.2
 
-Supported programs used for `steps`:
+Supported programs used for each **step**:
 
-- DeePMD-kit >= 2.0 (**training**)
+- DeePMD-kit >= 2.0 (**training**, **test**)
   - LAMMPS version adequate with DeePMD-kit (**exploration**)
   - i-PI version adequate with DeePMD-kit (**exploration**)
   - plumed version adequate with DeePMD-kit (**exploration**)
