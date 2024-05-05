@@ -7,14 +7,14 @@
         "launch_command": "sbatch",
         "max_jobs" : 200,
         "max_array_size" : 500,
-        "mykeyword_1": {
+        "mykeyword1": {
             "project_name": "myproject",
             "allocation_name": "myallocationgpu1",
             "arch_name": "a100",
             "arch_type": "gpu",
             "partition": "mypartitiongpu1",
             "subpartition": "mysubpartitiongpu1",
-            "qos": {"myqos_gpu_1": 72000, "myqos_gpu_2": 360000},
+            "qos": {"myqosgpu1": 72000, "myqos_gpu_2": 360000},
             "valid_for":  ["training"],
             "default": ["training"]
         },
@@ -25,7 +25,7 @@
             "arch_type": "gpu",
             "partition": "mypartitiongpu2",
             "subpartition": "mysubpartitiongpu2",
-            "qos": {"myqos_gpu_1": 72000, "myqos_gpu_2": 360000},
+            "qos": {"myqosgpu1": 72000, "myqos_gpu_2": 360000},
             "valid_for":  ["freezing","compressing","exploration","test"],
             "default": ["freezing","compressing","exploration","test"]
         },
@@ -36,7 +36,7 @@
             "arch_type": "cpu",
             "partition": "mypartitioncpu",
             "subpartition": null,
-            "qos": {"mypartition_cpu_1": 72000, "mypartition_cpu_2": 360000},
+            "qos": {"mypartitioncpu1": 72000, "mypartition_cpu_2": 360000},
             "valid_for": ["labeling"],
             "default": ["labeling"]
         },
@@ -47,7 +47,7 @@
             "arch_type": "gpu",
             "partition": "mypartitiongpu3",
             "subpartition": "mysubpartitiongpu3",
-            "qos": {"myqos_gpu_1": 72000, "myqos_gpu_2": 360000},
+            "qos": {"myqosgpu1": 72000, "myqos_gpu_2": 360000},
             "valid_for":  ["training"]
         }
     },
@@ -58,14 +58,14 @@
         "launch_command": "sbatch",
         "max_jobs" : -1,
         "max_array_size" : 10000,
-        "mykeyword_1": {
+        "mykeyword1": {
             "project_name": "myproject",
             "allocation_name": "myallocationcpu1",
             "arch_name": "cpu",
             "arch_type": "cpu",
             "partition": "mypartitioncpu1",
             "subpartition": null,
-            "qos": {"myqos_cpu_1": 72000, "myqos_cpu_2": 360000},
+            "qos": {"myqoscpu1": 72000, "myqos_cpu_2": 360000},
             "valid_for": ["labeling"],
             "default": ["labeling"]
         }
