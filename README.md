@@ -62,73 +62,101 @@ You **must**  adapt these files to ensure they work on your machine (see [Usage]
 <!-- GETTING STARTED -->
 <div id="getting-started"></div>
 
-## Getting Started
+## Getting Started ##
 
 <div id="prerequisites"></div>
 
-### Prerequisites
+### Prerequisites ###
 
 <!-- TODO: Prerequisites  -->
-For installation:
-* python >= 3.7.3 (all steps)
-* numpy>=1.17.3
-* setuptools>=40.8.0
-* wheel>=0.33.1
-* pip>=19.0.3
+For installation (supported):
 
-External requirements for usage:
-* DeePMD-kit 2.0 (at least)
-* CP2K 6.1 (at least)
-* Slurm >= ? (cluster requirement)
-* VMD >= 1.9.3 (exploration5_extract)
-* Atomsk >= beta-0.12.2 (exploration5_extract)
+- python >= 3.10
+- pip >= 21.3
+- setuptools >= 60.0
+- wheel >= 0.37
+- numpy >= 1.22
 
+External programs needed by ArcaNN for trajectories/structures manipulations:
+
+- VMD >= 1.9.3
+- Atomsk >= b0.12.2
+
+Supported programs used for `steps`:
+
+- DeePMD-kit >= 2.0 (**training**)
+  - LAMMPS version adequate with DeePMD-kit (**exploration**)
+  - i-PI version adequate with DeePMD-kit (**exploration**)
+  - plumed version adequate with DeePMD-kit (**exploration**)
+- CP2K >= 6.1 (**labeling**)
 
 <div id="installation"></div>
 
-## Installation
+## Installation ##
 
-### If your machine has access to the Internet
+### If your machine has access to the internet ###
 
-To use `deepmd_iterative_py` you first need to clone or download this repository using the `Code` green button on top right corner of the main page of this repository. We recommend that you keep a local copy of this repository on each computer that will be used to prepare, run or analyze any part of the iterative training process. This repository contains important files that are required at different stages of the process and should remain available at all time.
+To use `ArcaNN`, you first need to clone or download this repository using the green `Code` button in the top right corner of the repository's main page.
+We recommend keeping a local copy of this repository on each computer that will be used to prepare, run, or analyze any part of the iterative training process, though it is not mandatory.
 
-After the download is complete, go to the main folder of the repository. Create a `python` environment with all required packages indicated in the `examples/arcann_environment.txt` file with the following command:
+After the download is complete, go to the repository's main folder.
+Create a Python environment with all the required packages indicated in the `tools/arcann_conda_linux-64_env.txt` file using the following command:
+
 ```bash
-conda create --name <ENVNAME> --file examples/arcann_environment.txt
+conda create --name <ENVNAME> --file examples/arcann_conda_linux-64_env.txt
 ```
 
-Load this environment with `conda activate ENVNAME` and run:
+Load this environment with `conda activate <ENVNAME>` and run:
+
 ```bash
 pip install .
 ```
-That's it, `deepmd_iterative` has now been installed as a module of your `ENVNAME` python environment ! To verify the installation you can run:
-```bash
-python -m deepmd_iterative --help
-```
-which should print the basic usage message of the code.
 
-**Note:** you can also install the program with:
+That's it! `ARCANN` has now been installed as a module of your `<ENVNAME>` Python environment.
+
+To verify the installation, you can run:
+
+```bash
+python -m arcann_training --help
+```
+
+This command should print the basic usage message of the code.
+
+After installation, the repository folder can be deleted if you wish.
+
+**Note:** You can also install the program with:
+
 ```bash
 pip install -e .
 ```
-so that any modifications of the source files will be immediately effective on the execution of the program. This is **only** recommended if you plan to modify the source files.
 
-### If your machine does not have access to the Internet
+This way, any modifications to the source files will immediately take effect during program execution.
+This method is **only** recommended if you plan to modify the source files, and it requires you to **keep** the repository folder on your machine.
 
-Download the repository in a machine that has access to the Internet and to your offline working computer. In a `tmp/` folder (outside of the repository) copy the `deepmd_iterative_py/examples/download_arcann_environment.sh` and `deepmd_iterative_py/examples/arcann_environment.txt` files and run:
+### If your machine does not have access to the internet ###
+
+Download the repository onto a machine that has access to the internet and to your offline working computer.
+In a `tmp/` folder (outside of the repository), copy the `arcann_training/tools/download_arcann_environment.sh` and `arcann_training/tools/arcann_conda_linux-64_env.txt.txt` files, then run
+
 ```bash
 chmod +x download_arcann_environment.sh ; ./download_arcann_environment.sh
 ```
-This script will download all the required Python packages into a `download/` folder and create a `arcann_environment_offline.txt` file. Then upload this to the working computer along with the `deepmd_iterative_py` repository:
+
+This script will download all the required Python packages into a `arcann_conda_linux-64_env_offline_files/` folder and create a `arcann_conda_linux-64_env_offline.txt` file.
+Then upload this to the working computer along with the `arcann_training` repository:
+
 ```bash
 rsync -rvu tmp/* USER@WORKMACHINE:/PATH/TO/INSTALLATION/FOLDER/.
-rsync -rvu deepmd_iterative_py USER@WORKMACHINE:/PATH/TO/INSTALLATION/FOLDER/.
+rsync -rvu arcann_training USER@WORKMACHINE:/PATH/TO/INSTALLATION/FOLDER/.
 ```
+
 Now you can simply create the required Python environment:
+
 ```bash
-conda create --name <ENVNAME> --file arcann_environment_offline.txt
+conda create --name <ENVNAME> --file arcann_conda_linux-64_env_offline.txt
 ```
-and install the repository as a Python module as detailed above.
+
+and then install `ArcaNN` as a Python module as detailed above (with pip).
 
 <div id="machine"></div>
 
