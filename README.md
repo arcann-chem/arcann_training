@@ -160,9 +160,12 @@ and then install `ArcaNN` as a Python module as detailed above (with pip).
 
 <div id="machine"></div>
 
-## Cluster setup
+## Cluster setup ##
 
-This repository was designed for use on one or several HPC machines whose specificities must be indicated by the user through a `machine.json` file. You can find a general example file in `deepmd_iterative_py/examples/user_files/machine.json` that you should modify to adapt it to your setup and that you will need to copy to the `user_files/` folder of your working directory (see [Usage](#Usage) below). This file is organized as a `JSON` dictionary with one or several keys that designate the different HPC machines, the typical structure looks like this:
+ArcaNN was designed for use on one or several HPC machines whose specificities must be indicated by the user through a `machine.json` file.
+You can find a general example file in `arcann_training/examples/user_files/machine.json` that you should modify to adapt it to your setup and that you will need to copy to the `user_files/` folder of your working directory (see [Usage](#Usage) below).
+This file is organized as a `JSON` dictionary with one or several keys that designate the different HPC machines, the typical structure looks like this:
+
 ```json
 {
     "myHPCkeyword1":
@@ -172,7 +175,11 @@ This repository was designed for use on one or several HPC machines whose specif
     etc.
 }
 ```
-Each key of the `JSON` file is a short string designating the name of the machine (here `"myHPCkeyword1"`, `"myHPCkeyword2"`, etc.). The associated entry is also a dictionary whose keys are keywords (or further dictionaries of keywords) associated with information needed to run jobs in the corresponding HPC machine. Let's have a look at the first few entries of the `"myHPCkeyword1"` machine:
+
+Each key of the JSON file is a short string designating the name of the machine (here `"myHPCkeyword1"`, `"myHPCkeyword2"`, etc.).
+The associated entry is also a dictionary whose keys are keywords (or further dictionaries of keywords) associated with information needed to run jobs in the corresponding HPC machine.
+Let's have a look at the first few entries of the `"myHPCkeyword1"` machine for a SLURM job scheduler:
+
 ```json
 {
     "myHPCkeyword1":
@@ -190,7 +197,7 @@ Each key of the `JSON` file is a short string designating the name of the machin
             "arch_type": "gpu",
             "partition": "mypartitiongpu1",
             "subpartition": "mysubpartitiongpu1",
-            "qos": {"myqos_gpu_1": 72000, "myqos_gpu_2": 360000},
+            "qos": {"myqosgpu1": 72000, "myqosgpu2": 360000},
             "valid_for":  ["training"],
             "default": ["training"]
         },
@@ -200,16 +207,29 @@ Each key of the `JSON` file is a short string designating the name of the machin
     etc.
 }
 ```
-  - `"hostname"` is a substring contained in the output of the following command `python -c "import socket ; print(socket.gethostname())"` which should be indicative of your machine's name.
-  - `"walltime_format"` is the time unit in which the wall time must be indicated to the cluster.
-  - `"job_scheduler"` is the name of the job scheduler used in your HPC machine (the code has been extensively used with `Slurm` and has been tested with some other schedulers).
-  - `"launch_command"` is the `bash` command used for submitting jobs to your cluster (typically `sbatch` in normal `Slurm` setups, but you can adapt it to match your cluster requirements, for example `qsub` if your machine runs with `PBS/Torque`)
-  - `"max_jobs"` is the maximal number of jobs per user allowed by the job scheduler of your HPC machine (you can also use it to define a maximum number of jobs for safety reasons if your scheduler does not do this by default)
-  - `"max_array_size"` is the maximal number of jobs that can be submitted in a single job array (in `Slurm` the preferred usage of the `deepmd_iterative_py` suit relies heavily on arrays to submit jobs)
-  - The next keyword is the key name of a partition, it should contain all the information needed to run a job in that partition of your cluster (the names of the keywords are quite self explanatory). The keyword `"valid_for"` indicates the steps of the procedures that can be performed in this partition (possible options are: `["training","freezing","compressing","exploration","test","test_graph","labeling"]`). The `"default"` keyword indicates that this partition of the machine is the default to be used (if not indicated by the user) for the indicated steps. You can add as many partition keywords as you want. In the above example `"mykeyword_1"` is a GPU partition that uses A100 GPU nodes, which we will use in every iteration (unless the user explicitly indicates something different) for the `"training"` step. It is worth noting that in this example we assume that the HPC machine is divided in different projects with given time allocations (indicated in `"project_name"` and "`allocation_name`"), as it typically done in large HPC facilities used by different groups (if this is not the case for your HPC machine you do not need to provide these keywords! In the same way, if there are not different partitions and subpartitions the corresponding keywords need not be provided).
 
-Finally, in order to use your cluster you will need to provide example submission files adequate for your machine (in the same style as those provided in `examples/user_files/job*` files and **keeping the replaceable strings** indicated by a `_R_` prefix) in the `$WORK_DIR/user_files/` folder that you will need to create to use `deepmd_iterative_py` for a given system (see [Usage](#Usage).) 
+- `"hostname"` is a substring contained in the output of the following command: `python -c "import socket ; print(socket.gethostname())"`, which should indicate your machine's name.
+- `"walltime_format"` is the time unit used to specify the wall time to the cluster.
+- `"job_scheduler"` is the name of the job scheduler used in your HPC machine. The code has been extensively used with `Slurm` and has been tested with other schedulers.
+- `"launch_command"` is the bash command used for submitting jobs to your cluster (typically `sbatch` in normal `Slurm` setups, but you can adapt it to match your cluster requirements, such as `qsub` for machines running `PBS/Torque`).
+- `"max_jobs"` is the maximum number of jobs per user allowed by the job scheduler of your HPC machine.
+You can also use this to set a safety limit if your scheduler does not impose one by default.
+- `"max_array_size"` is the maximum number of jobs that can be submitted in a single job array (in `Slurm`, the preferred usage of the `ArcaNN` suite relies heavily on arrays to submit jobs).
+- The next keyword is the key name of a partition.
+It should contain all the information needed to run a job in that partition of your cluster.
+The keyword names are self-explanatory.
+The keyword `"valid_for"` indicates the steps that can be performed in this partition (possible options include `["training", "freezing", "compressing", "exploration", "test", "labeling"]`).
+The `"default"` keyword indicates that this partition of the machine is the default one used (if not explicitly indicated by the user) for the specified steps.
 
+You can add as many partition keywords as you need.
+In the above example, `"mykeyword1"` is a GPU partition that uses `A100` `GPU` nodes.
+We will use this for every iteration, unless the user explicitly specifies a different partition for the **training** step.
+Note that this example assumes that the HPC machine is divided into projects with allocated time (indicated in `"project_name"` and `"allocation_name"`), as is typical in large HPC facilities used by different groups.
+If this does not apply to your HPC machine, you don't need to provide these keywords.
+Likewise, if there are no partitions or subpartitions, the corresponding keywords need not be provided.
+Finally, to use your HPC machine, you will need to provide example submission files tailored to your machine.
+These should follow the style of the `examples/user_files/job*/*.sh` files, **keeping the replaceable strings** indicated by a `_R_` prefix and a `_` suffix.
+Place these files in the `$WORK_DIR/user_files/` folder, which you must create to use `ArcaNN` for a particular system (see [Usage](#usage)).
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
