@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/04/26
+Last modified: 2024/05/06
 
 Test cases for the (training) utils module.
 
@@ -169,7 +169,7 @@ class TestUpdateSystemNbStepsFactor(unittest.TestCase):
         # Create a temporary JSON file for the test
         self.temp_file = Path(self.temp_dir.name) / "prevexploration.json"
         with self.temp_file.open(mode="w") as f:
-            f.write('{"systems_auto": [{"candidates_count": 5, "rejected_count": 0, "total_count": 100, "nb_steps": 100}]}')
+            f.write('{"systems_auto": [{"candidates_count": 5, "rejected_count": 0, "total_count": 100, "nb_steps": 100, "timestep_ps": 1}]}')
 
     def tearDown(self):
         # Clean up the temporary directory and file
