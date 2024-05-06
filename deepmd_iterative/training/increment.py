@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/04
+Last modified: 2024/05/06
 """
 
 # Standard library modules
@@ -90,7 +90,7 @@ def main(
     main_json["current_iteration"] = next_iter
     padded_next_iter = str(next_iter).zfill(3)
 
-    for step in ["exploration", "adhoc", "labeling", "training"]:
+    for step in ["exploration", "labeling", "training"]:
         (training_path / f"{padded_next_iter}-{step}").mkdir(exist_ok=True)
         check_directory(training_path / f"{padded_next_iter}-{step}")
     del step
