@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/04
+Last modified: 2024/05/06
 
 Functions
 ---------
@@ -795,8 +795,8 @@ def update_system_nb_steps_factor(previous_json: Dict, system_auto_index: int) -
 
     # Return a multiplying factor for system_nb_steps based on the ratio of ill-described candidates
     if ill_described_ratio < 0.10:
-        return 4 * previous_json["systems_auto"][system_auto_index]["nb_steps"]
+        return 4 * previous_json["systems_auto"][system_auto_index]["nb_steps"] * previous_json["systems_auto"][system_auto_index]["timestep_ps"]
     elif ill_described_ratio < 0.20:
-        return 2 * previous_json["systems_auto"][system_auto_index]["nb_steps"]
+        return 2 * previous_json["systems_auto"][system_auto_index]["nb_steps"] * previous_json["systems_auto"][system_auto_index]["timestep_ps"]
     else:
-        return 1 * previous_json["systems_auto"][system_auto_index]["nb_steps"]
+        return 1 * previous_json["systems_auto"][system_auto_index]["nb_steps"] * previous_json["systems_auto"][system_auto_index]["timestep_ps"]

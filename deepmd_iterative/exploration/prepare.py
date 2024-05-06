@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/04
+Last modified: 2024/05/06
 """
 
 # Standard library modules
@@ -468,7 +468,7 @@ def main(
                     system_nb_steps = system_exp_time_ps / system_timestep_ps
                 # Auto value
                 else:
-                    system_nb_steps = update_system_nb_steps_factor(previous_exploration_json, system_auto)
+                    system_nb_steps = update_system_nb_steps_factor(previous_exploration_json, system_auto) / system_timestep_ps
                     # Update if over Max value
                     if system_nb_steps > system_max_exp_time_ps / system_timestep_ps:
                         system_nb_steps = system_max_exp_time_ps / system_timestep_ps
