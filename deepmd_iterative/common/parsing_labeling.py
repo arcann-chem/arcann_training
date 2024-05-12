@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2024/03/01
-Last modified: 2024/05/01
+Last modified: 2024/05/12
 """
 
 # TODO: Homogenize the docstrings for this module
@@ -36,7 +36,7 @@ def extract_and_convert_energy(energy_in, energy_out, system_candidates_not_skip
     elif program == "orca":
         energy_line_index = energy_in.index("# The current total energy in Eh") + 2
         energy = float(energy_in[energy_line_index].strip())
-        energy_out[system_candidates_not_skipped_counter - 1] = energy
+        energy_out[system_candidates_not_skipped_counter - 1] = energy * factor
         return energy_out
 
 # TODO: Add tests for this function
