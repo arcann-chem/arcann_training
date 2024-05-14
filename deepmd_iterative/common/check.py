@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/03/26
+Last modified: 2024/05/01
 
 This module contains functions for checking the availability of certain commands on the system, as well as a function for validating the current working directory during the execution of a specific step.
 
@@ -19,6 +19,8 @@ check_vmd(vmd_path: str = None) -> str
 validate_step_folder(step_name: str) -> None
     Check if the current directory matches the expected directory for the given step.
 """
+
+# TODO: Homogenize the docstrings for this module
 
 # Standard library modules
 import logging
@@ -62,28 +64,30 @@ def check_atomsk(atomsk_path: str = None) -> str:
     FileNotFoundError
         If the 'atomsk' command is not found in the system path.
     """
+    logger = logging.getLogger("ArcaNN")
+
     # Check if atomsk_path is provided and is valid
     if atomsk_path is not None:
         if Path(atomsk_path).is_file():
             return str(Path(atomsk_path).resolve())
         else:
-            logging.warning(f"Atomsk path '{atomsk_path}' is invalid. Deleting the atomsk_path variable. Checking environment variable and system path...")
+            logger.warning(f"Atomsk path '{atomsk_path}' is invalid. Deleting the atomsk_path variable. Checking environment variable and system path...")
             del atomsk_path
 
     # Check if ATOMSK_PATH is defined and is valid
     atomsk_path = os.environ.get("ATOMSK_PATH")
     if atomsk_path is not None and atomsk_path != "" and Path(atomsk_path).is_file():
-        logging.info(f"Atomsk found in $ATOMSK_PATH.")
+        logger.info(f"Atomsk found in $ATOMSK_PATH.")
         return str(Path(atomsk_path).resolve())
 
     # Check if atomsk is available in system path
     atomsk = shutil.which("atomsk")
     if atomsk is not None:
-        logging.info(f"Atomsk found in $PATH.")
+        logger.info(f"Atomsk found in $PATH.")
         atomsk_path = Path(atomsk).resolve()
         return f"{atomsk_path}"
     else:
-        error_msg = f"Atomsk not found."
+        error_msg = f"Atomsk not found. Please add it to your system path (or use ATOMSK_PATH environment variable to point towards the atomsk binary)."
         raise FileNotFoundError(error_msg)
 
 
@@ -117,27 +121,29 @@ def check_vmd(vmd_path: str = None) -> str:
     FileNotFoundError
         If the 'vmd' command is not found in the system path.
     """
+    logger = logging.getLogger("ArcaNN")
+
     # Check if vmd_path is provided and is valid
     if vmd_path is not None and vmd_path != "" and Path(vmd_path).is_file():
         return str(Path(vmd_path).resolve())
     else:
-        logging.warning(f"VMD path '{vmd_path}' is invalid. Deleting the vmd_path variable. Checking environment variable and system path...")
+        logger.warning(f"VMD path '{vmd_path}' is invalid. Deleting the vmd_path variable. Checking environment variable and system path...")
         del vmd_path
 
     # Check if VMD_PATH is defined and is valid
     vmd_path = os.environ.get("VMD_PATH")
     if vmd_path is not None and vmd_path != "" and Path(vmd_path).is_file():
-        logging.info(f"Atomsk found in $VMD_PATH.")
+        logger.info(f"Atomsk found in $VMD_PATH.")
         return str(Path(vmd_path).resolve())
 
     # Check if vmd is available in system path
     vmd = shutil.which("vmd")
     if vmd is not None:
-        logging.info(f"VMD found in $PATH.")
+        logger.info(f"VMD found in $PATH.")
         vmd_path = Path(vmd).resolve()
         return f"{vmd_path}"
     else:
-        error_msg = f"VMD not found."
+        error_msg = f"VMD not found in $PATH. Please add it to your system path (or use VMD_PATH environment variable to point towards the vmd binary)."
         raise FileNotFoundError(error_msg)
 
 
@@ -170,6 +176,7 @@ def validate_step_folder(step_name: str) -> None:
         raise ValueError(error_msg)
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def check_dcd_is_valid(dcd_path: Path, vmd_bin: Path) -> bool:
     """
@@ -194,7 +201,7 @@ def check_dcd_is_valid(dcd_path: Path, vmd_bin: Path) -> bool:
     quit
     """
     # Run VMD script from command line
-    result = subprocess.run([vmd_bin, '-dispdev', 'text', '-e', '/dev/stdin'], input=vmd_script, text=True, capture_output=True)
+    result = subprocess.run([vmd_bin, "-dispdev", "text", "-e", "/dev/stdin"], input=vmd_script, text=True, capture_output=True)
 
     # Check if the output contains "Unable to load file "
     if "Unable to load file " in result.stdout:
@@ -206,6 +213,8 @@ def check_dcd_is_valid(dcd_path: Path, vmd_bin: Path) -> bool:
         else:
             return False
 
+
+# TODO: Add tests for this function
 @catch_errors_decorator
 def check_nc_is_valid(nc_path: Path, vmd_bin: Path) -> bool:
     """
@@ -218,23 +227,19 @@ def check_nc_is_valid(nc_path: Path, vmd_bin: Path) -> bool:
     """
     vmd_script = f"""
     # Load your trajectory file
-    mol addfile {nc_path} type netctf waitfor all
+    mol addfile {nc_path} type netcdf waitfor all
 
     # Get the number of frames
     set numFrames [molinfo top get numframes]
 
     # Output the number of frames
     puts "Number of frames: $numFrames"
-    
-    # Convert to dcd
-    set dcd_path [string map {{".nc" ".dcd"}} {nc_path}]
-    animate write dcd $dcd_path beg 0 end [expr {{$numFrames - 1}}] waitfor all
 
     # Quit VMD
     quit
     """
     # Run VMD script from command line
-    result = subprocess.run([vmd_bin, '-dispdev', 'text', '-e', '/dev/stdin'], input=vmd_script, text=True, capture_output=True)
+    result = subprocess.run([vmd_bin, "-dispdev", "text", "-e", "/dev/stdin"], input=vmd_script, text=True, capture_output=True)
 
     # Check if the output contains "Unable to load file "
     if "Unable to load file " in result.stdout:
@@ -245,4 +250,3 @@ def check_nc_is_valid(nc_path: Path, vmd_bin: Path) -> bool:
             return True
         else:
             return False
-

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/09/04
+Last modified: 2024/03/31
 
 The utils module provides functions to manipulate lists.
 
@@ -24,6 +24,9 @@ string_list_to_textfile(file_path: Path, string_list: List[str]) -> None
 textfile_to_string_list(file_path: Path) -> List[str]
     A function to read the contents of a text file and return a list of strings.
 """
+
+# TODO: Homogenize the docstrings for this module
+
 # Standard library modules
 from pathlib import Path
 from typing import List
@@ -34,9 +37,7 @@ from deepmd_iterative.common.utils import catch_errors_decorator
 
 # Unittested
 @catch_errors_decorator
-def exclude_substring_from_string_list(
-    input_list: List[str], substring: str
-) -> List[str]:
+def exclude_substring_from_string_list(input_list: List[str], substring: str) -> List[str]:
     """
     Remove all strings containing a given substring from a list of strings.
 
@@ -73,9 +74,7 @@ def exclude_substring_from_string_list(
 
 # Unittested
 @catch_errors_decorator
-def replace_substring_in_string_list(
-    input_list: List[str], substring_in: str, substring_out: str
-) -> List[str]:
+def replace_substring_in_string_list(input_list: List[str], substring_in: str, substring_out: str) -> List[str]:
     """
     Replace a specified substring with a new substring in each string of a list.
 
@@ -111,15 +110,13 @@ def replace_substring_in_string_list(
     # if not substring_out:
     #    raise ValueError("Invalid input. substring_out must be a non-empty string.")
 
-    output_list = [
-        string.replace(substring_in, substring_out).strip() for string in input_list
-    ]
+    output_list = [string.replace(substring_in, substring_out).strip() for string in input_list]
     return output_list
 
 
 # Unittested
 @catch_errors_decorator
-def string_list_to_textfile(file_path: Path, string_list: List[str]) -> None:
+def string_list_to_textfile(file_path: Path, string_list: List[str], read_only=False) -> None:
     """
     Write a list of strings to a text file.
 
@@ -155,15 +152,16 @@ def string_list_to_textfile(file_path: Path, string_list: List[str]) -> None:
         error_msg = f"'{file_path}' must be a '{type(Path(''))}'."
         raise TypeError(error_msg)
 
-    if not isinstance(string_list, list) or not all(
-        isinstance(s, str) for s in string_list
-    ):
+    if not isinstance(string_list, list) or not all(isinstance(s, str) for s in string_list):
         error_msg = f"'{string_list}' must be a '{type([])}' of '{type('')}.'"
         raise TypeError(error_msg)
 
     if not string_list:
         error_msg = f"'{string_list}' must not be empty."
         raise ValueError(error_msg)
+
+    if file_path.exists():
+        file_path.chmod(0o644)
 
     try:
         with file_path.open("w") as text_file:
@@ -172,6 +170,13 @@ def string_list_to_textfile(file_path: Path, string_list: List[str]) -> None:
     except OSError as e:
         error_msg = f"error writing to file '{file_path}': '{e}'"
         raise OSError(error_msg)
+
+    if read_only:
+        current_permissions = file_path.stat().st_mode
+        # Remove the write permission (0222) while keeping others intact
+        new_permissions = current_permissions & ~0o222
+        # Update the file permissions
+        file_path.chmod(new_permissions)
 
 
 # Unittested

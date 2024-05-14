@@ -1,0 +1,9 @@
+! B3LYP D3BJ 6-31G* TightSCF NoFrozenCore KeepDens Engrad
+
+%MaxCore 1024
+
+%pal nprocs _R_NB_MPI_ end
+
+%elprop Polar 1 end
+
+*xyzfile -2 1 labeling_XXXXX.xyz

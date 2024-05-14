@@ -13,9 +13,7 @@
         "use_initial_datasets": true,
         "use_extra_datasets": false,
         "deepmd_model_version": 2.1,
-        "deepmd_model_type_descriptor": "se_e2_a",
-        "init_job_walltime_train_h": 10,
-        "job_walltime_train_h": -1,
+        "job_walltime_train_h": -1.0,
         "mean_s_per_step": 0.10,
         "start_lr": 0.001,
         "stop_lr": 1e-06,
@@ -33,7 +31,7 @@
         "vmd_path": "",
         "exploration_type": ["lammps"],
         "traj_count": [2],
-        "temperature_K": [[298.15, -1]],
+        "temperature_K": [[300.0, -1]],
         "timestep_ps": [[0.0005, 0.00025]],
         "previous_start": [[true, true]],
         "disturbed_start":[[false, false]],
@@ -41,8 +39,6 @@
         "job_walltime_h": [[-1, -1]],
         "exp_time_ps": [[-1, -1]],
         "max_exp_time_ps": [[400, 100]],
-        "init_exp_time_ps": [[10, 10]],
-        "init_job_walltime_h": [[1, 10]],
         "max_candidates": [50],
         "sigma_low": [0.2],
         "sigma_high": [0.7],
@@ -63,5 +59,13 @@
         "nb_nodes": [1],
         "nb_mpi_per_node": [10],
         "nb_threads_per_mpi": [1]
+    },
+    "test":
+    {
+        "user_machine_keyword_test": false,
+        "job_email": "",
+        "job_walltime_h": 2.0,
+        "is_compressed": false,
+        "deepmd_model_version": 0.0
     }
 }

@@ -1,0 +1,12 @@
+UNITS LENGTH=A ENERGY=kcal/mol
+
+INCLUDE FILE=plumed_atomdef__R_SYSTEM_.dat
+INCLUDE FILE=plumed_colvars__R_SYSTEM_.dat
+
+metad: METAD ARG=d1 SIGMA=0.05 HEIGHT=1.0 PACE=1000
+
+PRINT STRIDE=_R_PRINT_FREQ_ ARG=d1,metad.bias FILE=metad.txt FMT=%8.4f
+
+FLUSH STRIDE=_R_PRINT_FREQ_
+
+ENDPLUMED

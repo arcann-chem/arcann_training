@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2023/10/13
+Last modified: 2024/05/01
 
 The json module provides functions to manipulate JSON data (as dict).
 
@@ -29,16 +29,20 @@ load_json_file(file_path: Path, abort_on_error: bool = True, enable_logging: boo
 
 write_json_file(json_dict: Dict, file_path: Path, enable_logging: bool = True, **kwargs) -> None
     A function to write a dictionary to a JSON file.
-    
+
 convert_control_to_input(control_json: Dict, main_json: Dict) -> Dict:
     A functin to convert control JSON data to a input JSON.
 """
+
+# TODO: Homogenize the docstrings for this module
+
 # Standard library modules
 import json
 import logging
 import re
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List, Union
+
 
 # Local imports
 from deepmd_iterative.common.utils import catch_errors_decorator
@@ -92,9 +96,7 @@ def add_key_value_to_dict(dictionary: Dict, key: str, value: Any) -> None:
 
 # Unittested
 @catch_errors_decorator
-def get_key_in_dict(
-    key: str, input_json: Dict, previous_json: Dict, default_json: Dict
-) -> Any:
+def get_key_in_dict(key: str, input_json: Dict, previous_json: Dict, default_json: Dict) -> Any:
     """
     Get the value of the key from input JSON, previous JSON or default JSON, and validate its type.
 
@@ -142,7 +144,10 @@ def get_key_in_dict(
 # Unittested
 @catch_errors_decorator
 def backup_and_overwrite_json_file(
-    json_dict: Dict, file_path: Path, enable_logging: bool = True
+    json_dict: Dict,
+    file_path: Path,
+    enable_logging: bool = True,
+    read_only: bool = False,
 ) -> None:
     """
     Write a dictionary to a JSON file after creating a backup of the existing file.
@@ -177,13 +182,18 @@ def backup_and_overwrite_json_file(
     if file_path.is_file() and not file_path.is_symlink() and not backup_path.is_file():
         file_path.rename(backup_path)
     elif file_path.is_file() and not file_path.is_symlink() and backup_path.is_file():
+        current_permissions = backup_path.stat().st_mode
+        new_permissions = current_permissions | 0o200
+        backup_path.chmod(new_permissions)
         backup_path.unlink()
         file_path.rename(backup_path)
+        backup_path.chmod(current_permissions)
+
     # If the file is a symbolic link, remove it
     elif file_path.is_symlink():
         file_path.unlink()
     # Write the new data to the original file
-    write_json_file(json_dict, file_path, enable_logging)
+    write_json_file(json_dict, file_path, enable_logging, read_only)
 
 
 # Unittested
@@ -222,18 +232,14 @@ def load_default_json_file(file_path: Path) -> Dict:
             return json.loads(file_content)
     else:
         # If the file cannot be found, return an empty dictionary and log a warning
-        logging.warning(
-            f"Default file '{file_path.name}' not found in '{file_path.parent}'."
-        )
+        logging.warning(f"Default file '{file_path.name}' not found in '{file_path.parent}'.")
         logging.warning(f"Check your installation")
         return {}
 
 
 # Unittested
 @catch_errors_decorator
-def load_json_file(
-    file_path: Path, abort_on_error: bool = True, enable_logging: bool = True
-) -> Dict:
+def load_json_file(file_path: Path, abort_on_error: bool = True, enable_logging: bool = True) -> Dict:
     """
     Load a JSON file from the given file path and return its contents as a dictionary.
 
@@ -283,29 +289,36 @@ def load_json_file(
         else:
             # If logging is enabled, log information about the creation of the empty dictionary
             if enable_logging:
-                logging.info(
-                    f"Creating an empty dictionary: '{file_path.name}' in '{file_path.parent}'."
-                )
+                logging.info(f"Creating an empty dictionary: '{file_path.name}' in '{file_path.parent}'.")
             return {}
 
 
 # Unittested
 @catch_errors_decorator
 def write_json_file(
-    json_dict: Dict, file_path: Path, enable_logging: bool = True
+    json_dict: Dict,
+    file_path: Path,
+    enable_logging: bool = True,
+    read_only: bool = False,
 ) -> None:
     """
-    Write a dictionary to a JSON file.
+    Writes a dictionary to a JSON file, optionally logging the action and setting the file to read-only.
+
+    This function serializes `json_dict` to a JSON-formatted string (with pretty-printing) and writes it to the file
+    specified by `file_path`. It can optionally log the write operation and modify the file's permissions to read-only.
 
     Parameters
     ----------
-    json_dict : Dict
-        A dictionary containing data to be written to the JSON file.
+    json_dict : dict
+        The dictionary to serialize and write to the JSON file.
     file_path : Path
-        A path object representing the file to write the JSON data to.
-        Must be a Path object, otherwise a TypeError will be raised.
+        The file path where the JSON data should be written. This must be an instance of `Path`, otherwise, a
+        `TypeError` will be raised.
     enable_logging : bool, optional
-        If True, log a message indicating the file and path that the JSON data is being written to. Defaults to True.
+        If True (the default), logs a message indicating the file path where the JSON data is being written.
+    read_only : bool, optional
+        If True, sets the file's permissions to read-only after writing. If False (the default), the file's
+        permissions are not modified.
 
     Returns
     -------
@@ -314,13 +327,18 @@ def write_json_file(
     Raises
     ------
     TypeError
-        If file_path is not a Path object.
+        If `file_path` is not an instance of `Path`.
     Exception
-        If the file cannot be written.
+        If there is an issue writing to the file (e.g., permissions issue, disk full, file locked).
     """
     if not isinstance(file_path, Path):
         error_msg = f"'{file_path}' must be a '{type(Path('.'))}'."
         raise TypeError(error_msg)
+
+    if file_path.is_file():
+        current_permissions = file_path.stat().st_mode
+        new_permissions = current_permissions | 0o200
+        file_path.chmod(new_permissions)
 
     try:
         # Open the file specified by the file_path argument in write mode
@@ -330,25 +348,29 @@ def write_json_file(
 
             # Collapse arrays/lists in the JSON to a single line
             pattern = r"(\[)(\s*([^\]]*)\s*)(\])"
-            replacement = (
-                lambda m: m.group(1)
-                + re.sub(r"\s+", " ", m.group(3)).rstrip()
-                + m.group(4)
-            )
+            replacement = lambda m: m.group(1) + re.sub(r"\s+", " ", m.group(3)).rstrip() + m.group(4)
             json_str = re.sub(pattern, replacement, json_str)
             json_str = re.sub(r"\],\s+\[", "], [", json_str)
             json_str = re.sub(r"\]\s+\]", "]]", json_str)
             json_file.write(json_str)
 
-            # If log_write is True, log a message indicating the file and path that the JSON data is being written to
-            if enable_logging:
-                logging.info(f"JSON data written to '{file_path.absolute()}'.")
+        # If log_write is True, log a message indicating the file and path that the JSON data is being written to
+        if enable_logging:
+            logging.info(f"JSON data written to '{file_path.absolute()}'.")
+        if read_only:
+            current_permissions = file_path.stat().st_mode
+            # Remove the write permission (0222) while keeping others intact
+            new_permissions = current_permissions & ~0o222
+            # Update the file permissions
+            file_path.chmod(new_permissions)
+
     except (OSError, IOError) as e:
         # Raise an exception if the file path is not valid or the file cannot be written
         error_msg = f"Error writing JSON data to file '{file_path}': '{e}'."
         raise Exception(error_msg)
 
 
+# TODO: Add tests for this function
 @catch_errors_decorator
 def convert_control_to_input(control_json: Dict, main_json: Dict) -> Dict:
     """
@@ -381,8 +403,81 @@ def convert_control_to_input(control_json: Dict, main_json: Dict) -> Dict:
         # Iterate over keys in main_json["systems_auto"]
         for system_auto in main_json.get("systems_auto", {}):
             if system_auto in control_json.get("systems_auto", {}):
-                input_json[key].append(
-                    control_json["systems_auto"][system_auto].get(key, None)
-                )
+                input_json[key].append(control_json["systems_auto"][system_auto].get(key, None))
 
     return input_json
+
+
+# TODO: Add tests for this function
+@catch_errors_decorator
+def replace_values_by_key_name(d: Union[Dict[str, Any], List[Any]], key_name: str, new_value: Any, parent_key: str = "") -> None:
+    """
+    Recursively finds and replaces the values of all keys (and subkeys) with the specified name within a dictionary or list of dictionaries.
+
+    Parameters
+    ----------
+    d : Union[Dict[str, Any], List[Any]]
+        The dictionary (or list of dictionaries) to search and replace values in.
+    key_name : str
+        The name of the keys whose values are to be replaced.
+    new_value : Any
+        The new value to assign to all occurrences of keys with the specified name.
+    parent_key : str, optional
+        The parent key path for nested dictionaries, used for tracking the path in recursive calls (default is '').
+
+    Returns
+    -------
+    None
+        Modifies the dictionary or list of dictionaries in place; does not return a value.
+
+    Examples
+    --------
+    >>> example_dict = {
+        'a': {'seed': 1},
+        'b': {'c': {'seed': 2}},
+        'd': [{'seed': 3}, {'e': {'f': {'seed': 4}}}],
+        'seed': 5
+    }
+    >>> replace_values_by_key_name(example_dict, 'seed', 'replaced')
+    >>> print(example_dict)
+    {'a': {'seed': 'replaced'}, 'b': {'c': {'seed': 'replaced'}}, 'd': [{'seed': 'replaced'}, {'e': {'f': {'seed': 'replaced'}}}], 'seed': 'replaced'}
+    """
+
+    if isinstance(d, dict):
+        for key, value in d.items():
+            new_key = f"{parent_key}.{key}" if parent_key else key
+            if key == key_name:
+                d[key] = new_value
+            if isinstance(value, (dict, list)):
+                replace_values_by_key_name(value, key_name, new_value, new_key)
+    elif isinstance(d, list):
+        for i, item in enumerate(d):
+            new_key = f"{parent_key}[{i}]" if parent_key else f"[{i}]"
+            replace_values_by_key_name(item, key_name, new_value, new_key)
+
+
+def find_key_in_dict(d: Dict[str, Any], target_key: str) -> List[Any]:
+    """
+    Recursively search for a key in a nested dictionary and return all values associated with that key.
+
+    Parameters
+    ----------
+    d : Dict[str, Any]
+        The dictionary to search through. It can be nested with multiple levels.
+    target_key : str
+        The key to search for in the dictionary.
+
+    Returns
+    -------
+    List[Any]
+        A list of values found for the specified key across all levels of the nested dictionary.
+        If the key is not found, an empty list is returned.
+    """
+    found_values = []
+    if isinstance(d, dict):
+        for key, value in d.items():
+            if key == target_key:
+                found_values.append(value)
+            else:
+                found_values += find_key_in_dict(value, target_key)
+    return found_values

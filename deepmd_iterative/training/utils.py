@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/02/17
+Last modified: 2024/05/04
 
 The utils module provides functions for the training step.
 
@@ -32,10 +32,13 @@ validate_deepmd_config(training_config) -> None
 
 """
 
+# TODO: Homogenize the docstrings for this module
+
 # Standard library modules
-import json
 from pathlib import Path
+from copy import deepcopy
 from typing import Dict, Tuple
+import json
 
 # Third-party modules
 import numpy as np
@@ -47,10 +50,9 @@ from deepmd_iterative.common.utils import catch_errors_decorator
 # Unittested
 @catch_errors_decorator
 def generate_training_json(
-    user_input_json: Dict,
+    current_input_json: Dict,
     previous_json: Dict,
     default_input_json: Dict,
-    merged_input_json: Dict,
 ) -> Tuple[Dict, Dict]:
     """
     Generate the training JSON by incorporating values from the user input JSON, the previous JSON, and the default JSON.
@@ -59,14 +61,12 @@ def generate_training_json(
 
     Parameters
     ----------
-    user_input_json : dict
+    current_input_json : dict
         The input JSON provided by the user, containing user-defined parameters.
     previous_json : dict
         The JSON from the previous iteration.
     default_input_json : dict
         The default input JSON containing default parameters.
-    merged_input_json : dict
-        The combined input JSON.
 
     Returns
     -------
@@ -83,60 +83,28 @@ def generate_training_json(
         If a value has a different type compared to the corresponding default value.
     """
 
-    training_json = {}
+    # We copy the default to get the order of the keys constant.
+    merged_input_json = deepcopy(default_input_json)
+    training_json = deepcopy(default_input_json)
 
-    # Update the training JSON with values from the user input JSON, the previous training JSON, and the default JSON.
-    for key in [
-        "user_machine_keyword_train",
-        "user_machine_keyword_freeze",
-        "user_machine_keyword_compress",
-        "job_email",
-        "use_initial_datasets",
-        "use_extra_datasets",
-        "deepmd_model_version",
-        "deepmd_model_type_descriptor",
-        "start_lr",
-        "stop_lr",
-        "decay_rate",
-        "decay_steps",
-        "decay_steps_fixed",
-        "numb_steps",
-        "numb_test",
-    ]:
+    # Update the training JSON with values from the current JSON, the previous training JSON, and the default JSON.
+    for key in default_input_json:
         # Check if the key is present in any of the dictionaries, and set the value accordingly
-        if key in user_input_json:
-            if user_input_json[key] == "default" and key in default_input_json:
-                training_json[key] = default_input_json[key]
-                merged_input_json[key] = default_input_json[key]
-            else:
-                training_json[key] = user_input_json[key]
-                merged_input_json[key] = user_input_json[key]
+        if key in current_input_json:
+            if current_input_json[key] != "default":
+                training_json[key] = current_input_json[key]
+                merged_input_json[key] = current_input_json[key]
         elif key in previous_json:
             training_json[key] = previous_json[key]
             merged_input_json[key] = previous_json[key]
-        elif key in merged_input_json:
-            training_json[key] = merged_input_json[key]
-        elif key in default_input_json:
-            training_json[key] = default_input_json[key]
-            merged_input_json[key] = default_input_json[key]
-        else:
-            # The key is not present in any of the dictionaries
-            error_msg = f"'{key}' not found in any of the JSON dictionaries."
-            raise ValueError(error_msg)
 
         if "user_machine_keyword" in key:
-            pass
-            # This is already checked
-            # if not isinstance(training_json[key], bool) and not isinstance(training_json[key], str) and not isinstance(training_json[key], list):
-            #     error_msg = f"Wrong type: '{key}' is a {type(training_json[key])}. It should be a {bool} , or {str} or a {list} of 3 {str}."
-            #     raise TypeError(error_msg)
-            # elif isinstance(training_json[key], list) and ( len(training_json[key]) != 3 or not all(isinstance(_, str) for _ in training_json[key])):
-            #     error_msg = f"Wrong type: '{key}' is a {type(training_json[key])}, but it should be a {type(list)} of exactly 3 {type(str)}."
-            #     raise TypeError(error_msg)
-        else:
-            if not isinstance(training_json[key], type(default_input_json[key])):
-                error_msg = f"Type mismatch: '{key}' has type '{type(training_json[key])}', but should have type '{type(default_input_json[key])}'."
-                raise TypeError(error_msg)
+            continue
+
+        # Check if the value has the correct type
+        if not isinstance(training_json[key], type(default_input_json[key])):
+            error_msg = f"Type mismatch: '{key}' has type '{type(training_json[key])}', but should have type '{type(default_input_json[key])}'."
+            raise TypeError(error_msg)
 
     return training_json, merged_input_json
 
@@ -191,9 +159,7 @@ def calculate_decay_steps(num_structures: int, min_decay_steps: int = 5000) -> i
 
 # Unittested
 @catch_errors_decorator
-def calculate_decay_rate(
-    stop_batch: int, start_lr: float, stop_lr: float, decay_steps: int
-) -> float:
+def calculate_decay_rate(stop_batch: int, start_lr: float, stop_lr: float, decay_steps: int) -> float:
     """
     Calculate the decay rate based on the given training parameters.
 
@@ -235,9 +201,7 @@ def calculate_decay_rate(
 
 # Unittested
 @catch_errors_decorator
-def calculate_learning_rate(
-    current_step: int, start_lr: float, decay_rate: float, decay_steps: int
-) -> float:
+def calculate_learning_rate(current_step: int, start_lr: float, decay_rate: float, decay_steps: int) -> float:
     """
     Calculate the learning rate at a given training step, based on the given parameters.
 
@@ -263,12 +227,7 @@ def calculate_learning_rate(
         If any of the arguments are not positive or if decay_steps is not an integer.
     """
     # Check that all arguments are positive
-    if not all(
-        arg > 0 for arg in (current_step, start_lr, decay_rate, decay_steps)
-    ) or not all(
-        isinstance(arg, (int, float))
-        for arg in (current_step, start_lr, decay_rate, decay_steps)
-    ):
+    if not all(arg > 0 for arg in (current_step, start_lr, decay_rate, decay_steps)) or not all(isinstance(arg, (int, float)) for arg in (current_step, start_lr, decay_rate, decay_steps)):
         error_msg = f"All arguments must be positive."
         raise ValueError(error_msg)
     if not isinstance(decay_steps, int):
@@ -323,9 +282,7 @@ def check_initial_datasets(training_dir: Path) -> Dict[str, int]:
 
         # Check if the dataset exists in the 'data' subfolder
         if not dataset_path.is_dir():
-            error_msg = (
-                f"Initial dataset '{dataset_name}' is missing from the data subfolder."
-            )
+            error_msg = f"Initial dataset '{dataset_name}' is missing from the data subfolder."
             raise FileNotFoundError(error_msg)
 
         # Check if the number of samples in the dataset matches the expected count
@@ -364,22 +321,6 @@ def validate_deepmd_config(training_config) -> None:
         If the configuration is not valid with respect to machine/arch_name/arch and DeePMD.
     """
     # Check DeePMD version
-    if training_config["deepmd_model_version"] not in [2.0, 2.1, 2.2]:
-        error_msg = f"Invalid deepmd model version (2.0 or 2.1 or 2.2): '{training_config['deepmd_model_version']}'."
-        raise ValueError(error_msg)
-
-    # Check DeePMD descriptor type
-    if training_config["deepmd_model_type_descriptor"] not in ["se_e2_a"]:
-        error_msg = f"Invalid deepmd type descriptor (se_e2_a): '{training_config['deepmd_model_type_descriptor']}'."
-        raise ValueError(error_msg)
-
-    # Check mismatch between machine/arch_name/arch and DeePMD
-    if training_config["deepmd_model_version"] < 2.0:
-        error_msg = f"Only version >= 2.0 on Jean Zay!"
-        raise ValueError(error_msg)
-    if (
-        training_config["deepmd_model_version"] < 2.1
-        and training_config["arch_name"] == "a100"
-    ):
-        error_msg = f"Only version >= 2.1 on Jean Zay A100!"
+    if float(training_config["deepmd_model_version"]) < 2.0 or float(training_config["deepmd_model_version"]) >= 3.0:
+        error_msg = f"Only 2.x version of deepmd are suppported: '{training_config['deepmd_model_version']}'."
         raise ValueError(error_msg)

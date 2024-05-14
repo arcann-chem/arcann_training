@@ -1,5 +1,5 @@
 {
     "step_name": "initialization",
-    "systems_auto": { "value": null, "_comment": "list of str"},
+    "systems_auto": { "value": null, "_comment": "list of str", "_default": "auto-populated by taking each *.lmp file in the user_files directory"},
     "nnp_count": { "value": null, "_comment": "int", "_default": 3}
 }
