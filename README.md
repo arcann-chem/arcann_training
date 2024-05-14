@@ -3,6 +3,8 @@
 <!-- PROJECT SHIELDS -->
 
 [![GNU AGPL v3.0 License][license-shield]][license-url]
+[![Unit Tests Requirements](https://github.com/arcann-chem/arcann/actions/workflows/unittests_requirements.yml/badge.svg)](https://github.com/arcann-chem/arcann/actions/workflows/unittests_requirements.yml)
+[![Unit Tests Matrix](https://github.com/arcann-chem/arcann/actions/workflows/unittests_matrix.yml/badge.svg?branch=main)](https://github.com/arcann-chem/arcann/actions/workflows/unittests_matrix.yml)
 
 <!-- TABLE OF CONTENTS -->
 
