@@ -211,7 +211,7 @@ class TestGetMachineFromConfigs(unittest.TestCase):
         Test case where no matching configuration is found.
     """
 
-    @patch("deepmd_iterative.common.machine.get_host_name", return_value="my_machine")
+    @patch("arcann_training.common.machine.get_host_name", return_value="my_machine")
     def test_matching_hostname(self, mock_get_host_name):
         """
         Test case where a matching hostname is found.
@@ -234,7 +234,7 @@ class TestGetMachineFromConfigs(unittest.TestCase):
         result = get_machine_from_configs(machine_configs, machine_short_name="machine2")
         self.assertEqual(result, "machine2")
 
-    @patch("deepmd_iterative.common.machine.get_host_name", return_value="unknown_machine")
+    @patch("arcann_training.common.machine.get_host_name", return_value="unknown_machine")
     def test_no_matching_config(self, mock_get_host_name):
         """
         Test case where no matching configuration is found.
