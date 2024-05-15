@@ -41,7 +41,7 @@ if __name__ == "__main__":
     # Step/Phase name
     step_name: str = args.step_name
     phase_name: str = args.phase_name
-    submodule_name: str = f"deepmd_iterative.{step_name}.{phase_name}"
+    submodule_name: str = f"arcann_training.{step_name}.{phase_name}"
 
     # Input
     input_fn: str = args.input
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     # Start
     arcann_logger.info(f"-" * 88)
     arcann_logger.info(f"-" * 88)
-    arcann_logger.info(f"DEEPMD ITERATIVE PROGRAM SUITE")
+    arcann_logger.info(f"ARCANN TRAINING PROGRAM SUITE")
     arcann_logger.info(f"Launching: {step_name.capitalize()} - {phase_name.capitalize()}")
     arcann_logger.info(f"-" * 88)
     arcann_logger.info(f"-" * 88)
