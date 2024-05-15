@@ -1,11 +1,11 @@
 #----------------------------------------------------------------------------------------------------#
 #   ArcaNN: Automatic training of Reactive Chemical Architecture with Neural Networks                #
-#   Copyright 2023 ArcaNN developers group <https://github.com/arcann-chem>                          #
+#   Copyright 2022-2024 ArcaNN developers group <https://github.com/arcann-chem>                     #
 #                                                                                                    #
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 # Created: 2022/01/01
-# Last modified: 2023/08/16
+# Last modified: 2024/05/15
 
 # Load PDB file and clear all existing animations
 mol new _R_PDB_FILE_
