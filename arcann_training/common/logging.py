@@ -49,7 +49,7 @@ def setup_logging(verbose: int = 0) -> Dict:
                     'class': 'logging.FileHandler',
                     'level': 'INFO',
                     'formatter': 'simple_file',
-                    'filename': 'arcann.log',
+                    'filename': 'arcann_training.log',
                     'mode': 'a',  # Append mode
                 },
             },
