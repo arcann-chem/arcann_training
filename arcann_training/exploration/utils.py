@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/05/17
 
 Functions
 ---------
@@ -761,6 +761,7 @@ def get_last_frame_number(model_deviation: np.ndarray, sigma_high_limit: float, 
     return last_frame
 
 
+# TODO: Sould be renamed because it is not returning a factor or a number of steps but a time of simulation
 # Unittested
 @catch_errors_decorator
 def update_system_nb_steps_factor(previous_json: Dict, system_auto_index: int) -> int:
