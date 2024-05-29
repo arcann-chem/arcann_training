@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/05/26
 """
 
 # Standard library modules
@@ -360,7 +360,7 @@ def main(
             first_job_input_t = deepcopy(system_first_job_input)
             first_job_input_t = replace_substring_in_string_list(first_job_input_t, "_R_PADDEDSTEP_", padded_labeling_step)
             if labeling_program == "cp2k":
-                first_job_input_t = replace_substring_in_string_list(first_job_input_t, "_R_CELL_", " ".join([str(_) for _ in [cell_info[0][i] for i in [0, 4, 8]]]))
+                first_job_input_t = replace_substring_in_string_list(first_job_input_t, "_R_CELL_", " ".join([str(_) for _ in [cell_info[labeling_step][i] for i in [0, 4, 8]]]))
 
             string_list_to_textfile(labeling_step_path / f"1_labeling_{padded_labeling_step}.inp", first_job_input_t)
             del first_job_input_t
@@ -368,7 +368,7 @@ def main(
             if labeling_program == "cp2k":
                 second_job_input_t = deepcopy(system_second_job_input)
                 second_job_input_t = replace_substring_in_string_list(second_job_input_t, "_R_PADDEDSTEP_", padded_labeling_step)
-                second_job_input_t = replace_substring_in_string_list(second_job_input_t, "_R_CELL_", " ".join([str(_) for _ in [cell_info[0][i] for i in [0, 4, 8]]]))
+                second_job_input_t = replace_substring_in_string_list(second_job_input_t, "_R_CELL_", " ".join([str(_) for _ in [cell_info[labeling_step][i] for i in [0, 4, 8]]]))
 
                 string_list_to_textfile(labeling_step_path / f"2_labeling_{padded_labeling_step}.inp", second_job_input_t)
                 del second_job_input_t
@@ -416,13 +416,13 @@ def main(
 
                 first_job_input_t = deepcopy(system_first_job_input)
                 first_job_input_t = replace_substring_in_string_list(first_job_input_t, "_R_PADDEDSTEP_", padded_labeling_step)
-                first_job_input_t = replace_substring_in_string_list(first_job_input_t, "_R_CELL_", " ".join([str(_) for _ in [cell_info[0][i] for i in [0, 4, 8]]]))
+                first_job_input_t = replace_substring_in_string_list(first_job_input_t, "_R_CELL_", " ".join([str(_) for _ in [cell_info[labeling_step][i] for i in [0, 4, 8]]]))
                 string_list_to_textfile(labeling_step_path / f"1_labeling_{padded_labeling_step}.inp", first_job_input_t)
                 del first_job_input_t
                 if labeling_program == "cp2k":
                     second_job_input_t = deepcopy(system_second_job_input)
                     second_job_input_t = replace_substring_in_string_list(second_job_input_t, "_R_PADDEDSTEP_", padded_labeling_step)
-                    second_job_input_t = replace_substring_in_string_list(second_job_input_t, "_R_CELL_", " ".join([str(_) for _ in [cell_info[0][i] for i in [0, 4, 8]]]))
+                    second_job_input_t = replace_substring_in_string_list(second_job_input_t, "_R_CELL_", " ".join([str(_) for _ in [cell_info[labeling_step][i] for i in [0, 4, 8]]]))
                     string_list_to_textfile(labeling_step_path / f"2_labeling_{padded_labeling_step}.inp", second_job_input_t)
                     del second_job_input_t
 

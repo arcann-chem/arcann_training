@@ -392,7 +392,7 @@ Since `initialization` has only a single `start` *phase*, which is self-explanat
 
 | Phase | Description |
 | --- | --- |
-| `prepare` | Prepares folders and files for training the user-defined number of independent NNPs to be used in the next iteration. |
+| `prepare` | Prepares folders and files for training and the user-defined number of independent NNPs to be used in the next iteration. |
 | `launch` | Submits the training calculations using the `dp train` code from DeePMD-kit. |
 | `check` | Verifies whether the training has completed successfully. If any traoining ended abruptly, they need to be resubmitted manually to ensure the training finishes correctly. |
 | `freeze` | Freezes the NN parameters into a binary file (`.pb` extension for TensorFlow back-end) usable with LAMMPS and Python. This is done with the `dp freeze` code from DeePMD-kit. |

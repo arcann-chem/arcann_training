@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/05/26
 """
 
 # Standard library modules
@@ -20,7 +20,7 @@ import numpy as np
 
 # Local imports
 from arcann_training.common.json import load_json_file, write_json_file, get_key_in_dict, load_default_json_file, backup_and_overwrite_json_file
-from arcann_training.common.list import textfile_to_string_list
+from arcann_training.common.list import textfile_to_string_list, string_list_to_textfile
 from arcann_training.common.check import validate_step_folder, check_vmd, check_dcd_is_valid, check_nc_is_valid
 
 
@@ -111,6 +111,7 @@ def main(
     completed_count = 0
     skipped_count = 0
     forced_count = 0
+    failed_explorations_list = []
 
     for system_auto_index, system_auto in enumerate(main_json["systems_auto"]):
         # Counters
@@ -173,6 +174,7 @@ def main(
                         timings.append(float(timings_str[0].split(" ")[3]))
                         del timings_str
                     else:
+                        failed_explorations_list.append(f"{lammps_output_file.parent}")
                         arcann_logger.critical(f"'{lammps_output_file}' failed. Check manually.")
                     del lammps_output, lammps_output_file, traj_file, model_deviation_filename
 
@@ -213,6 +215,7 @@ def main(
                         timings.append(float(matches[0]))
                         del timings_str
                     else:
+                        failed_explorations_list.append(f"{lammps_output_file.parent}")
                         arcann_logger.critical(f"'{sander_emle_output_file}' failed. Check manually.")
                     del sander_emle_ouput, sander_emle_output_file, traj_file, model_deviation_filename
 
@@ -241,6 +244,7 @@ def main(
                         timings.append(np.average(np.asarray(ipi_time2, dtype="float32")))
                         del ipi_time, ipi_time2
                     else:
+                        failed_explorations_list.append(f"{lammps_output_file.parent}")
                         arcann_logger.critical(f"'{ipi_output_file}' failed. Check manually.")
                         del ipi_output
                     del ipi_output_file
@@ -285,7 +289,10 @@ def main(
         del timings, average_per_step, system_count
 
     del system_auto, it_nnp, it_number
-
+    if failed_explorations_list:
+        string_list_to_textfile((current_path / "failed_explorations.txt"), failed_explorations_list, read_only=True)
+        arcann_logger.critical(f"Failed explorations are listed in 'failed_explorations.txt'.")
+    
     arcann_logger.info(f"-" * 88)
     # Update the booleans in the exploration JSON
     if (completed_count + skipped_count + forced_count) == (exploration_json["nnp_count"] * sum([exploration_json["systems_auto"][_]["traj_count"] for _ in exploration_json["systems_auto"]])):
