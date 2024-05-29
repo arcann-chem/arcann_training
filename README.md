@@ -33,8 +33,8 @@
 
 # About The Project #
 
-"Very fancy DeePMD-based semi-automatic highly customizable iterative training procedure" would definitely be the best definition of this repository.
-It aims to simplify and automate the iterative training process of a [DeePMD-kit](https://doi.org/10.1063/5.0155600) neural network potential for a user-chosen system.
+ArcaNN proposes an automated enhanced sampling generation of training sets for chemically reactive machine learning interatomic potentials. 
+In its current version, it aims to simplify and to automate the iterative training process of a [DeePMD-kit](https://doi.org/10.1063/5.0155600) neural network potential for a user-chosen system, but the core concepts of the training procedure could be extended to other network architectures.
 The main advantages of this code are its modularity, the ability to finely tune the training process to adapt to your system and workflow, and great traceability, as the code records every parameter set during the procedure.
 During the iterative training process, you will iteratively train neural network potentials, use them as reactive force fields for molecular dynamics simulations (to explore the phase space), select and label some configurations based on a query by committee approach, and then train neural network potentials again with an improved training set, and so forth.
 This workflow, sometimes referred to as active or concurrent learning, was heavily inspired by [DP-GEN](https://doi.org/10.1016/j.cpc.2020.107206), and we use their naming scheme for the steps of the iterative procedure.
