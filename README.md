@@ -597,9 +597,9 @@ At this stage we should decide wether we want to include disturbed candidates in
 
 We can finally clean up the working folder by running the `clean` phase and move on to the labeling phase! (Don't forget to keep your local folder updated so that you can analyze all these results)
 
-### i-PI quantum nuclei simulations NEEDS TO BE UPDATED ###
+### i-PI quantum nuclei simulations ###
 
-Simulations explicitly including nuclear quantum effects by path-integral molecular dynamics with i-PI are quite similar to classical nuclei simulations with LAMMPS. Although the input files are different (see `examples/i-PI_exploration/*.xml`), the preparation, launch and check phases (`exploration1_prep.py`, `exploration2_launch.py` and `exploration3_check.py`) can be done exactly as previously (see [LAMMPS classical nuclei simulations](#lammps-classical-nuclei-simulations) above). Then, before executing `exploration4_devi.py` and `exploration5_extract.py`, you must run `explorationX_selectbeads.py`, `explorationX_rerun.py` and `explorationX_recheck.py` in this order. These 3 scripts do not have options or special parameters that need to be tuned but require `VMD` and `Atomsk`. After that, you can run `exploration4_devi.py`, `exploration5_extract.py` and `exploration9_clean.py` as for LAMMPS MD simulations.
+Simulations explicitly including nuclear quantum effects by path-integral molecular dynamics with i-PI are quite similar to classical nuclei simulations with LAMMPS. Although the i-PI input files are different (see [i-PI](https://ipi-code.org/)), the `prepare`, `launch` and `check` phases can be done exactly as previously (see [LAMMPS classical nuclei simulations](#lammps-classical-nuclei-simulations) above). Then, before executing the `deviate` and `extract` phases, you must run `select_beads` and `rerun` in this order. These phases do not have special parameters that need to be tuned but require `VMD` and `Atomsk`. After that, you can run the rest of the step as for LAMMPS MD simulations.
 
 <div id="usage-labeling"></div>
 
