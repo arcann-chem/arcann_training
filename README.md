@@ -711,5 +711,5 @@ Distributed under the GNU Affero General Public License v3.0. See `LICENSE` for 
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[license-shield]: https://img.shields.io/github/license/laagegroup/0_Template.svg?style=for-the-badge
-[license-url]: https://github.com/laagegroup/0_Template/blob/main/LICENSE
+[license-shield]: https://img.shields.io/github/license/arcann-chem/arcann_training.svg?style=for-the-badge
+[license-url]: https://github.com/arcann-chem/arcann_training/blob/main/LICENSE
