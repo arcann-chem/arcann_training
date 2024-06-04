@@ -669,9 +669,8 @@ Distributed under the GNU Affero General Public License v3.0. See `LICENSE` for 
 
 ### Beta-testers ###
 
-- Olaia Anton, Zakarya Benayad
+- Olaia Anton, Zakarya Benayad, Miguel de la Puente, Axel Gomez
 - Oscar Gayraud, Pierre Girard, Anne Milet
-- Meritxell Malagarriga Perez, Adrián García
 
 ### Atomsk ###
 
