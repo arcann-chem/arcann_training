@@ -1,4 +1,4 @@
 {
-    "user_machine_keyword_label": "cpu_rome_gen11005",
+    "user_machine_keyword_label": "cpu_rome",
     "nb_mpi_per_node": 16
 }

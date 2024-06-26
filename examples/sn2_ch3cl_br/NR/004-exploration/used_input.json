@@ -1,8 +1,8 @@
 {
-    "user_machine_keyword_exp": "v100_kro",
+    "user_machine_keyword_exp": "v100_myproject1",
     "job_email": "",
-    "atomsk_path": "/gpfsssd/worksf/projects/rech/kro/commun/programs/apps/atomsk/0.13.1/atomsk",
-    "vmd_path": "/gpfs7kro/gpfslocalsup/prod/vmd/1.9.4a43/bin/vmd_LINUXAMD64",
+    "atomsk_path": "/programs/apps/atomsk/0.13.1/atomsk",
+    "vmd_path": "/prod/vmd/1.9.4a43/bin/vmd_LINUXAMD64",
     "exploration_type": ["lammps", "lammps", "lammps", "lammps", "lammps", "lammps"],
     "traj_count": [2, 2, 2, 2, 2, 2],
     "temperature_K": [300.0, 300.0, 300.0, 300.0, 300.0, 300.0],

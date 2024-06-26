@@ -1,5 +1,5 @@
 {
-    "user_machine_keyword_label": "cpu_rome_gen11005",
+    "user_machine_keyword_label": "cpu_rome",
     "job_email": "",
     "labeling_program": "cp2k",
     "walltime_first_job_h": [0.7780846428571428, 0.8731616666666666, 0.7534175000000001, 0.80905125, 0.7984392499999999, 0.8496004166666666],

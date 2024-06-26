@@ -1,5 +1,5 @@
 {
-    "user_machine_keyword_label": "cpu_kro",
+    "user_machine_keyword_label": "cpu_myproject1",
     "job_email": "",
     "labeling_program": "cp2k",
     "walltime_first_job_h": [0.9335972916666666, 1.1555845052083331, 1.1739045512820514, 0.9075345833333334, 1.143174583333333, 1.142574375],

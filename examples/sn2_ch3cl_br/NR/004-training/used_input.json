@@ -1,7 +1,7 @@
 {
-    "user_machine_keyword_train": "v100_kro",
-    "user_machine_keyword_freeze": "v100_kro",
-    "user_machine_keyword_compress": "v100_kro",
+    "user_machine_keyword_train": "v100_myproject1",
+    "user_machine_keyword_freeze": "v100_myproject1",
+    "user_machine_keyword_compress": "v100_myproject1",
     "job_email": "",
     "use_initial_datasets": true,
     "use_extra_datasets": false,
