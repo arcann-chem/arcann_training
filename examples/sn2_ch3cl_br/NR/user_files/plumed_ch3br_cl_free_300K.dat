@@ -1,0 +1,19 @@
+UNITS LENGTH=A ENERGY=kcal/mol
+
+INCLUDE FILE=plumed_atomdef_ch3br_cl_free_300K.dat
+INCLUDE FILE=plumed_colvars_ch3br_cl_free_300K.dat
+
+# Walls on C-H distances
+UWALLS DATA=CV_ds_CMeHMe AT=1.4 KAPPA=200 LABEL=uwall_CMeHMe
+LWALLS DATA=CV_ds_CMeHMe AT=0.8 KAPPA=200 LABEL=lwall_CMeHMe
+LWALLS DATA=CV_ds_ANCNANHMe AT=1.8 KAPPA=200 LABEL=lwall_ANCNANHMe
+
+# Walls on CMe-X distances (not too far, no dissociation, whatever CH3-X is)
+UPPER_WALLS ARG=CV_ds_CMeClCMeBr.lowest AT=3.0 KAPPA=200 LABEL=uwall_ds_lowest_CMeClCMeBr
+UPPER_WALLS ARG=CV_ds_CMeClCMeBr.highest AT=11.0 KAPPA=200 LABEL=uwall_ds_highest_CMeClCMeBr
+
+PRINT STRIDE=_R_PRINT_FREQ_ ARG=(uwall_.*),(lwall_.*) FILE=WALLS.txt FMT=%8.4f
+
+FLUSH STRIDE=_R_PRINT_FREQ_
+
+ENDPLUMED

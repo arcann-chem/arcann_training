@@ -1,0 +1,18 @@
+{
+    "user_machine_keyword_train": "v100_kro",
+    "user_machine_keyword_freeze": "v100_kro",
+    "user_machine_keyword_compress": "v100_kro",
+    "job_email": "",
+    "use_initial_datasets": true,
+    "use_extra_datasets": false,
+    "deepmd_model_version": 2.1,
+    "job_walltime_train_h": 5.204166666666667,
+    "mean_s_per_step": 0.0468375,
+    "start_lr": 0.001,
+    "stop_lr": 1e-06,
+    "decay_rate": 0.9172759353897796,
+    "decay_steps": 5000,
+    "decay_steps_fixed": false,
+    "numb_steps": 400000,
+    "numb_test": 0
+}

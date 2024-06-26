@@ -1,0 +1,50 @@
+{
+    "model": {
+        "type_map": ["C", "H", "Cl", "Br", "N"],
+        "descriptor": {
+            "seed": 2082608865,
+            "type": "se_e2_a",
+            "sel": [40, 65, 1, 1, 25],
+            "rcut": 6.0,
+            "rcut_smth": 0.5,
+            "neuron": [20, 40, 80],
+            "axis_neuron": 16,
+            "resnet_dt": false
+        },
+        "fitting_net": {
+            "seed": 2082608865,
+            "neuron": [240, 240, 240],
+            "resnet_dt": true
+        }
+    },
+    "learning_rate": {
+        "type": "exp",
+        "decay_steps": 5000,
+        "start_lr": 0.002,
+        "stop_lr": 7.010533249765748e-08
+    },
+    "loss": {
+        "start_pref_e": 0.01,
+        "limit_pref_e": 1,
+        "start_pref_f": 1000,
+        "limit_pref_f": 1,
+        "start_pref_v": 0.0,
+        "limit_pref_v": 0.0
+    },
+    "training": {
+        "seed": 2082608865,
+        "disp_file": "lcurve.out",
+        "disp_freq": 1000,
+        "numb_test": 0,
+        "save_freq": 1000,
+        "save_ckpt": "model.ckpt",
+        "disp_training": true,
+        "time_training": true,
+        "profiling": false,
+        "training_data": {
+            "systems": ["../data.init/init_system.0_reactant", "../data.init/init_system.0_product"],
+            "set_prefix": "set",
+            "batch_size": 1
+        }
+    }
+}
