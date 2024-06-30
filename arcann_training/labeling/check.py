@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/06/11
 """
 
 # Standard library modules
@@ -216,13 +216,13 @@ def main(
                         else:
                             system_candidates_failed[0].append(f"{system_output_orca_file}")
 
-        if (candidates_step_count[0] == 0 or candidates_step_count[1] == 0) and candidates_skipped_count == 0 and labeling_program == "cp2k":
+        if candidates_step_count[1] == 0 and candidates_skipped_count == 0 and labeling_program == "cp2k":
             arcann_logger.critical("ALL jobs have failed/not converged/still running (second step).")
             arcann_logger.critical("Please check manually before relaunching this step")
             arcann_logger.critical('Or create files named "skip" to skip some configurations')
             arcann_logger.critical("Aborting...")
             return 1
-        elif (candidates_step_count[0] == 0) and candidates_step_count == 0 and labeling_program == "orca":
+        elif candidates_step_count[0] == 0 and candidates_skipped_count == 0 and labeling_program == "orca":
             arcann_logger.critical("ALL jobs have failed/not converged/still running (first step).")
             arcann_logger.critical("Please check manually before relaunching this step")
             arcann_logger.critical('Or create files named "skip" to skip some configurations')

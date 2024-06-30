@@ -1,0 +1,76 @@
+{
+    "hpc1":
+    {
+        "hostname": "hpc1_address",
+        "walltime_format": "hours",
+        "job_scheduler": "slurm",
+        "launch_command": "sbatch",
+        "max_jobs" : -1,
+        "max_array_size" : 10000,
+        "a100_myproject1": {
+            "project_name": "myproject1",
+            "allocation_name": "a100",
+            "arch_name": "a100",
+            "arch_type": "gpu",
+            "partition": "gpu_p1",
+            "subpartition": "a100",
+            "qos": {"qos_gpu-normal": 72000, "qos_gpu-long": 360000},
+            "valid_for":  ["training"],
+            "default": ["training"]
+        },
+
+        "cpu_myproject1": {
+            "project_name": "myproject1",
+            "allocation_name": "cpu",
+            "arch_name": "cpu",
+            "arch_type": "cpu",
+            "partition": "cpu_p",
+            "subpartition": null,
+            "qos": {"qos_cpu-normal": 72000, "qos_cpu-long": 360000},
+            "valid_for": ["labeling"],
+            "default": ["labeling"]
+        },
+
+        "v100_myproject1": {
+            "project_name": "myproject1",
+            "allocation_name": "v100",
+            "arch_name": "v100",
+            "arch_type": "gpu",
+            "partition": "gpu_p1",
+            "subpartition": "[v100-16g|v100-32g]",
+            "qos": {"qos_gpu-normal": 72000, "qos_gpu-long": 360000},
+            "valid_for":  ["freezing","compressing","exploration","test","training"],
+            "default": ["freezing","compressing","exploration","test"]
+        }
+    },
+    "hpc2":
+    {
+        "hostname": "hpc2_address",
+        "walltime_format": "seconds",
+        "job_scheduler": "slurm",
+        "launch_command": "sbatct",
+        "max_jobs" : 250,
+        "max_array_size" : 1000,
+        "cpu_rome": {
+            "project_name": "myproject2",
+            "allocation_name": "rome",
+            "arch_name": "cpu",
+            "arch_type": "cpu",
+            "partition": null,
+            "subpartition": null,
+            "qos": {"normal": 86400, "long": 259200},
+            "valid_for": ["labeling"],
+            "default": ["labeling"]
+        },
+        "cpu_skylake": {
+            "project_name": "myproject2",
+            "allocation_name": "skylake",
+            "arch_name": "cpu",
+            "arch_type": "cpu",
+            "partition": null,
+            "subpartition": null,
+            "qos": {"normal": 86400, "long": 259200},
+            "valid_for": ["labeling"]
+        }
+    }
+}

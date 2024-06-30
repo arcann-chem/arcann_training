@@ -9,22 +9,30 @@
 # Last modified: 2024/06/27
 #----------------------------------------------------------------------------------------------------#
 
+# Check if the input file is provided as an argument
+if [[ -z "$1" ]]; then
+    echo "Error: No input file specified!"
+    echo "Usage: $0 <input_file>"
+    exit 1
+fi
+
 # Check if the input file exists
-input_file="failed_explorations.txt"
+input_file="$1"
 if [[ ! -f "$input_file" ]]; then
     echo "Error: File '$input_file' not found!"
     exit 1
 fi
 
 # Read the input file line by line
-while IFS= read -r directory; do
+while IFS= read -r line; do
     # Trim leading and trailing whitespaces
-    directory=$(echo "$directory" | xargs)
+    line=$(echo "$line" | xargs)
+    directory=$(dirname "$line")
 
     # Check if the directory is not empty
     if [[ -n "$directory" ]]; then
-        # Create the "force" file in the directory
-        touch "$directory/force" && echo "Created force file in: $directory"
+        # Create the "skip" file in the directory
+        touch "$directory/skip" && echo "Created skip file in: $directory"
     else
         echo "Warning: Empty line encountered in the input file."
     fi

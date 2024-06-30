@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/06/12
 """
 
 # Standard library modules
@@ -139,9 +139,9 @@ def main(
                     check_file_existence(training_path / "user_files" / f"{system_auto}.lmp", True, True, "Input data file (lmp) not present.")
 
                     lammps_data = textfile_to_string_list(training_path / "user_files" / f"{system_auto}.lmp")
-                    indexes = [idx for idx, s in enumerate(lammps_data) if "Atoms" in s]
+                    indexes = [idx for idx, s in enumerate(lammps_data) if "Atoms" in s and "tomsk" not in s]
                     if len(indexes) > 1:
-                        for index in [idx for idx, s in enumerate(lammps_data) if "Atoms" in s]:
+                        for index in [idx for idx, s in enumerate(lammps_data) if "Atoms" in s and "tomsk" not in s]:
                             atom_list = [line.strip().split() for line in lammps_data[index + 2 : index + 4]]
                             if len(atom_list[0]) == len(atom_list[1]) and lammps_data[index + 1] == " \n" and atom_list[0][0] == "1" and atom_list[1][0] == "2":
                                 idx = index
@@ -301,9 +301,9 @@ def main(
                         check_file_existence(training_path / "user_files" / f"{system_auto}.lmp", True, True, "Input data file (lmp) not present.")
 
                         lammps_data = textfile_to_string_list(training_path / "user_files" / f"{system_auto}.lmp")
-                        indexes = [idx for idx, s in enumerate(lammps_data) if "Atoms" in s]
+                        indexes = [idx for idx, s in enumerate(lammps_data) if "Atoms" in s and "tomsk" not in s]
                         if len(indexes) > 1:
-                            for index in [idx for idx, s in enumerate(lammps_data) if "Atoms" in s]:
+                            for index in [idx for idx, s in enumerate(lammps_data) if "Atoms" in s and "tomsk" not in s]:
                                 atom_list = [line.strip().split() for line in lammps_data[index + 2 : index + 4]]
                                 if len(atom_list[0]) == len(atom_list[1]) and lammps_data[index + 1] == " \n" and atom_list[0][0] == "1" and atom_list[1][0] == "2":
                                     idx = index
