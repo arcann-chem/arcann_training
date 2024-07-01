@@ -359,7 +359,7 @@ Each iteration will have three folders: XXX-exploration, XXX-labeling, and XXX-t
 Each **step** is executed in its corresponding folder by running, in order, the relevant *phases* with the following command:
 
 ```bash
-python -m deepmd_iterative STEP_NAME PHASE_NAME 
+python -m arcann_training STEP_NAME PHASE_NAME 
 ```
 
 where `STEP_NAME` refers to the current **step** (`initialization`, `exploration`, `labeling`, `training`, or `test`) and `PHASE_NAME` is the specific task that needs to be performed within that **step**.
@@ -437,10 +437,10 @@ We will now describe each **step** of the concurrent learning procedure in detai
 
 ## Initialization ##
 
-Now that you have decided the subsystems that you want to train your NNP on and prepared all the required files you can initialize the `deepmd_iterative_py` procedure by running (from the $WORK_DIR folder):
+Now that you have decided the subsystems that you want to train your NNP on and prepared all the required files you can initialize the `arcann_training_py` procedure by running (from the $WORK_DIR folder):
 
 ```bash
-python -m deepmd_iterative initialization start 
+python -m arcann_training initialization start 
 ```
 
 Now it should have generated your first `000-training` directory. In `$WORK_DIR` you will also find a `default_input.json` file that lools like this :
@@ -500,7 +500,7 @@ rsync -rvu $WORK_DIR USER@HPC-MACHINE:/PATH/TO/WORK_DIR
 Now go to the empty `000-training` folder created by the script execute the `prepare` phase:
 
 ```bash
-python -m deepmd_iterative training prepare
+python -m arcann_training training prepare
 ```
 
 This will create three folders `1/`, `2/` and `3/` and a copy of your `data/` folder, as well as a `default_input.json` file containing the default training parameters. If you want to modify some of the default values you can create a `input.json` file from the `default_input.json` file that looks like this:
@@ -636,7 +636,7 @@ Here the reactive water calculations use full nodes and have a higher wall time 
 
 ## Test (optional) ##
 
-It is possible to perform tests at every iteration of the learning procedure (the code will create `XXX-test/` folders at every `increment` phase of a `training` step). However, doing this at every iteration is rather time consuming and is not really necessary (although you should obviously test your converged NNP thoroughly). Therefore, documentation on how to test at every iteration within the `deepmd_iterative` procedure is still not ready, sorry!
+It is possible to perform tests at every iteration of the learning procedure (the code will create `XXX-test/` folders at every `increment` phase of a `training` step). However, doing this at every iteration is rather time consuming and is not really necessary (although you should obviously test your converged NNP thoroughly). Therefore, documentation on how to test at every iteration within the `arcann_training` procedure is still not ready, sorry!
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
