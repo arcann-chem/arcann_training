@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/17
+Last modified: 2024/07/05
 """
 
 # Standard library modules
@@ -50,11 +50,11 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
-    logging.debug(f"Current path :{current_path}")
-    logging.debug(f"Training path: {training_path}")
-    logging.debug(f"Program path: {deepmd_iterative_path}")
-    logging.info(f"-" * 88)
+    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
+    arcann_logger.debug(f"Current path :{current_path}")
+    arcann_logger.debug(f"Training path: {training_path}")
+    arcann_logger.debug(f"Program path: {deepmd_iterative_path}")
+    arcann_logger.info(f"-" * 88)
 
     # Check if the current folder is correct for the current step
     validate_step_folder(current_step)
@@ -62,15 +62,15 @@ def main(
     # Get the current iteration number
     padded_curr_iter = Path().resolve().parts[-1].split("-")[0]
     curr_iter = int(padded_curr_iter)
-    logging.debug(f"curr_iter, padded_curr_iter: {curr_iter}, {padded_curr_iter}")
+    arcann_logger.debug(f"curr_iter, padded_curr_iter: {curr_iter}, {padded_curr_iter}")
 
     # Load the default input JSON
     default_input_json = load_default_json_file(deepmd_iterative_path / "assets" / "default_config.json")[current_step]
     default_input_json_present = bool(default_input_json)
     if default_input_json_present and not (current_path / "default_input.json").is_file():
         write_json_file(default_input_json, (current_path / "default_input.json"))
-    logging.debug(f"default_input_json: {default_input_json}")
-    logging.debug(f"default_input_json_present: {default_input_json_present}")
+    arcann_logger.debug(f"default_input_json: {default_input_json}")
+    arcann_logger.debug(f"default_input_json_present: {default_input_json_present}")
 
     # Load the user input JSON
     if (current_path / user_input_json_filename).is_file():
@@ -78,14 +78,14 @@ def main(
     else:
         user_input_json = {}
     user_input_json_present = bool(user_input_json)
-    logging.debug(f"user_input_json: {user_input_json}")
-    logging.debug(f"user_input_json_present: {user_input_json_present}")
+    arcann_logger.debug(f"user_input_json: {user_input_json}")
+    arcann_logger.debug(f"user_input_json_present: {user_input_json_present}")
 
     # Create a empty (None/Null) current input JSON
     current_input_json = {}
     for key in default_input_json:
         current_input_json[key] = None
-    logging.debug(f"current_input_json: {current_input_json}")
+    arcann_logger.debug(f"current_input_json: {current_input_json}")
 
     # Get control path and load the main JSON
     control_path = training_path / "control"
@@ -104,22 +104,22 @@ def main(
         previous_training_json = {}
         previous_exploration_json = {}
 
-    logging.debug(f"previous_training_json: {previous_training_json}")
-    logging.debug(f"previous_exploration_json: {previous_exploration_json}")
+    arcann_logger.debug(f"previous_training_json: {previous_training_json}")
+    arcann_logger.debug(f"previous_exploration_json: {previous_exploration_json}")
 
     # Check if the atomsk package is installed
     atomsk_bin = check_atomsk(get_key_in_dict("atomsk_path", user_input_json, previous_exploration_json, default_input_json))
     # Update the merged input JSON
     current_input_json["atomsk_path"] = atomsk_bin
-    logging.debug(f"current_input_json: {current_input_json}")
+    arcann_logger.debug(f"current_input_json: {current_input_json}")
 
     # Get the machine keyword (Priority: user > previous > default)
     # And update the merged input JSON
     user_machine_keyword = get_machine_keyword(user_input_json, previous_exploration_json, default_input_json, "exp")
-    logging.debug(f"user_machine_keyword: {user_machine_keyword}")
+    arcann_logger.debug(f"user_machine_keyword: {user_machine_keyword}")
     # Set it to None if bool, because: get_machine_spec_for_step needs None
     user_machine_keyword = None if isinstance(user_machine_keyword, bool) else user_machine_keyword
-    logging.debug(f"user_machine_keyword: {user_machine_keyword}")
+    arcann_logger.debug(f"user_machine_keyword: {user_machine_keyword}")
 
     # From the keyword (or default), get the machine spec (or for the fake one)
     (
@@ -139,28 +139,28 @@ def main(
         user_machine_keyword,
     )
     arch_type = machine_spec["arch_type"]
-    logging.debug(f"machine: {machine}")
-    logging.debug(f"machine_walltime_format: {machine_walltime_format}")
-    logging.debug(f"machine_job_scheduler: {machine_job_scheduler}")
-    logging.debug(f"machine_launch_command: {machine_launch_command}")
-    logging.debug(f"machine_max_jobs: {machine_max_jobs}")
-    logging.debug(f"machine_max_array_size: {machine_max_array_size}")
-    logging.debug(f"user_machine_keyword: {user_machine_keyword}")
-    logging.debug(f"machine_spec: {machine_spec}")
+    arcann_logger.debug(f"machine: {machine}")
+    arcann_logger.debug(f"machine_walltime_format: {machine_walltime_format}")
+    arcann_logger.debug(f"machine_job_scheduler: {machine_job_scheduler}")
+    arcann_logger.debug(f"machine_launch_command: {machine_launch_command}")
+    arcann_logger.debug(f"machine_max_jobs: {machine_max_jobs}")
+    arcann_logger.debug(f"machine_max_array_size: {machine_max_array_size}")
+    arcann_logger.debug(f"user_machine_keyword: {user_machine_keyword}")
+    arcann_logger.debug(f"machine_spec: {machine_spec}")
 
     current_input_json["user_machine_keyword_exp"] = user_machine_keyword
-    logging.debug(f"current_input_json: {current_input_json}")
+    arcann_logger.debug(f"current_input_json: {current_input_json}")
 
     if fake_machine is not None:
-        logging.info(f"Pretending to be on: '{fake_machine}'.")
+        arcann_logger.info(f"Pretending to be on: '{fake_machine}'.")
     else:
-        logging.info(f"Machine identified: '{machine}'.")
+        arcann_logger.info(f"Machine identified: '{machine}'.")
     del fake_machine
 
     # Generate/update the merged input JSON
     # Priority: user > previous > default
     current_input_json = generate_input_exploration_json(user_input_json, previous_exploration_json, default_input_json, current_input_json, main_json)
-    logging.debug(f"current_input_json: {current_input_json}")
+    arcann_logger.debug(f"current_input_json: {current_input_json}")
 
     # TODO to rewrite (generate_exploration_json ?)
     # Generate the exploration JSON
@@ -198,19 +198,19 @@ def main(
         if (current_path.parent / "user_files" / job_file_name).is_file():
             master_job_file[exploration_type] = textfile_to_string_list(current_path.parent / "user_files" / job_file_name)
         else:
-            logging.error(f"No JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine.")
-            logging.error(f"Aborting...")
+            arcann_logger.error(f"No JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine.")
+            arcann_logger.error(f"Aborting...")
             return 1
 
         if (current_path.parent / "user_files" / job_array_file_name).is_file():
             master_job_array_file[exploration_type] = textfile_to_string_list(current_path.parent / "user_files" / job_array_file_name)
         else:
-            logging.warning(f"No ARRAY JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine.")
-            logging.error(f"Aborting...")
+            arcann_logger.warning(f"No ARRAY JOB file provided for '{current_step.capitalize()} / {current_phase.capitalize()}' for this machine.")
+            arcann_logger.error(f"Aborting...")
             return 1
 
-        logging.debug(f"master_job_file: {master_job_file[exploration_type][0:5]}, {master_job_file[exploration_type][-5:-1]}")
-        logging.debug(f"master_job_array_file: {master_job_array_file[exploration_type][0:5]}, {master_job_array_file[exploration_type][-5:-1]}")
+        arcann_logger.debug(f"master_job_file: {master_job_file[exploration_type][0:5]}, {master_job_file[exploration_type][-5:-1]}")
+        arcann_logger.debug(f"master_job_array_file: {master_job_array_file[exploration_type][0:5]}, {master_job_array_file[exploration_type][-5:-1]}")
 
         current_input_json["job_email"] = get_key_in_dict("job_email", user_input_json, previous_exploration_json, default_input_json)
 
@@ -244,7 +244,7 @@ def main(
             system_previous_start,
             system_disturbed_start,
         ) = get_system_exploration(current_input_json, system_auto_index)
-        logging.debug(f"{system_exploration_type, system_traj_count, system_timestep_ps,system_temperature_K,system_exp_time_ps,system_max_exp_time_ps,system_job_walltime_h,system_print_mult,system_previous_start,system_disturbed_start}")
+        arcann_logger.debug(f"{system_exploration_type, system_traj_count, system_timestep_ps,system_temperature_K,system_exp_time_ps,system_max_exp_time_ps,system_job_walltime_h,system_print_mult,system_previous_start,system_disturbed_start}")
 
         plumed = [False, False, False]
 
@@ -301,8 +301,8 @@ def main(
 
             # If no plumed files are found, print an error message and exit
             if len(plumed_files) == 0:
-                logging.error(f"Plumed in (LAMMPS/i-PI/SANDER-EMLE) input but no plumed files found")
-                logging.error(f"Aborting...")
+                arcann_logger.error(f"Plumed in (LAMMPS/i-PI/SANDER-EMLE) input but no plumed files found")
+                arcann_logger.error(f"Aborting...")
                 sys.exit(1)
 
             # Read the contents of each plumed file into a dictionary
@@ -412,7 +412,7 @@ def main(
             # Get print freq
             system_print_every_x_steps = system_nb_steps * system_print_mult
             if int(system_print_every_x_steps) < 1:
-                logging.warning(f"Print frequency is less than 1 step. Setting it to 1 step.")
+                arcann_logger.warning(f"Print frequency is less than 1 step. Setting it to 1 step.")
                 system_print_every_x_steps = 1
             input_replace_dict["_R_PRINT_FREQ_"] = f"{int(system_print_every_x_steps)}"
 
@@ -491,7 +491,7 @@ def main(
             # Get print freq
             system_print_every_x_steps = system_nb_steps * system_print_mult
             if int(system_print_every_x_steps) < 1:
-                logging.warning(f"Print frequency is less than 1 step. Setting it to 1 step.")
+                arcann_logger.warning(f"Print frequency is less than 1 step. Setting it to 1 step.")
                 system_print_every_x_steps = 1
             input_replace_dict["_R_PRINT_FREQ_"] = f"{int(system_print_every_x_steps)}"
         # END OF SANDER-EMLE
@@ -500,8 +500,8 @@ def main(
         elif system_exploration_type == "i-PI":
             system_temperature_K = float(get_temperature_from_ipi_xml(master_system_ipi_xml))
             if system_temperature_K == -1:
-                logging.error(f"No temperature found in the xml: '{training_path / 'files' / (system_auto + '.xml')}'.")
-                logging.error("Aborting...")
+                arcann_logger.error(f"No temperature found in the xml: '{training_path / 'files' / (system_auto + '.xml')}'.")
+                arcann_logger.error("Aborting...")
                 sys.exit(1)
 
             # TODO This should be read like temp
@@ -582,7 +582,7 @@ def main(
             # Get print freq
             system_print_every_x_steps = system_nb_steps * system_print_mult
             if int(system_print_every_x_steps) < 1:
-                logging.warning(f"Print frequency is less than 1 step. Setting it to 1 step.")
+                arcann_logger.warning(f"Print frequency is less than 1 step. Setting it to 1 step.")
                 system_print_every_x_steps = 1
             input_replace_dict["_R_PRINT_FREQ_"] = f"{int(system_print_every_x_steps)}"
         # END OF i-PI
@@ -597,7 +597,7 @@ def main(
 
                 # Create the model list
                 models_list, models_string = create_models_list(main_json, previous_training_json, nnp_index, padded_prev_iter, training_path, local_path)
-                logging.debug(f"{models_list}, {models_string}")
+                arcann_logger.debug(f"{models_list}, {models_string}")
 
                 # LAMMPS
                 if system_exploration_type == "lammps":
@@ -698,7 +698,7 @@ def main(
                     if curr_iter > 1:
 
                         # TODO: Implement the starting points for SANDER-EMLE
-                        logging.warning(f"Starting points are not implemented for SANDER-EMLE. Using the same starting point as the first exploration.")
+                        arcann_logger.warning(f"Starting points are not implemented for SANDER-EMLE. Using the same starting point as the first exploration.")
                         system_previous_start = False
                         # if len(starting_point_list) == 0:
                         #     starting_point_list = copy.deepcopy(starting_point_list_bckp)
@@ -882,8 +882,8 @@ def main(
                     del job_file
                     # END OF INDIVIDUAL JOB FILE
                 else:
-                    logging.error(f"Exploration is unknown/not set.")
-                    logging.error(f"Aborting...")
+                    arcann_logger.error(f"Exploration is unknown/not set.")
+                    arcann_logger.error(f"Aborting...")
                     sys.exit(1)
 
             del traj_index, models_list, models_string, local_path
@@ -954,14 +954,14 @@ def main(
     exploration_json["nb_sim"] = nb_sim
 
     # Dump the JSON files (main, exploration and merged input)
-    logging.info(f"-" * 88)
+    arcann_logger.info(f"-" * 88)
     write_json_file(main_json, (control_path / "config.json"), read_only=True)
     write_json_file(exploration_json, (control_path / f"exploration_{padded_curr_iter}.json"), read_only=True)
     backup_and_overwrite_json_file(current_input_json, (current_path / "used_input.json"), read_only=True)
 
     # End
-    logging.info(f"-" * 88)
-    logging.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
+    arcann_logger.info(f"-" * 88)
+    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
 
     # Cleaning
     del current_path, control_path, training_path
@@ -971,8 +971,8 @@ def main(
     del curr_iter, padded_curr_iter, prev_iter, padded_prev_iter
     del machine, machine_spec, machine_walltime_format, machine_launch_command, machine_job_scheduler
 
-    logging.debug(f"LOCAL")
-    logging.debug(f"{locals()}")
+    arcann_logger.debug(f"LOCAL")
+    arcann_logger.debug(f"{locals()}")
     return 0
 
 
