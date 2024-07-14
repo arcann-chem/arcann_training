@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/07/14
 """
 
 # Standard library modules
@@ -211,14 +211,12 @@ def main(
                         arcann_logger.error("Aborting...")
                         return 1
 
-                    end_row_number = get_last_frame_number(
-                        model_deviation,
-                        sigma_high_limit,
-                        exploration_json["systems_auto"][system_auto]["disturbed_start"],
-                    )
-                    arcann_logger.debug(f"end_row_number: {end_row_number}, start_row_number: {start_row_number}")
+                    end_row_number = get_last_frame_number(model_deviation, sigma_high_limit, exploration_json["systems_auto"][system_auto]["disturbed_start"])
+
                     if (local_path / "force").is_file():
-                        end_row_number = end_row_number - 1
+                        end_row_number = model_deviation.shape[0] - 1
+
+                    arcann_logger.debug(f"end_row_number: {end_row_number}, start_row_number: {start_row_number}")
 
                     if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps" or exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
 
