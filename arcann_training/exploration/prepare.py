@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/07/05
+Last modified: 2024/07/14
 """
 
 # Standard library modules
@@ -454,7 +454,7 @@ def main(
 
                 walltime_approx_s[system_exploration_type].append(system_walltime_approx_s)
 
-                                # Get the cell and nb of atoms: It can be done now because the starting point is the same by NNP and by traj
+                # Get the cell and nb of atoms: It can be done now because the starting point is the same by NNP and by traj
                 system_nb_atm, num_atom_types, box, masses, coords = read_lammps_data(training_path / "user_files" / (system_auto + ".lmp"))
                 system_cell = [box[1] - box[0], box[3] - box[2], box[5] - box[4]]
 
@@ -641,7 +641,7 @@ def main(
                     for key, value in input_replace_dict.items():
                         system_lammps_in = replace_substring_in_string_list(system_lammps_in, key, value)
                     del key, value
-                    string_list_to_textfile(local_path / (f"{system_auto}_{nnp_index}_{padded_curr_iter}.in"), system_lammps_in, read_only=True)
+                    string_list_to_textfile(local_path / f"{system_auto}_{nnp_index}_{padded_curr_iter}.in", system_lammps_in, read_only=True)
 
                     job_array_params_line = str(system_auto) + "_" + str(nnp_index) + "_" + str(traj_index).zfill(5) + "/"
                     job_array_params_line += f"{exploration_json['deepmd_model_version']}" + "/"
@@ -742,7 +742,7 @@ def main(
                         system_sander_emle_in = replace_substring_in_string_list(system_sander_emle_in, key, value)
                     del key, value
                     string_list_to_textfile(
-                        local_path / (f"{system_auto}_{nnp_index}_{padded_curr_iter}.in"),
+                        local_path / f"{system_auto}_{nnp_index}_{padded_curr_iter}.in",
                         system_sander_emle_in,
                         read_only=True,
                     )
@@ -853,8 +853,8 @@ def main(
                         system_ipi_xml_aslist = replace_substring_in_string_list(system_ipi_xml_aslist, key, value)
                     del key, value
                     system_ipi_xml = string_list_to_xml(system_ipi_xml_aslist)
-                    write_xml_file(system_ipi_xml, local_path / (f"{system_auto}_{nnp_index}_{padded_curr_iter}.xml"), read_only=True)
-                    write_json_file(system_ipi_json, local_path / (f"{system_auto}_{nnp_index}_{padded_curr_iter}.json"), read_only=True)
+                    write_xml_file(system_ipi_xml, local_path / f"{system_auto}_{nnp_index}_{padded_curr_iter}.xml", read_only=True)
+                    write_json_file(system_ipi_json, local_path / f"{system_auto}_{nnp_index}_{padded_curr_iter}.json", read_only=True)
 
                     # INDIVIDUAL JOB FILE
                     job_file = replace_in_slurm_file_general(master_job_file[system_exploration_type], machine_spec, system_walltime_approx_s, machine_walltime_format, current_input_json["job_email"])

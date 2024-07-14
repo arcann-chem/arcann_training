@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2024/03/01
-Last modified: 2024/05/15
+Last modified: 2024/07/14
 """
 
 # TODO: Homogenize the docstrings for this module
@@ -39,6 +39,7 @@ def extract_and_convert_energy(energy_in, energy_out, system_candidates_not_skip
         energy = float(energy_in[energy_line_index].strip())
         energy_out[system_candidates_not_skipped_counter - 1] = energy * conversion_factor
         return energy_out
+
 
 # TODO: Add tests for this function
 @catch_errors_decorator
@@ -89,7 +90,7 @@ def extract_and_convert_forces(forces_in, forces_out, system_candidates_not_skip
             end_index = len(forces_in)
         gradient_values = forces_in[start_index:end_index]
         gradient_array = np.asarray([float(value.strip()) for value in gradient_values], dtype=np.float64)
-        forces_out[system_candidates_not_skipped_counter - 1, :] = - gradient_array * conversion_factor
+        forces_out[system_candidates_not_skipped_counter - 1, :] = -gradient_array * conversion_factor
         return forces_out
 
 
@@ -98,7 +99,7 @@ def extract_and_convert_forces(forces_in, forces_out, system_candidates_not_skip
 def extract_and_convert_virial(stress_in, virial_out, system_candidates_not_skipped_counter, volume, conversion_factor=1.0, program=None, version=None):
     logger = logging.getLogger("ArcaNN")
     if program == "cp2k":
-        if version < 8 and version >= 6:
+        if 8 > version >= 6:
             matching_index = None
             for index, line in enumerate(stress_in):
                 if re.search(r"\bX\b.*\bY\b.*\bZ\b", line):
@@ -119,7 +120,7 @@ def extract_and_convert_virial(stress_in, virial_out, system_candidates_not_skip
             else:
                 return virial_out, False
 
-        elif version < 2024 and version >= 8:
+        elif 2024 > version >= 8:
             matching_index = None
             for index, line in enumerate(stress_in):
                 if re.search(r"\bx\b.*\by\b.*\bz\b", line):

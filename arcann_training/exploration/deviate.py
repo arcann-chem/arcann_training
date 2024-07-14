@@ -23,6 +23,7 @@ from arcann_training.common.check import validate_step_folder
 from arcann_training.exploration.utils import get_last_frame_number, generate_input_exploration_deviation_json, get_system_deviation
 from arcann_training.common.xyz import parse_xyz_trajectory_file
 
+
 def main(
     current_step: str,
     current_phase: str,

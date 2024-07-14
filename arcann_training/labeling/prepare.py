@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/07/10
+Last modified: 2024/07/14
 """
 
 # Standard library modules
@@ -186,8 +186,7 @@ def main(
 
     labeling_json["systems_auto"] = {}
 
-    job_array_params_file = {f"{labeling_program}": [
-        f":SYSTEM:INDEX:{labeling_program_up}_INPUT_F1:{labeling_program_up}_INPUT_F2:{labeling_program_up}_WFRST_F:{labeling_program_up}_XYZ_F:NODES:MPI_PER_NODE:THREADS_PER_MPI:WALLTIME_S:"]}
+    job_array_params_file = {f"{labeling_program}": [f":SYSTEM:INDEX:{labeling_program_up}_INPUT_F1:{labeling_program_up}_INPUT_F2:{labeling_program_up}_WFRST_F:{labeling_program_up}_XYZ_F:NODES:MPI_PER_NODE:THREADS_PER_MPI:WALLTIME_S:"]}
 
     # Get the list of systems to label to get the next one
     total_to_label = 0

@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/07/14
 
 The machine module provides functions for machine operations.
 
@@ -337,7 +337,9 @@ def get_machine_spec_for_step(
                 "max_array_size",
             ]:
                 # Check if the current keyword matches the user keyword
-                if (isinstance(user_machine_keyword, str) and user_machine_keyword == config_key) or (isinstance(user_machine_keyword, list) and len(user_machine_keyword) == 3 and user_machine_keyword[0] == config_data.get("project_name") and user_machine_keyword[1] == config_data.get("allocation_name") and user_machine_keyword[2] == config_data.get("arch_name")):
+                if (isinstance(user_machine_keyword, str) and user_machine_keyword == config_key) or (
+                    isinstance(user_machine_keyword, list) and len(user_machine_keyword) == 3 and user_machine_keyword[0] == config_data.get("project_name") and user_machine_keyword[1] == config_data.get("allocation_name") and user_machine_keyword[2] == config_data.get("arch_name")
+                ):
                     # Check if the step is valid for the current configuration
                     if step in config_data.get("valid_for", []):
                         # Return the machine specification

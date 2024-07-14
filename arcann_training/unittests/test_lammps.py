@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2023/09/04
-Last modified: 2024/05/15
+Last modified: 2024/07/14
 
 Test cases for the lammps module.
 
@@ -17,8 +17,6 @@ TestReadLammpsData():
 """
 
 # Standard library modules
-from contextlib import AbstractContextManager
-from typing import Any
 import unittest
 
 # Third-party modules

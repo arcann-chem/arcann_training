@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/07/14
 
 The json module provides functions to manipulate JSON data (as dict).
 
@@ -143,17 +143,12 @@ def get_key_in_dict(key: str, input_json: Dict, previous_json: Dict, default_jso
 
 # Unittested
 @catch_errors_decorator
-def backup_and_overwrite_json_file(
-    json_dict: Dict,
-    file_path: Path,
-    enable_logging: bool = True,
-    read_only: bool = False,
-) -> None:
+def backup_and_overwrite_json_file(json_dict: Dict, file_path: Path, enable_logging: bool = True, read_only: bool = False) -> None:
     """
     Write a dictionary to a JSON file after creating a backup of the existing file.
 
-    If the file already exists, it will be renamed to have a ".json.bak" extension before the new data is written. If the
-    file is a symbolic link, it will be removed before the new data is written.
+    If the file already exists, it will be renamed to have a ".json.bak" extension before the new data is written.
+    If the file is a symbolic link, it will be removed before the new data is written.
 
     Parameters
     ----------
@@ -162,7 +157,10 @@ def backup_and_overwrite_json_file(
     file_path : Path
         A path object representing the file to write the JSON data to.
     enable_logging : bool, optional
-        Whether to log information about the writing process. Defaults to False.
+        Whether to log information about the writing process. Defaults to True.
+    read_only : bool, optional
+        If True, sets the file's permissions to read-only after writing. If False (the default), the file's
+        permissions are not modified.
 
     Returns
     -------
@@ -295,12 +293,7 @@ def load_json_file(file_path: Path, abort_on_error: bool = True, enable_logging:
 
 # Unittested
 @catch_errors_decorator
-def write_json_file(
-    json_dict: Dict,
-    file_path: Path,
-    enable_logging: bool = True,
-    read_only: bool = False,
-) -> None:
+def write_json_file(json_dict: Dict, file_path: Path, enable_logging: bool = True, read_only: bool = False) -> None:
     """
     Writes a dictionary to a JSON file, optionally logging the action and setting the file to read-only.
 

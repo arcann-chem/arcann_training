@@ -6,20 +6,20 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/07/14
 """
 
 # Standard library modules
 import logging
+import subprocess
 import sys
 from pathlib import Path
-import subprocess
 
 # Local imports
 from arcann_training.common.check import validate_step_folder
 from arcann_training.common.filesystem import change_directory
-from arcann_training.common.json import backup_and_overwrite_json_file, load_default_json_file, load_json_file, write_json_file
-from arcann_training.common.machine import assert_same_machine, get_machine_keyword, get_machine_spec_for_step
+from arcann_training.common.json import load_json_file, write_json_file
+from arcann_training.common.machine import assert_same_machine, get_machine_spec_for_step
 
 
 def main(

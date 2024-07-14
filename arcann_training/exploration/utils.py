@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/17
+Last modified: 2024/07/14
 
 Functions
 ---------
@@ -748,7 +748,7 @@ def get_last_frame_number(model_deviation: np.ndarray, sigma_high_limit: float, 
     else:
         start_frame = 0
     if model_deviation.shape[1] == 2:
-        if np.any(model_deviation[start_frame: 1] >= sigma_high_limit):
+        if np.any(model_deviation[start_frame:1] >= sigma_high_limit):
             last_frame = np.argmax(model_deviation[start_frame:, 1] >= sigma_high_limit)
         else:
             last_frame = -1

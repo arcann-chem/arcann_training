@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/07/14
 """
 
 # Standard library modules
@@ -141,9 +141,9 @@ def main(
             arcann_logger.error(f"Lock found. Please execute 'labeling extract' first.")
             arcann_logger.error(f"Aborting...")
             return 1
-        #exploration_json = load_json_file((control_path / f"exploration_{padded_curr_iter}.json"))
+        # exploration_json = load_json_file((control_path / f"exploration_{padded_curr_iter}.json"))
     else:
-        #exploration_json = {}
+        # exploration_json = {}
         labeling_json = {}
 
     if "deepmd_model_version" not in user_input_json:
@@ -157,7 +157,7 @@ def main(
         arcann_logger.debug(f"dptrain_list: {dptrain_list}")
         del file
 
-        if dptrain_list == []:
+        if not dptrain_list:
             arcann_logger.error(f"No dptrain_DEEPMDVERSION.json files found in {(current_path.parent / 'user_files')}")
             arcann_logger.error(f"Aborting...")
             return 1
@@ -166,7 +166,7 @@ def main(
         for dptrain in dptrain_list:
             dptrain_max_version = max(dptrain_max_version, float(dptrain.stem.split("_")[-1]))
         del dptrain
-    
+
         arcann_logger.debug(f"dptrain_max_version: {dptrain_max_version}")
         current_input_json["deepmd_model_version"] = dptrain_max_version
         del dptrain_list, dptrain_max_version
@@ -195,7 +195,7 @@ def main(
     validate_deepmd_config(training_json)
 
     # Check if the default input json file exists
-    dp_train_input_path = (training_path / "user_files" / (f"dptrain_{training_json['deepmd_model_version']}.json")).resolve()
+    dp_train_input_path = (training_path / "user_files" / f"dptrain_{training_json['deepmd_model_version']}.json").resolve()
 
     dp_train_input = load_json_file(dp_train_input_path)
     if "type_map" not in main_json:
@@ -447,10 +447,10 @@ def main(
     else:
         if curr_iter == 0:
             # This is rounded up to the next hour
-            walltime_approx_s = int( np.ceil(training_json["numb_steps"] * default_input_json["mean_s_per_step"] / 3600 ) * 3600 )
+            walltime_approx_s = int(np.ceil(training_json["numb_steps"] * default_input_json["mean_s_per_step"] / 3600) * 3600)
             mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
         else:
-            walltime_approx_s = int( np.ceil(training_json["numb_steps"] * previous_training_json["mean_s_per_step"] * 1.5 / 3600 ) * 3600 )
+            walltime_approx_s = int(np.ceil(training_json["numb_steps"] * previous_training_json["mean_s_per_step"] * 1.5 / 3600) * 3600)
             mean_s_per_step = walltime_approx_s / training_json["numb_steps"]
 
     current_input_json["job_walltime_train_h"] = float(walltime_approx_s / 3600)
@@ -502,7 +502,7 @@ def main(
     del default_input_json, default_input_json_present, user_input_json, user_input_json_present, user_input_json_filename
     del main_json, current_input_json, training_json, previous_training_json, labeling_json
     del user_machine_keyword
-    del curr_iter, padded_curr_iter 
+    del curr_iter, padded_curr_iter
     del machine, machine_spec, machine_walltime_format, machine_job_scheduler, machine_launch_command, machine_max_jobs, machine_max_array_size
     del master_job_file
 

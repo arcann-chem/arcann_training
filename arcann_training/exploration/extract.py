@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/07/14
 """
 
 # Standard library modules
@@ -26,6 +26,7 @@ from arcann_training.common.list import replace_substring_in_string_list, string
 from arcann_training.common.check import validate_step_folder, check_atomsk, check_vmd
 from arcann_training.exploration.utils import generate_input_exploration_disturbed_json, get_system_disturb
 from arcann_training.common.xyz import parse_xyz_trajectory_file, write_xyz_frame
+
 
 def main(
     current_step: str,
@@ -203,7 +204,6 @@ def main(
 
                     if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps" or exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
 
-
                         min_file_name = f"{padded_curr_iter}_{system_auto}_{it_nnp}_{str(it_number).zfill(5)}"
                         vmd_tcl = deepcopy(master_vmd_tcl)
                         vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_PDB_FILE_", str(topo_file))
@@ -252,7 +252,11 @@ def main(
 
                             # Atomsk XYZ -> LMP
                             remove_file(starting_structures_path / f"{min_file_name}_{padded_min_index}_disturbed.lmp")
-                            subprocess.run([atomsk_bin, "-ow", "-properties", str(Path("..") / "user_files" / "properties.txt"), str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}_disturbed.xyz"), str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}_disturbed.lmp")], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                            subprocess.run(
+                                [atomsk_bin, "-ow", "-properties", str(Path("..") / "user_files" / "properties.txt"), str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}_disturbed.xyz"), str(Path("..") / "starting_structures" / f"{min_file_name}_{padded_min_index}_disturbed.lmp")],
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.STDOUT,
+                            )
                             # Add a mass to any 0.0000 mass in the LMP file
                             lmp_file = textfile_to_string_list(starting_structures_path / f"{min_file_name}_{padded_min_index}_disturbed.lmp")
                             lmp_file = replace_substring_in_string_list(lmp_file, "0.00000000              # XX", "1.00000000              # XX")
@@ -300,7 +304,7 @@ def main(
                         vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_PDB_FILE_", str(topo_file))
                         vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_DCD_FILE_", str(traj_file))
                         vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_FRAME_INDEX_FILE_", str(local_path / "label.vmd"))
-                        vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_XYZ_OUT_", str(local_path / ("candidates")))
+                        vmd_tcl = replace_substring_in_string_list(vmd_tcl, "_R_XYZ_OUT_", str(local_path / "candidates"))
                         string_list_to_textfile((local_path / "vmd.tcl"), vmd_tcl)
                         del vmd_tcl, traj_file
 
@@ -332,9 +336,13 @@ def main(
                             for candidate_index_padded in candidate_indexes_padded:
                                 (local_path / f"candidates_{candidate_index_padded}_disturbed.xyz").write_text((local_path / f"candidates_{candidate_index_padded}.xyz").read_text())
                                 if not disturbed_candidate_indexes:
-                                    subprocess.run([atomsk_bin, "-ow", str(Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / (f"candidates_{candidate_index_padded}_disturbed.xyz")), "-disturb", str(disturbed_candidate_value), "exyz"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                                    subprocess.run([atomsk_bin, "-ow", str(Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / f"candidates_{candidate_index_padded}_disturbed.xyz"), "-disturb", str(disturbed_candidate_value), "exyz"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
                                 else:
-                                    subprocess.run([atomsk_bin, "-ow", str(Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / (f"candidates_{candidate_index_padded}_disturbed.xyz")), "-select", ",".join([str(idx) for idx in disturbed_candidate_indexes]), "-disturb", str(disturbed_candidate_value), "exyz"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                                    subprocess.run(
+                                        [atomsk_bin, "-ow", str(Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / f"candidates_{candidate_index_padded}_disturbed.xyz"), "-select", ",".join([str(idx) for idx in disturbed_candidate_indexes]), "-disturb", str(disturbed_candidate_value), "exyz"],
+                                        stdout=subprocess.DEVNULL,
+                                        stderr=subprocess.STDOUT,
+                                    )
 
                             candidates_disturbed_files.extend([str(Path(".") / str(system_auto) / str(it_nnp) / str(it_number).zfill(5) / ("candidates_" + _ + "_disturbed.xyz")) for _ in candidate_indexes_padded])
                             exploration_json["systems_auto"][system_auto]["disturbed_candidate_value"] = disturbed_candidate_value
@@ -429,7 +437,7 @@ if __name__ == "__main__":
             "extract",
             Path(sys.argv[1]),
             fake_machine=sys.argv[2],
-            input_fn=sys.argv[3],
+            user_input_json_filename=sys.argv[3],
         )
     else:
         pass

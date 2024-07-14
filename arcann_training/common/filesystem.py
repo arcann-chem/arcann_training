@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/07/14
 
 The filesystem module provides functions to handle file and directory management
 
@@ -106,7 +106,7 @@ def check_directory(directory_path: Path, abort_on_error: bool = True, error_msg
         If the directory does not exist and `abort_on_error` is True.
     """
     logger = logging.getLogger("ArcaNN")
-    
+
     # Check if the directory exists
     if not directory_path.is_dir():
         # Create error message
@@ -154,7 +154,7 @@ def check_file_existence(
         If the file is expected not to exist but does, and `abort_on_error` is True.
     """
     logger = logging.getLogger("ArcaNN")
-    
+
     exists = file_path.is_file()
 
     if exists != expected_existence:

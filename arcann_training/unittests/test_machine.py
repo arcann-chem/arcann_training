@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2023/09/04
-Last modified: 2024/05/15
+Last modified: 2024/07/14
 
 Test cases for the machine module.
 
@@ -26,9 +26,11 @@ TestGetMachineFromConfigs():
 
 """
 
-# Standard library modules
-import unittest
 import socket
+
+# Standard library modules
+
+import unittest
 from unittest.mock import patch
 
 # Local imports
@@ -36,9 +38,7 @@ from arcann_training.common.machine import (
     get_host_name,
     assert_same_machine,
     get_machine_keyword,
-    get_machine_config_files,
     get_machine_from_configs,
-    get_machine_spec_for_step,
 )
 
 

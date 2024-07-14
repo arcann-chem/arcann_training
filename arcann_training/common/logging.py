@@ -6,9 +6,11 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2024/05/01
-Last modified: 2024/05/15
+Last modified: 2024/07/14
 """
+
 from typing import Dict
+
 
 def setup_logging(verbose: int = 0) -> Dict:
     """
@@ -18,55 +20,44 @@ def setup_logging(verbose: int = 0) -> Dict:
     ----------
     verbose : int, optional
         Verbosity level, by default 0
-    
+
     Returns
     -------
     Dict
         Logging configuration
     """
     logging_config = {
-            'version': 1,
-            'disable_existing_loggers': False,
-            'formatters': {
-                'simple': {
-                    'format': '%(levelname)s - %(message)s',
-                },
-                'simple_file': {
-                    'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                },
-                'detailed': {
-                    'format': '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s',
-                }
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "simple": {
+                "format": "%(levelname)s - %(message)s",
             },
-            'handlers': {
-                'console': {
-                    'class': 'logging.StreamHandler',
-                    'level': 'INFO',
-                    'formatter': 'simple',
-                    'stream': 'ext://sys.stdout'  # Use standard output (or sys.stderr)
-                },
-                'file': {
-                    'class': 'logging.FileHandler',
-                    'level': 'INFO',
-                    'formatter': 'simple_file',
-                    'filename': 'arcann_training.log',
-                    'mode': 'a',  # Append mode
-                },
+            "simple_file": {
+                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             },
-            'loggers': {
-                '': {
-                    'handlers': ['console', 'file'],
-                    'level': 'INFO',
-                    'propagate': True
-                }
-            }
-        }
+            "detailed": {
+                "format": "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s",
+            },
+        },
+        "handlers": {
+            "console": {"class": "logging.StreamHandler", "level": "INFO", "formatter": "simple", "stream": "ext://sys.stdout"},  # Use standard output (or sys.stderr)
+            "file": {
+                "class": "logging.FileHandler",
+                "level": "INFO",
+                "formatter": "simple_file",
+                "filename": "arcann_training.log",
+                "mode": "a",  # Append mode
+            },
+        },
+        "loggers": {"": {"handlers": ["console", "file"], "level": "INFO", "propagate": True}},
+    }
 
     if verbose >= 1:
-        logging_config['handlers']['console']['level'] = 'DEBUG'
-        logging_config['handlers']['console']['formatter'] = 'detailed'
-        logging_config['handlers']['file']['level'] = 'DEBUG'
-        logging_config['handlers']['file']['formatter'] = 'detailed'
-        logging_config['loggers']['']['level'] = 'DEBUG'
+        logging_config["handlers"]["console"]["level"] = "DEBUG"
+        logging_config["handlers"]["console"]["formatter"] = "detailed"
+        logging_config["handlers"]["file"]["level"] = "DEBUG"
+        logging_config["handlers"]["file"]["formatter"] = "detailed"
+        logging_config["loggers"][""]["level"] = "DEBUG"
 
     return logging_config

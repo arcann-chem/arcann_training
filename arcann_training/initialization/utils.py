@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/07/14
 
 Functions
 ---------
@@ -231,7 +231,7 @@ def check_dptrain_properties(user_files_path: Path, properties_dict: Dict):
         if "dptrain" not in file.stem:
             continue
         dptrain_list.append(file)
-    if dptrain_list == []:
+    if not dptrain_list:
         error_msg = f"No dptrain_DEEPMDVERSION.json files found in {user_files_path}"
         raise FileNotFoundError(error_msg)
 
