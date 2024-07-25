@@ -138,10 +138,10 @@ This method is **only** recommended if you plan to modify the source files, and 
 ### If your machine does not have access to the internet ###
 
 Download the repository onto a machine that has access to the internet and to your offline working computer.
-In a `tmp/` folder (outside of the repository), copy the `arcann_training/tools/download_arcann_environment.sh` and `arcann_training/tools/arcann_conda_linux-64_env.txt.txt` files, then run
+In a `tmp/` folder (outside of the repository), copy the `arcann_training/tools/download_arcann_environment.sh` and `arcann_training/tools/arcann_conda_linux-64_env.txt` files, then run
 
 ```bash
-chmod +x download_arcann_environment.sh ; ./download_arcann_environment.sh
+chmod +x download_arcann_environment.sh ; ./download_arcann_environment.sh arcann_conda_linux-64_env.txt
 ```
 
 This script will download all the required Python packages into a `arcann_conda_linux-64_env_offline_files/` folder and create a `arcann_conda_linux-64_env_offline.txt` file.
