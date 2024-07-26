@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/26
+Last modified: 2024/07/14
 """
 
 # Standard library modules
@@ -186,8 +186,7 @@ def main(
 
     labeling_json["systems_auto"] = {}
 
-    job_array_params_file = {f"{labeling_program}": [
-        f":SYSTEM:INDEX:{labeling_program_up}_INPUT_F1:{labeling_program_up}_INPUT_F2:{labeling_program_up}_WFRST_F:{labeling_program_up}_XYZ_F:NODES:MPI_PER_NODE:THREADS_PER_MPI:WALLTIME_S:"]}
+    job_array_params_file = {f"{labeling_program}": [f":SYSTEM:INDEX:{labeling_program_up}_INPUT_F1:{labeling_program_up}_INPUT_F2:{labeling_program_up}_WFRST_F:{labeling_program_up}_XYZ_F:NODES:MPI_PER_NODE:THREADS_PER_MPI:WALLTIME_S:"]}
 
     # Get the list of systems to label to get the next one
     total_to_label = 0
@@ -241,9 +240,9 @@ def main(
             labeling_json["systems_auto"][system_auto]["disturbed_candidates_count"] = disturbed_candidates_count
             continue
 
-        if curr_iter > 1 and ("walltime_first_job_h" not in user_input_json or user_input_json["walltime_first_job_h"][system_auto_index] == -1):
+        if curr_iter > 1 and "walltime_first_job_h" not in user_input_json:
             system_walltime_first_job_h = max(previous_labeling_json["systems_auto"][system_auto]["timings_s"][0] / 3600 * 1.5, 0.5)
-        if curr_iter > 1 and ("walltime_second_job_h" not in user_input_json or user_input_json["walltime_second_job_h"][system_auto_index] == -1):
+        if curr_iter > 1 and "walltime_second_job_h" not in user_input_json:
             system_walltime_second_job_h = max(previous_labeling_json["systems_auto"][system_auto]["timings_s"][1] / 3600 * 1.5, 0.5)
 
         current_input_json["walltime_first_job_h"][system_auto_index] = system_walltime_first_job_h

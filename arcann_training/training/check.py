@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/07/14
 """
 
 # Standard library modules
@@ -157,7 +157,6 @@ def main(
         if sum(selection_list[0]) > 2.0 * sum(max_nbor_size):
             arcann_logger.warning(f"The expected maximum number of type-i neighbors of an atom is at least 100% larger that the ones present in the training datasets.")
             arcann_logger.warning(f"You may want to decrease the expected maximum number of type-i neighbors of an atom (keyword 'sel').")
-
 
     arcann_logger.info(f"-" * 88)
     # Update the boolean in the training JSON

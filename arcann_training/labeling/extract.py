@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/06/12
+Last modified: 2024/07/14
 """
 
 # Standard library modules
@@ -115,7 +115,13 @@ def main(
         coord_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, main_json["systems_auto"][system_auto]["nb_atm"] * 3), dtype=np.float64)
         box_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, 9), dtype=np.float64)
         volume_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count), dtype=np.float64)
-        force_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, main_json["systems_auto"][system_auto]["nb_atm"] * 3,), dtype=np.float64)
+        force_array_raw = np.zeros(
+            (
+                system_candidates_count - system_candidates_skipped_count,
+                main_json["systems_auto"][system_auto]["nb_atm"] * 3,
+            ),
+            dtype=np.float64,
+        )
         virial_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, 9), dtype=np.float64)
         # Options
         is_virial = False
@@ -156,7 +162,7 @@ def main(
                     type_atom_array = type_atom_array - 1
                     np.savetxt(f"{system_path}/type.raw", type_atom_array, delimiter=" ", newline=" ", fmt="%d")
                     np.savetxt(f"{data_path}/type.raw", type_atom_array, delimiter=" ", newline=" ", fmt="%d")
-    
+
                     # Get the CP2K/Orca version
                     if labeling_program == "cp2k":
                         output_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}.out")
@@ -202,7 +208,7 @@ def main(
                         output_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}.out")
                         wannier_xyz = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}-Wannier.xyz")
                         if system_candidates_not_skipped_counter == 1:
-                            wannier_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, (len(wannier_xyz)-2-main_json["systems_auto"][system_auto]["nb_atm"]) * 3), dtype=np.float64)
+                            wannier_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, (len(wannier_xyz) - 2 - main_json["systems_auto"][system_auto]["nb_atm"]) * 3), dtype=np.float64)
                         wannier_array_raw, is_wannier = extract_and_convert_wannier(wannier_xyz, wannier_array_raw, system_candidates_not_skipped_counter, main_json["systems_auto"][system_auto]["nb_atm"], 1.0, labeling_program, program_version)
                         if any("LOCALIZATION! loop did not converge within the maximum number of iterations" in _ for _ in output_cp2k):
                             wannier_not_converged.append(f"{system_candidates_not_skipped_counter - 1}\n")
@@ -213,7 +219,7 @@ def main(
                     energy_orca = textfile_to_string_list(labeling_step_path / f"1_labeling_{padded_labeling_step}.engrad")
                     energy_array_raw = extract_and_convert_energy(energy_orca, energy_array_raw, system_candidates_not_skipped_counter, Ha_to_eV, labeling_program, program_version)
                     del energy_orca
-                    
+
                     # Box / Volume
                     # TODO
                     system_cell = main_json["systems_auto"][system_auto]["cell"]
@@ -363,7 +369,7 @@ def main(
                             output_cp2k = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}.out")
                             wannier_xyz = textfile_to_string_list(labeling_step_path / f"2_labeling_{padded_labeling_step}-Wannier.xyz")
                             if system_disturbed_candidates_not_skipped_counter == 1:
-                                wannier_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, (len(wannier_xyz)-2-main_json["systems_auto"][system_auto]["nb_atm"]) * 3), dtype=np.float64)
+                                wannier_array_raw = np.zeros((system_candidates_count - system_candidates_skipped_count, (len(wannier_xyz) - 2 - main_json["systems_auto"][system_auto]["nb_atm"]) * 3), dtype=np.float64)
                             wannier_array_raw, is_wannier = extract_and_convert_wannier(wannier_xyz, wannier_array_raw, system_disturbed_candidates_not_skipped_counter, main_json["systems_auto"][system_auto]["nb_atm"], 1.0, labeling_program, program_version)
                             if any("LOCALIZATION! loop did not converge within the maximum number of iterations" in _ for _ in output_cp2k):
                                 wannier_not_converged.append(f"{system_disturbed_candidates_not_skipped_counter - 1}\n")
@@ -378,7 +384,7 @@ def main(
                         # Box / Volume
                         # TODO
                         system_cell = main_json["systems_auto"][system_auto]["cell"]
-                        #box_array_raw, volume_array_raw = extract_and_convert_box_volume(energy_orca, box_array_raw, volume_array_raw, system_candidates_not_skipped_counter, 1.0, labeling_program, program_version)
+                        # box_array_raw, volume_array_raw = extract_and_convert_box_volume(energy_orca, box_array_raw, volume_array_raw, system_candidates_not_skipped_counter, 1.0, labeling_program, program_version)
                         box_array_raw[system_candidates_not_skipped_counter, 0] = system_cell[0]
                         box_array_raw[system_candidates_not_skipped_counter, 4] = system_cell[1]
                         box_array_raw[system_candidates_not_skipped_counter, 8] = system_cell[2]

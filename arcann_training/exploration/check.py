@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/26
+Last modified: 2024/07/14
 """
 
 # Standard library modules
@@ -210,7 +210,7 @@ def main(
                         completed_count += 1
                         exploration_json["systems_auto"][system_auto]["completed_count"] += 1
                         timings_str = [zzz for zzz in sander_emle_ouput if "Elapsed(s) = " in zzz]
-                        pattern = r'Elapsed\(s\) =\s*([\d.]+)'
+                        pattern = r"Elapsed\(s\) =\s*([\d.]+)"
                         matches = re.findall(pattern, timings_str[0])
                         timings.append(float(matches[0]))
                         del timings_str
@@ -292,7 +292,7 @@ def main(
     if failed_explorations_list:
         string_list_to_textfile((current_path / "failed_explorations.txt"), failed_explorations_list, read_only=True)
         arcann_logger.critical(f"Failed explorations are listed in 'failed_explorations.txt'.")
-    
+
     arcann_logger.info(f"-" * 88)
     # Update the booleans in the exploration JSON
     if (completed_count + skipped_count + forced_count) == (exploration_json["nnp_count"] * sum([exploration_json["systems_auto"][_]["traj_count"] for _ in exploration_json["systems_auto"]])):

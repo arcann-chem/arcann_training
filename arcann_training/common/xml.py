@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/07/14
 
 The xml module provides functions to manipulate XML data (as XML tree / list of strings).
 
@@ -45,7 +45,7 @@ def string_list_to_xml(string_list: List[str]) -> ET.ElementTree:
 
     Parameters
     ----------
-    list_string : List[str]
+    string_list : List[str]
         A list of strings, where each string represents a single line of the XML tree.
 
     Returns

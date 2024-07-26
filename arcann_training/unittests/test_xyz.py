@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/07/14
 
 Test cases for the xyz module.
 
@@ -18,11 +18,8 @@ Classes:
 
 # Standard library modules
 import unittest
-import tempfile
-from pathlib import Path
 
 # Third-party modules
-import numpy as np
 
 
 if __name__ == "__main__":

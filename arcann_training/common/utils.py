@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/07/14
 
 Utility module providing helper functions.
 
@@ -114,8 +114,4 @@ def natural_sort_key(s: str) -> List[Union[int, str]]:
     if s == "":
         return []
     _nsre = re.compile("([0-9]+)")
-    return [
-        format(int(text), "020d") if text.isdigit() else text.lower()
-        for text in re.split(_nsre, s)
-        if text
-    ]
+    return [format(int(text), "020d") if text.isdigit() else text.lower() for text in re.split(_nsre, s) if text]

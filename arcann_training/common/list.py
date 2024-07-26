@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/07/14
 
 The utils module provides functions to manipulate lists.
 
@@ -116,7 +116,7 @@ def replace_substring_in_string_list(input_list: List[str], substring_in: str, s
 
 # Unittested
 @catch_errors_decorator
-def string_list_to_textfile(file_path: Path, string_list: List[str], read_only=False) -> None:
+def string_list_to_textfile(file_path: Path, string_list: List[str], read_only: bool = False) -> None:
     """
     Write a list of strings to a text file.
 
@@ -126,6 +126,9 @@ def string_list_to_textfile(file_path: Path, string_list: List[str], read_only=F
         A 'Path' object representing the path to the file.
     string_list : list[str]
         A list of strings to be written to the text file.
+    read_only : bool, optional
+        If True, sets the file's permissions to read-only after writing. If False (the default), the file's
+        permissions are not modified.
 
     Returns
     -------

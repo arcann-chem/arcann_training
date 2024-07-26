@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/07/14
 
 The xyz module provides functions to manipulate XYZ data (as np.ndarray).
 
@@ -102,7 +102,7 @@ def parse_xyz_trajectory_file(trajectory_file_path: Path) -> Tuple[np.ndarray, n
         properties_info.append(properties if properties else None)
         max_f_std_info.append(max_f_std if max_f_std else None)
 
-        symbols_frame = np.zeros(atom_count, dtype='<U3')
+        symbols_frame = np.zeros(atom_count, dtype="<U3")
         coordinates_frame = np.zeros((atom_count, 3))
 
         for j in range(atom_count):
@@ -156,10 +156,11 @@ def parse_extended_format(comment_line: str) -> Tuple[Optional[List[float]], boo
 
     lattice_values = [float(value) for value in lattice_match.group(1).split()] if lattice_match else None
     properties_present = bool(properties_match)
-    pbc_values = [v.lower() in ['true', 't'] for v in pbc_match.group(1).split()] if pbc_match else None
+    pbc_values = [v.lower() in ["true", "t"] for v in pbc_match.group(1).split()] if pbc_match else None
     max_f_std_value = float(max_f_std_match.group(1)) if max_f_std_match else None
 
     return lattice_values, properties_present, pbc_values, max_f_std_value
+
 
 # TODO: Add tests for this function
 @catch_errors_decorator

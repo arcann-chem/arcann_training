@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/07/14
 """
 
 # Standard library modules
@@ -65,7 +65,14 @@ def main(
         return 1
 
     # Regular expressions for each value
-    patterns = {"energy_rmse": "Energy RMSE\s+:\s+([\d\.e\+\-]+)\s+eV", "energy_rmse_per_atom": "Energy RMSE/Natoms\s+:\s+([\d\.e\+\-]+)\s+eV", "force_rmse": "Force\s+RMSE\s+:\s+([\d\.e\+\-]+)\s+eV/A", "virial_rmse": "Virial RMSE\s+:\s+([\d\.e\+\-]+)\s+eV", "virial_rmse_per_atom": "Virial RMSE/Natoms\s+:\s+([\d\.e\+\-]+)\s+eV", "number_of_test_data": "# number of test data\s+:\s+(\d+)"}
+    patterns = {
+        "energy_rmse": "Energy RMSE\s+:\s+([\d\.e\+\-]+)\s+eV",
+        "energy_rmse_per_atom": "Energy RMSE/Natoms\s+:\s+([\d\.e\+\-]+)\s+eV",
+        "force_rmse": "Force\s+RMSE\s+:\s+([\d\.e\+\-]+)\s+eV/A",
+        "virial_rmse": "Virial RMSE\s+:\s+([\d\.e\+\-]+)\s+eV",
+        "virial_rmse_per_atom": "Virial RMSE/Natoms\s+:\s+([\d\.e\+\-]+)\s+eV",
+        "number_of_test_data": "# number of test data\s+:\s+(\d+)",
+    }
 
     completed_count = 0
 
