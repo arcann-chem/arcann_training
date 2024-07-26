@@ -105,7 +105,7 @@ After the download is complete, go to the repository's main folder.
 Create a Python environment with all the required packages indicated in the `tools/arcann_conda_linux-64_env.txt` file using the following command:
 
 ```bash
-conda create --name <ENVNAME> --file examples/arcann_conda_linux-64_env.txt
+conda create --name <ENVNAME> --file tools/arcann_conda_linux-64_env.txt
 ```
 
 Load this environment with `conda activate <ENVNAME>` and run:
