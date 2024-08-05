@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/07/14
+Last modified: 2024/08/05
 
 Functions
 ---------
@@ -364,7 +364,7 @@ def generate_input_exploration_deviation_json(
             elif isinstance(value, (int, float)):
                 merged_input_json[key] = [value] * system_count
             else:
-                error_msg = f"Type mismatch: the type is '{type(it_value)}', but it should be '{type(1)}' or '{type(1.0)}'"
+                error_msg = f"Type mismatch: the type is '{type(value)}', but it should be '{type(1)}' or '{type(1.0)}'"
                 raise TypeError(error_msg)
     return merged_input_json
 
