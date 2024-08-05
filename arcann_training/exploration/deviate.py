@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/07/14
+Last modified: 2024/08/05
 """
 
 # Standard library modules
@@ -346,7 +346,7 @@ def main(
                     del end_row_number
 
                 else:
-                    ### If the trajectory was used skiped, count everything as a failure
+                    # If the trajectory was used skiped, count everything as a failure
                     skipped_traj_user = skipped_traj_user + 1
                     # Fill JSON files
                     QbC_indexes = {
@@ -411,7 +411,12 @@ def main(
 
     del system_auto_index, system_auto
 
-    total_candidates_selected = 0
+    exploration_json["total_simulation_time_ps"] = 0
+    exploration_json["total_count"] = 0
+    exploration_json["candidates_count"] = 0
+    exploration_json["rejected_count"] = 0
+    exploration_json["selected_count"] = 0
+    exploration_json["discarded_count"] = 0
 
     for system_auto_index, system_auto in enumerate(exploration_json["systems_auto"]):
         # Set the system params for deviation selection
@@ -479,8 +484,6 @@ def main(
                         "discarded_count": len(discarded_indexes.astype(int).tolist()) if discarded_indexes.size > 0 else 0,
                     }
 
-                    total_candidates_selected += len(selected_indexes.astype(int).tolist())
-
                     # Now we get the starting point (the min of selected, or the last good)
                     # Min of selected
                     if selected_indexes.shape[0] > 0:
@@ -521,8 +524,15 @@ def main(
                         "minimum_index": -1,
                     }
 
-                exploration_json["systems_auto"][system_auto]["selected_count"] = exploration_json["systems_auto"][system_auto]["selected_count"] + QbC_stats["selected_count"]
-                exploration_json["systems_auto"][system_auto]["discarded_count"] = exploration_json["systems_auto"][system_auto]["discarded_count"] + QbC_stats["discarded_count"]
+                exploration_json["systems_auto"][system_auto]["selected_count"] += QbC_stats["selected_count"]
+                exploration_json["systems_auto"][system_auto]["discarded_count"] += QbC_stats["discarded_count"]
+
+                exploration_json["total_simulation_time_ps"] += exploration_json["systems_auto"][system_auto]["nb_steps"] * exploration_json["systems_auto"][system_auto]["timestep_ps"]
+                exploration_json["total_count"] += QbC_stats["total_count"]
+                exploration_json["candidates_count"] += QbC_stats["candidates_count"]
+                exploration_json["rejected_count"] += QbC_stats["rejected_count"]
+                exploration_json["selected_count"] += QbC_stats["selected_count"]
+                exploration_json["discarded_count"] += QbC_stats["discarded_count"]
 
                 write_json_file(QbC_stats, local_path / "QbC_stats.json", False)
                 write_json_file(QbC_indexes, local_path / "QbC_indexes.json", False)
@@ -533,10 +543,16 @@ def main(
         del max_candidates, sigma_low, sigma_high, sigma_high_limit, ignore_first_x_ps
     del system_auto_index, system_auto
 
-    arcann_logger.info(f"A total of {total_candidates_selected} structures have been selected for labeling...")
-    del total_candidates_selected
-
+    # Print the stats
     arcann_logger.info(f"-" * 88)
+    arcann_logger.info(f"Total simulation time: {exploration_json['total_simulation_time_ps']:.2f} ps")
+    arcann_logger.info(f"Total number of structures: {exploration_json['total_count']}")
+    arcann_logger.info(f"Total number of candidates: {exploration_json['candidates_count']}, {exploration_json['candidates_count'] / exploration_json['total_count'] * 100:.2f}% of structures.")
+    arcann_logger.info(f"Total number of rejected: {exploration_json['rejected_count']}, {exploration_json['rejected_count'] / exploration_json['total_count'] * 100:.2f}% of structures.")
+    arcann_logger.info(f"Total number of selected: {exploration_json['selected_count']}, {exploration_json['selected_count'] / exploration_json['candidates_count'] * 100:.2f}% of candidates.")
+    arcann_logger.info(f"Total number of discarded: {exploration_json['discarded_count']}, {exploration_json['discarded_count'] / exploration_json['candidates_count'] * 100:.2f}% of candidates.")
+    arcann_logger.info(f"-" * 88)
+
     # Update the booleans in the exploration JSON
     exploration_json["is_deviated"] = True
 
