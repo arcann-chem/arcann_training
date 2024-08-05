@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/07/14
+Last modified: 2024/08/05
 """
 
 # Standard library modules
@@ -126,6 +126,13 @@ def main(
     arcann_logger.debug(f"machine_max_array_size: {machine_max_array_size}")
     arcann_logger.debug(f"user_machine_keyword: {user_machine_keyword}")
     arcann_logger.debug(f"machine_spec: {machine_spec}")
+
+    # Check if machine_max_jobs is inferior to machine_max_array_size, if not, set it to machine_max_array_size (avoid division by 0)
+    if machine_max_jobs > machine_max_array_size:
+        system_machine_max_jobs = machine_max_array_size
+    else:
+        system_machine_max_jobs = machine_max_jobs
+    arcann_logger.debug(f"system_machine_max_jobs: {system_machine_max_jobs}")
 
     current_input_json["user_machine_keyword_label"] = user_machine_keyword
     arcann_logger.debug(f"current_input_json: {current_input_json}")
@@ -279,10 +286,10 @@ def main(
             next_index = -1
 
         # Calculate the effective capacity increment based on machine_max_array_size and machine_max_jobs
-        if machine_max_jobs <= 0:
+        if system_machine_max_jobs <= 0:
             effective_capacity_increment = 0
         else:
-            effective_capacity_increment = (machine_max_array_size // machine_max_jobs) * machine_max_jobs
+            effective_capacity_increment = (machine_max_array_size // system_machine_max_jobs) * system_machine_max_jobs
 
         jobs_processed = 0
         block_start = 0
@@ -293,13 +300,13 @@ def main(
 
         while jobs_processed < labeling_count:
             # Calculate start and end indices for jobs within the current batch
-            if machine_max_jobs <= 0:
+            if system_machine_max_jobs <= 0:
                 batch_size = labeling_count
                 batch_start = 0
                 batch_end = labeling_count - 1
             else:
-                batch_size = min(machine_max_jobs, labeling_count - jobs_processed)
-                batch_start = (batch_number % (machine_max_array_size // machine_max_jobs)) * machine_max_jobs
+                batch_size = min(system_machine_max_jobs, labeling_count - jobs_processed)
+                batch_start = (batch_number % (machine_max_array_size // system_machine_max_jobs)) * system_machine_max_jobs
                 batch_end = batch_start + batch_size - 1
 
             # Replace placeholders in the system_master_job_file with batch-specific values
@@ -308,7 +315,7 @@ def main(
             slurm_file_array_subsys_dict[batch_number] = replace_substring_in_string_list(slurm_file_array_subsys_dict[batch_number], "_R_ARRAY_END_", f"{batch_end}")
 
             if jobs_processed + batch_size == labeling_count:
-                if machine_max_jobs <= 0 or next_index == -1 or total_to_label <= machine_max_jobs:
+                if system_machine_max_jobs <= 0 or next_index == -1 or total_to_label <= machine_max_jobs:
                     slurm_file_array_subsys_dict[batch_number] = replace_substring_in_string_list(slurm_file_array_subsys_dict[batch_number], "_R_LAUNCHNEXT_", "0")
                 else:
                     slurm_file_array_subsys_dict[batch_number] = replace_substring_in_string_list(slurm_file_array_subsys_dict[batch_number], "_R_LAUNCHNEXT_", "1")
@@ -325,7 +332,7 @@ def main(
             jobs_processed += batch_size
             batch_number += 1
 
-            if batch_number % (machine_max_array_size // machine_max_jobs) == 0:
+            if batch_number % (machine_max_array_size // system_machine_max_jobs) == 0:
                 block_start += effective_capacity_increment
 
         # Labeling input first job
