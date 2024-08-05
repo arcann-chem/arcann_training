@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/07/14
+Last modified: 2024/08/05
 
 The json module provides functions to manipulate JSON data (as dict).
 
@@ -119,7 +119,7 @@ def get_key_in_dict(key: str, input_json: Dict, previous_json: Dict, default_jso
 
     # Check if the key is present in any of the JSON, and set the value accordingly.
     if key in input_json:
-        if input_json[key] == "default" and key in default_json:
+        if ( input_json[key] == "default" or input_json[key] == None ) and key in default_json:
             value = default_json[key]
         else:
             value = input_json[key]
