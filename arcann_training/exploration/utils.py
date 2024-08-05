@@ -118,7 +118,7 @@ def generate_input_exploration_json(
         # Get the value
         default_used = False
         if key in user_input_json:
-            if user_input_json[key] == "default" and key in default_input_json:
+            if ( user_input_json[key] == "default" or user_input_json[key] == None ) and key in default_input_json:
                 value = default_input_json[key]
                 default_used = True
             else:
@@ -326,7 +326,7 @@ def generate_input_exploration_deviation_json(
         # Get the value
         default_used = False
         if key in user_input_json:
-            if user_input_json[key] == "default" and key in default_input_json:
+            if ( user_input_json[key] == "default" or user_input_json[key] == None ) and key in default_input_json:
                 value = default_input_json[key]
                 default_used = True
             else:
@@ -465,7 +465,7 @@ def generate_input_exploration_disturbed_json(
         # Get the value
         default_used = False
         if key in user_input_json:
-            if user_input_json[key] == "default" and key in default_input_json:
+            if ( user_input_json[key] == "default" or user_input_json[key] == None ) and key in default_input_json:
                 value = default_input_json[key]
                 default_used = True
             else:

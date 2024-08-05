@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2024/08/05
 
 Functions
 ---------
@@ -86,7 +86,7 @@ def generate_input_labeling_json(
         # Get the value
         default_used = False
         if key in user_input_json:
-            if user_input_json[key] == "default" and key in default_input_json:
+            if ( user_input_json[key] == "default" or user_input_json[key] == None ) and key in default_input_json:
                 value = default_input_json[key]
                 default_used = True
             else:
