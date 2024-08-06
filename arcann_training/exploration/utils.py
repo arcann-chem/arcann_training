@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/08/05
+Last modified: 2024/08/06
 
 Functions
 ---------
@@ -44,6 +44,7 @@ update_system_nb_steps_factor(previous_json: Dict, system_auto_index: int) -> in
 # TODO: Homogenize the docstrings for this module
 
 # Standard library modules
+import logging
 from pathlib import Path
 from copy import deepcopy
 from typing import Dict, List, Tuple, Union
@@ -118,7 +119,7 @@ def generate_input_exploration_json(
         # Get the value
         default_used = False
         if key in user_input_json:
-            if ( user_input_json[key] == "default" or user_input_json[key] == None ) and key in default_input_json:
+            if (user_input_json[key] == "default" or user_input_json[key] == None) and key in default_input_json:
                 value = default_input_json[key]
                 default_used = True
             else:
@@ -326,7 +327,7 @@ def generate_input_exploration_deviation_json(
         # Get the value
         default_used = False
         if key in user_input_json:
-            if ( user_input_json[key] == "default" or user_input_json[key] == None ) and key in default_input_json:
+            if (user_input_json[key] == "default" or user_input_json[key] == None) and key in default_input_json:
                 value = default_input_json[key]
                 default_used = True
             else:
@@ -465,7 +466,7 @@ def generate_input_exploration_disturbed_json(
         # Get the value
         default_used = False
         if key in user_input_json:
-            if ( user_input_json[key] == "default" or user_input_json[key] == None ) and key in default_input_json:
+            if (user_input_json[key] == "default" or user_input_json[key] == None) and key in default_input_json:
                 value = default_input_json[key]
                 default_used = True
             else:
@@ -618,6 +619,7 @@ def generate_starting_points(
         A tuple containing the starting point file names, the backup starting point file names,
         and a boolean indicating wehter to start from a previous minimum and a boolean indicating whether to start from a disturbed minimum.
     """
+    arcann_logger = logging.getLogger("ArcaNN")
 
     # Determine file extension based on exploration type
     if exploration_type == "lammps":
@@ -638,6 +640,18 @@ def generate_starting_points(
     starting_points_bckp = deepcopy(starting_points)
     starting_points_disturbed_bckp = deepcopy(starting_points_disturbed)
     starting_points_original_bckp = deepcopy(starting_points_original)
+
+    # Special case if no valid starting structures are found (either normal or disturbed)
+    # Replace starting points with original starting points and disturbed starting points with original starting points too but do not changes (but just temporary)
+    if not starting_points:
+        starting_points = deepcopy(starting_points_original)
+        starting_points_bckp = deepcopy(starting_points_original_bckp)
+        arcann_logger.warning(f"No valid starting structures found for {system_auto} in iteration {padded_prev_iter}. Using original starting structures.")
+    if not starting_points_disturbed and (disturbed_start or (previous_json["systems_auto"][system_auto]["disturbed_start"] and previous_json["systems_auto"][system_auto]["disturbed_start_value"])):
+        starting_points_disturbed = deepcopy(starting_points_original)
+        starting_points_disturbed_bckp = deepcopy(starting_points_original_bckp)
+        arcann_logger.warning(f"No valid disturbed starting structures found for {system_auto} in iteration {padded_prev_iter}. Using original starting structures.")
+
     # Check if system should start from a disturbed minimum
     if input_present and not previous_start:
         starting_points = deepcopy(starting_points_original)

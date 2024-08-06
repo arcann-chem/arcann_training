@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/07/14
+Last modified: 2024/08/06
 """
 
 # Standard library modules
@@ -256,7 +256,11 @@ def main(
             master_system_lammps_in = textfile_to_string_list(training_path / "user_files" / (system_auto + ".in"))
 
             # Add cell info to the LAMMPS input file
-            index_run = master_system_lammps_in.index("run _R_NUMBER_OF_STEPS_")
+            index_run = next((i for i, item in enumerate(master_system_lammps_in) if item.startswith("run _R_NUMBER_OF_STEPS_")), -1)
+            if index_run == -1:
+                arcann_logger.error(f"No 'run _R_NUMBER_OF_STEPS_' found in the LAMMPS input file: '{training_path / 'user_files' / (system_auto + '.in')}'.")
+                arcann_logger.error(f"Aborting...")
+                return 1
             master_system_lammps_in = master_system_lammps_in[:index_run] + cell_info_lammps + master_system_lammps_in[index_run:]
             del index_run
 
@@ -315,9 +319,10 @@ def main(
                 if plumed[1] and plumed[2] != 0:
                     break
 
-        # Disturbed start ?
+        # Generate the starting points (if iteration number > 1)
+        # Check the iteration number
         if curr_iter == 1:
-            # No disturbed start
+            # First iteration, so no disturbed starting points
             system_disturbed_start = False
         else:
             # Get starting points
@@ -336,7 +341,15 @@ def main(
                 system_previous_start,
                 system_disturbed_start,
             )
-        # End of disturbed start
+            arcann_logger.debug(f"starting_point_list: {starting_point_list}")
+            arcann_logger.debug(f"starting_point_list_bckp: {starting_point_list_bckp}")
+            arcann_logger.debug(f"system_previous_start: {system_previous_start}")
+            arcann_logger.debug(f"system_disturbed_start: {system_disturbed_start}")
+
+            if not starting_point_list:
+                arcann_logger.error(f"No starting points found for '{system_auto}'.")
+                arcann_logger.error(f"Aborting...")
+                return 1
 
         input_replace_dict["_R_TIMESTEP_"] = f"{system_timestep_ps}"
 
@@ -614,10 +627,15 @@ def main(
                             starting_point_list = deepcopy(starting_point_list_bckp)
                         system_lammps_data_fn = starting_point_list[random.randrange(0, len(starting_point_list))]
                         starting_point_list.remove(system_lammps_data_fn)
-                        if system_previous_start:
+                        # Check if the file is in the starting_structures or user_files
+                        if (training_path / "starting_structures" / system_lammps_data_fn).is_file():
                             system_lammps_data = textfile_to_string_list(training_path / "starting_structures" / system_lammps_data_fn)
-                        else:
+                        elif (training_path / "user_files" / system_lammps_data_fn).is_file():
                             system_lammps_data = textfile_to_string_list(training_path / "user_files" / system_lammps_data_fn)
+                        else:
+                            arcann_logger.error(f"Starting point '{system_lammps_data_fn}' not found.")
+                            arcann_logger.error(f"Aborting...")
+                            return 1
                         input_replace_dict["_R_DATA_FILE_"] = system_lammps_data_fn
                         # Get again the system_cell and nb_atom
                         system_nb_atm, num_atom_types, box, masses, coords = read_lammps_data(system_lammps_data)
