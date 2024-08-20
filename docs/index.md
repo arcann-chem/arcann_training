@@ -22,7 +22,7 @@ During the iterative training process, you will:
 2. Use them as reactive force fields in molecular dynamics simulations to explore the phase space.
 
 3. Select and label configurations based on a query by committee approach.
-   
+
 4. Train a new generation of neural network potentials again with the improved training set.
 
 This workflow, often referred to as active or concurrent learning, is inspired by [DP-GEN](https://doi.org/10.1016/j.cpc.2020.107206).
