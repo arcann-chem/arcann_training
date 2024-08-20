@@ -1,0 +1,4 @@
+nav:
+    - package_prerequisites.md
+    - install.md
+    - hpc_conf.md
