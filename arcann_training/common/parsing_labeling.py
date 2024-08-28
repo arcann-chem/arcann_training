@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2024/03/01
-Last modified: 2024/07/14
+Last modified: 2024/08/28
 """
 
 # TODO: Homogenize the docstrings for this module
@@ -61,14 +61,26 @@ def extract_and_convert_box_volume(input, box_out, volume_out, system_candidates
         box_out[system_candidates_not_skipped_counter - 1, 4] = cell[1]
         box_out[system_candidates_not_skipped_counter - 1, 8] = cell[2]
         volume_out[system_candidates_not_skipped_counter - 1] = cell[0] * cell[1] * cell[2]
-        return box_out, volume_out
+        # Check the PBC:
+        periodic_poisson = [match.group(1).strip().upper() for _ in input if '&POISSON' in _ and (match := pattern.search(_))]
+        periodic_cell = [match.group(1).strip().upper() for _ in input if '&CELL' in _ and (match := pattern.search(_))]
+        pbc = True
+        if periodic_poisson and periodic_cell:
+            if periodic_poisson[0] != periodic_cell[0]:
+                raise ValueError("The periodicity in the cell and poisson sections do not match.")
+            pbc = periodic_poisson[0] != 'NONE'
+        elif periodic_poisson:
+            pbc = periodic_poisson[0] != 'NONE'
+        elif periodic_cell:
+            pbc = periodic_cell[0] != 'NONE'
+        return box_out, volume_out, pbc
     elif program == "orca":
         cell = input
         box_out[system_candidates_not_skipped_counter - 1, 0] = cell[0]
         box_out[system_candidates_not_skipped_counter - 1, 4] = cell[1]
         box_out[system_candidates_not_skipped_counter - 1, 8] = cell[2]
         volume_out[system_candidates_not_skipped_counter - 1] = cell[0] * cell[1] * cell[2]
-        return box_out, volume_out
+        return box_out, volume_out, False
 
 
 # TODO: Add tests for this function

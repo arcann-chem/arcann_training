@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/07/14
+Last modified: 2024/08/27
 """
 
 # Standard library modules
@@ -106,10 +106,14 @@ def main(
                         match = re.search(pattern, testing_out_combined)
                         if match:
                             extracted_values_from_list[key] = float(match.group(1)) if "test data" not in key else int(match.group(1))
-                            completed_count += 1
+                            if key not in ["virial_rmse", "virial_rmse_per_atom"]:
+                                completed_count += 1
                         else:
                             extracted_values_from_list[key] = False
-                            arcann_logger.critical(f"DP Test - '{nnp}' for '{dataset}': value {key} not present.")
+                            if key in ["virial_rmse", "virial_rmse_per_atom"]:
+                                arcann_logger.warning(f"DP Test - '{nnp}' for '{dataset}': value {key} not present, but this will not be counted as a failure.")
+                            else:
+                                arcann_logger.critical(f"DP Test - '{nnp}' for '{dataset}': value {key} not present.")
 
                     testing_json[nnp_name][dataset] = extracted_values_from_list
                     del testing_out_combined, extracted_values_from_list, match, key, pattern
@@ -138,7 +142,9 @@ def main(
         del dataset
     del nnp, local_path, nnp_name
 
-    if completed_count == main_json["nnp_count"] * len(datasets) * len(patterns):
+    expected_count = main_json["nnp_count"] * len(datasets) * (len(patterns) - 2)  # Subtracting 2 to ignore virial_rmse and virial_rmse_per_atom
+
+    if completed_count == expected_count:
         testing_json["is_checked"] = True
 
     # Dump the JSON files (training)
@@ -147,17 +153,17 @@ def main(
     # End
     arcann_logger.info(f"-" * 88)
     arcann_logger.debug(f"completed_count: {completed_count}")
-    arcann_logger.debug(f"expected: {main_json['nnp_count'] * len(datasets) * len(patterns)}")
+    arcann_logger.debug(f"expected: {expected_count}")
     arcann_logger.debug(f"main_json['nnp_count']: {main_json['nnp_count']}")
     arcann_logger.debug(f"len(datasets): {len(datasets)}")
-    arcann_logger.debug(f"len(patterns): {len(patterns)}")
+    arcann_logger.debug(f"len(patterns): {len(patterns) - 2}")
 
-    if completed_count == main_json["nnp_count"] * len(datasets) * len(patterns):
+    if completed_count == expected_count:
         arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
     else:
         arcann_logger.critical(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!")
-        arcann_logger.critical(f"Some DP Test did not finished correctly.")
-        arcann_logger.critical(f"Please check manually before re-exectuing this step.")
+        arcann_logger.critical(f"Some DP Test did not finish correctly.")
+        arcann_logger.critical(f"Please check manually before re-executing this step.")
         arcann_logger.critical(f"Aborting...")
         return 1
     del completed_count

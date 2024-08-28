@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/07/14
+Last modified: 2024/08/28
 """
 
 # Standard library modules
@@ -189,7 +189,8 @@ def main(
 
                     # Box / Volume
                     input_cp2k = textfile_to_string_list(labeling_step_path / f"1_labeling_{padded_labeling_step}.inp")
-                    box_array_raw, volume_array_raw = extract_and_convert_box_volume(input_cp2k, box_array_raw, volume_array_raw, system_candidates_not_skipped_counter, 1.0, labeling_program, program_version)
+                    # LOOK FOR THE
+                    box_array_raw, volume_array_raw, is_periodic = extract_and_convert_box_volume(input_cp2k, box_array_raw, volume_array_raw, system_candidates_not_skipped_counter, 1.0, labeling_program, program_version)
                     del input_cp2k
 
                     # Forces
@@ -223,7 +224,8 @@ def main(
                     # Box / Volume
                     # TODO
                     system_cell = main_json["systems_auto"][system_auto]["cell"]
-                    box_array_raw, volume_array_raw = extract_and_convert_box_volume(system_cell, box_array_raw, volume_array_raw, system_candidates_not_skipped_counter, 1.0, labeling_program, program_version)
+                    box_array_raw, volume_array_raw, is_periodic = extract_and_convert_box_volume(system_cell, box_array_raw, volume_array_raw, system_candidates_not_skipped_counter, 1.0, labeling_program, program_version)
+                    is_periodic = False
                     del system_cell
 
                     # Forces
@@ -266,6 +268,11 @@ def main(
             if len(wannier_not_converged) > 1:
                 string_list_to_textfile(data_path / "set.000" / "wannier_not-converged.txt", wannier_not_converged)
             del wannier_not_converged, wannier_array_raw, is_wannier
+
+        if not is_periodic:
+            arcann_logger.warning(f"System {system_auto} is not periodic.")
+            np.savetxt(data_path / "nopbc", np.array([True]), fmt="%s")
+        del is_periodic
 
         arcann_logger.debug("Extraction done.")
 
@@ -350,7 +357,7 @@ def main(
 
                         # Box / Volume
                         input_cp2k = textfile_to_string_list(labeling_step_path / f"1_labeling_{padded_labeling_step}.inp")
-                        box_array_raw, volume_array_raw = extract_and_convert_box_volume(input_cp2k, box_array_raw, volume_array_raw, system_disturbed_candidates_not_skipped_counter, 1.0, labeling_program, program_version)
+                        box_array_raw, volume_array_raw, is_periodic = extract_and_convert_box_volume(input_cp2k, box_array_raw, volume_array_raw, system_disturbed_candidates_not_skipped_counter, 1.0, labeling_program, program_version)
                         del input_cp2k
 
                         # Forces
@@ -388,6 +395,7 @@ def main(
                         box_array_raw[system_candidates_not_skipped_counter, 0] = system_cell[0]
                         box_array_raw[system_candidates_not_skipped_counter, 4] = system_cell[1]
                         box_array_raw[system_candidates_not_skipped_counter, 8] = system_cell[2]
+                        is_periodic = False
                         del system_cell
 
                         # Forces
@@ -431,6 +439,11 @@ def main(
                     string_list_to_textfile(data_path / "set.000" / "wannier_not-converged.txt", wannier_not_converged)
                 del wannier_not_converged, wannier_array_raw, is_wannier
             arcann_logger.debug("Extraction for disturbed done.")
+
+            if not is_periodic:
+                arcann_logger.warning(f"System {system_auto} is not periodic.")
+                np.savetxt(data_path / "nopbc", np.array([True]), fmt="%s")
+            del is_periodic
 
         arcann_logger.info(f"Processed system: {system_auto} ({system_auto_index + 1}/{len(main_json['systems_auto'])})")
 
