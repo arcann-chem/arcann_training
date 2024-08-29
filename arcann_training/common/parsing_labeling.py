@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2024/03/01
-Last modified: 2024/08/28
+Last modified: 2024/08/29
 """
 
 # TODO: Homogenize the docstrings for this module
@@ -62,17 +62,29 @@ def extract_and_convert_box_volume(input, box_out, volume_out, system_candidates
         box_out[system_candidates_not_skipped_counter - 1, 8] = cell[2]
         volume_out[system_candidates_not_skipped_counter - 1] = cell[0] * cell[1] * cell[2]
         # Check the PBC:
-        periodic_poisson = [match.group(1).strip().upper() for _ in input if '&POISSON' in _ and (match := pattern.search(_))]
-        periodic_cell = [match.group(1).strip().upper() for _ in input if '&CELL' in _ and (match := pattern.search(_))]
+        def extract_periodic_in_section(section_start):
+            in_section = False
+            for line in input:
+                if section_start in line:
+                    in_section = True
+                elif '&END' in line and in_section:
+                    in_section = False
+                if in_section:
+                    match = re.search(r'PERIODIC\s+(\S+)', line)
+                    if match:
+                        return match.group(1).strip().upper()
+            return None
+        periodic_poisson = extract_periodic_in_section('&POISSON')
+        periodic_cell = extract_periodic_in_section('&CELL')
         pbc = True
         if periodic_poisson and periodic_cell:
-            if periodic_poisson[0] != periodic_cell[0]:
+            if periodic_poisson != periodic_cell:
                 raise ValueError("The periodicity in the cell and poisson sections do not match.")
-            pbc = periodic_poisson[0] != 'NONE'
+            pbc = periodic_poisson != 'NONE'
         elif periodic_poisson:
-            pbc = periodic_poisson[0] != 'NONE'
+            pbc = periodic_poisson != 'NONE'
         elif periodic_cell:
-            pbc = periodic_cell[0] != 'NONE'
+            pbc = periodic_cell != 'NONE'
         return box_out, volume_out, pbc
     elif program == "orca":
         cell = input
