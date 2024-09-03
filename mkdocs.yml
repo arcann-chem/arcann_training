@@ -3,4 +3,5 @@ Home: index.md
 plugins:
     - search
     - awesome-pages
+    - markdownextradata
 theme: readthedocs
