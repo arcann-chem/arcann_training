@@ -1,4 +1,4 @@
-# HPC Configuration #
+# HPC Configuration 
 
 ArcaNN is designed for use on one or several HPC machines, whose specific configurations must be specified by the user through a `machine.json` file.
 A general example file can be found at `arcann_training/examples/user_files/machine.json`.
@@ -55,6 +55,9 @@ Below is an example of the initial entries for an HPC machine using a SLURM job 
 
 ## Entry Descriptions ##
 
+HPC Configuration 
+1 per HPC 
+
 - **hostname**: A substring contained in the output of `python -c "import socket ; print(socket.gethostname())"`. This should match your machine's name.
 - **walltime_format**: The unit of time (e.g., hours) used to specify wall time on the cluster.
 - **job_scheduler**: The job scheduler used by your HPC machine (e.g., `slurm`, `PBS/Torque`). ArcaNN is extensively tested with `Slurm`.
@@ -63,11 +66,14 @@ Below is an example of the initial entries for an HPC machine using a SLURM job 
 - **max_array_size**: Maximum number of jobs in a single job array. This is important for `Slurm` as ArcaNN relies heavily on job arrays.
 
 ## Partition Configuration ##
+Resource type, as many as you want 
 
 Each partition in the HPC machine is represented by a key (e.g., `"mykeyword1"`) and includes:
 
-- **project_name**: Name of the project using the HPC resources.
+- **project_name**: Name of the project using the HPC resources. 
+Corresponds to #SBATCH --account=_R_PROJECT_
 - **allocation_name**: Allocation or account name, typically used in large HPC facilities.
+_P_ALLOC_
 - **arch_name**: Architecture name (e.g., `a100` for GPU nodes).
 - **arch_type**: Architecture type (e.g., `gpu` or `cpu`).
 - **partition**: The partition on the HPC machine.

@@ -1,13 +1,9 @@
-# Training #
-
-## Training ##
+# Training 
 
 During the training procedure you will use DeePMD-kit to train neural networks on the data sets that you have thus far generated (or on the initial ones only for the 000 iteration). In order to do this go to the current iteration training folder `XXX-training`.
-There are 9 phases (see [Steps](../start)) that you must now execute in order after having optionally modified the `input.json` file to define the relevant parameters (in case you want something different from the defaults, which are written to `default_input.json` in the `prepare` phase). The input keywords that you should check the most carefully are those related to the first phase `prepare`, as this sets all the important parameters for the training. Some phases will simply submit `Slurm` jobs (model training, freezing and compressing). You must wait for the jobs to finish before executing the next phase (generally this will be a check phase that will tell you that jobs have failed or are currently running). Once you have executed the first 8 phases the training iteration is done! Executing the 9-th phases is optional, as this will only remove intermediary files.
+There are 9 phases (see [Steps](../start)) that you must now execute in order after having optionally modified the `input.json` file to define the relevant parameters (in case you want something different from the defaults, which are written to `default_input.json` in the `prepare` phase). The input keywords that you should check the most carefully are those related to the first phase `prepare`, as this sets all the important parameters for the training. Some phases will simply submit `Slurm` jobs (model training, freezing and compressing). You must wait for the jobs to finish before executing the next phase (generally this will be a check phase that will tell you that jobs have failed or are currently running). Once you have executed the first 8 phases, the training iteration is done! Executing the 9-th phases is optional, as this will only remove intermediary files.
 
-## EXAMPLE ##
-
-Suppose that you just ran the `initialization` step described in the previous example. You must now perform the first training phase. Update (or copy for the first time) the full `$WORK_DIR` from your local machine to your HPC machine (where you must have also a copy of this repository and an environment in which it is installed):
+After running the `initialization` step described in the previous example, you must now perform the first training phase. Update (or copy for the first time) the full `$WORK_DIR` from your local machine to your HPC machine (where you must have also a copy of this repository and an environment in which it is installed):
 
 ```bash
 rsync -rvu $WORK_DIR USER@HPC-MACHINE:/PATH/TO/WORK_DIR
@@ -55,6 +51,6 @@ and you are ready to move on to the exploration phase!
 
 **Notes:**
 
-- At some point during the iterative procedure we might want to get rid of our initial data sets, we would only need to set the `use_initial_datasets` variable to `False`
-- We might also have generated some data independently from the iterative procedure that we might want to start using, this can be done by copying the corresponding DeePMD-kit systems to `data/`, prefixing their names by `extra_` and setting the `use_extra_datasets` variable to `True`
+- At some point during the iterative procedure we might want to get rid of our initial data sets, we would only need to set the `use_initial_datasets` variable to `False`.
+- We might also have generated some data independently from the iterative procedure that we might want to start using, this can be done by copying the corresponding DeePMD-kit systems to `data/`, prefixing their names by `extra_` and setting the `use_extra_datasets` variable to `True`.
 - At the end of the step the last phase `increment` will create the folders needed for the next iteration, save the current NNPs (stored as graph files `graph_[nnp_count]_XXX[_compressed].pb`) into the `$WORK_DIR/NNP` folder and write a `control/training_XXX.json` file with all parameters used during training.

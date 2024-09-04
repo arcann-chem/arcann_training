@@ -1,4 +1,4 @@
-# Using ArcaNN #
+# Using ArcaNN 
 
 ## Iterations, Steps and Phases of the Iterative Procedure ##
 

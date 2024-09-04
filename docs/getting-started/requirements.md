@@ -1,4 +1,4 @@
-# ArcaNN Requirements #
+# ArcaNN Requirements 
 
 ## Installation Requirements ##
 
