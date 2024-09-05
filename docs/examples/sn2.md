@@ -13,38 +13,33 @@ For the non-reactive training, 6 systems were defined : 3 systems to explore the
 
 In the `user_files/` folder you will find the following files for each one of the systems (for clarity purposes, we only indicate the files of the `ch3cl_br_close_300K` system here). Note also that `hpc1`` and `hpc2` are the machine keywords indicated in the machine.json file, see [HPC Configuration](../getting-started/hpc_configuration.md). 
 
-### JSON FILES
+**JSON FILES**
 
 - `machine.json` : file containing the cluster parameters.
 - `dp_train_2.1.json` : input for DeePMD trainings. 
 
 
-### JOB FILES 
+**JOB FILES**
 
 - `job_lammps-deepmd_explore_gpu_hpc1.sh` and `job-array_lammps-deepmd_explore_gpu_hpc1.sh` : job scripts for exploration
 - `job_CP2K_label_cpu_hpc1.sh` and `job-array_CP2K_label_hpc1.sh`: job scripts for labeling
 - `job_deepmd_compress_gpu_hpc1.sh`, `job_deepmd_freeze_gpu_hpc1.sh` and `job_deepmd_train_gpu_hpc1.sh` job scripts for training
 
 
-### CP2K FILES 
+**CP2K FILES**
 
 - `1_ch3cl_br_close_300K_labeling_XXXXX_hpc1.inp`,  `2_ch3cl_br_close_300K_labeling_XXXXX_hpc1.inp`, `1_ch3cl_br_close_300K_labeling_XXXXX_hpc1.inp`, `2_ch3cl_br_close_300K_labeling_XXXXX_hpc2.inp` : inputs for CP2K labeling. There are 2 input files per subsystem, see details in [labeling](../labeling). 
 
 
-### LAMMPS FILES
+**LAMMPS FILES**
 
 - `ch3cl_br_close_300K.lmp` : starting configurations for the first exploration in the LAMMPS format. 
 - `ch3cl_br_close_300K.in` : inputs for LAMMPS exploration. 
-
-
-#### plumed files 
 
 - `plumed_SYSTEM_300K.dat` : plumed input files for the emplorations. 
 
 Additional plumed files can be used, and must be named as `plumed_KEYWORD_SYSTEM.dat`. Here, we used an additional plumed file to store colvars and another to define the key atoms : `plumed_colvars_ch3cl_br_close_300K.dat` and `plumed_atomdef_ch3cl_br_close_300K.dat`. 
 
-
-#### properties file
 
 The atom order is defined in the `properties.txt` file. It makes sure that the order of the  atoms in the `SYSTEM.lmp` files match the order indicated in the `"type_map"` keyword of the DeePMD-kit `dptrain_2.1.json` training file. Also, it makes sure that the generated structures also presents the correct atom numbering to avoid conflicts. 
 
@@ -64,60 +59,52 @@ After the initialization step, a `default_input.json` file is generated, contain
 
 ## Training
 
-### INPUTS
-et quelle partie est utilisée dans quelle phase
-### OUTPUTS
-Decrire les control/*.json
+After running the `prepare` phase, a `default_input.json` file is created. In order to modify some of the default parameters, an `input.json` file must be created in the same directory, where only the parameters to be updated need to be indicated: 
+
+```JSON
+{
+  "user_machine_keyword_train": "v100_myproject1",  
+  "job_walltime_train_h": 12.0
+}
+
+```
+
+Then, the input is updated and stored in the directory as `used_input.json`:
+
+
+```JSON
+{
+    "user_machine_keyword_train": "v100_myproject1",
+    "user_machine_keyword_freeze": "v100_myproject1",
+    "user_machine_keyword_compress": "v100_myproject1",
+    "job_email": "",
+    "use_initial_datasets": true,
+    "use_extra_datasets": false,
+    "deepmd_model_version": 2.1,
+    "job_walltime_train_h": 12.0,
+    "mean_s_per_step": 0.108,
+    "start_lr": 0.001,
+    "stop_lr": 1e-06,
+    "decay_rate": 0.9172759353897796,
+    "decay_steps": 5000,
+    "decay_steps_fixed": false,
+    "numb_steps": 400000,
+    "numb_test": 0
+}
+```
 
 ## Exploration
 
 After the first training phase NNP you now have starting models that can be used to propagate reactive MD. For this go to the `$WORK_DIR/001-exploration` folder (in your HPC machine!) and execute the `prepare` phase to obtain an `default_input.json` file with default values. For the first iteration we might be satisfied with the defaults (2 simulations per NNP and per subsystem, 10 ps simulations with the LAMMPS time-step of 0.5 fs, etc.) so we might directly run exploration phases 2 and 3 right away (waiting for the `Slurm` jobs to finish as always). These will have created 6 directories (one per system), in which there will be 3 subdirectories (one per trained NNP) `1/`, `2/` and `3/`, in which again there will be 2 subdirectories (default) `0001/` and `0002/`. This means that a total of 32 MD trajectories will be performed for this first iteration (180 ps total simulation time). Be careful, the total exploration time can quickly become huge, especially if you have many systems.
 
-### INPUTS
-
-For the first exploration phase we might want to generate only a few candidate configurations to check whether our initial NNP are stable enough to give physically meaningful configurations. We might as well want to use a relatively strict error criterion for candidate selection. All this can be done by modifying the default values written to `input.json` at the `deviate` phase and re-running this phase. In the end, your input file might look like this:
-
-```JSON
-{
-    "step_name": "exploration",
-    "user_machine_keyword_exp": "mykeyword1",
-    "slurm_email": "",
-    "atomsk_path": "PATH_TO_THE_ATOMSK_BINARY",
-    "vmd_path": "PATH_TO_THE_VMD_BINARY",
-    "exploration_type": ["lammps", "lammps", "lammps"],
-    "traj_count": [2, 2, 2],
-    "temperature_K": [273.0, 300.0, 300.0],
-    "timestep_ps": [0.0005, 0.0005, 0.0005],
-    "previous_start": [true, true, true],
-    "disturbed_start": [false, false, false],
-    "print_interval_mult": [0.01, 0.01, 0.01],
-    "job_walltime_h": [-1, -1, -1],
-    "exp_time_ps": [10, 10, 10],
-    "max_exp_time_ps": [400, 400, 400],
-    "max_candidates": [50, 50, 100],
-    "sigma_low": [0.1, 0.1, 0.1],
-    "sigma_high": [0.8, 0.8, 0.8],
-    "sigma_high_limit": [1.5, 1.5, 1.5],
-    "ignore_first_x_ps": [0.5, 0.5, 0.5],
-    "init_exp_time_ps": [-1, -1, -1],
-    "init_job_walltime_h": [-1, -1, -1],
-    "disturbed_candidate_value": [0.5, 0, 0],
-    "disturbed_start_value": [0.0, 0.0, 0.0],
-    "disturbed_start_indexes": [[], [], []],
-    "disturbed_candidate_indexes": [[], [], []]
-}
-```
-
-We have indicated the path to the `Atomsk` code used for creating the disturbed geometries at the beginning of the input file. We allow for slightly larger deviations (`"sigma_high"` keyword set to 0.8 eV/Ang) and collect a larger number of candidates (`"max_candidates"` set to 100) for the more complex third system (reactive water).
-At this stage we should decide wether we want to include disturbed candidates in the training set. Here we might want to do so only for the ice system, since explorations at lower temperature explore a more reduced zone of the phase space and it is easier to be trapped in meta-stable states. This can be done by setting `disturbed_start_value` to `0.5`. The values in `disturbed_start_value` are used to disturb the starting structures for the next iteration. For the 2 other systems `disturbed_start_value` and `disturbed_candidate_value` are set to `0.0` in order to avoid disturbance. A non-zero value sets the maximal amplitude of the random translation vector that will be applied to each atom (a different vector for each atom) in Å.
-
-**Note:** we have indicated the path to a `VMD` executable, this is not needed if `vmd` is inmediately available in our path when executing the `extract` phase (loaded as a module for example). Similarly, we can remove `atomsk_path` if `atomsk` is already in the path.
 
 We can finally clean up the working folder by running the `clean` phase and move on to the labeling phase! (Don't forget to keep your local folder updated so that you can analyze all these results)
 
 
+We allow for slightly larger deviations (`"sigma_high"` keyword set to 0.8 eV/Ang) and collect a larger number of candidates (`"max_candidates"` set to 100) for the more complex third system (reactive water).
 
-### OUTPUTS
+At this stage we should decide wether we want to include disturbed candidates in the training set. Here we might want to do so only for the ice system, since explorations at lower temperature explore a more reduced zone of the phase space and it is easier to be trapped in meta-stable states. This can be done by setting `disturbed_start_value` to `0.5`. The values in `disturbed_start_value` are used to disturb the starting structures for the next iteration. For the 2 other systems `disturbed_start_value` and `disturbed_candidate_value` are set to `0.0` in order to avoid disturbance. A non-zero value sets the maximal amplitude of the random translation vector that will be applied to each atom (a different vector for each atom) in Å.
+
 
 ## Labeling
 
@@ -147,17 +134,14 @@ rsync -rvu $WORK_DIR USER@OTHER_HPC_MACHINE:PATH_TO_WORKDIR
 Here the reactive water calculations use full nodes and have a higher wall time of 1h30min. The wall times should be set for the first iteration but can be guessed automatically later using the average time per CP2K calculation measured in the previous iteration. We can now run the first 2 phases and wait for the electronic structure calculations to finish. When running the check phase there could be a message telling us that there are failed configurations in the `water-reactive` folder! We can see which calculations did not converge in the `water-reactive/water-reactive_step2_not_converged.txt` file. Suppose there were 2 failed jobs, the 13-th and the 54-th. We might just do `touch water-reactive/00013/skip` and `touch water-reactive/00054/skip` and run the `check` phase again. This time it will inform us that some configurations will be skipped, but the final message should be that check phase is a success. All that is left to do now is run the `extract` phase, clean up with the `clean` phase, store wavefunctions and remove all unwanted data and finally update our local folder. We have now augmented our total training set and might do a new training iteration and keep iterating until convergence is reached!
 
 
-### INPUTS
-### OUTPUTS
+
 
 ## Test
 
+
+
+
 ### INPUTS
+et quelle partie est utilisée dans quelle phase
 ### OUTPUTS
-
-
-- If you want train an NNP to study a reaction, such as an SN2 reaction, you would like to include in the training set configurations representing the reactant, product and transition states.
-In this case, we would start by defining two **systems** (`reactant` and `product`) and generating structures in both bassins by performing several iterations (exploring the chemical space, labeling the generated structures and training the NNP on the extented *dataset*).
-Next, you would also want to generate transition structures between the `reactant` and the `product`.
-For that, you would need to performed biased explorations with the PLUMED software (see [Exploration](../exploration)) within different **systems**.
-
+Decrire les control/*.json
