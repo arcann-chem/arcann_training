@@ -17,7 +17,7 @@ Now it should have generated your first `000-training` directory. In `$WORK_DIR`
 }
 ```
 
-The `"systems_auto"` keyword contains the name of all the subsystems that were found in your `$WORK_DIR/user_files/` (i.e. all files lmp files) directory and `"nnp_count"` is the number of NNP that is used by default in the committee.
+The `"systems_auto"` keyword contains the name of all the systems that were found in your `$WORK_DIR/user_files/` (i.e. all `LMP` files) directory and `"nnp_count"` is the number of NNP that is used by default in the committee.
 
 The initialization will create several folders. The most important one is the `control/` folder, in which essential data files will be stored throughout the iterative procedure. These files will be written in `.json` format and should NOT be modified. Right after initialization the only file in `control/` is `config.json`, which contains the essential information about your initialization choices (or defaults), such as your subsystem names and options. Finally the `000-training` empty folder should also have been created by the execution of the python script, where you will perform the first iteration of [training](../training).
 

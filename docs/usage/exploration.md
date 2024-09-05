@@ -1,6 +1,51 @@
 # Exploration 
 
-In the exploration phase we will generate new configurations (referred to as **candidates**) to include in the training set. For this we will perform MD simulations with either the LAMMPS (classical nuclei) or i-PI (quantum nuclei) softwares. Go to the current iteration exploration folder `XXX-exploration` created at the end of the previous training phase and execute the `prepare` phase to initialize the exploration. As for the Initialization and Training steps, you could change the default parameters of the exploration by creating a `input.json` file from the `default_input.json` file, modifying the desired values and running the `prepare` phase again. If you want to keep the default values you only need to run the `prepare` phase once. Some of the phases are slightly different if you use LAMMPS or i-PI, both phase workflows are detailed below.
+In the exploration phase we will generate new configurations (referred to as **candidates**) to include in the training set. For this we will perform MD simulations with either the LAMMPS (classical nuclei) or i-PI (quantum nuclei) softwares. Go to the current iteration exploration folder `XXX-exploration` created at the end of the previous training phase and execute the `prepare` phase to initialize the exploration.
+
+For the first exploration phase we might want to generate only a few candidate configurations to check whether our initial NNP are stable enough to give physically meaningful configurations. We might as well want to use a relatively strict error criterion for candidate selection. 
+To change these parameters you can create a `input.json` file , indicating the values to be updated, and run the `prepare` phase again. If you want to keep the default values you only need to run the `prepare` phase once. As for the Initialization and Training steps, this will generate a `used_input.json` file:
+
+```JSON
+{
+    "step_name": "exploration",
+    "user_machine_keyword_exp": "mykeyword1",
+    "slurm_email": "",
+    "atomsk_path": "PATH_TO_THE_ATOMSK_BINARY",
+    "vmd_path": "PATH_TO_THE_VMD_BINARY",
+    "exploration_type": ["lammps", "lammps", "lammps"],
+    "traj_count": [2, 2, 2],
+    "temperature_K": [273.0, 300.0, 300.0],
+    "timestep_ps": [0.0005, 0.0005, 0.0005],
+    "previous_start": [true, true, true],
+    "disturbed_start": [false, false, false],
+    "print_interval_mult": [0.01, 0.01, 0.01],
+    "job_walltime_h": [-1, -1, -1],
+    "exp_time_ps": [10, 10, 10],
+    "max_exp_time_ps": [400, 400, 400],
+    "max_candidates": [50, 50, 100],
+    "sigma_low": [0.1, 0.1, 0.1],
+    "sigma_high": [0.8, 0.8, 0.8],
+    "sigma_high_limit": [1.5, 1.5, 1.5],
+    "ignore_first_x_ps": [0.5, 0.5, 0.5],
+    "init_exp_time_ps": [-1, -1, -1],
+    "init_job_walltime_h": [-1, -1, -1],
+    "disturbed_candidate_value": [0.5, 0, 0],
+    "disturbed_start_value": [0.0, 0.0, 0.0],
+    "disturbed_start_indexes": [[], [], []],
+    "disturbed_candidate_indexes": [[], [], []]
+}
+```
+
+The `"sigma_low"`, `"sigma_high"` and `"sigma_high_limit"` keywords indicate the deviation acceptance criteria in eV/Ang for the candidate selection. 
+The `"max_candidates"` keywords indicates the maximum candidated that can be selected. 
+The values in `disturbed_start_value` are used to disturb the starting structures for the next iteration.  A non-zero value sets the maximal amplitude of the random translation vector that will be applied to each atom (a different vector for each atom) in Å.
+
+**Note:** the `vmd_path` keyword is not needed if `vmd` is inmediately available in our path when executing the `extract` phase (loaded as a module for example). Similarly, we can remove `atomsk_path` if `atomsk` is already in the path.
+
+
+Some of the phases are slightly different if you use LAMMPS or i-PI, both phase workflows are detailed below.
+
+
 
 ### LAMMPS: classical nuclei simulations ###
 
@@ -8,7 +53,8 @@ Once you are satisfied with your exploration parameters (see example below) you 
 
 ### i-PI quantum nuclei simulations ###
 
-Simulations explicitly including nuclear quantum effects by path-integral molecular dynamics with i-PI are quite similar to classical nuclei simulations with LAMMPS. Although the i-PI input files are different (see [i-PI](https://ipi-code.org/)), the `prepare`, `launch` and `check` phases can be done exactly as previously (see [LAMMPS classical nuclei simulations](#lammps-classical-nuclei-simulations) above). Then, before executing the `deviate` and `extract` phases, you must run `select_beads` and `rerun` in this order. These phases do not have special parameters that need to be tuned but require `VMD` and `Atomsk`. After that, you can run the rest of the step as for LAMMPS MD simulations.
+Simulations explicitly including nuclear quantum effects by path-integral molecular dynamics with i-PI are quite similar to classical nuclei simulations with LAMMPS. Although the i-PI input files are different (see [i-PI](https://ipi-code.org/)), the `prepare`, `launch` and `check` phases can be done exactly as previously (see [LAMMPS classical nuclei simulations](#lammps-classical-nuclei-simulations) above). Then, before executing the `deviate` and `extract` phases, you must run `select_beads` and `rerun` in this order. These phases do not have special parameters that need to be tuned but require `VMD` and `Atomsk`. After that, you can run the rest of the steps as for LAMMPS MD simulations.
+
 
 
 
