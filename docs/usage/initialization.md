@@ -1,7 +1,7 @@
 # Initialization 
 
 
-Now that you have decided the subsystems that you want to train your NNP on and prepared all the required files you can initialize the `ArcaNN` procedure by running (from the $WORK_DIR folder):
+Now that you have decided the subsystems that you want to train your NNP on and prepared all the required files you can initialize the ArcaNN procedure by running (from the $WORK_DIR folder):
 
 ```bash
 python -m arcann_training initialization start 

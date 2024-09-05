@@ -10,3 +10,5 @@ Once you are satisfied with your exploration parameters (see example below) you 
 
 Simulations explicitly including nuclear quantum effects by path-integral molecular dynamics with i-PI are quite similar to classical nuclei simulations with LAMMPS. Although the i-PI input files are different (see [i-PI](https://ipi-code.org/)), the `prepare`, `launch` and `check` phases can be done exactly as previously (see [LAMMPS classical nuclei simulations](#lammps-classical-nuclei-simulations) above). Then, before executing the `deviate` and `extract` phases, you must run `select_beads` and `rerun` in this order. These phases do not have special parameters that need to be tuned but require `VMD` and `Atomsk`. After that, you can run the rest of the step as for LAMMPS MD simulations.
 
+
+

@@ -1,8 +1,8 @@
 # SN2
 
-Here we introduce the basic usage of the ArcaNN software, ilustrated by a SN2 reaction. All the files can be found in the github page. 
+Here we introduce the basic usage of the ArcaNN software, ilustrated by a SN2 reaction. All the files can be found in the [GitHub Repository](https://github.com/arcann-chem/arcann_training/); and after ArcaNN installation, you will find them at `examples/sn2_ch3cl_br/` inside your local `arcann_traininig` directory. 
 
-Two iterative trainings were done : a first non-reactive training on reactant and products structures, followed by a reactive training where transition structures were generated. 
+For this reaction, two iterative trainings were performed : a first non-reactive training on reactant and products structures, followed by a reactive training where transition structures were generated. 
 
 The non-reactive ArcaNN training in detailed in the following sections. 
 
@@ -11,7 +11,7 @@ We will start by creating a `user_files/` directory (See [Iterative procedure pr
 
 For the non-reactive training, 6 systems were defined : 3 systems to explore the reactant basin (`ch3cl_br_close_300K`, `ch3cl_br_free_300K`, `ch3cl_br_smd_300K`) and 3 systems to explore the product basin (`ch3br_cl_close_300K`, `ch3br_cl_free_300K`, `ch3br_cl_smd_300K`). 
 
-In the `user_files/` folder you will find the following files for each one of the systems (for clarity purposes, we replaced the system's name by `SYSTEM`)
+In the `user_files/` folder you will find the following files for each one of the systems (for clarity purposes, we only indicate the files of the `ch3cl_br_close_300K` system here). Note also that `hpc1`` and `hpc2` are the machine keywords indicated in the machine.json file, see [HPC Configuration](../getting-started/hpc_configuration.md). 
 
 ### JSON FILES
 
@@ -28,20 +28,20 @@ In the `user_files/` folder you will find the following files for each one of th
 
 ### CP2K FILES 
 
-- `1_SYSTEM_labeling_XXXXX_hpc1.inp`, `2_SYSTEM_labeling_XXXXX_hpc1.inp`, `1_SYSTEM_labeling_XXXXX_hpc1.inp`, `2_SYSTEM_labeling_XXXXX_hpc2.inp` : inputs for CP2K labeling. There are 2 input files per subsystem, see details in [labeling](../labeling). `hpc1` and `hpc2` are the machine keywords indicated in the `machine.json` file.
+- `1_ch3cl_br_close_300K_labeling_XXXXX_hpc1.inp`,  `2_ch3cl_br_close_300K_labeling_XXXXX_hpc1.inp`, `1_ch3cl_br_close_300K_labeling_XXXXX_hpc1.inp`, `2_ch3cl_br_close_300K_labeling_XXXXX_hpc2.inp` : inputs for CP2K labeling. There are 2 input files per subsystem, see details in [labeling](../labeling). 
 
 
 ### LAMMPS FILES
 
-- `SYSTEM.lmp` : starting configurations for the first exploration in the LAMMPS format. 
-- `SYSTEM.in` : inputs for LAMMPS exploration. 
+- `ch3cl_br_close_300K.lmp` : starting configurations for the first exploration in the LAMMPS format. 
+- `ch3cl_br_close_300K.in` : inputs for LAMMPS exploration. 
 
 
 #### plumed files 
 
 - `plumed_SYSTEM_300K.dat` : plumed input files for the emplorations. 
 
-Additional plumed files can be used, and must be named as `plumed_KEYWORD_SYSTEM.dat`. Here, we used an additional plumed file to store colvars and another to define the key atoms : `plumed_colvars_SYSTEM.dat` and `plumed_atomdef_SYSTEM.dat`. 
+Additional plumed files can be used, and must be named as `plumed_KEYWORD_SYSTEM.dat`. Here, we used an additional plumed file to store colvars and another to define the key atoms : `plumed_colvars_ch3cl_br_close_300K.dat` and `plumed_atomdef_ch3cl_br_close_300K.dat`. 
 
 
 #### properties file
@@ -53,27 +53,21 @@ The atom order is defined in the `properties.txt` file. It makes sure that the o
 
 ## Initialization
 
-### INPUTS
-
-Let's use the above example of a NNP for water and ice that is able to describe water self-dissociation. Suppose that you want 3 subsystems (ice, un-dissociated liquid water, water with a dissociated pair) your `defaut_input.json` file might look like this:
+After the initialization step, a `default_input.json` file is generated, containing the name of the `LMP` systems found in the `user_files/`, and the default number of NNP for training defined in ArcaNN. 
 
 ```JSON
 {
-    "step_name": "initialization",
-    "systems_auto": ["ice", "water", "water-reactive"],
+    "systems_auto": ["ch3br_cl_close_300K", "ch3br_cl_free_300K", "ch3br_cl_smd_300K", "ch3cl_br_close_300K", "ch3cl_br_free_300K", "ch3cl_br_smd_300K"],
     "nnp_count": 3
 }
 ```
 
-Decrire le used_inputs
-et quelle partie est utilisée dans quelle phase
-### OUTPUTS
-Decrire les control/*.json
-
 ## Training
 
 ### INPUTS
+et quelle partie est utilisée dans quelle phase
 ### OUTPUTS
+Decrire les control/*.json
 
 ## Exploration
 
