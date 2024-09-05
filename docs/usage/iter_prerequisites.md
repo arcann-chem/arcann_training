@@ -11,8 +11,8 @@ You get the idea: you need a subsystem for every kind of chemical composition, p
 Because of this, every time you want to include a new subsystem (such as transition state structures, see [SN2](../examples/sn2.md) example), you will need to initialize the procedure again.
 This is very simple—you only need to create a new `$WORK_DIR` and include the necessary files in `user_files/` for each extra **system** you want to add.
 
-To initiate the iterative training procedure, you should create in `$WORK_DIR` two folders: `user_files/` and `data/`.
-In `user_files/` you will store all the files needed for each step (**not** in the `arcann_training/examples/user_files/` folder if you kept it!).
+To initiate the iterative training procedure, you should create in your `$WORK_DIR` two folders: `user_files/` and `data/`.
+In `user_files/` you will store all the files needed for each step.
 You can start with the examples given in the github `arcann_training/examples/user_files/`:
 
 - The LAMMPS (or i-PI) and CP2K files used for carrying out the exploration and labeling phases of each **system** should also be prepared before initialization and follow the required naming scheme (`SYSNAME.in` for the LAMMPS input file, `SYSNAME.xml` for i-PI, and `[1-2]_SYSNAME_labeling_XXXXX_[cluster].inp` for the two CP2K files required per **system**, where `[cluster]` refers to the short string selected for the labeling cluster in the `machine.json`; see [Labeling](../labeling)).
