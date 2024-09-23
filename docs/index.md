@@ -1,5 +1,5 @@
 <div style="text-align: center;">
-<img src="./docs/arcann_logo.svg" alt="ArcaNN logo" style="width: 25%; height: auto;" />
+<img src="./arcann_logo.svg" alt="ArcaNN logo" style="width: 25%; height: auto;" />
 </div>
 
 ---
