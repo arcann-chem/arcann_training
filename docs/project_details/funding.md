@@ -1,0 +1,3 @@
+- Idex ANR-10-IDEX-0001-02PSL
+- ERC Grant Agreement No. 757111
+- GENCI Grant 2023-A0130707156
