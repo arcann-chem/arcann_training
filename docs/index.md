@@ -1,4 +1,6 @@
-![ArcaNN logo](./doc/_static/arcann_logo.svg)
+<div style="text-align: center;">
+<img src="./docs/arcann_logo.svg" alt="ArcaNN logo" style="width: 25%; height: auto;" />
+</div>
 
 ---
 
