@@ -1,10 +1,16 @@
+[<picture><img alt="ArcaNN logo" src="./doc/_static/arcann_logo.svg"></picture>]
+
+---
+
 [![GNU AGPL v3.0 License](https://img.shields.io/github/license/arcann-chem/arcann_training.svg)](https://github.com/arcann-chem/arcann_training/blob/main/LICENSE)
 [![Unit Tests Requirements](https://github.com/arcann-chem/arcann/actions/workflows/unittests_requirements.yml/badge.svg)](https://github.com/arcann-chem/arcann/actions/workflows/unittests_requirements.yml)
 [![Unit Tests Matrix](https://github.com/arcann-chem/arcann/actions/workflows/unittests_matrix.yml/badge.svg?branch=main)](https://github.com/arcann-chem/arcann/actions/workflows/unittests_matrix.yml)
 [![Docs](https://github.com/arcann-chem/arcann/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/arcann-chem/arcann/actions/workflows/docs.yml)
 [![DOI](https://img.shields.io/badge/DOI-10.48550%2FarXiv.2407.07751-blue)](https://doi.org/10.48550/arXiv.2407.07751)
 
-# About The Project #
+---
+
+# ArcaNN #
 
 ArcaNN proposes an automated enhanced sampling generation of training sets for chemically reactive machine learning interatomic potentials.
 In its current version, it aims to simplify and automate the iterative training process of a [DeePMD-kit](https://doi.org/10.1063/5.0155600) neural network potential for a user-chosen system.
