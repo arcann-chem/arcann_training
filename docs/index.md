@@ -1,4 +1,4 @@
-[<picture><img alt="ArcaNN logo" src="./doc/_static/arcann_logo.svg"></picture>]
+![ArcaNN logo](./doc/_static/arcann_logo.svg)
 
 ---
 
