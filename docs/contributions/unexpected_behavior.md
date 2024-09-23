@@ -1,4 +1,4 @@
-# Unexpected Behavior #
+# Unexpected Behavior 
 
 If you encounter any bugs or issues while working with ArcaNN, we encourage you to report them.
 Please don't hesitate to open an issue on our GitHub repository.

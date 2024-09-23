@@ -1,8 +1,8 @@
-# HPC Configuration #
+# HPC Configuration 
 
 ArcaNN is designed for use on one or several HPC machines, whose specific configurations must be specified by the user through a `machine.json` file.
-A general example file can be found at `arcann_training/examples/user_files/machine.json`.
-You should modify this file to suit your setup and then copy it to the `user_files/` folder in your working directory (see [Usage](../usage/iter_prerequisites)).
+A general example file can be found in the [GitHub Repository](https://github.com/arcann-chem/arcann_training/blob/main/examples/user_files/machine.json).
+You should modify this file to suit your setup and then copy it to the `user_files/` folder in your working directory (see later in [Usage](../usage/iter_prerequisites.md)).
 
 ## Structure of the `machine.json` File ##
 
@@ -16,12 +16,10 @@ The `machine.json` file is organized as a JSON dictionary with one or more keys 
 }
 ```
 
-## Key Definitions ##
 
-Machine Name: Each key in the JSON file is a short string that designates the name of the machine (e.g., `"myHPCkeyword1"`, `"myHPCkeyword2"`).
-Configuration Dictionary: The value associated with each key is a dictionary containing the necessary configuration entries for running jobs on the corresponding HPC machine.
+Each key in the JSON file is a short string designating the name of the machine (e.g., `"myHPCkeyword1"`, `"myHPCkeyword2"` are the names of 2 different HPC machines).
+The value associated with each key is a dictionary indicating the configuration entries for running jobs on the corresponding HPC machine.
 
-Example: SLURM Job Scheduler Configuration
 Below is an example of the initial entries for an HPC machine using a SLURM job scheduler:
 
 ```json
@@ -53,7 +51,9 @@ Below is an example of the initial entries for an HPC machine using a SLURM job 
 }
 ```
 
-## Entry Descriptions ##
+## HPC Entry ##
+
+Each HPC machine entry contains a JSON directonary where each key corresponds to a configuration entry. 
 
 - **hostname**: A substring contained in the output of `python -c "import socket ; print(socket.gethostname())"`. This should match your machine's name.
 - **walltime_format**: The unit of time (e.g., hours) used to specify wall time on the cluster.
@@ -62,12 +62,15 @@ Below is an example of the initial entries for an HPC machine using a SLURM job 
 - **max_jobs**: Maximum number of jobs per user allowed by the scheduler. Can also be a user-defined safety limit.
 - **max_array_size**: Maximum number of jobs in a single job array. This is important for `Slurm` as ArcaNN relies heavily on job arrays.
 
-## Partition Configuration ##
+## Resource Configuration ##
 
-Each partition in the HPC machine is represented by a key (e.g., `"mykeyword1"`) and includes:
+Several resources can be available for calculation within the same HPC machine. 
+Each available resource in the HPC machine is represented by a key (e.g., `"mykeyword1"`) and includes:
 
-- **project_name**: Name of the project using the HPC resources.
+- **project_name**: Name of the project using the HPC resources. 
+It will correspond to the `_R_PROJECT_` keyword in the `#SBATCH --account=_R_PROJECT_` line of the slurm job. 
 - **allocation_name**: Allocation or account name, typically used in large HPC facilities.
+It will correspond to the `_R_ALLOC_` keyword in the `#SBATCH --account=_R_PROJECT_@_R_ALLOC_` line of the slurm job. 
 - **arch_name**: Architecture name (e.g., `a100` for GPU nodes).
 - **arch_type**: Architecture type (e.g., `gpu` or `cpu`).
 - **partition**: The partition on the HPC machine.

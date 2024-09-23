@@ -1,4 +1,4 @@
-# ArcaNN Installation Guide #
+# ArcaNN Installation Guide 
 
 ## Installation on Machines with Internet Access ##
 
