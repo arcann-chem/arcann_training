@@ -1,0 +1,8 @@
+nav:
+    - start.md
+    - iter_prerequisites.md
+    - initialization.md
+    - training.md
+    - exploration.md
+    - labeling.md
+    - test.md

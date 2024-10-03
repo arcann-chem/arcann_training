@@ -1,5 +1,5 @@
 pip>=21.3
-setuptools>=60.0
-wheel>=0.37
+setuptools>=58.5
+wheel>=0.38
 numpy>=1.22
 pyyaml>=6.0

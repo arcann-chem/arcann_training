@@ -34,7 +34,9 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
+    arcann_logger.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
+    )
     arcann_logger.debug(f"Current path :{current_path}")
     arcann_logger.debug(f"Training path: {training_path}")
     arcann_logger.debug(f"Program path: {deepmd_iterative_path}")
@@ -75,14 +77,22 @@ def main(
         training_json["is_compressed"] = True
 
     # Dump the JSON files (training)
-    write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"), read_only=True)
+    write_json_file(
+        training_json,
+        (control_path / f"training_{padded_curr_iter}.json"),
+        read_only=True,
+    )
 
     # End
     arcann_logger.info(f"-" * 88)
     if completed_count == main_json["nnp_count"]:
-        arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
+        arcann_logger.info(
+            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
+        )
     else:
-        arcann_logger.error(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!")
+        arcann_logger.error(
+            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!"
+        )
         arcann_logger.error(f"Some DP Compress did not finished correctly.")
         arcann_logger.error(f"Please check manually before relaunching this step.")
         arcann_logger.error(f"Aborting...")

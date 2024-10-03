@@ -24,7 +24,10 @@ import unittest
 from pathlib import Path
 
 # Local imports
-from arcann_training.initialization.utils import generate_main_json, check_properties_file
+from arcann_training.initialization.utils import (
+    generate_main_json,
+    check_properties_file,
+)
 
 
 class TestGenerateMainJson(unittest.TestCase):
@@ -69,7 +72,9 @@ class TestGenerateMainJson(unittest.TestCase):
         }
         expected_padded_curr_iter = "000"
 
-        config_json, merged_input_json, padded_curr_iter = generate_main_json(input_json, self.default_json)
+        config_json, merged_input_json, padded_curr_iter = generate_main_json(
+            input_json, self.default_json
+        )
 
         self.assertDictEqual(config_json, expected_config_json)
         self.assertDictEqual(merged_input_json, expected_merged_input_json)
@@ -94,7 +99,9 @@ class TestGenerateMainJson(unittest.TestCase):
         }
         expected_padded_curr_iter = "000"
 
-        config_json, merged_input_json, padded_curr_iter = generate_main_json(input_json, self.default_json)
+        config_json, merged_input_json, padded_curr_iter = generate_main_json(
+            input_json, self.default_json
+        )
 
         self.assertDictEqual(config_json, expected_config_json)
         self.assertDictEqual(merged_input_json, expected_merged_input_json)
@@ -172,7 +179,10 @@ He 4.002
 """
         temp_file = self.create_temp_file(content)
         result = check_properties_file(temp_file)
-        self.assertEqual(result, {1: {"symbol": "H", "mass": 1.007}, 2: {"symbol": "He", "mass": 4.002}})
+        self.assertEqual(
+            result,
+            {1: {"symbol": "H", "mass": 1.007}, 2: {"symbol": "He", "mass": 4.002}},
+        )
 
     def test_file_not_found(self):
         """

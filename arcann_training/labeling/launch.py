@@ -19,7 +19,10 @@ import subprocess
 from arcann_training.common.check import validate_step_folder
 from arcann_training.common.filesystem import change_directory
 from arcann_training.common.json import load_json_file, write_json_file
-from arcann_training.common.machine import assert_same_machine, get_machine_spec_for_step
+from arcann_training.common.machine import (
+    assert_same_machine,
+    get_machine_spec_for_step,
+)
 
 
 def main(
@@ -37,7 +40,9 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
+    arcann_logger.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
+    )
     arcann_logger.debug(f"Current path :{current_path}")
     arcann_logger.debug(f"Training path: {training_path}")
     arcann_logger.debug(f"Program path: {deepmd_iterative_path}")
@@ -51,7 +56,9 @@ def main(
     curr_iter = int(padded_curr_iter)
 
     # Load the input JSON
-    current_input_json = load_json_file((current_path / "used_input.json"), abort_on_error=True)
+    current_input_json = load_json_file(
+        (current_path / "used_input.json"), abort_on_error=True
+    )
     arcann_logger.debug(f"current_input_json: {current_input_json}")
 
     # Get control path, load the main JSON and the exploration JSON
@@ -100,7 +107,9 @@ def main(
     # Check if we can continue
     if labeling_json["is_launched"]:
         arcann_logger.critical(f"Already launched...")
-        continuing = input(f"Do you want to continue?\n['Y' for yes, anything else to abort]\n")
+        continuing = input(
+            f"Do you want to continue?\n['Y' for yes, anything else to abort]\n"
+        )
         if continuing == "Y":
             del continuing
         else:
@@ -120,27 +129,43 @@ def main(
     for system_auto in labeling_json["systems_auto"]:
         system_path = current_path / system_auto
         if stop_launch_flag:
-            arcann_logger.info(f"Labeling - '{system_auto}' skipped (launch_all_jobs = False).")
+            arcann_logger.info(
+                f"Labeling - '{system_auto}' skipped (launch_all_jobs = False)."
+            )
             launched_count += 1
             continue
 
-        if (system_path / f"job-array_{labeling_program_up}_label_{machine_spec['arch_type']}_{machine}_0.sh").is_file():
+        if (
+            system_path
+            / f"job-array_{labeling_program_up}_label_{machine_spec['arch_type']}_{machine}_0.sh"
+        ).is_file():
             change_directory(system_path)
             try:
-                subprocess.run([machine_launch_command, f"./job-array_{labeling_program_up}_label_{machine_spec['arch_type']}_{machine}_0.sh"])
+                subprocess.run(
+                    [
+                        machine_launch_command,
+                        f"./job-array_{labeling_program_up}_label_{machine_spec['arch_type']}_{machine}_0.sh",
+                    ]
+                )
                 arcann_logger.info(f"Labeling - '{system_auto}' launched.")
                 launched_count += 1
                 if not labeling_json["launch_all_jobs"]:
                     stop_launch_flag = True
             except:
-                arcann_logger.critical(f"Labeling - '{system_auto}' NOT launched - EXCEPTION.")
+                arcann_logger.critical(
+                    f"Labeling - '{system_auto}' NOT launched - EXCEPTION."
+                )
             change_directory(system_path.parent)
         else:
             if labeling_json["systems_auto"][system_auto]["candidates_count"] == 0:
-                arcann_logger.info(f"Labeling - '{system_auto}' skipped (no candidates to label).")
+                arcann_logger.info(
+                    f"Labeling - '{system_auto}' skipped (no candidates to label)."
+                )
                 launched_count += 1
             else:
-                arcann_logger.critical(f"Labeling - '{system_auto}' NOT launched - No job file.")
+                arcann_logger.critical(
+                    f"Labeling - '{system_auto}' NOT launched - No job file."
+                )
 
         del system_path
     del system_auto
@@ -156,12 +181,20 @@ def main(
     # End
     arcann_logger.info(f"-" * 88)
     if launched_count == len(labeling_json["systems_auto"]):
-        arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
+        arcann_logger.info(
+            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
+        )
     else:
-        arcann_logger.critical(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!")
+        arcann_logger.critical(
+            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!"
+        )
         arcann_logger.critical(f"Some jobs did not launch correctly.")
-        arcann_logger.critical(f"Please launch manually before continuing to the next step.")
-        arcann_logger.critical(f"Replace the key 'is_launched' to 'True' in the 'labeling_{padded_curr_iter}.json'.")
+        arcann_logger.critical(
+            f"Please launch manually before continuing to the next step."
+        )
+        arcann_logger.critical(
+            f"Replace the key 'is_launched' to 'True' in the 'labeling_{padded_curr_iter}.json'."
+        )
     del launched_count
 
     # Cleaning
@@ -169,7 +202,14 @@ def main(
     del (user_input_json_filename,)
     del main_json, current_input_json, labeling_json
     del curr_iter, padded_curr_iter
-    del machine, machine_walltime_format, machine_job_scheduler, machine_launch_command, user_machine_keyword, machine_spec
+    del (
+        machine,
+        machine_walltime_format,
+        machine_job_scheduler,
+        machine_launch_command,
+        user_machine_keyword,
+        machine_spec,
+    )
 
     arcann_logger.debug(f"LOCAL")
     arcann_logger.debug(f"{locals()}")

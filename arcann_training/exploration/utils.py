@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/08/05
+Last modified: 2024/08/06
 
 Functions
 ---------
@@ -44,6 +44,7 @@ update_system_nb_steps_factor(previous_json: Dict, system_auto_index: int) -> in
 # TODO: Homogenize the docstrings for this module
 
 # Standard library modules
+import logging
 from pathlib import Path
 from copy import deepcopy
 from typing import Dict, List, Tuple, Union
@@ -118,7 +119,9 @@ def generate_input_exploration_json(
         # Get the value
         default_used = False
         if key in user_input_json:
-            if ( user_input_json[key] == "default" or user_input_json[key] == None ) and key in default_input_json:
+            if (
+                user_input_json[key] == "default" or user_input_json[key] == None
+            ) and key in default_input_json:
                 value = default_input_json[key]
                 default_used = True
             else:
@@ -150,7 +153,11 @@ def generate_input_exploration_json(
                 exploration_dep = []
                 if len(value) == system_count:
                     for it_value in value:
-                        if it_value != "lammps" and it_value != "i-PI" and it_value != "sander_emle":
+                        if (
+                            it_value != "lammps"
+                            and it_value != "i-PI"
+                            and it_value != "sander_emle"
+                        ):
                             error_msg = f"Exploration type {key} is not know: use ethier 'lammps' or 'i-PI' or 'sander_emle' or in a list"
                             raise ValueError(error_msg)
                         else:
@@ -177,7 +184,9 @@ def generate_input_exploration_json(
                     if isinstance(exploration_dep, List):
                         merged_input_json[key] = [value[0][_] for _ in exploration_dep]
                     else:
-                        merged_input_json[key] = [value[0][exploration_dep]] * system_count
+                        merged_input_json[key] = [
+                            value[0][exploration_dep]
+                        ] * system_count
                 else:
                     merged_input_json[key] = [value[0]] * system_count
             else:
@@ -185,7 +194,17 @@ def generate_input_exploration_json(
                 if isinstance(value, List):
                     if len(value) == system_count:
                         for it_value in value:
-                            if (isinstance(it_value, (int, float)) and (key != "disturbed_start" and key != "previous_start")) or (isinstance(it_value, (bool)) and (key == "disturbed_start" or key == "previous_start")):
+                            if (
+                                isinstance(it_value, (int, float))
+                                and (
+                                    key != "disturbed_start" and key != "previous_start"
+                                )
+                            ) or (
+                                isinstance(it_value, (bool))
+                                and (
+                                    key == "disturbed_start" or key == "previous_start"
+                                )
+                            ):
                                 merged_input_json[key].append(it_value)
                             else:
                                 error_msg = f"{key}: Type mismatch: the type is '{type(it_value)}', but it should be '{type(1)}' or '{type(1.0)}' or '{type(True)}' (for previous_start or disturbed_start)"
@@ -194,7 +213,13 @@ def generate_input_exploration_json(
                         error_msg = f"{key}: Size mismatch: The length of the list should be '{system_count}' corresponding to the number of systems."
                         raise ValueError(error_msg)
                 # If it is not a List
-                elif (isinstance(value, (int, float)) and (key != "disturbed_start" and key != "previous_start")) or (isinstance(value, (bool)) and (key == "disturbed_start" or key == "previous_start")):
+                elif (
+                    isinstance(value, (int, float))
+                    and (key != "disturbed_start" and key != "previous_start")
+                ) or (
+                    isinstance(value, (bool))
+                    and (key == "disturbed_start" or key == "previous_start")
+                ):
                     merged_input_json[key] = [value] * system_count
                 else:
                     error_msg = f"{key}: Type mismatch: the type is '{type(it_value)}', but it should be '{type(1)}' or '{type(1.0)}' or '{type(True)}' (for previous_start or disturbed_start)"
@@ -326,7 +351,9 @@ def generate_input_exploration_deviation_json(
         # Get the value
         default_used = False
         if key in user_input_json:
-            if ( user_input_json[key] == "default" or user_input_json[key] == None ) and key in default_input_json:
+            if (
+                user_input_json[key] == "default" or user_input_json[key] == None
+            ) and key in default_input_json:
                 value = default_input_json[key]
                 default_used = True
             else:
@@ -465,7 +492,9 @@ def generate_input_exploration_disturbed_json(
         # Get the value
         default_used = False
         if key in user_input_json:
-            if ( user_input_json[key] == "default" or user_input_json[key] == None ) and key in default_input_json:
+            if (
+                user_input_json[key] == "default" or user_input_json[key] == None
+            ) and key in default_input_json:
                 value = default_input_json[key]
                 default_used = True
             else:
@@ -618,6 +647,7 @@ def generate_starting_points(
         A tuple containing the starting point file names, the backup starting point file names,
         and a boolean indicating wehter to start from a previous minimum and a boolean indicating whether to start from a disturbed minimum.
     """
+    arcann_logger = logging.getLogger("ArcaNN")
 
     # Determine file extension based on exploration type
     if exploration_type == "lammps":
@@ -629,15 +659,47 @@ def generate_starting_points(
         return None, None, False, False
 
     # Get list of starting point file names for system and iteration
-    starting_points_path = list(Path(training_path / "starting_structures").glob(f"{padded_prev_iter}_{system_auto}_*.{file_extension}"))
-    orginal_starting_points_path = list(Path(training_path / "user_files").glob(f"{system_auto}.{file_extension}"))
+    starting_points_path = list(
+        Path(training_path / "starting_structures").glob(
+            f"{padded_prev_iter}_{system_auto}_*.{file_extension}"
+        )
+    )
+    orginal_starting_points_path = list(
+        Path(training_path / "user_files").glob(f"{system_auto}.{file_extension}")
+    )
     starting_points_all = [str(zzz).split("/")[-1] for zzz in starting_points_path]
     starting_points = [zzz for zzz in starting_points_all if "disturbed" not in zzz]
-    starting_points_disturbed = [zzz for zzz in starting_points_all if zzz not in starting_points]
-    starting_points_original = [str(_).split("/")[-1] for _ in orginal_starting_points_path]
+    starting_points_disturbed = [
+        zzz for zzz in starting_points_all if zzz not in starting_points
+    ]
+    starting_points_original = [
+        str(_).split("/")[-1] for _ in orginal_starting_points_path
+    ]
     starting_points_bckp = deepcopy(starting_points)
     starting_points_disturbed_bckp = deepcopy(starting_points_disturbed)
     starting_points_original_bckp = deepcopy(starting_points_original)
+
+    # Special case if no valid starting structures are found (either normal or disturbed)
+    # Replace starting points with original starting points and disturbed starting points with original starting points too but do not changes (but just temporary)
+    if not starting_points:
+        starting_points = deepcopy(starting_points_original)
+        starting_points_bckp = deepcopy(starting_points_original_bckp)
+        arcann_logger.warning(
+            f"No valid starting structures found for {system_auto} in iteration {padded_prev_iter}. Using original starting structures."
+        )
+    if not starting_points_disturbed and (
+        disturbed_start
+        or (
+            previous_json["systems_auto"][system_auto]["disturbed_start"]
+            and previous_json["systems_auto"][system_auto]["disturbed_start_value"]
+        )
+    ):
+        starting_points_disturbed = deepcopy(starting_points_original)
+        starting_points_disturbed_bckp = deepcopy(starting_points_original_bckp)
+        arcann_logger.warning(
+            f"No valid disturbed starting structures found for {system_auto} in iteration {padded_prev_iter}. Using original starting structures."
+        )
+
     # Check if system should start from a disturbed minimum
     if input_present and not previous_start:
         starting_points = deepcopy(starting_points_original)
@@ -654,7 +716,10 @@ def generate_starting_points(
             starting_points_bckp = deepcopy(starting_points_original_bckp)
             return starting_points, starting_points_bckp, False, False
         # If input file is not present, check if system started from disturbed minimum in previous iteration
-        elif previous_json["systems_auto"][system_auto]["disturbed_start"] and previous_json["systems_auto"][system_auto]["disturbed_start_value"]:
+        elif (
+            previous_json["systems_auto"][system_auto]["disturbed_start"]
+            and previous_json["systems_auto"][system_auto]["disturbed_start_value"]
+        ):
             # If system started from disturbed minimum in previous iteration, use disturbed starting points
             starting_points = deepcopy(starting_points_disturbed)
             starting_points_bckp = deepcopy(starting_points_disturbed_bckp)
@@ -703,17 +768,33 @@ def create_models_list(
 
     # Generate list of NNP model indices and reorder based on current model to propagate
     list_nnp = [zzz for zzz in range(1, main_json["nnp_count"] + 1)]
-    reorder_nnp_list = list_nnp[list_nnp.index(it_nnp) :] + list_nnp[: list_nnp.index(it_nnp)]
+    reorder_nnp_list = (
+        list_nnp[list_nnp.index(it_nnp) :] + list_nnp[: list_nnp.index(it_nnp)]
+    )
 
     # Determine whether to use compressed models
     compress_str = "_compressed" if previous_json["is_compressed"] else ""
 
     # Generate list of model file names
-    models_list = ["graph_" + str(f) + "_" + padded_prev_iter + compress_str + ".pb" for f in reorder_nnp_list]
+    models_list = [
+        "graph_" + str(f) + "_" + padded_prev_iter + compress_str + ".pb"
+        for f in reorder_nnp_list
+    ]
 
     # Create symbolic links to the model files in the local directory
     for it_sub_nnp in range(1, main_json["nnp_count"] + 1):
-        nnp_apath = (training_path / "NNP" / ("graph_" + str(it_sub_nnp) + "_" + padded_prev_iter + compress_str + ".pb")).resolve()
+        nnp_apath = (
+            training_path
+            / "NNP"
+            / (
+                "graph_"
+                + str(it_sub_nnp)
+                + "_"
+                + padded_prev_iter
+                + compress_str
+                + ".pb"
+            )
+        ).resolve()
         subprocess.call(["ln", "-nsf", str(nnp_apath), str(local_path)])
 
     # Join the model file names into a single string for ease of use
@@ -724,7 +805,9 @@ def create_models_list(
 
 # Unittested
 @catch_errors_decorator
-def get_last_frame_number(model_deviation: np.ndarray, sigma_high_limit: float, disturbed_start: bool) -> int:
+def get_last_frame_number(
+    model_deviation: np.ndarray, sigma_high_limit: float, disturbed_start: bool
+) -> int:
     """
     Returns the index of the last frame to be processed based on the given parameters.
 
@@ -792,12 +875,27 @@ def update_system_nb_steps_factor(previous_json: Dict, system_auto_index: int) -
 
     """
     # Calculate the ratio of ill-described candidates to the total number of candidates
-    ill_described_ratio = (previous_json["systems_auto"][system_auto_index]["candidates_count"] + previous_json["systems_auto"][system_auto_index]["rejected_count"]) / previous_json["systems_auto"][system_auto_index]["total_count"]
+    ill_described_ratio = (
+        previous_json["systems_auto"][system_auto_index]["candidates_count"]
+        + previous_json["systems_auto"][system_auto_index]["rejected_count"]
+    ) / previous_json["systems_auto"][system_auto_index]["total_count"]
 
     # Return a multiplying factor for system_nb_steps based on the ratio of ill-described candidates
     if ill_described_ratio < 0.10:
-        return 4 * previous_json["systems_auto"][system_auto_index]["nb_steps"] * previous_json["systems_auto"][system_auto_index]["timestep_ps"]
+        return (
+            4
+            * previous_json["systems_auto"][system_auto_index]["nb_steps"]
+            * previous_json["systems_auto"][system_auto_index]["timestep_ps"]
+        )
     elif ill_described_ratio < 0.20:
-        return 2 * previous_json["systems_auto"][system_auto_index]["nb_steps"] * previous_json["systems_auto"][system_auto_index]["timestep_ps"]
+        return (
+            2
+            * previous_json["systems_auto"][system_auto_index]["nb_steps"]
+            * previous_json["systems_auto"][system_auto_index]["timestep_ps"]
+        )
     else:
-        return 1 * previous_json["systems_auto"][system_auto_index]["nb_steps"] * previous_json["systems_auto"][system_auto_index]["timestep_ps"]
+        return (
+            1
+            * previous_json["systems_auto"][system_auto_index]["nb_steps"]
+            * previous_json["systems_auto"][system_auto_index]["timestep_ps"]
+        )

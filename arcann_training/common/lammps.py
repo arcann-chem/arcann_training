@@ -125,7 +125,14 @@ def read_lammps_data(
     if num_atom_types == None:
         error_msg = "The number of atom types was not found."
         raise ValueError(error_msg)
-    if xlo == None or xhi == None or ylo == None or yhi == None or zlo == None or zhi == None:
+    if (
+        xlo == None
+        or xhi == None
+        or ylo == None
+        or yhi == None
+        or zlo == None
+        or zhi == None
+    ):
         error_msg = f"Invalid box coordinates."
         raise ValueError(error_msg)
     if len(masses) == 0:

@@ -225,7 +225,9 @@ class TestCheckFileExistence(unittest.TestCase):
         Test logging a warning for a nonexistent file with 'abort_on_error=False'.
         """
         with self.assertLogs(level="WARNING"):
-            check_file_existence(Path(self.temp_dir.name) / "nonexistent_file.txt", abort_on_error=False)
+            check_file_existence(
+                Path(self.temp_dir.name) / "nonexistent_file.txt", abort_on_error=False
+            )
         self.assertTrue(True)
 
     def test_check_file_existence_existing_file_no_abort(self):
@@ -233,7 +235,9 @@ class TestCheckFileExistence(unittest.TestCase):
         Test raising a 'FileExistsError' for an existing file with 'expected_existence=False' and 'abort_on_error=True'.
         """
         with self.assertRaises(FileExistsError):
-            check_file_existence(self.temp_file, expected_existence=False, abort_on_error=True)
+            check_file_existence(
+                self.temp_file, expected_existence=False, abort_on_error=True
+            )
 
         self.assertTrue(True)
 

@@ -96,7 +96,9 @@ def add_key_value_to_dict(dictionary: Dict, key: str, value: Any) -> None:
 
 # Unittested
 @catch_errors_decorator
-def get_key_in_dict(key: str, input_json: Dict, previous_json: Dict, default_json: Dict) -> Any:
+def get_key_in_dict(
+    key: str, input_json: Dict, previous_json: Dict, default_json: Dict
+) -> Any:
     """
     Get the value of the key from input JSON, previous JSON or default JSON, and validate its type.
 
@@ -119,7 +121,9 @@ def get_key_in_dict(key: str, input_json: Dict, previous_json: Dict, default_jso
 
     # Check if the key is present in any of the JSON, and set the value accordingly.
     if key in input_json:
-        if ( input_json[key] == "default" or input_json[key] == None ) and key in default_json:
+        if (
+            input_json[key] == "default" or input_json[key] == None
+        ) and key in default_json:
             value = default_json[key]
         else:
             value = input_json[key]
@@ -143,7 +147,12 @@ def get_key_in_dict(key: str, input_json: Dict, previous_json: Dict, default_jso
 
 # Unittested
 @catch_errors_decorator
-def backup_and_overwrite_json_file(json_dict: Dict, file_path: Path, enable_logging: bool = True, read_only: bool = False) -> None:
+def backup_and_overwrite_json_file(
+    json_dict: Dict,
+    file_path: Path,
+    enable_logging: bool = True,
+    read_only: bool = False,
+) -> None:
     """
     Write a dictionary to a JSON file after creating a backup of the existing file.
 
@@ -230,14 +239,18 @@ def load_default_json_file(file_path: Path) -> Dict:
             return json.loads(file_content)
     else:
         # If the file cannot be found, return an empty dictionary and log a warning
-        logging.warning(f"Default file '{file_path.name}' not found in '{file_path.parent}'.")
+        logging.warning(
+            f"Default file '{file_path.name}' not found in '{file_path.parent}'."
+        )
         logging.warning(f"Check your installation")
         return {}
 
 
 # Unittested
 @catch_errors_decorator
-def load_json_file(file_path: Path, abort_on_error: bool = True, enable_logging: bool = True) -> Dict:
+def load_json_file(
+    file_path: Path, abort_on_error: bool = True, enable_logging: bool = True
+) -> Dict:
     """
     Load a JSON file from the given file path and return its contents as a dictionary.
 
@@ -287,13 +300,20 @@ def load_json_file(file_path: Path, abort_on_error: bool = True, enable_logging:
         else:
             # If logging is enabled, log information about the creation of the empty dictionary
             if enable_logging:
-                logging.info(f"Creating an empty dictionary: '{file_path.name}' in '{file_path.parent}'.")
+                logging.info(
+                    f"Creating an empty dictionary: '{file_path.name}' in '{file_path.parent}'."
+                )
             return {}
 
 
 # Unittested
 @catch_errors_decorator
-def write_json_file(json_dict: Dict, file_path: Path, enable_logging: bool = True, read_only: bool = False) -> None:
+def write_json_file(
+    json_dict: Dict,
+    file_path: Path,
+    enable_logging: bool = True,
+    read_only: bool = False,
+) -> None:
     """
     Writes a dictionary to a JSON file, optionally logging the action and setting the file to read-only.
 
@@ -341,7 +361,11 @@ def write_json_file(json_dict: Dict, file_path: Path, enable_logging: bool = Tru
 
             # Collapse arrays/lists in the JSON to a single line
             pattern = r"(\[)(\s*([^\]]*)\s*)(\])"
-            replacement = lambda m: m.group(1) + re.sub(r"\s+", " ", m.group(3)).rstrip() + m.group(4)
+            replacement = (
+                lambda m: m.group(1)
+                + re.sub(r"\s+", " ", m.group(3)).rstrip()
+                + m.group(4)
+            )
             json_str = re.sub(pattern, replacement, json_str)
             json_str = re.sub(r"\],\s+\[", "], [", json_str)
             json_str = re.sub(r"\]\s+\]", "]]", json_str)
@@ -396,14 +420,21 @@ def convert_control_to_input(control_json: Dict, main_json: Dict) -> Dict:
         # Iterate over keys in main_json["systems_auto"]
         for system_auto in main_json.get("systems_auto", {}):
             if system_auto in control_json.get("systems_auto", {}):
-                input_json[key].append(control_json["systems_auto"][system_auto].get(key, None))
+                input_json[key].append(
+                    control_json["systems_auto"][system_auto].get(key, None)
+                )
 
     return input_json
 
 
 # TODO: Add tests for this function
 @catch_errors_decorator
-def replace_values_by_key_name(d: Union[Dict[str, Any], List[Any]], key_name: str, new_value: Any, parent_key: str = "") -> None:
+def replace_values_by_key_name(
+    d: Union[Dict[str, Any], List[Any]],
+    key_name: str,
+    new_value: Any,
+    parent_key: str = "",
+) -> None:
     """
     Recursively finds and replaces the values of all keys (and subkeys) with the specified name within a dictionary or list of dictionaries.
 

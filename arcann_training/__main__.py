@@ -23,9 +23,19 @@ from arcann_training.common.logging import setup_logging
 parser = argparse.ArgumentParser(description="Deepmd iterative program suite")
 parser.add_argument("step_name", type=str, help="Step name")
 parser.add_argument("phase_name", type=str, help="Phase name")
-parser.add_argument("-v", "--verbose", type=int, default=0, help="verbosity, 0 (default) or 1 (debug)")
-parser.add_argument("-i", "--input", type=str, default="input.json", help="name of the input file (with ext)")
-parser.add_argument("-c", "--cluster", type=str, default=None, help="name of the fake cluster")
+parser.add_argument(
+    "-v", "--verbose", type=int, default=0, help="verbosity, 0 (default) or 1 (debug)"
+)
+parser.add_argument(
+    "-i",
+    "--input",
+    type=str,
+    default="input.json",
+    help="name of the input file (with ext)",
+)
+parser.add_argument(
+    "-c", "--cluster", type=str, default=None, help="name of the fake cluster"
+)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -58,7 +68,9 @@ if __name__ == "__main__":
     arcann_logger.info(f"-" * 88)
     arcann_logger.info(f"-" * 88)
     arcann_logger.info(f"ARCANN TRAINING PROGRAM SUITE")
-    arcann_logger.info(f"Launching: {step_name.capitalize()} - {phase_name.capitalize()}")
+    arcann_logger.info(
+        f"Launching: {step_name.capitalize()} - {phase_name.capitalize()}"
+    )
     arcann_logger.info(f"-" * 88)
     arcann_logger.info(f"-" * 88)
 
@@ -66,7 +78,11 @@ if __name__ == "__main__":
     valid_phases = {}
     for step in steps:
         step_path = deepmd_iterative_path / step
-        files = [f.stem for f in step_path.iterdir() if f.is_file() and f.suffix == ".py" and f.stem not in ["__init__", "utils"]]
+        files = [
+            f.stem
+            for f in step_path.iterdir()
+            if f.is_file() and f.suffix == ".py" and f.stem not in ["__init__", "utils"]
+        ]
         valid_phases[step] = files
 
     if step_name not in steps:
@@ -76,7 +92,9 @@ if __name__ == "__main__":
         exit(exit_code)
 
     elif phase_name not in valid_phases.get(step_name, []):
-        arcann_logger.error(f"Invalid phase for step {step_name}. Valid phases are: {valid_phases[step_name]}")
+        arcann_logger.error(
+            f"Invalid phase for step {step_name}. Valid phases are: {valid_phases[step_name]}"
+        )
         arcann_logger.error(f"Aborting...")
         exit_code = 1
         exit(exit_code)
@@ -85,7 +103,9 @@ if __name__ == "__main__":
     else:
         try:
             submodule = importlib.import_module(submodule_name)
-            exit_code = submodule.main(step_name, phase_name, deepmd_iterative_path, fake_cluster, input_fn)
+            exit_code = submodule.main(
+                step_name, phase_name, deepmd_iterative_path, fake_cluster, input_fn
+            )
             del submodule, submodule_name
         except Exception as e:
             exit_code = 1
@@ -96,9 +116,13 @@ if __name__ == "__main__":
     arcann_logger.info(f"-" * 88)
     arcann_logger.info(f"-" * 88)
     if exit_code == 0:
-        arcann_logger.info(f"{step_name.capitalize()} - {phase_name.capitalize()} finished")
+        arcann_logger.info(
+            f"{step_name.capitalize()} - {phase_name.capitalize()} finished"
+        )
     else:
-        arcann_logger.error(f"{step_name.capitalize()} - {phase_name.capitalize()} encountered an error")
+        arcann_logger.error(
+            f"{step_name.capitalize()} - {phase_name.capitalize()} encountered an error"
+        )
     arcann_logger.info(f"-" * 88)
     arcann_logger.info(f"-" * 88)
 

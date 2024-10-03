@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 # Created: 2022/01/01
-# Last modified: 2024/06/26
+# Last modified: 2024/10/03
 #----------------------------------------------
 # You must keep the _R_VARIABLES_ in the file.
 # You must keep the name file as job_deepmd_compress_ARCHTYPE_myHPCkeyword.sh.
@@ -45,7 +45,6 @@ DeepMD_MODEL_FILE="_R_DEEPMD_MODEL_FILE_"
 #----------------------------------------------
 # Adapt the following lines to your HPC system
 #----------------------------------------------
-
 
 # Project switch
 PROJECT_NAME=${SLURM_JOB_ACCOUNT:0:3}

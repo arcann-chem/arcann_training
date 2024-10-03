@@ -37,7 +37,9 @@ from arcann_training.common.utils import catch_errors_decorator
 
 # Unittested
 @catch_errors_decorator
-def exclude_substring_from_string_list(input_list: List[str], substring: str) -> List[str]:
+def exclude_substring_from_string_list(
+    input_list: List[str], substring: str
+) -> List[str]:
     """
     Remove all strings containing a given substring from a list of strings.
 
@@ -74,7 +76,9 @@ def exclude_substring_from_string_list(input_list: List[str], substring: str) ->
 
 # Unittested
 @catch_errors_decorator
-def replace_substring_in_string_list(input_list: List[str], substring_in: str, substring_out: str) -> List[str]:
+def replace_substring_in_string_list(
+    input_list: List[str], substring_in: str, substring_out: str
+) -> List[str]:
     """
     Replace a specified substring with a new substring in each string of a list.
 
@@ -110,13 +114,17 @@ def replace_substring_in_string_list(input_list: List[str], substring_in: str, s
     # if not substring_out:
     #    raise ValueError("Invalid input. substring_out must be a non-empty string.")
 
-    output_list = [string.replace(substring_in, substring_out).strip() for string in input_list]
+    output_list = [
+        string.replace(substring_in, substring_out).strip() for string in input_list
+    ]
     return output_list
 
 
 # Unittested
 @catch_errors_decorator
-def string_list_to_textfile(file_path: Path, string_list: List[str], read_only: bool = False) -> None:
+def string_list_to_textfile(
+    file_path: Path, string_list: List[str], read_only: bool = False
+) -> None:
     """
     Write a list of strings to a text file.
 
@@ -155,7 +163,9 @@ def string_list_to_textfile(file_path: Path, string_list: List[str], read_only: 
         error_msg = f"'{file_path}' must be a '{type(Path(''))}'."
         raise TypeError(error_msg)
 
-    if not isinstance(string_list, list) or not all(isinstance(s, str) for s in string_list):
+    if not isinstance(string_list, list) or not all(
+        isinstance(s, str) for s in string_list
+    ):
         error_msg = f"'{string_list}' must be a '{type([])}' of '{type('')}.'"
         raise TypeError(error_msg)
 

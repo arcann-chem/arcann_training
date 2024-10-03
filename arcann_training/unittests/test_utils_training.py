@@ -77,19 +77,25 @@ class TestCalculateDecaySteps(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             calculate_decay_steps(0)
         error_msg = str(cm.exception)
-        expected_error_msg = f"The argument 'num_structures' must be a positive integer."
+        expected_error_msg = (
+            f"The argument 'num_structures' must be a positive integer."
+        )
         self.assertEqual(error_msg, expected_error_msg)
 
         with self.assertRaises(ValueError) as cm:
             calculate_decay_steps(-100)
         error_msg = str(cm.exception)
-        expected_error_msg = f"The argument 'num_structures' must be a positive integer."
+        expected_error_msg = (
+            f"The argument 'num_structures' must be a positive integer."
+        )
         self.assertEqual(error_msg, expected_error_msg)
 
         with self.assertRaises(ValueError) as cm:
             calculate_decay_steps(100, min_decay_steps=-500)
         error_msg = str(cm.exception)
-        expected_error_msg = f"The argument 'min_decay_steps' must be a positive integer."
+        expected_error_msg = (
+            f"The argument 'min_decay_steps' must be a positive integer."
+        )
         self.assertEqual(error_msg, expected_error_msg)
 
     def test_calculate_decay_steps_output_type(self):
@@ -117,13 +123,17 @@ class TestCalculateDecayRate(unittest.TestCase):
         pass
 
     def test_calculate_decay_rate_valid_input(self):
-        self.assertAlmostEqual(calculate_decay_rate(50000, 0.01, 0.001, 5000), 0.7943282347242815, places=7)
+        self.assertAlmostEqual(
+            calculate_decay_rate(50000, 0.01, 0.001, 5000), 0.7943282347242815, places=7
+        )
         self.assertAlmostEqual(
             calculate_decay_rate(200000, 0.05, 0.005, 10000),
             0.8912509381337456,
             places=7,
         )
-        self.assertAlmostEqual(calculate_decay_rate(500000, 0.1, 0.01, 25000), 0.8912509381337456, places=7)
+        self.assertAlmostEqual(
+            calculate_decay_rate(500000, 0.1, 0.01, 25000), 0.8912509381337456, places=7
+        )
 
     def test_calculate_decay_rate_invalid_input(self):
         with self.assertRaises(ValueError) as cm:
@@ -246,15 +256,21 @@ class TestCheckInitialDatasets(unittest.TestCase):
         with (temp_dir_path / "control" / "initial_datasets.json").open("w") as file:
             file.write('{"dataset1": 100, "dataset2": 200}')
 
-        np.save(temp_dir_path / "data" / "dataset1" / "set.000" / "box.npy", np.zeros(100))
-        np.save(temp_dir_path / "data" / "dataset2" / "set.000" / "box.npy", np.zeros(200))
+        np.save(
+            temp_dir_path / "data" / "dataset1" / "set.000" / "box.npy", np.zeros(100)
+        )
+        np.save(
+            temp_dir_path / "data" / "dataset2" / "set.000" / "box.npy", np.zeros(200)
+        )
 
     def tearDown(self):
         self.temp_dir.cleanup()
 
     def test_check_initial_datasets(self):
         expected_result = {"dataset1": 100, "dataset2": 200}
-        self.assertDictEqual(check_initial_datasets(Path(self.temp_dir.name)), expected_result)
+        self.assertDictEqual(
+            check_initial_datasets(Path(self.temp_dir.name)), expected_result
+        )
 
     def test_check_initial_datasets_invalid_num_samples(self):
         np.save(
@@ -270,7 +286,9 @@ class TestCheckInitialDatasets(unittest.TestCase):
             check_initial_datasets(Path(self.temp_dir.name))
 
     def test_check_initial_datasets_missing_dataset(self):
-        (Path(self.temp_dir.name) / "data" / "dataset2" / "set.000" / "box.npy").unlink()
+        (
+            Path(self.temp_dir.name) / "data" / "dataset2" / "set.000" / "box.npy"
+        ).unlink()
         (Path(self.temp_dir.name) / "data" / "dataset2" / "set.000").rmdir()
         (Path(self.temp_dir.name) / "data" / "dataset2").rmdir()
         with self.assertRaises(FileNotFoundError) as cm:
@@ -392,7 +410,9 @@ class TestGenerateTrainingJson(unittest.TestCase):
             "job_walltime_train_h": -1,
             "mean_s_per_step": 0.5,
         }
-        training_json, updated_merged_json = generate_training_json(user_input, previous_json, self.default_input_json)
+        training_json, updated_merged_json = generate_training_json(
+            user_input, previous_json, self.default_input_json
+        )
         self.assertDictEqual(training_json, expected_training_json)
         self.assertDictEqual(updated_merged_json, expected_merged_json)
 
@@ -449,7 +469,9 @@ class TestGenerateTrainingJson(unittest.TestCase):
             "mean_s_per_step": 0.3,
         }
 
-        training_json, updated_merged_json = generate_training_json(user_input, previous_json, self.default_input_json)
+        training_json, updated_merged_json = generate_training_json(
+            user_input, previous_json, self.default_input_json
+        )
         self.assertDictEqual(training_json, expected_training_json)
         self.assertDictEqual(updated_merged_json, expected_training_json)
 

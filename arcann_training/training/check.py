@@ -21,7 +21,11 @@ import numpy as np
 # Local imports
 from arcann_training.common.check import validate_step_folder
 from arcann_training.common.list import textfile_to_string_list
-from arcann_training.common.json import load_json_file, write_json_file, find_key_in_dict
+from arcann_training.common.json import (
+    load_json_file,
+    write_json_file,
+    find_key_in_dict,
+)
 
 
 def main(
@@ -39,7 +43,9 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
+    arcann_logger.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
+    )
     arcann_logger.debug(f"Current path :{current_path}")
     arcann_logger.debug(f"Training path: {training_path}")
     arcann_logger.debug(f"Program path: {deepmd_iterative_path}")
@@ -92,13 +98,19 @@ def main(
                 if min_nbor_dist is None or max_nbor_size is None:
                     for log_text in training_out:
                         if "min nbor dist" in log_text:
-                            min_nbor_dist_match = re.search(r"min nbor dist: ([\d\.]+)", log_text)
+                            min_nbor_dist_match = re.search(
+                                r"min nbor dist: ([\d\.]+)", log_text
+                            )
                             if min_nbor_dist_match:
                                 min_nbor_dist = float(min_nbor_dist_match.group(1))
                         elif "max nbor size" in log_text:
-                            max_nbor_size_match = re.search(r"max nbor size: \[([ \d]+)\]", log_text)
+                            max_nbor_size_match = re.search(
+                                r"max nbor size: \[([ \d]+)\]", log_text
+                            )
                             if max_nbor_size_match:
-                                max_nbor_size = [int(n) for n in max_nbor_size_match.group(1).split()]
+                                max_nbor_size = [
+                                    int(n) for n in max_nbor_size_match.group(1).split()
+                                ]
 
                 if training_input_json is None:
                     training_input_json = load_json_file(local_path / "training.json")
@@ -120,8 +132,12 @@ def main(
                 del time_pattern, batch_pattern
 
                 for suffix in ["index", "meta", "data-00000-of-00001"]:
-                    if (local_path / f"model.ckpt-{batch_numbers[-1]}.{suffix}").is_file():
-                        (local_path / f"model.ckpt-{batch_numbers[-1]}.{suffix}").rename(local_path / f"model.ckpt.{suffix}")
+                    if (
+                        local_path / f"model.ckpt-{batch_numbers[-1]}.{suffix}"
+                    ).is_file():
+                        (
+                            local_path / f"model.ckpt-{batch_numbers[-1]}.{suffix}"
+                        ).rename(local_path / f"model.ckpt.{suffix}")
                 del suffix
 
                 step_sizes.extend(np.diff(batch_numbers))
@@ -141,22 +157,34 @@ def main(
         training_json["min_nbor_dist"] = min_nbor_dist
         arcann_logger.info(f"Your minimum neighbor distance is: {min_nbor_dist:.3f}")
         if min_nbor_dist < 0.7:
-            arcann_logger.warning(f"Your minimum neighbor distance is lower than 0.1 Angstrom.")
+            arcann_logger.warning(
+                f"Your minimum neighbor distance is lower than 0.1 Angstrom."
+            )
             arcann_logger.warning(f"You might have a funky system.")
 
     if max_nbor_size is not None:
         training_json["max_nbor_size"] = max_nbor_size
-        arcann_logger.info(f"In the training datasets, the maximum number of type-i neighbors of an atom is: {max_nbor_size}")
+        arcann_logger.info(
+            f"In the training datasets, the maximum number of type-i neighbors of an atom is: {max_nbor_size}"
+        )
         arcann_logger.info(f"Your type map was: {main_json['type_map']}")
         arcann_logger.info(f"The total is: {sum(max_nbor_size)}")
         selection_list = find_key_in_dict(training_input_json, "sel")
-        arcann_logger.info(f"In the training parameters, the expected maximum number of type-i neighbors of an atom was: {selection_list[0]} (keyword 'sel').")
+        arcann_logger.info(
+            f"In the training parameters, the expected maximum number of type-i neighbors of an atom was: {selection_list[0]} (keyword 'sel')."
+        )
         if sum(max_nbor_size) > sum(selection_list[0]):
-            arcann_logger.warning(f"The maximum number of type-i neighbors of an atom is higher than the expected maximum number of type-i neighbors of an atom (keyword 'sel').")
+            arcann_logger.warning(
+                f"The maximum number of type-i neighbors of an atom is higher than the expected maximum number of type-i neighbors of an atom (keyword 'sel')."
+            )
             arcann_logger.warning(f"Please correct this.")
         if sum(selection_list[0]) > 2.0 * sum(max_nbor_size):
-            arcann_logger.warning(f"The expected maximum number of type-i neighbors of an atom is at least 100% larger that the ones present in the training datasets.")
-            arcann_logger.warning(f"You may want to decrease the expected maximum number of type-i neighbors of an atom (keyword 'sel').")
+            arcann_logger.warning(
+                f"The expected maximum number of type-i neighbors of an atom is at least 100% larger that the ones present in the training datasets."
+            )
+            arcann_logger.warning(
+                f"You may want to decrease the expected maximum number of type-i neighbors of an atom (keyword 'sel')."
+            )
 
     arcann_logger.info(f"-" * 88)
     # Update the boolean in the training JSON
@@ -165,9 +193,15 @@ def main(
 
     # If not empty
     if training_times and step_sizes:
-        training_json["mean_s_per_step"] = np.average(training_times) / np.average(step_sizes)
-        training_json["median_s_per_step"] = np.median(training_times) / np.average(step_sizes)
-        training_json["stdeviation_s_per_step"] = np.std(training_times) / np.average(step_sizes)
+        training_json["mean_s_per_step"] = np.average(training_times) / np.average(
+            step_sizes
+        )
+        training_json["median_s_per_step"] = np.median(training_times) / np.average(
+            step_sizes
+        )
+        training_json["stdeviation_s_per_step"] = np.std(training_times) / np.average(
+            step_sizes
+        )
     else:
         training_json["mean_s_per_step"] = -1
         training_json["median_s_per_step"] = -1
@@ -175,18 +209,28 @@ def main(
 
     arcann_logger.debug(f"mean_s_per_step: {training_json['mean_s_per_step']}")
     arcann_logger.debug(f"median_s_per_step: {training_json['median_s_per_step']}")
-    arcann_logger.debug(f"stdeviation_s_per_step: {training_json['stdeviation_s_per_step']}")
+    arcann_logger.debug(
+        f"stdeviation_s_per_step: {training_json['stdeviation_s_per_step']}"
+    )
 
     del training_times, step_sizes
     # Dump the JSON files (training)
-    write_json_file(training_json, (control_path / f"training_{padded_curr_iter}.json"), read_only=True)
+    write_json_file(
+        training_json,
+        (control_path / f"training_{padded_curr_iter}.json"),
+        read_only=True,
+    )
 
     # End
     arcann_logger.info(f"-" * 88)
     if completed_count == main_json["nnp_count"]:
-        arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
+        arcann_logger.info(
+            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
+        )
     else:
-        arcann_logger.critical(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!")
+        arcann_logger.critical(
+            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!"
+        )
         arcann_logger.critical(f"Some DP Train did not finished correctly.")
         arcann_logger.critical(f"Please check manually before re-exectuing this step.")
         arcann_logger.critical(f"Aborting...")

@@ -52,7 +52,9 @@ class TestStringListToXml(unittest.TestCase):
     """
 
     def setUp(self):
-        self.xml_string = "<root>\n  <child1>value1</child1>\n  <child2>value2</child2>\n</root>"
+        self.xml_string = (
+            "<root>\n  <child1>value1</child1>\n  <child2>value2</child2>\n</root>"
+        )
         self.xml_tree = ET.ElementTree(ET.fromstring(self.xml_string))
         self.expected_lines = [
             "<root>",
@@ -60,7 +62,9 @@ class TestStringListToXml(unittest.TestCase):
             "  <child2>value2</child2>",
             "</root>",
         ]
-        self.expected_xml_string = b"<root><child1>value1</child1><child2>value2</child2></root>"
+        self.expected_xml_string = (
+            b"<root><child1>value1</child1><child2>value2</child2></root>"
+        )
 
     def tearDown(self):
         pass
@@ -86,7 +90,9 @@ class TestXmlToStringList(unittest.TestCase):
     """
 
     def setUp(self):
-        self.xml_string = "<root>\n  <child1>value1</child1>\n  <child2>value2</child2>\n</root>"
+        self.xml_string = (
+            "<root>\n  <child1>value1</child1>\n  <child2>value2</child2>\n</root>"
+        )
         self.xml_tree = ET.ElementTree(ET.fromstring(self.xml_string))
         self.expected_lines_no_spaces = [
             "<root>",
@@ -135,7 +141,9 @@ class TestReadXmlFile(unittest.TestCase):
         with self.assertRaises(FileNotFoundError) as cm:
             read_xml_file(xml_file_path)
         error_msg = str(cm.exception)
-        expected_error_msg = f"File not found '{xml_file_path.name}' not in '{xml_file_path.parent}'."
+        expected_error_msg = (
+            f"File not found '{xml_file_path.name}' not in '{xml_file_path.parent}'."
+        )
         self.assertEqual(error_msg, expected_error_msg)
 
     def test_parse_error(self):
@@ -205,8 +213,12 @@ class TestWriteXmlFile(unittest.TestCase):
 
     def setUp(self):
         self.tmp_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
-        self.xml_tree = ET.ElementTree(ET.fromstring("<root><child1>value1</child1><child2>value2</child2></root>"))
-        self.expected_xml_string = minidom.parseString(ET.tostring(self.xml_tree.getroot())).toprettyxml(indent=" ")
+        self.xml_tree = ET.ElementTree(
+            ET.fromstring("<root><child1>value1</child1><child2>value2</child2></root>")
+        )
+        self.expected_xml_string = minidom.parseString(
+            ET.tostring(self.xml_tree.getroot())
+        ).toprettyxml(indent=" ")
         self.tmp_file_path = Path(self.tmp_file.name)
 
     def tearDown(self):

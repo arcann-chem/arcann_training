@@ -86,7 +86,9 @@ def generate_input_labeling_json(
         # Get the value
         default_used = False
         if key in user_input_json:
-            if ( user_input_json[key] == "default" or user_input_json[key] == None ) and key in default_input_json:
+            if (
+                user_input_json[key] == "default" or user_input_json[key] == None
+            ) and key in default_input_json:
                 value = default_input_json[key]
                 default_used = True
             else:
@@ -103,7 +105,9 @@ def generate_input_labeling_json(
         # This is not system dependent and should be a string and should not change from previous iteration (but issue just a warning if it does).
         if key == "labeling_program":
             if key in previous_input_json and value != previous_input_json[key]:
-                arcann_logger.critical(f"Labeling program changed from {previous_input_json[key]} to {value}!")
+                arcann_logger.critical(
+                    f"Labeling program changed from {previous_input_json[key]} to {value}!"
+                )
 
             if default_used:
                 merged_input_json[key] = value

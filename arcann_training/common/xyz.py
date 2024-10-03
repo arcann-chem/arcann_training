@@ -38,7 +38,18 @@ from arcann_training.common.utils import catch_errors_decorator
 
 # TODO: Add tests for this function
 @catch_errors_decorator
-def parse_xyz_trajectory_file(trajectory_file_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray, List[str], Optional[np.ndarray], Optional[List[bool]], Optional[bool], Optional[float]]:
+def parse_xyz_trajectory_file(
+    trajectory_file_path: Path,
+) -> Tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    List[str],
+    Optional[np.ndarray],
+    Optional[List[bool]],
+    Optional[bool],
+    Optional[float],
+]:
     """
     Parses an XYZ format trajectory file, extracting atomic structure and optional extended properties such as lattice information,
     periodic boundary conditions (PBC), and additional properties if they are provided in the comments.
@@ -72,7 +83,16 @@ def parse_xyz_trajectory_file(trajectory_file_path: Path) -> Tuple[np.ndarray, n
     if not trajectory_file_path.is_file():
         raise FileNotFoundError(f"File not found: {trajectory_file_path}")
 
-    atom_counts, atomic_symbols, atomic_coordinates, comments, lattice_info, pbc_info, properties_info, max_f_std_info = [], [], [], [], [], [], [], []
+    (
+        atom_counts,
+        atomic_symbols,
+        atomic_coordinates,
+        comments,
+        lattice_info,
+        pbc_info,
+        properties_info,
+        max_f_std_info,
+    ) = ([], [], [], [], [], [], [], [])
 
     with trajectory_file_path.open("r") as file:
         lines = file.readlines()
@@ -81,7 +101,9 @@ def parse_xyz_trajectory_file(trajectory_file_path: Path) -> Tuple[np.ndarray, n
     while i < len(lines):
         atom_count_str = lines[i].strip()
         if not atom_count_str.isdigit():
-            raise TypeError("Incorrect file format: number of atoms must be an integer.")
+            raise TypeError(
+                "Incorrect file format: number of atoms must be an integer."
+            )
         atom_count = int(atom_count_str)
         atom_counts.append(atom_count)
 
@@ -95,7 +117,9 @@ def parse_xyz_trajectory_file(trajectory_file_path: Path) -> Tuple[np.ndarray, n
             if len(pbc) == 3:
                 pbc_info.append(pbc)
             else:
-                raise ValueError("PBC data must consist of three boolean values (True or False for each axis).")
+                raise ValueError(
+                    "PBC data must consist of three boolean values (True or False for each axis)."
+                )
         else:
             pbc_info.append(None)
 
@@ -108,7 +132,9 @@ def parse_xyz_trajectory_file(trajectory_file_path: Path) -> Tuple[np.ndarray, n
         for j in range(atom_count):
             line_elements = lines[i + 2 + j].split()
             if len(line_elements) != 4:
-                raise ValueError("Incorrect file format: expected an atomic symbol followed by three coordinates.")
+                raise ValueError(
+                    "Incorrect file format: expected an atomic symbol followed by three coordinates."
+                )
             symbol, x, y, z = line_elements
             symbols_frame[j] = symbol
             coordinates_frame[j] = [float(x), float(y), float(z)]
@@ -119,14 +145,27 @@ def parse_xyz_trajectory_file(trajectory_file_path: Path) -> Tuple[np.ndarray, n
         i += atom_count + 2
 
     if len(set(atom_counts)) > 1:
-        raise ValueError("Number of atoms is not constant throughout the trajectory file.")
+        raise ValueError(
+            "Number of atoms is not constant throughout the trajectory file."
+        )
 
-    return np.array(atom_counts), np.array(atomic_symbols), np.array(atomic_coordinates), comments, lattice_info, pbc_info, properties_info, max_f_std_info
+    return (
+        np.array(atom_counts),
+        np.array(atomic_symbols),
+        np.array(atomic_coordinates),
+        comments,
+        lattice_info,
+        pbc_info,
+        properties_info,
+        max_f_std_info,
+    )
 
 
 # TODO: Add tests for this function
 @catch_errors_decorator
-def parse_extended_format(comment_line: str) -> Tuple[Optional[List[float]], bool, Optional[List[bool]], Optional[float]]:
+def parse_extended_format(
+    comment_line: str,
+) -> Tuple[Optional[List[float]], bool, Optional[List[bool]], Optional[float]]:
     """
     Parses the comment line of an extended XYZ file for lattice, properties, periodic boundary conditions (PBC),
     and max force standard deviation.
@@ -154,9 +193,17 @@ def parse_extended_format(comment_line: str) -> Tuple[Optional[List[float]], boo
     pbc_match = re.search(pbc_regex, comment_line)
     max_f_std_match = re.search(max_f_std_regex, comment_line)
 
-    lattice_values = [float(value) for value in lattice_match.group(1).split()] if lattice_match else None
+    lattice_values = (
+        [float(value) for value in lattice_match.group(1).split()]
+        if lattice_match
+        else None
+    )
     properties_present = bool(properties_match)
-    pbc_values = [v.lower() in ["true", "t"] for v in pbc_match.group(1).split()] if pbc_match else None
+    pbc_values = (
+        [v.lower() in ["true", "t"] for v in pbc_match.group(1).split()]
+        if pbc_match
+        else None
+    )
     max_f_std_value = float(max_f_std_match.group(1)) if max_f_std_match else None
 
     return lattice_values, properties_present, pbc_values, max_f_std_value
@@ -164,7 +211,15 @@ def parse_extended_format(comment_line: str) -> Tuple[Optional[List[float]], boo
 
 # TODO: Add tests for this function
 @catch_errors_decorator
-def write_xyz_frame(trajectory_file_path: Path, frame_idx: int, atom_counts: np.ndarray, atomic_symbols: np.ndarray, atomic_coordinates: np.ndarray, cell_info: np.ndarray, comments: List[str]) -> None:
+def write_xyz_frame(
+    trajectory_file_path: Path,
+    frame_idx: int,
+    atom_counts: np.ndarray,
+    atomic_symbols: np.ndarray,
+    atomic_coordinates: np.ndarray,
+    cell_info: np.ndarray,
+    comments: List[str],
+) -> None:
     """
     Writes the XYZ coordinates of a specific frame from a trajectory to a file, including extended format lattice information if provided.
 
@@ -193,7 +248,9 @@ def write_xyz_frame(trajectory_file_path: Path, frame_idx: int, atom_counts: np.
 
     # Validate frame index
     if frame_idx >= atom_counts.shape[0]:
-        raise IndexError(f"Frame index out of range: {frame_idx} (total frames: {atom_counts.shape[0]})")
+        raise IndexError(
+            f"Frame index out of range: {frame_idx} (total frames: {atom_counts.shape[0]})"
+        )
 
     # Start writing to the file
     with trajectory_file_path.open("w") as file:
