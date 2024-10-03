@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Training - ArcanNN - Training</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Training";
+        var mkdocs_page_input_path = "usage/training.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ArcanNN - Training
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Getting started</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../getting-started/requirements/">ArcaNN Requirements</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../getting-started/installation/">ArcaNN Installation Guide</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../getting-started/hpc_configuration/">HPC Configuration</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Usage</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../start/">Using ArcaNN</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../iter_prerequisites/">Iterative procedure prerequisites</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../initialization/">Initialization</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Training</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../exploration/">Exploration</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../labeling/">Labeling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../test/">Test</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Examples</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../examples/sn2/">SN2</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Contributions</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../contributions/unexpected_behavior/">Unexpected Behavior</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../contributions/contributions/">Contributions</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Project details</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/license/">License</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/authors/">Authors</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/funding/">Funding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/acknowledgments/">Acknowledgments</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ArcanNN - Training</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Usage</li>
+      <li class="breadcrumb-item active">Training</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="training">Training</h1>
+<p>During the training procedure you will use DeePMD-kit to train neural networks on the data sets that you have thus far generated (or on the initial ones only for the <code>000-training</code>). In order to do this go to the current iteration training folder <code>XXX-training</code>.
+There are 9 phases (see <a href="../start">Iterations, Steps and Phases of the Iterative Procedure</a>) that you must now execute in order after having optionally modified the <code>input.json</code> file to define the relevant parameters (in case you want something different from the defaults, which are written to <code>default_input.json</code> in the <code>prepare</code> phase). The input keywords that you should check the most carefully are those related to the first phase <code>prepare</code>, as this sets all the important parameters for the training. Some phases will simply submit <code>Slurm</code> jobs (model training, freezing and compressing). You must wait for the jobs to finish before executing the next phase (generally this will be a check phase that will tell you that jobs have failed or are currently running). Once you have executed the first 8 phases, the training iteration is done! Executing the 9-th phases is optional, as this will only remove intermediary files.</p>
+<p>After running the <code>initialization</code> step described in the previous example, you must now perform the first training phase. Update (or copy for the first time) the full <code>$WORK_DIR</code> from your local machine to your HPC machine (where you must have also a copy of this repository and an environment in which it is installed):</p>
+<pre><code class="language-bash">rsync -rvu $WORK_DIR USER@HPC-MACHINE:/PATH/TO/WORK_DIR
+</code></pre>
+<p>Now go to the empty <code>000-training</code> folder created by the script execute the <code>prepare</code> phase:</p>
+<pre><code class="language-bash">python -m arcann_training training prepare
+</code></pre>
+<p>This will create three folders <code>1/</code>, <code>2/</code> and <code>3/</code> and a copy of your <code>data/</code> folder, as well as a <code>default_input.json</code> file containing the default training parameters. If you want to modify some of the default values you can create a <code>input.json</code> file from the <code>default_input.json</code> file that looks like this:</p>
+<pre><code class="language-JSON">{
+    &quot;step_name&quot;: &quot;training&quot;,
+    &quot;user_machine_keyword_train&quot;: &quot;mykeyword1&quot;,
+    &quot;user_machine_keyword_freeze&quot;: &quot;mykeyword2&quot;,
+    &quot;user_machine_keyword_compress&quot;: &quot;mykeyword2&quot;,
+    &quot;slurm_email&quot;: &quot;&quot;,
+    &quot;use_initial_datasets&quot;: true,
+    &quot;use_extra_datasets&quot;: false,
+    &quot;deepmd_model_version&quot;: 2.2,
+    &quot;job_walltime_train_h&quot;: 4,
+    &quot;mean_s_per_step&quot;: -1,
+    &quot;start_lr&quot;: 0.001,
+    &quot;stop_lr&quot;: 1e-06,
+    &quot;decay_rate&quot;: 0.9172759353897796,
+    &quot;decay_steps&quot;: 5000,
+    &quot;decay_steps_fixed&quot;: false,
+    &quot;numb_steps&quot;: 400000,
+    &quot;numb_test&quot;: 0,
+}
+</code></pre>
+<p>Here the <code>"user_machine_keyword"</code> should match the <code>"myHPCkeyword1"</code> keyword in the <code>machine.json</code> (see <a href="../../getting-started/hpc_conf">HPC Configuration</a>). Note that the more performant GPUs should ideally be used for training, while the other steps could be alllocated to less performant GPUs or even to CPUs. Here we used a user chosen walltime of 4 h (instead of the default indicated by <code>-1</code>, which will calculate the job walltime automatically based on your previous trainings).
+The followiing keywords are the DeePMD training parameters, that you can eventually modify or keep the default values.
+ We can then execute all the other phases in order (waiting for <code>Slurm</code> jobs to finish!). That's it! Now you just need to update the local folder:</p>
+<pre><code class="language-bash">rsync -rvu USER@HPC-MACHINE.fr:/PATH/TO/WORK_DIR $WORK_DIR
+</code></pre>
+<p>and you are ready to move on to the exploration phase!</p>
+<p><strong>Notes:</strong></p>
+<ul>
+<li>At some point during the iterative procedure we might want to get rid of our initial data sets, we would only need to set the <code>use_initial_datasets</code> variable to <code>False</code>.</li>
+<li>We might also have generated some data independently from the iterative procedure that we might want to start using, this can be done by copying the corresponding DeePMD-kit systems to <code>data/</code>, prefixing their names by <code>extra_</code> and setting the <code>use_extra_datasets</code> variable to <code>True</code>.</li>
+<li>At the end of the step the last phase <code>increment</code> will create the folders needed for the next iteration, save the current NNPs (stored as graph files <code>graph_[nnp_count]_XXX[_compressed].pb</code>) into the <code>$WORK_DIR/NNP</code> folder and write a <code>control/training_XXX.json</code> file with all parameters used during training.</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../initialization/" class="btn btn-neutral float-left" title="Initialization"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../exploration/" class="btn btn-neutral float-right" title="Exploration">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../initialization/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../exploration/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

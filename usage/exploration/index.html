@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Exploration - ArcanNN - Training</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Exploration";
+        var mkdocs_page_input_path = "usage/exploration.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ArcanNN - Training
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Getting started</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../getting-started/requirements/">ArcaNN Requirements</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../getting-started/installation/">ArcaNN Installation Guide</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../getting-started/hpc_configuration/">HPC Configuration</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Usage</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../start/">Using ArcaNN</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../iter_prerequisites/">Iterative procedure prerequisites</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../initialization/">Initialization</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../training/">Training</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Exploration</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#lammps-classical-nuclei-simulations">LAMMPS: classical nuclei simulations</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#i-pi-quantum-nuclei-simulations">i-PI quantum nuclei simulations</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../labeling/">Labeling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../test/">Test</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Examples</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../examples/sn2/">SN2</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Contributions</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../contributions/unexpected_behavior/">Unexpected Behavior</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../contributions/contributions/">Contributions</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Project details</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/license/">License</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/authors/">Authors</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/funding/">Funding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/acknowledgments/">Acknowledgments</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ArcanNN - Training</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Usage</li>
+      <li class="breadcrumb-item active">Exploration</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="exploration">Exploration</h1>
+<p>In the exploration phase we will generate new configurations (referred to as <strong>candidates</strong>) to include in the training set. For this we will perform MD simulations with either the LAMMPS (classical nuclei) or i-PI (quantum nuclei) softwares. Go to the current iteration exploration folder <code>XXX-exploration</code> created at the end of the previous training phase and execute the <code>prepare</code> phase to initialize the exploration.</p>
+<p>For the first exploration phase we might want to generate only a few candidate configurations to check whether our initial NNP are stable enough to give physically meaningful configurations. We might as well want to use a relatively strict error criterion for candidate selection. 
+To change these parameters you can create a <code>input.json</code> file , indicating the values to be updated, and run the <code>prepare</code> phase again. If you want to keep the default values you only need to run the <code>prepare</code> phase once. As for the Initialization and Training steps, this will generate a <code>used_input.json</code> file:</p>
+<pre><code class="language-JSON">{
+    &quot;step_name&quot;: &quot;exploration&quot;,
+    &quot;user_machine_keyword_exp&quot;: &quot;mykeyword1&quot;,
+    &quot;slurm_email&quot;: &quot;&quot;,
+    &quot;atomsk_path&quot;: &quot;PATH_TO_THE_ATOMSK_BINARY&quot;,
+    &quot;vmd_path&quot;: &quot;PATH_TO_THE_VMD_BINARY&quot;,
+    &quot;exploration_type&quot;: [&quot;lammps&quot;, &quot;lammps&quot;, &quot;lammps&quot;],
+    &quot;traj_count&quot;: [2, 2, 2],
+    &quot;temperature_K&quot;: [273.0, 300.0, 300.0],
+    &quot;timestep_ps&quot;: [0.0005, 0.0005, 0.0005],
+    &quot;previous_start&quot;: [true, true, true],
+    &quot;disturbed_start&quot;: [false, false, false],
+    &quot;print_interval_mult&quot;: [0.01, 0.01, 0.01],
+    &quot;job_walltime_h&quot;: [-1, -1, -1],
+    &quot;exp_time_ps&quot;: [10, 10, 10],
+    &quot;max_exp_time_ps&quot;: [400, 400, 400],
+    &quot;max_candidates&quot;: [50, 50, 100],
+    &quot;sigma_low&quot;: [0.1, 0.1, 0.1],
+    &quot;sigma_high&quot;: [0.8, 0.8, 0.8],
+    &quot;sigma_high_limit&quot;: [1.5, 1.5, 1.5],
+    &quot;ignore_first_x_ps&quot;: [0.5, 0.5, 0.5],
+    &quot;init_exp_time_ps&quot;: [-1, -1, -1],
+    &quot;init_job_walltime_h&quot;: [-1, -1, -1],
+    &quot;disturbed_candidate_value&quot;: [0.5, 0, 0],
+    &quot;disturbed_start_value&quot;: [0.0, 0.0, 0.0],
+    &quot;disturbed_start_indexes&quot;: [[], [], []],
+    &quot;disturbed_candidate_indexes&quot;: [[], [], []]
+}
+</code></pre>
+<p>The <code>"sigma_low"</code>, <code>"sigma_high"</code> and <code>"sigma_high_limit"</code> keywords indicate the deviation acceptance criteria in eV/Ang for the candidate selection. 
+The <code>"max_candidates"</code> keywords indicates the maximum candidated that can be selected. 
+The values in <code>disturbed_start_value</code> are used to disturb the starting structures for the next iteration.  A non-zero value sets the maximal amplitude of the random translation vector that will be applied to each atom (a different vector for each atom) in Å.</p>
+<p><strong>Note:</strong> the <code>vmd_path</code> keyword is not needed if <code>vmd</code> is inmediately available in our path when executing the <code>extract</code> phase (loaded as a module for example). Similarly, we can remove <code>atomsk_path</code> if <code>atomsk</code> is already in the path.</p>
+<p>Some of the phases are slightly different if you use LAMMPS or i-PI, both phase workflows are detailed below.</p>
+<h3 id="lammps-classical-nuclei-simulations">LAMMPS: classical nuclei simulations</h3>
+<p>Once you are satisfied with your exploration parameters (see example below) you can execute the next exploration phases : <code>launch</code> to run MD trajectories with each subsystem  and <code>check</code> (once the <code>Slurm</code> MD jobs are done!). If the <code>check</code> phase is succesfull, you can move on to the <code>deviate</code> phase, where you can set important parameters for candidate selection. Once again you can modify these keywors by the creation (or modification if you already created one for a previous phase) of a <code>default_input.json</code> file and re-executing the <code>deviate</code> phase. In the <code>extract</code> phase an important choice can be made: whether to include "disturbed" candidates in the training set or not. This is done by changing the <code>disturbed_start_value</code> and <code>disturbed_candidate_value</code> variables from the defaults (0.0) and will include a set of candidates generated by applying a random perturbation to those obtained in the MD trajectories (this will multiply by 2 the number of selected candidates, make sure that the <code>disturbed_start_value</code> that you choose will still give physically meaningful configurations, otherwise you will deteriorate your NNP!). Once you execute this phase a <code>candidates_SUBSYS_XXX.xyz</code> file will be created in each subsystem directory containing the candidate configurations that will be added to the training set (you might want to check that they make sense!). You can also disturb only some atoms in the configuration in which case you will need to write their (zero-based) atomic indices in the <code>disturbed_candidate_indexes</code> variable. The <code>clean</code> phase can be executed to clean up all the temporary files. A <code>control/exploration_XXX.json</code> file will be written recording all the exploration parameters. You can now move on to the labeling phase! (Don't forget to keep your local folder updated so that you can analyze all these results)</p>
+<h3 id="i-pi-quantum-nuclei-simulations">i-PI quantum nuclei simulations</h3>
+<p>Simulations explicitly including nuclear quantum effects by path-integral molecular dynamics with i-PI are quite similar to classical nuclei simulations with LAMMPS. Although the i-PI input files are different (see <a href="https://ipi-code.org/">i-PI</a>), the <code>prepare</code>, <code>launch</code> and <code>check</code> phases can be done exactly as previously (see <a href="#lammps-classical-nuclei-simulations">LAMMPS classical nuclei simulations</a> above). Then, before executing the <code>deviate</code> and <code>extract</code> phases, you must run <code>select_beads</code> and <code>rerun</code> in this order. These phases do not have special parameters that need to be tuned but require <code>VMD</code> and <code>Atomsk</code>. After that, you can run the rest of the steps as for LAMMPS MD simulations.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../training/" class="btn btn-neutral float-left" title="Training"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../labeling/" class="btn btn-neutral float-right" title="Labeling">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../training/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../labeling/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

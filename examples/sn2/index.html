@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>SN2 - ArcanNN - Training</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "SN2";
+        var mkdocs_page_input_path = "examples/sn2.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ArcanNN - Training
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Getting started</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../getting-started/requirements/">ArcaNN Requirements</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../getting-started/installation/">ArcaNN Installation Guide</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../getting-started/hpc_configuration/">HPC Configuration</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Usage</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../usage/start/">Using ArcaNN</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../usage/iter_prerequisites/">Iterative procedure prerequisites</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../usage/initialization/">Initialization</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../usage/training/">Training</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../usage/exploration/">Exploration</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../usage/labeling/">Labeling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../usage/test/">Test</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Examples</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">SN2</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#user-files">User files</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#initialization">Initialization</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#training">Training</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#exploration">Exploration</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#labeling">Labeling</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Contributions</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../contributions/unexpected_behavior/">Unexpected Behavior</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../contributions/contributions/">Contributions</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Project details</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/license/">License</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/authors/">Authors</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/funding/">Funding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/acknowledgments/">Acknowledgments</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ArcanNN - Training</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Examples</li>
+      <li class="breadcrumb-item active">SN2</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="sn2">SN2</h1>
+<p>Here we introduce the basic usage of the ArcaNN software, ilustrated by a SN2 reaction. All the files are available in the <a href="https://github.com/arcann-chem/arcann_training/">GitHub Repository</a>; and after ArcaNN installation, you will find them at <code>examples/sn2_ch3cl_br/</code> inside your local <code>arcann_traininig</code> directory. </p>
+<p>The iterative training and dataset generation for the SN2 reaction, comprised two iterative trainings : a first non-reactive training was performed on reactant and products structures, followed by a reactive training where transition structures were generated. </p>
+<p>The files set up for the non-reactive SN2 ArcaNN training is illustrated bellow. Then, the ArcaNN inputs for each step of the first iteration and the corresponding control <code>json</code> files are detailed. </p>
+<h2 id="user-files">User files</h2>
+<p>We will start by creating a <code>user_files/</code> directory (See <a href="../../usage/iter_prerequisites/">Iterative procedure prerequisites</a>) where we will include the necessary files for each step of the procedure. You also need to create a <code>data/</code> directory where the initial labeled datasets will be stored. For the reactive training, you will store the datasets of the non-reactive training in the corresponding <code>data/</code> directory, together with the initial datasets. </p>
+<p>For the non-reactive training, 6 systems were defined : 3 systems to explore the reactant basin (<code>ch3cl_br_close_300K</code>, <code>ch3cl_br_free_300K</code>, <code>ch3cl_br_smd_300K</code>) and 3 systems to explore the product basin (<code>ch3br_cl_close_300K</code>, <code>ch3br_cl_free_300K</code>, <code>ch3br_cl_smd_300K</code>). </p>
+<p>In the <code>user_files/</code> folder you will find the following files for each one of the systems (for clarity purposes, we only indicate the files of the <code>ch3cl_br_close_300K</code> system here). Note also that <code>hpc1</code> and <code>hpc2</code> are the machine keywords indicated in the machine.json file, see <a href="../../getting-started/hpc_configuration/">HPC Configuration</a>. </p>
+<p><strong>JSON FILES</strong></p>
+<ul>
+<li><code>machine.json</code> : file containing the cluster parameters.</li>
+<li><code>dp_train_2.1.json</code> : input for DeePMD trainings. </li>
+</ul>
+<p><strong>JOB FILES</strong></p>
+<ul>
+<li><code>job_lammps-deepmd_explore_gpu_hpc1.sh</code> and <code>job-array_lammps-deepmd_explore_gpu_hpc1.sh</code> : job scripts for exploration</li>
+<li><code>job_CP2K_label_cpu_hpc1.sh</code> and <code>job-array_CP2K_label_hpc1.sh</code>: job scripts for labeling</li>
+<li><code>job_deepmd_compress_gpu_hpc1.sh</code>, <code>job_deepmd_freeze_gpu_hpc1.sh</code> and <code>job_deepmd_train_gpu_hpc1.sh</code> job scripts for training</li>
+</ul>
+<p><strong>CP2K FILES</strong></p>
+<ul>
+<li><code>1_ch3cl_br_close_300K_labeling_XXXXX_hpc1.inp</code>,  <code>2_ch3cl_br_close_300K_labeling_XXXXX_hpc1.inp</code>, <code>1_ch3cl_br_close_300K_labeling_XXXXX_hpc1.inp</code>, <code>2_ch3cl_br_close_300K_labeling_XXXXX_hpc2.inp</code> : inputs for CP2K labeling. There are 2 input files per subsystem, see details in <a href="../labeling">labeling</a>. </li>
+</ul>
+<p><strong>LAMMPS FILES</strong></p>
+<ul>
+<li><code>ch3cl_br_close_300K.lmp</code> : starting configurations for the first exploration in the LAMMPS format. </li>
+<li>
+<p><code>ch3cl_br_close_300K.in</code> : inputs for LAMMPS exploration. </p>
+</li>
+<li>
+<p><code>plumed_SYSTEM_300K.dat</code> : plumed input files for the emplorations. </p>
+</li>
+</ul>
+<p>Additional plumed files can be used, and must be named as <code>plumed_KEYWORD_SYSTEM.dat</code>. Here, we used an additional plumed file to store colvars and another to define the key atoms : <code>plumed_colvars_ch3cl_br_close_300K.dat</code> and <code>plumed_atomdef_ch3cl_br_close_300K.dat</code>. </p>
+<p>The atom order is defined in the <code>properties.txt</code> file. It makes sure that the order of the  atoms in the <code>SYSTEM.lmp</code> files match the order indicated in the <code>"type_map"</code> keyword of the DeePMD-kit <code>dptrain_2.1.json</code> training file. Also, it makes sure that the generated structures also presents the correct atom numbering to avoid conflicts. </p>
+<h2 id="initialization">Initialization</h2>
+<p>After the initialization step, a <code>default_input.json</code> file is generated, containing the name of the <code>LMP</code> systems found in the <code>user_files/</code>, and the default number of NNP for training defined in ArcaNN. </p>
+<pre><code class="language-JSON">{
+    &quot;systems_auto&quot;: [&quot;ch3br_cl_close_300K&quot;, &quot;ch3br_cl_free_300K&quot;, &quot;ch3br_cl_smd_300K&quot;, &quot;ch3cl_br_close_300K&quot;, &quot;ch3cl_br_free_300K&quot;, &quot;ch3cl_br_smd_300K&quot;],
+    &quot;nnp_count&quot;: 3
+}
+</code></pre>
+<h2 id="training">Training</h2>
+<p>You can now move to the <code>000-training</code> directory corresponding to the training of the first generation of NNP. After running the <code>prepare</code> phase, a <code>default_input.json</code> file is created. In order to modify some of the default parameters, an <code>input.json</code> file must be created in the same directory, where only the parameters to be updated need to be indicated as the following: </p>
+<pre><code class="language-JSON">{
+  &quot;user_machine_keyword_train&quot;: &quot;v100_myproject1&quot;,  
+  &quot;job_walltime_train_h&quot;: 12.0
+}
+
+</code></pre>
+<p>Then, the input is updated and stored in the directory as <code>used_input.json</code>:</p>
+<pre><code class="language-JSON">{
+    &quot;user_machine_keyword_train&quot;: &quot;v100_myproject1&quot;,
+    &quot;user_machine_keyword_freeze&quot;: &quot;v100_myproject1&quot;,
+    &quot;user_machine_keyword_compress&quot;: &quot;v100_myproject1&quot;,
+    &quot;job_email&quot;: &quot;&quot;,
+    &quot;use_initial_datasets&quot;: true,
+    &quot;use_extra_datasets&quot;: false,
+    &quot;deepmd_model_version&quot;: 2.1,
+    &quot;job_walltime_train_h&quot;: 12.0,
+    &quot;mean_s_per_step&quot;: 0.108,
+    &quot;start_lr&quot;: 0.001,
+    &quot;stop_lr&quot;: 1e-06,
+    &quot;decay_rate&quot;: 0.9172759353897796,
+    &quot;decay_steps&quot;: 5000,
+    &quot;decay_steps_fixed&quot;: false,
+    &quot;numb_steps&quot;: 400000,
+    &quot;numb_test&quot;: 0
+}
+</code></pre>
+<p>The corresponding <code>control</code> file in your local <code>$WORKDIR/control/</code> is updated after the execution of each <code>phase</code>. Once the <code>000-training</code> step is finished, you will find the following <code>training_000.json</code> file: </p>
+<pre><code class="language-JSON">{
+    &quot;user_machine_keyword_train&quot;: &quot;v100_myproject1&quot;,
+    &quot;user_machine_keyword_freeze&quot;: &quot;v100_myproject1&quot;,
+    &quot;user_machine_keyword_compress&quot;: &quot;v100_myproject1&quot;,
+    &quot;job_email&quot;: &quot;&quot;,
+    &quot;use_initial_datasets&quot;: true,
+    &quot;use_extra_datasets&quot;: false,
+    &quot;deepmd_model_version&quot;: 2.1,
+    &quot;job_walltime_train_h&quot;: 12.0,
+    &quot;mean_s_per_step&quot;: 0.039030916666666665,
+    &quot;start_lr&quot;: 0.001,
+    &quot;stop_lr&quot;: 1e-06,
+    &quot;decay_rate&quot;: 0.9172759353897796,
+    &quot;decay_steps&quot;: 5000,
+    &quot;decay_steps_fixed&quot;: false,
+    &quot;numb_steps&quot;: 400000,
+    &quot;numb_test&quot;: 0,
+    &quot;training_datasets&quot;: [&quot;init_ch3br_cl_xxxxx_1001_4001_60&quot;, &quot;init_ch3cl_br_xxxxx_1001_4001_60&quot;],
+    &quot;trained_count&quot;: 1000,
+    &quot;initial_count&quot;: 1000,
+    &quot;added_auto_count&quot;: 0,
+    &quot;added_adhoc_count&quot;: 0,
+    &quot;added_auto_iter_count&quot;: 0,
+    &quot;added_adhoc_iter_count&quot;: 0,
+    &quot;extra_count&quot;: 0,
+    &quot;is_prepared&quot;: true,
+    &quot;is_launched&quot;: true,
+    &quot;is_checked&quot;: true,
+    &quot;is_freeze_launched&quot;: true,
+    &quot;is_frozen&quot;: true,
+    &quot;is_compress_launched&quot;: true,
+    &quot;is_compressed&quot;: true,
+    &quot;is_incremented&quot;: true,
+    &quot;min_nbor_dist&quot;: 0.9898124626241066,
+    &quot;max_nbor_size&quot;: [30, 45, 1, 1, 17],
+    &quot;median_s_per_step&quot;: 0.038560000000000004,
+    &quot;stdeviation_s_per_step&quot;: 0.0011691332942493009
+}
+</code></pre>
+<p>When a <code>phase</code> is executed succesfully, the corresponding <code>"is_prepared"</code>, <code>"is_launched"</code>, <code>"is_checked"</code>, etc. keywords are set to <code>true</code>
+Additional performance data, such as the mean time (<code>"mean_s_per_step"</code>), median time (<code>"median_s_per_step"</code>) and standard deviation (<code>"stdeviation_s_per_step"</code>) per training step are reported in this file. </p>
+<h2 id="exploration">Exploration</h2>
+<p>After the first training phase you now have starting NNP that can be used to propagate reactive MD. After executing the <code>prepare</code> phase in the <code>0001-exploration/</code> folder, you will obtain an <code>default_input.json</code> file with default values. </p>
+<p>We allow for the first exploration for slightly larger deviations by setting <code>"sigma_low"</code> keyword set to 0.15 eV/Ang. This is done by modifying the <code>input.json</code> and running <code>prepare</code> again. </p>
+<pre><code class="language-JSON">{
+&quot;sigma_low&quot;: 0.15
+}
+</code></pre>
+<p>The <code>used_input.json</code> becomes then:</p>
+<pre><code class="language-JSON">{
+    &quot;user_machine_keyword_exp&quot;: &quot;v100_myproject1&quot;,
+    &quot;job_email&quot;: &quot;&quot;,
+    &quot;atomsk_path&quot;: &quot;/programs/apps/atomsk/0.13.1/atomsk&quot;,
+    &quot;vmd_path&quot;: &quot;/prod/vmd/1.9.4a43/bin/vmd_LINUXAMD64&quot;,
+    &quot;exploration_type&quot;: [&quot;lammps&quot;, &quot;lammps&quot;, &quot;lammps&quot;, &quot;lammps&quot;, &quot;lammps&quot;, &quot;lammps&quot;],
+    &quot;traj_count&quot;: [2, 2, 2, 2, 2, 2],
+    &quot;temperature_K&quot;: [300.0, 300.0, 300.0, 300.0, 300.0, 300.0],
+    &quot;timestep_ps&quot;: [0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005],
+    &quot;previous_start&quot;: [true, true, true, true, true, true],
+    &quot;disturbed_start&quot;: [false, false, false, false, false, false],
+    &quot;print_interval_mult&quot;: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01],
+    &quot;job_walltime_h&quot;: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+    &quot;exp_time_ps&quot;: [10.0, 10.0, 41.0, 10.0, 10.0, 41.0],
+    &quot;max_exp_time_ps&quot;: [400, 400, 400, 400, 400, 400],
+    &quot;max_candidates&quot;: [50, 50, 50, 50, 50, 50],
+    &quot;sigma_low&quot;: [0.15, 0.15, 0.15, 0.15, 0.15, 0.15],
+    &quot;sigma_high&quot;: [0.7, 0.7, 0.7, 0.7, 0.7, 0.7],
+    &quot;sigma_high_limit&quot;: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+    &quot;ignore_first_x_ps&quot;: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+    &quot;disturbed_start_value&quot;: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    &quot;disturbed_start_indexes&quot;: [[], [], [], [], [], []],
+    &quot;disturbed_candidate_value&quot;: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    &quot;disturbed_candidate_indexes&quot;: [[], [], [], [], [], []]
+}
+</code></pre>
+<p>For the first iteration the default parameters are a good starting point. The <code>"traj_count"</code> keyword sets to 2  the number of simulations per NNP. and per system and <code>"timestep_ps"</code> sets to 0.0005 ps the timestep of the simulations. The <code>"disturbed_candidate_value"</code> keywords are all set to 0, so no disturbance is applied to the candidate structures that will be added to the training set. </p>
+<p>To perform the explorations, one directory per system is created, in which there will be 3 subdirectories (one per trained NNP) <code>1/</code>, <code>2/</code> and <code>3/</code>, in which again there will be 2 subdirectories (by default) <code>0001/</code> and <code>0002/</code>. This means that a total of 36 MD trajectories will be performed for this first iteration. Be careful, the total exploration time can quickly become huge, especially if you have many systems.</p>
+<p>If we have a look at the <code>exploration_001.json</code> file inside the <code>$WORKDIR/control/</code> folder:</p>
+<pre><code class="language-JSON">{
+    &quot;atomsk_path&quot;: &quot;/programs/apps/atomsk/0.13.1/atomsk&quot;,
+    &quot;user_machine_keyword_exp&quot;: &quot;v100_myproject1&quot;,
+    &quot;deepmd_model_version&quot;: 2.1,
+    &quot;nnp_count&quot;: 3,
+    &quot;systems_auto&quot;: {
+        &quot;ch3br_cl_close_300K&quot;: {
+        // exploration parameters from used_input.json 
+        },
+        &quot;ch3br_cl_free_300K&quot;: {
+        //
+        },
+        &quot;ch3br_cl_smd_300K&quot;: {
+        //
+        },
+        &quot;ch3cl_br_close_300K&quot;: {
+        //
+        },
+        &quot;ch3cl_br_free_300K&quot;: {
+        //
+        },
+        &quot;ch3cl_br_smd_300K&quot;: {
+        //
+        }
+    },
+    &quot;is_locked&quot;: true,
+    &quot;is_launched&quot;: true,
+    &quot;is_checked&quot;: true,
+    &quot;is_deviated&quot;: true,
+    &quot;is_extracted&quot;: true,
+    &quot;nb_sim&quot;: 36,
+    &quot;vmd_path&quot;: &quot;/prod/vmd/1.9.4a43/bin/vmd_LINUXAMD64&quot;
+}
+</code></pre>
+<p>The total number of MD simulations is indicated by the <code>"nb_sim"</code> keyword. The <code>"vmd_path"</code> and the <code>"atomsk_path"</code> correspond to the ones indicated in the <code>used_input.json</code>, but are not necessary if the code is already available in the ArcaNN path. When the <code>exploration</code> step is succesfully finished, all the <code>phase</code> keywords are set to <code>"true"</code>.</p>
+<h2 id="labeling">Labeling</h2>
+<p>For the last <code>step</code> of the first iteration, we move to the <code>$WORKDIR/001-labeling/</code> folder to run the different <code>phases</code>. You should adapt the Slurm parameters for the electronic structure calculation to match the architecture of your system. In this case, the number of MPI processes per node is set to 16 with the <code>"nb_mpi_per_node"</code> keyword in the <code>input.json</code>:</p>
+<pre><code class="language-JSON">{
+    &quot;user_machine_keyword_label&quot;: &quot;mykeyword1&quot;,
+    &quot;nb_mpi_per_node&quot;: 16
+}
+</code></pre>
+<p>As usual, the <code>used_input.json</code> file will be updated consequently when re running the <code>prepare</code> phase: </p>
+<pre><code class="language-JSON">{
+    &quot;user_machine_keyword_label&quot;: &quot;mykeyword1&quot;,
+    &quot;job_email&quot;: &quot;&quot;,
+    &quot;labeling_program&quot;: &quot;cp2k&quot;,
+    &quot;walltime_first_job_h&quot;: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+    &quot;walltime_second_job_h&quot;: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+    &quot;nb_nodes&quot;: [1, 1, 1, 1, 1, 1],
+    &quot;nb_mpi_per_node&quot;: [16, 16, 16, 16, 16, 16],
+    &quot;nb_threads_per_mpi&quot;: [1, 1, 1, 1, 1, 1]
+}
+</code></pre>
+<p>The number of MPI processes hs been set to 16 for the 6 systems. The walltimes of both calculations (2 calculation are performed when using CP2, a first quick calculation at a lower level of theory and then the reference level) are kept at the default values. </p>
+<p>Here the reactive water calculations use full nodes and have a higher wall time of 1h30min. The wall times should be set for the first iteration but can be guessed automatically later using the average time per CP2K calculation measured in the previous iteration. We can now run the first 2 phases and wait for the electronic structure calculations to finish. When running the check phase there could be a message telling us that there are failed configurations in the <code>water-reactive</code> folder! We can see which calculations did not converge in the <code>water-reactive/water-reactive_step2_not_converged.txt</code> file. Suppose there were 2 failed jobs, the 13-th and the 54-th. We might just do <code>touch water-reactive/00013/skip</code> and <code>touch water-reactive/00054/skip</code> and run the <code>check</code> phase again. This time it will inform us that some configurations will be skipped, but the final message should be that check phase is a success. All that is left to do now is run the <code>extract</code> phase, clean up with the <code>clean</code> phase, store wavefunctions and remove all unwanted data and finally update our local folder. We have now augmented our total training set and might do a new training iteration and keep iterating until convergence is reached!</p>
+<p>Finally, we can check the <code>labeling_001.json</code> file in <code>$WORKDIR/control/</code>: </p>
+<pre><code class="language-JSON">{
+    &quot;labeling_program&quot;: &quot;cp2k&quot;,
+    &quot;user_machine_keyword_label&quot;: &quot;mykeyword1&quot;,
+    &quot;systems_auto&quot;: {
+        &quot;ch3br_cl_close_300K&quot;: {
+        // labeling parameters from used_input.json
+        },
+        &quot;ch3br_cl_free_300K&quot;: {
+        //
+        },
+        &quot;ch3br_cl_smd_300K&quot;: {
+        //
+         },
+        &quot;ch3cl_br_close_300K&quot;: {
+        //
+        },
+        &quot;ch3cl_br_free_300K&quot;: {
+        //
+         },
+        &quot;ch3cl_br_smd_300K&quot;: {
+        }
+    },
+    &quot;total_to_label&quot;: 50,
+    &quot;launch_all_jobs&quot;: true,
+    &quot;is_locked&quot;: true,
+    &quot;is_launched&quot;: true,
+    &quot;is_checked&quot;: true,
+    &quot;is_extracted&quot;: true
+}
+</code></pre>
+<p>The total number of structures that have been selected labeled from the selected candidates in the previous exploration step is indicated with the <code>"total_to_label"</code> keyword. </p>
+<p>The first iteration is done. After executing the <code>extract</code> phase, the directories for the next iteration will be created. </p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../../usage/test/" class="btn btn-neutral float-left" title="Test"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../contributions/unexpected_behavior/" class="btn btn-neutral float-right" title="Unexpected Behavior">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../../usage/test/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../contributions/unexpected_behavior/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
