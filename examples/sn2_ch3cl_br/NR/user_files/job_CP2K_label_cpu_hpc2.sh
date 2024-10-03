@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 # Created: 2022/01/01
-# Last modified: 2024/06/26
+# Last modified: 2024/10/03
 #----------------------------------------------
 # You must keep the _R_VARIABLES_ in the file.
 # You must keep the name file as job_CP2K_label_ARCHTYPE_myHPCkeyword1.sh.
@@ -46,7 +46,6 @@ CP2K_WFRST_FILE="labeling__R_PADDEDSTEP_-SCF.wfn"
 #----------------------------------------------
 # Adapt the following lines to your HPC system
 #----------------------------------------------
-
 
 # Project switch
 module purge

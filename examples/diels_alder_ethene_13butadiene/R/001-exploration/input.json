@@ -1,0 +1,9 @@
+{
+    "user_machine_keyword_exp": "v100_nvs",
+    "atomsk_path": "/lustre/fsn1/worksf/projects/rech/kro/commun/programs/atomsk/0.13.1/atomsk",
+    "timestep_ps": 0.00025,
+    "previous_start": false,
+    "print_interval_mult": 0.0005,
+    "ignore_first_x_ps": 0.1,
+    "sigma_low": 0.15
+}

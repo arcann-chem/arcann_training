@@ -1,0 +1,24 @@
+UNITS LENGTH=A ENERGY=kcal/mol
+INCLUDE FILE=plumed_atomdef_product_OPES1D20_300K.dat
+INCLUDE FILE=plumed_colvars_product_OPES1D20_300K.dat
+INCLUDE FILE=plumed_walls_product_OPES1D20_300K.dat
+
+opes: OPES_METAD ...
+    ARG=CV_dm
+    SIGMA=0.05
+    BARRIER=20
+    PACE=500
+    TEMP=300
+    STATE_WFILE=state.data
+    STATE_WSTRIDE=10000
+    FILE=kernels.data
+...
+
+UPPER_WALLS ARG=CV_d1 AT=4.0 KAPPA=100.0 EXP=2 EPS=1 OFFSET=0 LABEL=uwall_d1
+UPPER_WALLS ARG=CV_d2 AT=4.0 KAPPA=100.0 EXP=2 EPS=1 OFFSET=0 LABEL=uwall_d2
+PRINT STRIDE=_R_PRINT_FREQ_ ARG=uwall_d1.*,uwall_d2.* FILE=walls_extra.txt FMT=%8.4f
+
+PRINT STRIDE=_R_PRINT_FREQ_ ARG=CV_d1,CV_d2,CV_dm,opes.bias FILE=opes.txt FMT=%8.4f
+FLUSH STRIDE=_R_PRINT_FREQ_
+
+ENDPLUMED

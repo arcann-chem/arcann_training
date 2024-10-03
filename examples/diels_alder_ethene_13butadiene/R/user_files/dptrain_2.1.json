@@ -1,0 +1,67 @@
+{
+    "model": {
+        "type_map": ["C", "H"],
+        "descriptor": {
+            "seed": 1161000,
+            "type": "se_e2_a",
+            "sel": [6, 10],
+            "rcut": 6.0,
+            "rcut_smth": 0.5,
+            "neuron": [20, 40, 80],
+            "axis_neuron": 16,
+            "resnet_dt": false,
+            "activation_function": "tanh",
+            "precision": "float64",
+            "type_one_side": false,
+            "trainable": true,
+            "exclude_types": [],
+            "set_davg_zero": false
+        },
+        "fitting_net": {
+            "seed": 1161000,
+            "neuron": [240, 240, 240],
+            "resnet_dt": true,
+            "type": "ener",
+            "activation_function": "tanh",
+            "precision": "float64",
+            "numb_fparam": 0,
+            "numb_aparam": 0,
+            "trainable": true,
+            "rcond": 0.001,
+            "atom_ener": []
+        }
+    },
+    "learning_rate": {
+        "type": "exp",
+        "decay_steps": 5000,
+        "start_lr": 0.001,
+        "stop_lr": 1e-06,
+        "scale_by_worker": "linear"
+    },
+    "loss": {
+        "start_pref_e": 0.01,
+        "limit_pref_e": 1.0,
+        "start_pref_f": 1000,
+        "limit_pref_f": 1.0,
+        "start_pref_v": 0.0,
+        "limit_pref_v": 0.0,
+        "type": "ener"
+    },
+    "training": {
+        "seed": 1161000,
+        "disp_file": "lcurve.out",
+        "disp_freq": 1000,
+        "numb_test": 0,
+        "save_freq": 1000,
+        "save_ckpt": "model.ckpt",
+        "disp_training": true,
+        "time_training": true,
+        "training_data": {
+            "systems": [""],
+            "set_prefix": "set",
+            "batch_size": "auto"
+        },
+        "numb_steps": 400000,
+        "validation_data": null
+    }
+}

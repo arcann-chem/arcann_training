@@ -1,0 +1,4 @@
+{
+    "systems_auto": ["product_free_300K", "product_OPES1D20_300K", "product_OPES1D50_300K", "product_OPES1D70_300K", "product_SMD_300K", "reactant_free_300K", "reactant_OPES1D20_300K", "reactant_OPES1D50_300K", "reactant_OPES1D70_300K", "reactant_SMD_300K"],
+    "nnp_count": 3
+}

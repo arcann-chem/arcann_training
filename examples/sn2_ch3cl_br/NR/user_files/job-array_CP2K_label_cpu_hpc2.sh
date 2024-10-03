@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 # Created: 2022/01/01
-# Last modified: 2024/06/26
+# Last modified: 2024/10/03
 #----------------------------------------------
 # You must keep the _R_VARIABLES_ in the file.
 # You must keep the name file as job-array_CP2K_label_ARCHTYPE_myHPCkeyword1.sh.
@@ -52,7 +52,6 @@ CP2K_WFRST_FILE="labeling_${SLURM_ARRAY_TASK_ID_PADDED}-SCF.wfn"
 # It should be the close to the job_CP2K_label_ARCHTYPE_myHPCkeyword1.sh
 # Don't forget to replace the job_labeling_array_ARCHTYPE_myHPCkeyword1.sh at the end of the file (replacling ARCHTYPE and myHPCkeyword1)
 #----------------------------------------------
-
 
 # Project switch
 module purge
