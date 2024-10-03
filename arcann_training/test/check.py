@@ -39,7 +39,9 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
+    arcann_logger.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
+    )
     arcann_logger.debug(f"Current path :{current_path}")
     arcann_logger.debug(f"Training path: {training_path}")
     arcann_logger.debug(f"Program path: {deepmd_iterative_path}")
@@ -94,7 +96,9 @@ def main(
             elif (local_path / f"{dataset}.out").is_file():
                 testing_out = textfile_to_string_list((local_path / f"{dataset}.out"))
             else:
-                arcann_logger.critical(f"DP Test - '{nnp}' for '{dataset}' still running/no outfile.")
+                arcann_logger.critical(
+                    f"DP Test - '{nnp}' for '{dataset}' still running/no outfile."
+                )
                 continue
 
             if testing_out:
@@ -105,18 +109,32 @@ def main(
                     for key, pattern in patterns.items():
                         match = re.search(pattern, testing_out_combined)
                         if match:
-                            extracted_values_from_list[key] = float(match.group(1)) if "test data" not in key else int(match.group(1))
+                            extracted_values_from_list[key] = (
+                                float(match.group(1))
+                                if "test data" not in key
+                                else int(match.group(1))
+                            )
                             if key not in ["virial_rmse", "virial_rmse_per_atom"]:
                                 completed_count += 1
                         else:
                             extracted_values_from_list[key] = False
                             if key in ["virial_rmse", "virial_rmse_per_atom"]:
-                                arcann_logger.warning(f"DP Test - '{nnp}' for '{dataset}': value {key} not present, but this will not be counted as a failure.")
+                                arcann_logger.warning(
+                                    f"DP Test - '{nnp}' for '{dataset}': value {key} not present, but this will not be counted as a failure."
+                                )
                             else:
-                                arcann_logger.critical(f"DP Test - '{nnp}' for '{dataset}': value {key} not present.")
+                                arcann_logger.critical(
+                                    f"DP Test - '{nnp}' for '{dataset}': value {key} not present."
+                                )
 
                     testing_json[nnp_name][dataset] = extracted_values_from_list
-                    del testing_out_combined, extracted_values_from_list, match, key, pattern
+                    del (
+                        testing_out_combined,
+                        extracted_values_from_list,
+                        match,
+                        key,
+                        pattern,
+                    )
 
                     if dataset in training_json["training_datasets"]:
                         testing_json[nnp_name][dataset]["trained"] = True
@@ -130,25 +148,37 @@ def main(
                     for file in [energy_file, force_file, virial_file]:
                         if file.is_file():
                             np.save(file.with_suffix(".npy"), np.genfromtxt(file))
-                            arcann_logger.info(f"DP Test - '{nnp}' for '{dataset}' - '{file.stem}' saved as NPY.")
+                            arcann_logger.info(
+                                f"DP Test - '{nnp}' for '{dataset}' - '{file.stem}' saved as NPY."
+                            )
                     del energy_file, force_file, virial_file, file
                 else:
                     testing_json[nnp_name][dataset] = False
-                    arcann_logger.critical(f"DP Test - '{nnp}' for '{dataset}' not finished/failed.")
+                    arcann_logger.critical(
+                        f"DP Test - '{nnp}' for '{dataset}' not finished/failed."
+                    )
             else:
                 testing_json[nnp_name][dataset] = False
-                arcann_logger.critical(f"DP Test - '{nnp}' for '{dataset}' not finished/failed.")
+                arcann_logger.critical(
+                    f"DP Test - '{nnp}' for '{dataset}' not finished/failed."
+                )
             del testing_out
         del dataset
     del nnp, local_path, nnp_name
 
-    expected_count = main_json["nnp_count"] * len(datasets) * (len(patterns) - 2)  # Subtracting 2 to ignore virial_rmse and virial_rmse_per_atom
+    expected_count = (
+        main_json["nnp_count"] * len(datasets) * (len(patterns) - 2)
+    )  # Subtracting 2 to ignore virial_rmse and virial_rmse_per_atom
 
     if completed_count == expected_count:
         testing_json["is_checked"] = True
 
     # Dump the JSON files (training)
-    write_json_file(testing_json, (control_path / f"testing_{padded_curr_iter}.json"), read_only=True)
+    write_json_file(
+        testing_json,
+        (control_path / f"testing_{padded_curr_iter}.json"),
+        read_only=True,
+    )
 
     # End
     arcann_logger.info(f"-" * 88)
@@ -159,9 +189,13 @@ def main(
     arcann_logger.debug(f"len(patterns): {len(patterns) - 2}")
 
     if completed_count == expected_count:
-        arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
+        arcann_logger.info(
+            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
+        )
     else:
-        arcann_logger.critical(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!")
+        arcann_logger.critical(
+            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!"
+        )
         arcann_logger.critical(f"Some DP Test did not finish correctly.")
         arcann_logger.critical(f"Please check manually before re-executing this step.")
         arcann_logger.critical(f"Aborting...")

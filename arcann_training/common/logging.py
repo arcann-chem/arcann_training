@@ -41,7 +41,12 @@ def setup_logging(verbose: int = 0) -> Dict:
             },
         },
         "handlers": {
-            "console": {"class": "logging.StreamHandler", "level": "INFO", "formatter": "simple", "stream": "ext://sys.stdout"},  # Use standard output (or sys.stderr)
+            "console": {
+                "class": "logging.StreamHandler",
+                "level": "INFO",
+                "formatter": "simple",
+                "stream": "ext://sys.stdout",
+            },  # Use standard output (or sys.stderr)
             "file": {
                 "class": "logging.FileHandler",
                 "level": "INFO",
@@ -50,7 +55,9 @@ def setup_logging(verbose: int = 0) -> Dict:
                 "mode": "a",  # Append mode
             },
         },
-        "loggers": {"": {"handlers": ["console", "file"], "level": "INFO", "propagate": True}},
+        "loggers": {
+            "": {"handlers": ["console", "file"], "level": "INFO", "propagate": True}
+        },
     }
 
     if verbose >= 1:

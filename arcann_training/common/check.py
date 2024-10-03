@@ -71,7 +71,9 @@ def check_atomsk(atomsk_path: str = None) -> str:
         if Path(atomsk_path).is_file():
             return str(Path(atomsk_path).resolve())
         else:
-            logger.warning(f"Atomsk path '{atomsk_path}' is invalid. Deleting the atomsk_path variable. Checking environment variable and system path...")
+            logger.warning(
+                f"Atomsk path '{atomsk_path}' is invalid. Deleting the atomsk_path variable. Checking environment variable and system path..."
+            )
             del atomsk_path
 
     # Check if ATOMSK_PATH is defined and is valid
@@ -127,7 +129,9 @@ def check_vmd(vmd_path: str = None) -> str:
     if vmd_path is not None and vmd_path != "" and Path(vmd_path).is_file():
         return str(Path(vmd_path).resolve())
     else:
-        logger.warning(f"VMD path '{vmd_path}' is invalid. Deleting the vmd_path variable. Checking environment variable and system path...")
+        logger.warning(
+            f"VMD path '{vmd_path}' is invalid. Deleting the vmd_path variable. Checking environment variable and system path..."
+        )
         del vmd_path
 
     # Check if VMD_PATH is defined and is valid
@@ -201,7 +205,12 @@ def check_dcd_is_valid(dcd_path: Path, vmd_bin: Path) -> bool:
     quit
     """
     # Run VMD script from command line
-    result = subprocess.run([vmd_bin, "-dispdev", "text", "-e", "/dev/stdin"], input=vmd_script, text=True, capture_output=True)
+    result = subprocess.run(
+        [vmd_bin, "-dispdev", "text", "-e", "/dev/stdin"],
+        input=vmd_script,
+        text=True,
+        capture_output=True,
+    )
 
     # Check if the output contains "Unable to load file "
     if "Unable to load file " in result.stdout:
@@ -239,7 +248,12 @@ def check_nc_is_valid(nc_path: Path, vmd_bin: Path) -> bool:
     quit
     """
     # Run VMD script from command line
-    result = subprocess.run([vmd_bin, "-dispdev", "text", "-e", "/dev/stdin"], input=vmd_script, text=True, capture_output=True)
+    result = subprocess.run(
+        [vmd_bin, "-dispdev", "text", "-e", "/dev/stdin"],
+        input=vmd_script,
+        text=True,
+        capture_output=True,
+    )
 
     # Check if the output contains "Unable to load file "
     if "Unable to load file " in result.stdout:

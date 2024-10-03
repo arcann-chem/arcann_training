@@ -40,7 +40,9 @@ from arcann_training.common.json import load_json_file
 
 # Unittested
 @catch_errors_decorator
-def generate_main_json(user_input_json: Dict, default_input_json: Dict) -> Tuple[Dict, Dict, str]:
+def generate_main_json(
+    user_input_json: Dict, default_input_json: Dict
+) -> Tuple[Dict, Dict, str]:
     """
     Generate the main JSON by combining values from the user input JSON and the default JSON.
     If the user input JSON is invalid, an error is raised, and the script is terminated.
@@ -85,7 +87,9 @@ def generate_main_json(user_input_json: Dict, default_input_json: Dict) -> Tuple
     main_json = deepcopy(merged_input_json)
     main_json["current_iteration"] = 0
 
-    main_json["systems_auto"] = {key: {"index": idx} for idx, key in enumerate(main_json["systems_auto"])}
+    main_json["systems_auto"] = {
+        key: {"index": idx} for idx, key in enumerate(main_json["systems_auto"])
+    }
 
     return main_json, merged_input_json, str(main_json["current_iteration"]).zfill(3)
 
@@ -130,7 +134,9 @@ def check_properties_file(file_path: Path) -> dict:
     masses_index = lines.index("masses")
 
     if type_index >= masses_index:
-        error_msg = f"'type' section should come before 'masses'. Check your properties file."
+        error_msg = (
+            f"'type' section should come before 'masses'. Check your properties file."
+        )
         raise ValueError(error_msg)
 
     types = {}
@@ -163,7 +169,9 @@ def check_properties_file(file_path: Path) -> dict:
                 raise ValueError(error_msg)
 
     if set(types) != set(masses):
-        error_msg = f"Number of types and masses do not match. Check your properties file."
+        error_msg = (
+            f"Number of types and masses do not match. Check your properties file."
+        )
         raise ValueError(error_msg)
 
     # Combining types and masses into one dictionary
@@ -214,7 +222,9 @@ def check_lmp_properties(lmp_file: Path, properties: Dict) -> bool:
         if masses[atom_type_id] == 0.1:
             continue
 
-        if not np.isclose(masses[atom_type_id], properties[atom_type_id]["mass"], atol=1e-2):
+        if not np.isclose(
+            masses[atom_type_id], properties[atom_type_id]["mass"], atol=1e-2
+        ):
             error_msg = f"Masses do not match for atom type {atom_type_id} between the LMP file {lmp_file} and properties file."
             raise ValueError(error_msg)
 

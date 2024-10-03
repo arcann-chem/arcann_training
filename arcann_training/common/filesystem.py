@@ -83,7 +83,9 @@ def change_directory(directory_path: Path) -> None:
 
 # Unittested
 @catch_errors_decorator
-def check_directory(directory_path: Path, abort_on_error: bool = True, error_msg: str = "default") -> None:
+def check_directory(
+    directory_path: Path, abort_on_error: bool = True, error_msg: str = "default"
+) -> None:
     """
     Check if the given directory exists and logs a warning or raises an error if it does not.
 
@@ -161,7 +163,9 @@ def check_file_existence(
         if expected_existence:
             message = f"File not found: `{file_path.name}` not in `{file_path.parent}`"
             if abort_on_error:
-                raise FileNotFoundError(message if error_msg == "default" else error_msg)
+                raise FileNotFoundError(
+                    message if error_msg == "default" else error_msg
+                )
             else:
                 logger.warning(message if error_msg == "default" else error_msg)
         else:

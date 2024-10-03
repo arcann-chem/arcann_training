@@ -130,7 +130,9 @@ class TestAddKeyValueToDict(unittest.TestCase):
         d = {"key1": {"value": "value1"}}
         nested_dict = {"key2": {"key3": "value3"}}
         add_key_value_to_dict(d, "key2", nested_dict)
-        self.assertEqual(d, {"key1": {"value": "value1"}, "key2": {"value": nested_dict}})
+        self.assertEqual(
+            d, {"key1": {"value": "value1"}, "key2": {"value": nested_dict}}
+        )
 
     def test_input_types(self):
         """
@@ -180,7 +182,9 @@ class TestGetKeyInDict(unittest.TestCase):
         """
         Test getting an existing key from the input JSON.
         """
-        result = get_key_in_dict("key1", self.input_json, self.previous_json, self.default_json)
+        result = get_key_in_dict(
+            "key1", self.input_json, self.previous_json, self.default_json
+        )
         self.assertEqual(result, 42)
 
     def test_get_nonexistent_key_from_input_json(self):
@@ -199,14 +203,18 @@ class TestGetKeyInDict(unittest.TestCase):
         """
         Test getting an existing key from the previous JSON.
         """
-        result = get_key_in_dict("key1", self.input_json_incomplete, self.previous_json, self.default_json)
+        result = get_key_in_dict(
+            "key1", self.input_json_incomplete, self.previous_json, self.default_json
+        )
         self.assertEqual(result, 5)
 
     def test_get_existing_key_from_default_json(self):
         """
         Test getting an existing key from the default JSON.
         """
-        result = get_key_in_dict("key2", self.input_json, self.previous_json, self.default_json)
+        result = get_key_in_dict(
+            "key2", self.input_json, self.previous_json, self.default_json
+        )
         self.assertEqual(result, "")
 
     def test_key_not_present_in_any_json(self):
@@ -238,7 +246,9 @@ class TestGetKeyInDict(unittest.TestCase):
         Test getting a key with wrong type from the previous JSON.
         """
         with self.assertRaises(TypeError):
-            get_key_in_dict("key3", self.input_json, self.previous_json, self.default_json)
+            get_key_in_dict(
+                "key3", self.input_json, self.previous_json, self.default_json
+            )
 
 
 class TestBackupAndOverwriteJsonFile(unittest.TestCase):
@@ -416,7 +426,9 @@ class TestLoadJsonFile(unittest.TestCase):
         with self.assertRaises(FileNotFoundError) as cm:
             load_json_file(file_path)
         error_msg = str(cm.exception)
-        expected_error_msg = f"File '{file_path.name}' not found in '{file_path.parent}'."
+        expected_error_msg = (
+            f"File '{file_path.name}' not found in '{file_path.parent}'."
+        )
         self.assertEqual(error_msg, expected_error_msg)
 
     def test_load_nonexistent_json_file_without_abort_on_error(self):

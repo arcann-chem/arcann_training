@@ -19,9 +19,20 @@ import re
 import numpy as np
 
 # Local imports
-from arcann_training.common.json import load_json_file, write_json_file, get_key_in_dict, load_default_json_file, backup_and_overwrite_json_file
+from arcann_training.common.json import (
+    load_json_file,
+    write_json_file,
+    get_key_in_dict,
+    load_default_json_file,
+    backup_and_overwrite_json_file,
+)
 from arcann_training.common.list import textfile_to_string_list, string_list_to_textfile
-from arcann_training.common.check import validate_step_folder, check_vmd, check_dcd_is_valid, check_nc_is_valid
+from arcann_training.common.check import (
+    validate_step_folder,
+    check_vmd,
+    check_dcd_is_valid,
+    check_nc_is_valid,
+)
 
 
 def main(
@@ -39,7 +50,9 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
+    arcann_logger.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
+    )
     arcann_logger.debug(f"Current path :{current_path}")
     arcann_logger.debug(f"Training path: {training_path}")
     arcann_logger.debug(f"Program path: {deepmd_iterative_path}")
@@ -53,7 +66,9 @@ def main(
     curr_iter = int(padded_curr_iter)
 
     # Load the default input JSON
-    default_input_json = load_default_json_file(deepmd_iterative_path / "assets" / "default_config.json")[current_step]
+    default_input_json = load_default_json_file(
+        deepmd_iterative_path / "assets" / "default_config.json"
+    )[current_step]
     default_input_json_present = bool(default_input_json)
     arcann_logger.debug(f"default_input_json: {default_input_json}")
     arcann_logger.debug(f"default_input_json_present: {default_input_json_present}")
@@ -72,22 +87,30 @@ def main(
         current_input_json = load_json_file((current_path / "used_input.json"))
     else:
         arcann_logger.warning(f"No used_input.json found. Starting with empty one.")
-        arcann_logger.warning(f"You should avoid this by not deleting the used_input.json file.")
+        arcann_logger.warning(
+            f"You should avoid this by not deleting the used_input.json file."
+        )
         current_input_json = {}
     arcann_logger.debug(f"current_input_json: {current_input_json}")
 
     # Get control path, load the main JSON and the exploration JSON
     control_path = training_path / "control"
     main_json = load_json_file((control_path / "config.json"))
-    exploration_json = load_json_file((control_path / f"exploration_{padded_curr_iter}.json"))
+    exploration_json = load_json_file(
+        (control_path / f"exploration_{padded_curr_iter}.json")
+    )
 
     # Load the previous exploration JSON and training JSON
     if curr_iter > 0:
         prev_iter = curr_iter - 1
         padded_prev_iter = str(prev_iter).zfill(3)
-        previous_training_json = load_json_file((control_path / f"training_{padded_prev_iter}.json"))
+        previous_training_json = load_json_file(
+            (control_path / f"training_{padded_prev_iter}.json")
+        )
         if prev_iter > 0:
-            previous_exploration_json = load_json_file((control_path / ("exploration_" + padded_prev_iter + ".json")))
+            previous_exploration_json = load_json_file(
+                (control_path / ("exploration_" + padded_prev_iter + ".json"))
+            )
         else:
             previous_exploration_json = {}
     else:
@@ -101,7 +124,11 @@ def main(
         return 1
 
     # Check if the vmd package is installed
-    vmd_bin = check_vmd(get_key_in_dict("vmd_path", user_input_json, previous_exploration_json, default_input_json))
+    vmd_bin = check_vmd(
+        get_key_in_dict(
+            "vmd_path", user_input_json, previous_exploration_json, default_input_json
+        )
+    )
     current_input_json["vmd_path"] = vmd_bin
 
     exploration_json["vmd_path"] = vmd_bin
@@ -127,8 +154,15 @@ def main(
         }
 
         for it_nnp in range(1, main_json["nnp_count"] + 1):
-            for it_number in range(1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1):
-                local_path = Path(".").resolve() / str(system_auto) / str(it_nnp) / (str(it_number).zfill(5))
+            for it_number in range(
+                1, exploration_json["systems_auto"][system_auto]["traj_count"] + 1
+            ):
+                local_path = (
+                    Path(".").resolve()
+                    / str(system_auto)
+                    / str(it_nnp)
+                    / (str(it_number).zfill(5))
+                )
                 arcann_logger.debug(f"Checking local_path: {local_path}")
 
                 # If there is a skip, we skip
@@ -139,14 +173,32 @@ def main(
                     continue
 
                 # LAMMPS
-                if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps":
-                    traj_file = local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.dcd"
-                    lammps_output_file = local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.log"
-                    model_deviation_filename = local_path / f"model_devi_{system_auto}_{it_nnp}_{padded_curr_iter}.out"
+                if (
+                    exploration_json["systems_auto"][system_auto]["exploration_type"]
+                    == "lammps"
+                ):
+                    traj_file = (
+                        local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.dcd"
+                    )
+                    lammps_output_file = (
+                        local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.log"
+                    )
+                    model_deviation_filename = (
+                        local_path
+                        / f"model_devi_{system_auto}_{it_nnp}_{padded_curr_iter}.out"
+                    )
 
                     # Log if files are missing.
-                    if not all([traj_file.is_file(), lammps_output_file.is_file(), model_deviation_filename.is_file()]):
-                        arcann_logger.critical(f"'{local_path}': missing files. Check manually.")
+                    if not all(
+                        [
+                            traj_file.is_file(),
+                            lammps_output_file.is_file(),
+                            model_deviation_filename.is_file(),
+                        ]
+                    ):
+                        arcann_logger.critical(
+                            f"'{local_path}': missing files. Check manually."
+                        )
                         del lammps_output_file, traj_file, model_deviation_filename
                         continue
 
@@ -154,7 +206,9 @@ def main(
                     if not check_dcd_is_valid(traj_file, vmd_bin):
                         (local_path / "skip").touch(exist_ok=True)
                         skipped_count += 1
-                        exploration_json["systems_auto"][system_auto]["skipped_count"] += 1
+                        exploration_json["systems_auto"][system_auto][
+                            "skipped_count"
+                        ] += 1
                         arcann_logger.warning(f"'{traj_file}' present but invalid.")
                         arcann_logger.warning(f"'{local_path}' auto-skipped.")
                         del lammps_output_file, traj_file, model_deviation_filename
@@ -164,28 +218,59 @@ def main(
                     lammps_output = textfile_to_string_list(lammps_output_file)
                     if (local_path / "force").is_file():
                         forced_count += 1
-                        exploration_json["systems_auto"][system_auto]["forced_count"] += 1
+                        exploration_json["systems_auto"][system_auto][
+                            "forced_count"
+                        ] += 1
                         arcann_logger.warning(f"'{local_path}' forced.")
                     elif any("Total wall time:" in f for f in lammps_output):
                         system_count += 1
                         completed_count += 1
-                        exploration_json["systems_auto"][system_auto]["completed_count"] += 1
-                        timings_str = [zzz for zzz in lammps_output if "Loop time of" in zzz]
+                        exploration_json["systems_auto"][system_auto][
+                            "completed_count"
+                        ] += 1
+                        timings_str = [
+                            zzz for zzz in lammps_output if "Loop time of" in zzz
+                        ]
                         timings.append(float(timings_str[0].split(" ")[3]))
                         del timings_str
                     else:
                         failed_explorations_list.append(f"{lammps_output_file.parent}")
-                        arcann_logger.critical(f"'{lammps_output_file}' failed. Check manually.")
-                    del lammps_output, lammps_output_file, traj_file, model_deviation_filename
+                        arcann_logger.critical(
+                            f"'{lammps_output_file}' failed. Check manually."
+                        )
+                    del (
+                        lammps_output,
+                        lammps_output_file,
+                        traj_file,
+                        model_deviation_filename,
+                    )
 
-                elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
-                    traj_file = local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.nc"
-                    sander_emle_output_file = local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.log"
-                    model_deviation_filename = local_path / f"model_devi_{system_auto}_{it_nnp}_{padded_curr_iter}.out"
+                elif (
+                    exploration_json["systems_auto"][system_auto]["exploration_type"]
+                    == "sander_emle"
+                ):
+                    traj_file = (
+                        local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.nc"
+                    )
+                    sander_emle_output_file = (
+                        local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.log"
+                    )
+                    model_deviation_filename = (
+                        local_path
+                        / f"model_devi_{system_auto}_{it_nnp}_{padded_curr_iter}.out"
+                    )
 
                     # Log if files are missing.
-                    if not all([traj_file.is_file(), sander_emle_output_file.is_file(), model_deviation_filename.is_file()]):
-                        arcann_logger.critical(f"'{local_path}': missing files. Check manually.")
+                    if not all(
+                        [
+                            traj_file.is_file(),
+                            sander_emle_output_file.is_file(),
+                            model_deviation_filename.is_file(),
+                        ]
+                    ):
+                        arcann_logger.critical(
+                            f"'{local_path}': missing files. Check manually."
+                        )
                         del sander_emle_output_file, traj_file, model_deviation_filename
                         continue
 
@@ -193,7 +278,9 @@ def main(
                     if not check_nc_is_valid(traj_file, vmd_bin):
                         (local_path / "skip").touch(exist_ok=True)
                         skipped_count += 1
-                        exploration_json["systems_auto"][system_auto]["skipped_count"] += 1
+                        exploration_json["systems_auto"][system_auto][
+                            "skipped_count"
+                        ] += 1
                         arcann_logger.warning(f"'{traj_file}' present but invalid.")
                         arcann_logger.warning(f"'{local_path}' auto-skipped.")
                         del sander_emle_output_file, traj_file, model_deviation_filename
@@ -203,29 +290,52 @@ def main(
                     sander_emle_ouput = textfile_to_string_list(sander_emle_output_file)
                     if (local_path / "force").is_file():
                         forced_count += 1
-                        exploration_json["systems_auto"][system_auto]["forced_count"] += 1
+                        exploration_json["systems_auto"][system_auto][
+                            "forced_count"
+                        ] += 1
                         arcann_logger.warning(f"'{local_path}' forced.")
-                    elif any("Average timings for all steps" in f for f in sander_emle_ouput):
+                    elif any(
+                        "Average timings for all steps" in f for f in sander_emle_ouput
+                    ):
                         system_count += 1
                         completed_count += 1
-                        exploration_json["systems_auto"][system_auto]["completed_count"] += 1
-                        timings_str = [zzz for zzz in sander_emle_ouput if "Elapsed(s) = " in zzz]
+                        exploration_json["systems_auto"][system_auto][
+                            "completed_count"
+                        ] += 1
+                        timings_str = [
+                            zzz for zzz in sander_emle_ouput if "Elapsed(s) = " in zzz
+                        ]
                         pattern = r"Elapsed\(s\) =\s*([\d.]+)"
                         matches = re.findall(pattern, timings_str[0])
                         timings.append(float(matches[0]))
                         del timings_str
                     else:
                         failed_explorations_list.append(f"{lammps_output_file.parent}")
-                        arcann_logger.critical(f"'{sander_emle_output_file}' failed. Check manually.")
-                    del sander_emle_ouput, sander_emle_output_file, traj_file, model_deviation_filename
+                        arcann_logger.critical(
+                            f"'{sander_emle_output_file}' failed. Check manually."
+                        )
+                    del (
+                        sander_emle_ouput,
+                        sander_emle_output_file,
+                        traj_file,
+                        model_deviation_filename,
+                    )
 
                 # i-PI
-                elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
-                    ipi_output_file = local_path / f"{system_auto}_{it_nnp}_{padded_curr_iter}.i-PI.server.log"
+                elif (
+                    exploration_json["systems_auto"][system_auto]["exploration_type"]
+                    == "i-PI"
+                ):
+                    ipi_output_file = (
+                        local_path
+                        / f"{system_auto}_{it_nnp}_{padded_curr_iter}.i-PI.server.log"
+                    )
 
                     # Log if files are missing.
                     if not ipi_output_file.is_file():
-                        arcann_logger.critical(f"'{local_path}': missing files. Check manually.")
+                        arcann_logger.critical(
+                            f"'{local_path}': missing files. Check manually."
+                        )
                         del ipi_output_file
                         continue
 
@@ -233,81 +343,166 @@ def main(
                     ipi_output = textfile_to_string_list(ipi_output_file)
                     if (local_path / "force").is_file():
                         forced_count += 1
-                        exploration_json["systems_auto"][system_auto]["forced_count"] += 1
+                        exploration_json["systems_auto"][system_auto][
+                            "forced_count"
+                        ] += 1
                         arcann_logger.warning(f"'{local_path}' forced.")
                     elif any("SIMULATION: Exiting cleanly" in f for f in ipi_output):
                         system_count += 1
                         completed_count += 1
-                        exploration_json["systems_auto"][system_auto]["completed_count"] += 1
-                        ipi_time = [zzz for zzz in ipi_output if "Average timings at MD step" in zzz]
-                        ipi_time2 = [zzz[zzz.index("step:") + len("step:") : zzz.index("\n")] for zzz in ipi_time]
-                        timings.append(np.average(np.asarray(ipi_time2, dtype="float32")))
+                        exploration_json["systems_auto"][system_auto][
+                            "completed_count"
+                        ] += 1
+                        ipi_time = [
+                            zzz
+                            for zzz in ipi_output
+                            if "Average timings at MD step" in zzz
+                        ]
+                        ipi_time2 = [
+                            zzz[zzz.index("step:") + len("step:") : zzz.index("\n")]
+                            for zzz in ipi_time
+                        ]
+                        timings.append(
+                            np.average(np.asarray(ipi_time2, dtype="float32"))
+                        )
                         del ipi_time, ipi_time2
                     else:
                         failed_explorations_list.append(f"{lammps_output_file.parent}")
-                        arcann_logger.critical(f"'{ipi_output_file}' failed. Check manually.")
+                        arcann_logger.critical(
+                            f"'{ipi_output_file}' failed. Check manually."
+                        )
                         del ipi_output
                     del ipi_output_file
                 else:
-                    arcann_logger.error(f"'{exploration_json['exploration_type']}' unknown. Check manually.")
+                    arcann_logger.error(
+                        f"'{exploration_json['exploration_type']}' unknown. Check manually."
+                    )
                     return 1
                 del local_path
 
         # timings = timings_sum / system_count
 
-        if exploration_json["systems_auto"][system_auto]["exploration_type"] == "lammps":
-            average_per_step = np.array(timings) / exploration_json["systems_auto"][system_auto]["nb_steps"]
-        elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "sander_emle":
-            average_per_step = np.array(timings) / exploration_json["systems_auto"][system_auto]["nb_steps"]
-        elif exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI":
+        if (
+            exploration_json["systems_auto"][system_auto]["exploration_type"]
+            == "lammps"
+        ):
+            average_per_step = (
+                np.array(timings)
+                / exploration_json["systems_auto"][system_auto]["nb_steps"]
+            )
+        elif (
+            exploration_json["systems_auto"][system_auto]["exploration_type"]
+            == "sander_emle"
+        ):
+            average_per_step = (
+                np.array(timings)
+                / exploration_json["systems_auto"][system_auto]["nb_steps"]
+            )
+        elif (
+            exploration_json["systems_auto"][system_auto]["exploration_type"] == "i-PI"
+        ):
             average_per_step = np.array(timings)
         else:
             average_per_step = np.NaN
 
         if np.isnan(np.average(average_per_step)) and prev_iter > 0:
             arcann_logger.warning(f"Using previous mean_s_per_step for '{system_auto}'")
-            for timings_key in ["mean_s_per_step", "median_s_per_step", "stdeviation_s_per_step"]:
-                exploration_json["systems_auto"][system_auto][timings_key] = previous_exploration_json["systems_auto"][system_auto][timings_key]
+            for timings_key in [
+                "mean_s_per_step",
+                "median_s_per_step",
+                "stdeviation_s_per_step",
+            ]:
+                exploration_json["systems_auto"][system_auto][timings_key] = (
+                    previous_exploration_json["systems_auto"][system_auto][timings_key]
+                )
             del timings_key
         elif np.isnan(np.average(average_per_step)) and prev_iter == 0:
             if "job_walltime_h" in current_input_json:
-                arcann_logger.warning(f"Using job_walltime_h to calculate mean_s_per_step for '{system_auto}'.")
-                average_per_step = (current_input_json["job_walltime_h"][system_auto_index] * 3600) / exploration_json["systems_auto"][system_auto]["nb_steps"]
+                arcann_logger.warning(
+                    f"Using job_walltime_h to calculate mean_s_per_step for '{system_auto}'."
+                )
+                average_per_step = (
+                    current_input_json["job_walltime_h"][system_auto_index] * 3600
+                ) / exploration_json["systems_auto"][system_auto]["nb_steps"]
             else:
-                arcann_logger.error(f"Missing input job_walltime_h for '{system_auto}', set to the default to calculcate mean_s_per_step.")
-                average_per_step = 3600.0 / exploration_json["systems_auto"][system_auto]["nb_steps"]
+                arcann_logger.error(
+                    f"Missing input job_walltime_h for '{system_auto}', set to the default to calculcate mean_s_per_step."
+                )
+                average_per_step = (
+                    3600.0 / exploration_json["systems_auto"][system_auto]["nb_steps"]
+                )
 
-            exploration_json["systems_auto"][system_auto]["mean_s_per_step"] = average_per_step
+            exploration_json["systems_auto"][system_auto][
+                "mean_s_per_step"
+            ] = average_per_step
             for timings_key in ["median_s_per_step", "stdeviation_s_per_step"]:
                 exploration_json["systems_auto"][system_auto][timings_key] = 0
             del timings_key
         else:
-            exploration_json["systems_auto"][system_auto]["mean_s_per_step"] = np.average(average_per_step)
-            exploration_json["systems_auto"][system_auto]["median_s_per_step"] = np.median(average_per_step)
-            exploration_json["systems_auto"][system_auto]["stdeviation_s_per_step"] = np.std(average_per_step)
+            exploration_json["systems_auto"][system_auto]["mean_s_per_step"] = (
+                np.average(average_per_step)
+            )
+            exploration_json["systems_auto"][system_auto]["median_s_per_step"] = (
+                np.median(average_per_step)
+            )
+            exploration_json["systems_auto"][system_auto]["stdeviation_s_per_step"] = (
+                np.std(average_per_step)
+            )
 
         del timings, average_per_step, system_count
 
     del system_auto, it_nnp, it_number
     if failed_explorations_list:
-        string_list_to_textfile((current_path / "failed_explorations.txt"), failed_explorations_list, read_only=True)
-        arcann_logger.critical(f"Failed explorations are listed in 'failed_explorations.txt'.")
+        string_list_to_textfile(
+            (current_path / "failed_explorations.txt"),
+            failed_explorations_list,
+            read_only=True,
+        )
+        arcann_logger.critical(
+            f"Failed explorations are listed in 'failed_explorations.txt'."
+        )
 
     arcann_logger.info(f"-" * 88)
     # Update the booleans in the exploration JSON
-    if (completed_count + skipped_count + forced_count) == (exploration_json["nnp_count"] * sum([exploration_json["systems_auto"][_]["traj_count"] for _ in exploration_json["systems_auto"]])):
+    if (completed_count + skipped_count + forced_count) == (
+        exploration_json["nnp_count"]
+        * sum(
+            [
+                exploration_json["systems_auto"][_]["traj_count"]
+                for _ in exploration_json["systems_auto"]
+            ]
+        )
+    ):
         exploration_json["is_checked"] = True
 
     # Dump the JSON files (exploration JSON)
-    write_json_file(exploration_json, (control_path / f"exploration_{padded_curr_iter}.json"), read_only=True)
-    backup_and_overwrite_json_file(current_input_json, (current_path / "used_input.json"), read_only=True)
+    write_json_file(
+        exploration_json,
+        (control_path / f"exploration_{padded_curr_iter}.json"),
+        read_only=True,
+    )
+    backup_and_overwrite_json_file(
+        current_input_json, (current_path / "used_input.json"), read_only=True
+    )
 
     # End
     arcann_logger.info(f"-" * 88)
-    if (completed_count + skipped_count + forced_count) != (exploration_json["nnp_count"] * sum([exploration_json["systems_auto"][_]["traj_count"] for _ in exploration_json["systems_auto"]])):
-        arcann_logger.error(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!")
+    if (completed_count + skipped_count + forced_count) != (
+        exploration_json["nnp_count"]
+        * sum(
+            [
+                exploration_json["systems_auto"][_]["traj_count"]
+                for _ in exploration_json["systems_auto"]
+            ]
+        )
+    ):
+        arcann_logger.error(
+            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a failure!"
+        )
         arcann_logger.error(f"Please check manually before relaunching this step.")
-        arcann_logger.error(f"Or create files named 'skip' or 'force' to skip or force.")
+        arcann_logger.error(
+            f"Or create files named 'skip' or 'force' to skip or force."
+        )
         arcann_logger.error(f"Aborting...")
         return 1
 
@@ -316,7 +511,9 @@ def main(
     if (skipped_count + forced_count) != 0:
         arcann_logger.warning(f"'{skipped_count}' systems were skipped.")
         arcann_logger.warning(f"'{forced_count}' systems were forced.")
-    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
+    arcann_logger.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
+    )
     del skipped_count, forced_count
 
     # Cleaning

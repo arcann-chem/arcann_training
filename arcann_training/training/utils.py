@@ -159,7 +159,9 @@ def calculate_decay_steps(num_structures: int, min_decay_steps: int = 5000) -> i
 
 # Unittested
 @catch_errors_decorator
-def calculate_decay_rate(stop_batch: int, start_lr: float, stop_lr: float, decay_steps: int) -> float:
+def calculate_decay_rate(
+    stop_batch: int, start_lr: float, stop_lr: float, decay_steps: int
+) -> float:
     """
     Calculate the decay rate based on the given training parameters.
 
@@ -201,7 +203,9 @@ def calculate_decay_rate(stop_batch: int, start_lr: float, stop_lr: float, decay
 
 # Unittested
 @catch_errors_decorator
-def calculate_learning_rate(current_step: int, start_lr: float, decay_rate: float, decay_steps: int) -> float:
+def calculate_learning_rate(
+    current_step: int, start_lr: float, decay_rate: float, decay_steps: int
+) -> float:
     """
     Calculate the learning rate at a given training step, based on the given parameters.
 
@@ -227,7 +231,12 @@ def calculate_learning_rate(current_step: int, start_lr: float, decay_rate: floa
         If any of the arguments are not positive or if decay_steps is not an integer.
     """
     # Check that all arguments are positive
-    if not all(arg > 0 for arg in (current_step, start_lr, decay_rate, decay_steps)) or not all(isinstance(arg, (int, float)) for arg in (current_step, start_lr, decay_rate, decay_steps)):
+    if not all(
+        arg > 0 for arg in (current_step, start_lr, decay_rate, decay_steps)
+    ) or not all(
+        isinstance(arg, (int, float))
+        for arg in (current_step, start_lr, decay_rate, decay_steps)
+    ):
         error_msg = f"All arguments must be positive."
         raise ValueError(error_msg)
     if not isinstance(decay_steps, int):
@@ -282,7 +291,9 @@ def check_initial_datasets(training_dir: Path) -> Dict[str, int]:
 
         # Check if the dataset exists in the 'data' subfolder
         if not dataset_path.is_dir():
-            error_msg = f"Initial dataset '{dataset_name}' is missing from the data subfolder."
+            error_msg = (
+                f"Initial dataset '{dataset_name}' is missing from the data subfolder."
+            )
             raise FileNotFoundError(error_msg)
 
         # Check if the number of samples in the dataset matches the expected count
@@ -321,6 +332,9 @@ def validate_deepmd_config(training_config) -> None:
         If the configuration is not valid with respect to machine/arch_name/arch and DeePMD.
     """
     # Check DeePMD version
-    if float(training_config["deepmd_model_version"]) < 2.0 or float(training_config["deepmd_model_version"]) >= 3.0:
+    if (
+        float(training_config["deepmd_model_version"]) < 2.0
+        or float(training_config["deepmd_model_version"]) >= 3.0
+    ):
         error_msg = f"Only 2.x version of deepmd are suppported: '{training_config['deepmd_model_version']}'."
         raise ValueError(error_msg)

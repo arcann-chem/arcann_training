@@ -18,7 +18,10 @@ import subprocess
 # Local imports
 from arcann_training.common.check import validate_step_folder
 from arcann_training.common.json import load_json_file, write_json_file
-from arcann_training.common.machine import assert_same_machine, get_machine_spec_for_step
+from arcann_training.common.machine import (
+    assert_same_machine,
+    get_machine_spec_for_step,
+)
 
 
 def main(
@@ -36,7 +39,9 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
+    arcann_logger.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
+    )
     arcann_logger.debug(f"Current path :{current_path}")
     arcann_logger.debug(f"Training path: {training_path}")
     arcann_logger.debug(f"Program path: {deepmd_iterative_path}")
@@ -50,13 +55,17 @@ def main(
     curr_iter = int(padded_curr_iter)
 
     # Load the input JSON
-    current_input_json = load_json_file((current_path / "used_input.json"), abort_on_error=True)
+    current_input_json = load_json_file(
+        (current_path / "used_input.json"), abort_on_error=True
+    )
     arcann_logger.debug(f"current_input_json: {current_input_json}")
 
     # Get control path, load the main JSON and the exploration JSON
     control_path = training_path / "control"
     main_json = load_json_file((control_path / "config.json"))
-    exploration_json = load_json_file((control_path / f"exploration_{padded_curr_iter}.json"))
+    exploration_json = load_json_file(
+        (control_path / f"exploration_{padded_curr_iter}.json")
+    )
 
     user_machine_keyword = current_input_json["user_machine_keyword_exp"]
     arcann_logger.debug(f"user_machine_keyword: {user_machine_keyword}")
@@ -99,7 +108,9 @@ def main(
     # Check if we can continue
     if exploration_json["is_launched"]:
         arcann_logger.critical(f"Already launched...")
-        continuing = input(f"Do you want to continue?\n['Y' for yes, anything else to abort]\n")
+        continuing = input(
+            f"Do you want to continue?\n['Y' for yes, anything else to abort]\n"
+        )
         if continuing == "Y":
             del continuing
         else:
@@ -113,7 +124,9 @@ def main(
     # Launch the jobs
     exploration_types = []
     for system_auto in exploration_json["systems_auto"]:
-        exploration_types.append(exploration_json["systems_auto"][system_auto]["exploration_type"])
+        exploration_types.append(
+            exploration_json["systems_auto"][system_auto]["exploration_type"]
+        )
     exploration_types = list(set(exploration_types))
 
     completed_count = 0
@@ -130,18 +143,28 @@ def main(
         exploration_json["is_launched"] = True
 
     # Dump the JSON files (exploration JSON and merged input JSON)
-    write_json_file(exploration_json, (control_path / f"exploration_{padded_curr_iter}.json"))
+    write_json_file(
+        exploration_json, (control_path / f"exploration_{padded_curr_iter}.json")
+    )
 
     # End
     arcann_logger.info(f"-" * 88)
 
     if completed_count == len(exploration_types):
-        arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
+        arcann_logger.info(
+            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
+        )
     else:
-        arcann_logger.critical(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!")
+        arcann_logger.critical(
+            f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is semi-success!"
+        )
         arcann_logger.critical(f"Some jobs did not launch correctly.")
-        arcann_logger.critical(f"Please launch manually before continuing to the next step.")
-        arcann_logger.critical(f"Replace the key 'is_launched' to 'True' in the 'exploration_{padded_curr_iter}.json'.")
+        arcann_logger.critical(
+            f"Please launch manually before continuing to the next step."
+        )
+        arcann_logger.critical(
+            f"Replace the key 'is_launched' to 'True' in the 'exploration_{padded_curr_iter}.json'."
+        )
     del completed_count
 
     # Cleaning
@@ -149,7 +172,15 @@ def main(
     del user_input_json_filename
     del main_json, current_input_json
     del curr_iter, padded_curr_iter
-    del machine, machine_spec, machine_walltime_format, machine_launch_command, machine_job_scheduler, machine_max_jobs, machine_max_array_size
+    del (
+        machine,
+        machine_spec,
+        machine_walltime_format,
+        machine_launch_command,
+        machine_job_scheduler,
+        machine_max_jobs,
+        machine_max_array_size,
+    )
 
     arcann_logger.debug(f"LOCAL")
     arcann_logger.debug(f"{locals()}")

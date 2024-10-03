@@ -16,7 +16,11 @@ from pathlib import Path
 
 # Local imports
 from arcann_training.common.check import validate_step_folder
-from arcann_training.common.filesystem import remove_files_matching_glob, remove_tree, remove_all_symlink
+from arcann_training.common.filesystem import (
+    remove_files_matching_glob,
+    remove_tree,
+    remove_all_symlink,
+)
 from arcann_training.common.json import load_json_file
 
 
@@ -35,7 +39,9 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
+    arcann_logger.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
+    )
     arcann_logger.debug(f"Current path :{current_path}")
     arcann_logger.debug(f"Training path: {training_path}")
     arcann_logger.debug(f"Program path: {deepmd_iterative_path}")
@@ -62,9 +68,15 @@ def main(
     arcann_logger.critical(f"It should be run after testing check phase.")
     arcann_logger.critical(f"This is will delete:")
     arcann_logger.critical(f"The current folder {current_path} and all subdirectories.")
-    arcann_logger.critical(f"The results are stored in the {(control_path / f'testing_{padded_curr_iter}.json')} file.")
-    arcann_logger.critical(f"If you asked to have detailed results, the .npy files will not be deleted.")
-    continuing = input(f"Do you want to continue? [Enter 'Y' for yes, or any other key to abort]: ")
+    arcann_logger.critical(
+        f"The results are stored in the {(control_path / f'testing_{padded_curr_iter}.json')} file."
+    )
+    arcann_logger.critical(
+        f"If you asked to have detailed results, the .npy files will not be deleted."
+    )
+    continuing = input(
+        f"Do you want to continue? [Enter 'Y' for yes, or any other key to abort]: "
+    )
     if continuing == "Y":
         del continuing
     else:
@@ -96,15 +108,21 @@ def main(
         arcann_logger.info(f"Deleting empty directory: {current_path}")
         current_path.rmdir()
     if current_path.is_dir():
-        total_size = sum(f.stat().st_size for f in current_path.glob("**/*") if f.is_file())
+        total_size = sum(
+            f.stat().st_size for f in current_path.glob("**/*") if f.is_file()
+        )
         total_size_mb = total_size / 1048576  # Convert size from bytes to megabytes
-        arcann_logger.info(f"Size of {current_path}: {total_size_mb:.2f} megabytes")  # Update logging message
+        arcann_logger.info(
+            f"Size of {current_path}: {total_size_mb:.2f} megabytes"
+        )  # Update logging message
         del total_size, total_size_mb
 
     arcann_logger.info(f"Cleaning done!")
 
     # End
-    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
+    arcann_logger.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
+    )
 
     # Cleaning
     del current_path, control_path, training_path

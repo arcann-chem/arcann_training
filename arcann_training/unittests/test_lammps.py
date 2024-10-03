@@ -89,9 +89,13 @@ class TestReadLammpsData(unittest.TestCase):
         num_atoms, num_atom_types, box_bounds, masses, atoms = read_lammps_data(data)
         self.assertEqual(num_atoms, 3)
         self.assertEqual(num_atom_types, 3)
-        np.testing.assert_array_equal(box_bounds, np.array([0.0, 10.0, 0.0, 10.0, 0.0, 10.0, 0.0, 0.0, 0.0]))
+        np.testing.assert_array_equal(
+            box_bounds, np.array([0.0, 10.0, 0.0, 10.0, 0.0, 10.0, 0.0, 0.0, 0.0])
+        )
         self.assertDictEqual(masses, {1: 12.01, 2: 16.00, 3: 1.008})
-        np.testing.assert_array_equal(atoms, np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]))
+        np.testing.assert_array_equal(
+            atoms, np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
+        )
 
     def test_successful_read_complex(self):
         """
@@ -128,7 +132,9 @@ class TestReadLammpsData(unittest.TestCase):
             box_bounds,
             np.array([0.0, 19.915, 0.0, 19.915, 0.0, 19.915, None, None, None]),
         )
-        self.assertDictEqual(masses, {1: 30.973762, 2: 15.999, 3: 14.007, 4: 12.011, 5: 1.008})
+        self.assertDictEqual(
+            masses, {1: 30.973762, 2: 15.999, 3: 14.007, 4: 12.011, 5: 1.008}
+        )
         np.testing.assert_array_equal(
             atoms,
             np.array(

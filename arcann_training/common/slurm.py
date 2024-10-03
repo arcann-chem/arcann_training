@@ -75,13 +75,29 @@ def replace_in_slurm_file_general(
 
     slurm_file = deepcopy(slurm_file_master)
 
-    slurm_file = replace_substring_in_string_list(slurm_file, "_R_PROJECT_", machine_spec["project_name"])
+    slurm_file = replace_substring_in_string_list(
+        slurm_file, "_R_PROJECT_", machine_spec["project_name"]
+    )
 
-    slurm_file = replace_substring_in_string_list(slurm_file, "_R_ALLOC_", machine_spec["allocation_name"])
+    slurm_file = replace_substring_in_string_list(
+        slurm_file, "_R_ALLOC_", machine_spec["allocation_name"]
+    )
 
-    slurm_file = exclude_substring_from_string_list(slurm_file, "_R_PARTITION_") if machine_spec["partition"] is None else replace_substring_in_string_list(slurm_file, "_R_PARTITION_", machine_spec["partition"])
+    slurm_file = (
+        exclude_substring_from_string_list(slurm_file, "_R_PARTITION_")
+        if machine_spec["partition"] is None
+        else replace_substring_in_string_list(
+            slurm_file, "_R_PARTITION_", machine_spec["partition"]
+        )
+    )
 
-    slurm_file = exclude_substring_from_string_list(slurm_file, "_R_SUBPARTITION_") if machine_spec["subpartition"] is None else replace_substring_in_string_list(slurm_file, "_R_SUBPARTITION_", machine_spec["subpartition"])
+    slurm_file = (
+        exclude_substring_from_string_list(slurm_file, "_R_SUBPARTITION_")
+        if machine_spec["subpartition"] is None
+        else replace_substring_in_string_list(
+            slurm_file, "_R_SUBPARTITION_", machine_spec["subpartition"]
+        )
+    )
 
     max_qos_time = 0
 
@@ -96,9 +112,21 @@ def replace_in_slurm_file_general(
     del it_qos
 
     if not qos_ok:
-        logger.warning("Approximate wall time superior than the maximun time allowed by the QoS")
-        logger.warning(f"Settign the maximum QoS time as walltime: '{convert_seconds_to_hh_mm_ss(max_qos_time)}'")
-        slurm_file = replace_substring_in_string_list(slurm_file, "_R_WALLTIME_", convert_seconds_to_hh_mm_ss(max_qos_time)) if "hours" in machine_walltime_format else replace_substring_in_string_list(slurm_file, "_R_WALLTIME_", str(max_qos_time))
+        logger.warning(
+            "Approximate wall time superior than the maximun time allowed by the QoS"
+        )
+        logger.warning(
+            f"Settign the maximum QoS time as walltime: '{convert_seconds_to_hh_mm_ss(max_qos_time)}'"
+        )
+        slurm_file = (
+            replace_substring_in_string_list(
+                slurm_file, "_R_WALLTIME_", convert_seconds_to_hh_mm_ss(max_qos_time)
+            )
+            if "hours" in machine_walltime_format
+            else replace_substring_in_string_list(
+                slurm_file, "_R_WALLTIME_", str(max_qos_time)
+            )
+        )
     else:
         slurm_file = (
             replace_substring_in_string_list(
@@ -107,11 +135,15 @@ def replace_in_slurm_file_general(
                 convert_seconds_to_hh_mm_ss(walltime_approx_s),
             )
             if "hours" in machine_walltime_format
-            else replace_substring_in_string_list(slurm_file, "_R_WALLTIME_", str(walltime_approx_s))
+            else replace_substring_in_string_list(
+                slurm_file, "_R_WALLTIME_", str(walltime_approx_s)
+            )
         )
 
     if slurm_email != "":
-        slurm_file = replace_substring_in_string_list(slurm_file, "_R_EMAIL_", slurm_email)
+        slurm_file = replace_substring_in_string_list(
+            slurm_file, "_R_EMAIL_", slurm_email
+        )
     else:
         slurm_file = exclude_substring_from_string_list(slurm_file, "_R_EMAIL_")
         slurm_file = exclude_substring_from_string_list(slurm_file, "mail")

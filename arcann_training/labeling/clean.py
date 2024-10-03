@@ -17,7 +17,11 @@ import subprocess
 
 # Local imports
 from arcann_training.common.check import validate_step_folder
-from arcann_training.common.filesystem import remove_file, remove_files_matching_glob, remove_all_symlink
+from arcann_training.common.filesystem import (
+    remove_file,
+    remove_files_matching_glob,
+    remove_all_symlink,
+)
 from arcann_training.common.list import string_list_to_textfile
 from arcann_training.common.json import load_json_file
 
@@ -37,7 +41,9 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
+    arcann_logger.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
+    )
     arcann_logger.debug(f"Current path :{current_path}")
     arcann_logger.debug(f"Training path: {training_path}")
     arcann_logger.debug(f"Program path: {deepmd_iterative_path}")
@@ -53,7 +59,9 @@ def main(
     # Get control path and load the main config (JSON) and the training config (JSON)
     control_path = training_path / "control"
     main_config = load_json_file((control_path / "config.json"))
-    labeling_config = load_json_file((control_path / f"labeling_{padded_curr_iter}.json"))
+    labeling_config = load_json_file(
+        (control_path / f"labeling_{padded_curr_iter}.json")
+    )
 
     # Check if we can continue
     if not labeling_config["is_extracted"]:
@@ -63,12 +71,18 @@ def main(
     arcann_logger.warning(f"This is the cleaning step for labeling step.")
     arcann_logger.warning(f"It should be run after labeling extract phase.")
     arcann_logger.warning(f"This is will delete:")
-    arcann_logger.warning(f"symbolic links, 'job_*.sh', 'job-array_*.sh', 'labeling_*.xyz', 'labeling_*-SCF.wfn', '*labeling*.inp'")
+    arcann_logger.warning(
+        f"symbolic links, 'job_*.sh', 'job-array_*.sh', 'labeling_*.xyz', 'labeling_*-SCF.wfn', '*labeling*.inp'"
+    )
     arcann_logger.warning(f"CP2K.*")
     arcann_logger.warning(f"in the folder: '{current_path}' and all subdirectories.")
-    arcann_logger.warning(f"It will also create an tar.bz2 file with all important files (except the binary wavefunction files).")
+    arcann_logger.warning(
+        f"It will also create an tar.bz2 file with all important files (except the binary wavefunction files)."
+    )
 
-    continuing = input(f"Do you want to continue? [Enter 'Y' for yes, or any other key to abort]: ")
+    continuing = input(
+        f"Do you want to continue? [Enter 'Y' for yes, or any other key to abort]: "
+    )
     if continuing == "Y":
         del continuing
     else:
@@ -97,13 +111,30 @@ def main(
     archive_name = f"labeling_{padded_curr_iter}_noWFN.tar.bz2"
 
     all_files = Path(".").glob("**/*")
-    files = [str(file) for file in all_files if (file.is_file() and (not (file.name.endswith(".wfn") or file.name.endswith(".gbw") or ".tar" in file.name)))]
+    files = [
+        str(file)
+        for file in all_files
+        if (
+            file.is_file()
+            and (
+                not (
+                    file.name.endswith(".wfn")
+                    or file.name.endswith(".gbw")
+                    or ".tar" in file.name
+                )
+            )
+        )
+    ]
     if files:
         if (Path(".") / archive_name).is_file():
             arcann_logger.info(f"{archive_name} already present, adding .bak extension")
-            (Path(".") / f"{archive_name}.bak").write_bytes((Path(".") / archive_name).read_bytes())
+            (Path(".") / f"{archive_name}.bak").write_bytes(
+                (Path(".") / archive_name).read_bytes()
+            )
 
-        string_list_to_textfile(current_path / archive_name.replace(".tar.bz2", ".lst"), files)
+        string_list_to_textfile(
+            current_path / archive_name.replace(".tar.bz2", ".lst"), files
+        )
         cmd = [
             "tar",
             "-I",
@@ -120,23 +151,43 @@ def main(
     del archive_name, files, all_files
 
     arcann_logger.info(f"Done!")
-    arcann_logger.info(f"Please note that the wavefunction files are not included in the archive.")
+    arcann_logger.info(
+        f"Please note that the wavefunction files are not included in the archive."
+    )
     if labeling_config["labeling_program"] == "cp2k":
-        arcann_logger.info(f"To keep only the wavefunction files from the 2nd step (your reference) in a labeling_{padded_curr_iter}_WFN.tar, execute:")
-        arcann_logger.info(f"\"find ./ -name '2_*.wfn' | tar -cf labeling_{padded_curr_iter}_WFN.tar --files-from -\" (without the double quotes).")
-        arcann_logger.info(f"To keep all wavefunction files in a labeling_{padded_curr_iter}_WFN.tar, execute:")
-        arcann_logger.info(f"\"find ./ -name '*.wfn' | tar -cf labeling_{padded_curr_iter}_WFN.tar --files-from -\" (without the double quotes).")
+        arcann_logger.info(
+            f"To keep only the wavefunction files from the 2nd step (your reference) in a labeling_{padded_curr_iter}_WFN.tar, execute:"
+        )
+        arcann_logger.info(
+            f"\"find ./ -name '2_*.wfn' | tar -cf labeling_{padded_curr_iter}_WFN.tar --files-from -\" (without the double quotes)."
+        )
+        arcann_logger.info(
+            f"To keep all wavefunction files in a labeling_{padded_curr_iter}_WFN.tar, execute:"
+        )
+        arcann_logger.info(
+            f"\"find ./ -name '*.wfn' | tar -cf labeling_{padded_curr_iter}_WFN.tar --files-from -\" (without the double quotes)."
+        )
         arcann_logger.info(f"For cp2k labeling, wavefunction files are in .wfn format.")
-        arcann_logger.info(f"You can delete any subsys subfolders if labeling_{padded_curr_iter}_noWFN.tar.bz2 is okay, and you have saved or don't need the wavefunction files.")
+        arcann_logger.info(
+            f"You can delete any subsys subfolders if labeling_{padded_curr_iter}_noWFN.tar.bz2 is okay, and you have saved or don't need the wavefunction files."
+        )
 
     elif labeling_config["labeling_program"] == "orca":
-        arcann_logger.info(f"To keep only the wavefunction files from the 1st and only step (your reference) in a labeling_{padded_curr_iter}_WFN.tar, execute:")
-        arcann_logger.info(f"\"find ./ -name '1_*.gbw' | tar -cf labeling_{padded_curr_iter}_WFN.tar --files-from -\" (without the double quotes).")
+        arcann_logger.info(
+            f"To keep only the wavefunction files from the 1st and only step (your reference) in a labeling_{padded_curr_iter}_WFN.tar, execute:"
+        )
+        arcann_logger.info(
+            f"\"find ./ -name '1_*.gbw' | tar -cf labeling_{padded_curr_iter}_WFN.tar --files-from -\" (without the double quotes)."
+        )
         arcann_logger.info(f"For orca labeling, wavefunction files are in .gbw format.")
-        arcann_logger.info(f"You can delete any subsys subfolders if labeling_{padded_curr_iter}_noWFN.tar.bz2 is okay, and you have saved or don't need the wavefunction files.")
+        arcann_logger.info(
+            f"You can delete any subsys subfolders if labeling_{padded_curr_iter}_noWFN.tar.bz2 is okay, and you have saved or don't need the wavefunction files."
+        )
 
     # End
-    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
+    arcann_logger.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
+    )
 
     # Cleaning
     del current_path, control_path, training_path

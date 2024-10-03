@@ -148,7 +148,9 @@ class TestReplaceSubstringInStringList(unittest.TestCase):
             "classical chemistry",
             "chemical equilibrium",
         ]
-        output = replace_substring_in_string_list(self.input_list, self.substring_in, self.substring_out)
+        output = replace_substring_in_string_list(
+            self.input_list, self.substring_in, self.substring_out
+        )
         self.assertEqual(output, expected_output)
 
     def test_replace_substring_in_string_list_invalid_input(self):
@@ -157,7 +159,9 @@ class TestReplaceSubstringInStringList(unittest.TestCase):
         """
         input_list = "not a list"
         with self.assertRaises(TypeError):
-            replace_substring_in_string_list(input_list, self.substring_in, self.substring_out)
+            replace_substring_in_string_list(
+                input_list, self.substring_in, self.substring_out
+            )
 
     def test_replace_substring_in_string_list_empty_substring(self):
         """
@@ -165,7 +169,9 @@ class TestReplaceSubstringInStringList(unittest.TestCase):
         """
         substring_in = ""
         with self.assertRaises(ValueError):
-            replace_substring_in_string_list(self.input_list, substring_in, self.substring_out)
+            replace_substring_in_string_list(
+                self.input_list, substring_in, self.substring_out
+            )
 
         # substring_out = ""
         # with self.assertRaises(ValueError):
@@ -181,7 +187,9 @@ class TestReplaceSubstringInStringList(unittest.TestCase):
             f.write("\n".join(self.input_list))
 
         with open(self.tmp_file.name, "r") as f:
-            output = replace_substring_in_string_list(f.readlines(), self.substring_in, self.substring_out)
+            output = replace_substring_in_string_list(
+                f.readlines(), self.substring_in, self.substring_out
+            )
 
         expected_output = [
             "classical mechanics",
@@ -227,7 +235,9 @@ class TestStringListToTextfile(unittest.TestCase):
             lines = f.readlines()
         print(expected_output)
         expected_lines = [f"{s}\n" for s in expected_output]
-        self.assertEqual(lines, expected_lines, "The file does not contain the expected contents")
+        self.assertEqual(
+            lines, expected_lines, "The file does not contain the expected contents"
+        )
 
     def test_string_list_to_textfile_with_empty_list(self):
         """
@@ -247,7 +257,9 @@ class TestStringListToTextfile(unittest.TestCase):
         with input_file.open("r") as f:
             lines = f.readlines()
         expected_lines = [f"{s}\n" for s in expected_output]
-        self.assertEqual(lines, expected_lines, "The file does not contain the expected contents")
+        self.assertEqual(
+            lines, expected_lines, "The file does not contain the expected contents"
+        )
 
     def test_string_list_to_textfile_appends_to_file(self):
         """
@@ -262,7 +274,9 @@ class TestStringListToTextfile(unittest.TestCase):
         with input_file.open("r") as f:
             lines = f.readlines()
         expected_lines = [f"{s}\n" for s in new_content]
-        self.assertEqual(lines, expected_lines, "The file does not contain the expected contents")
+        self.assertEqual(
+            lines, expected_lines, "The file does not contain the expected contents"
+        )
 
 
 class TestTextfileToStringList(unittest.TestCase):

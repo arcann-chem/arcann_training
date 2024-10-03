@@ -16,7 +16,11 @@ from pathlib import Path
 
 # Local imports
 from arcann_training.common.check import validate_step_folder
-from arcann_training.common.filesystem import remove_files_matching_glob, remove_tree, remove_all_symlink
+from arcann_training.common.filesystem import (
+    remove_files_matching_glob,
+    remove_tree,
+    remove_all_symlink,
+)
 from arcann_training.common.json import load_json_file
 
 
@@ -35,7 +39,9 @@ def main(
     training_path = current_path.parent
 
     # Log the step and phase of the program
-    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}.")
+    arcann_logger.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()}."
+    )
     arcann_logger.debug(f"Current path :{current_path}")
     arcann_logger.debug(f"Training path: {training_path}")
     arcann_logger.debug(f"Program path: {deepmd_iterative_path}")
@@ -51,7 +57,9 @@ def main(
     # Get control path and load the main config (JSON) and the training config (JSON)
     control_path = training_path / "control"
     main_json = load_json_file((control_path / "config.json"))
-    training_config = load_json_file((control_path / f"training_{padded_curr_iter}.json"))
+    training_config = load_json_file(
+        (control_path / f"training_{padded_curr_iter}.json")
+    )
 
     # Check if we can continue
     if not training_config["is_incremented"]:
@@ -61,12 +69,20 @@ def main(
     arcann_logger.critical(f"This is the cleaning step for training step.")
     arcann_logger.critical(f"It should be run after training increment phase.")
     arcann_logger.critical(f"This is will delete:")
-    arcann_logger.critical(f"symbolic links, 'job_*.sh', 'training.out', 'graph*freeze.out', 'graph*compress.out', 'checkpoint.*', 'input_v2_compat.json', 'DeepMD_*'")
+    arcann_logger.critical(
+        f"symbolic links, 'job_*.sh', 'training.out', 'graph*freeze.out', 'graph*compress.out', 'checkpoint.*', 'input_v2_compat.json', 'DeepMD_*'"
+    )
     arcann_logger.critical(f"'model-compression' folders")
-    arcann_logger.critical(f"'*.pb' models files (they are saved in the '{current_path.parent / 'NNP'}' root folder)")
-    arcann_logger.critical(f"'data' folder (it is saved in the '{current_path.parent / 'data'}' root folder)")
+    arcann_logger.critical(
+        f"'*.pb' models files (they are saved in the '{current_path.parent / 'NNP'}' root folder)"
+    )
+    arcann_logger.critical(
+        f"'data' folder (it is saved in the '{current_path.parent / 'data'}' root folder)"
+    )
     arcann_logger.critical(f"in the folder: '{current_path}' and all subdirectories.")
-    continuing = input(f"Do you want to continue? [Enter 'Y' for yes, or any other key to abort]: ")
+    continuing = input(
+        f"Do you want to continue? [Enter 'Y' for yes, or any other key to abort]: "
+    )
     if continuing == "Y":
         del continuing
     else:
@@ -104,7 +120,9 @@ def main(
     arcann_logger.info(f"Cleaning done!")
 
     # End
-    arcann_logger.info(f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!")
+    arcann_logger.info(
+        f"Step: {current_step.capitalize()} - Phase: {current_phase.capitalize()} is a success!"
+    )
 
     # Cleaning
     del current_path, control_path, training_path
