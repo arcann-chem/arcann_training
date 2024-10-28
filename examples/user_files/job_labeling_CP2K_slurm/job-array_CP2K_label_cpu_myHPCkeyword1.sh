@@ -95,7 +95,7 @@ rmdir "${TEMPWORKDIR}" 2> /dev/null || echo "Leftover files on ${TEMPWORKDIR}"
 if [ "${SLURM_ARRAY_TASK_ID}" == "_R_ARRAY_END_" ]; then
     if [ "_R_LAUNCHNEXT_" == "1" ]; then
         cd "_R_CD_WHERE_" || { echo "Could not go to _R_CD_WHERE_. Aborting..."; exit 1;}
-        sbatch job_labeling_array_ARCHTYPE_myHPCkeyword1__R_NEXT_JOB_FILE_.sh
+        sbatch job-array_CP2K_label_ARCHTYPE_myHPCkeyword1__R_NEXT_JOB_FILE_.sh
     fi
 fi
 
