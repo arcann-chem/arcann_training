@@ -5,10 +5,12 @@
 ---
 
 [![GNU AGPL v3.0 License](https://img.shields.io/github/license/arcann-chem/arcann_training.svg)](https://github.com/arcann-chem/arcann_training/blob/main/LICENSE)
+[![DOI](https://img.shields.io/badge/DOI-10.1039%2FD4DD00209A-004976.svg)](https://doi.org/10.1039/D4DD00209A)
+[![DOI](https://img.shields.io/badge/DOI-10.48550%2FarXiv.2407.07751-b31b1b.svg)](https://doi.org/10.48550/arXiv.2407.07751)
+
 [![Unit Tests Requirements](https://github.com/arcann-chem/arcann/actions/workflows/unittests_requirements.yml/badge.svg)](https://github.com/arcann-chem/arcann/actions/workflows/unittests_requirements.yml)
 [![Unit Tests Matrix](https://github.com/arcann-chem/arcann/actions/workflows/unittests_matrix.yml/badge.svg?branch=main)](https://github.com/arcann-chem/arcann/actions/workflows/unittests_matrix.yml)
 [![Docs](https://github.com/arcann-chem/arcann/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/arcann-chem/arcann/actions/workflows/docs.yml)
-[![DOI](https://img.shields.io/badge/DOI-10.48550%2FarXiv.2407.07751-blue)](https://doi.org/10.48550/arXiv.2407.07751)
 
 ---
 
