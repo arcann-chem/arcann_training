@@ -156,7 +156,7 @@ def main(
     if min_nbor_dist is not None:
         training_json["min_nbor_dist"] = min_nbor_dist
         arcann_logger.info(f"Your minimum neighbor distance is: {min_nbor_dist:.3f}")
-        if min_nbor_dist < 0.7:
+        if min_nbor_dist < 0.1:
             arcann_logger.warning(
                 f"Your minimum neighbor distance is lower than 0.1 Angstrom."
             )
