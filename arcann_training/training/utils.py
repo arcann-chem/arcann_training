@@ -328,7 +328,7 @@ def validate_deepmd_config(training_config) -> None:
     Raises
     ------
     ValueError
-        If deepmd_model_version is not 2.0 or 2.1 or 3.0, or if deepmd_model_type_descriptor is not "se_e2_a".
+        If deepmd_model_version is not 2.x or 3.0, or if deepmd_model_type_descriptor is not "se_e2_a".
         If the configuration is not valid with respect to machine/arch_name/arch and DeePMD.
     """
     # Check DeePMD version
