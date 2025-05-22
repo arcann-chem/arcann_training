@@ -91,13 +91,14 @@ def main(
         if training_out:
             # Finished correctly
             if any("finished training" in s for s in training_out):
-                training_out_time = [s for s in training_out if "training time" in s]
 
                 if deepmd_version == 3.0:
+                    training_out_time = [s for s in training_out if "wall time" in s]
                     batch_pattern = r"batch\s*(\d+)\b"
                     time_pattern = r"wall time = (\d+\.\d+) s"
                 
                 else: 
+                    training_out_time = [s for s in training_out if "training time" in s]
                     batch_pattern = r"batch\s*(\d+)\s"
                     time_pattern = r"training time (\d+\.\d+) s"
 
