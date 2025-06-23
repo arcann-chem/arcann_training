@@ -78,6 +78,7 @@ def main(
     min_nbor_dist = None
     max_nbor_size = None
     training_input_json = None
+    deepmd_version = training_json["deepmd_model_version"]
 
     for nnp in range(1, main_json["nnp_count"] + 1):
         local_path = current_path / f"{nnp}"
@@ -90,10 +91,16 @@ def main(
         if training_out:
             # Finished correctly
             if any("finished training" in s for s in training_out):
-                training_out_time = [s for s in training_out if "training time" in s]
 
-                batch_pattern = r"batch\s*(\d+)\s"
-                time_pattern = r"training time (\d+\.\d+) s"
+                if deepmd_version == 3.0:
+                    training_out_time = [s for s in training_out if "wall time" in s]
+                    batch_pattern = r"batch\s*(\d+)\b"
+                    time_pattern = r"wall time = (\d+\.\d+) s"
+                
+                else: 
+                    training_out_time = [s for s in training_out if "training time" in s]
+                    batch_pattern = r"batch\s*(\d+)\s"
+                    time_pattern = r"training time (\d+\.\d+) s"
 
                 if min_nbor_dist is None or max_nbor_size is None:
                     for log_text in training_out:
@@ -156,7 +163,7 @@ def main(
     if min_nbor_dist is not None:
         training_json["min_nbor_dist"] = min_nbor_dist
         arcann_logger.info(f"Your minimum neighbor distance is: {min_nbor_dist:.3f}")
-        if min_nbor_dist < 0.7:
+        if min_nbor_dist < 0.1:
             arcann_logger.warning(
                 f"Your minimum neighbor distance is lower than 0.1 Angstrom."
             )

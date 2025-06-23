@@ -67,6 +67,9 @@ if [ ${DeepMD_MODEL_VERSION} == "2.2" ]; then
 elif [ ${DeepMD_MODEL_VERSION} == "2.1" ]; then
     # Load the DeepMD module
     module load DeepMD-kit/${DeepMD_MODEL_VERSION}
+elif [ ${DeepMD_MODEL_VERSION} == "3.0" ]; then
+    # Load the DeepMD module
+    module load DeepMD-kit/${DeepMD_MODEL_VERSION}
 else
     echo "DeepMD version ${DeepMD_MODEL_VERSION} is not available. Aborting..."
     exit 1
