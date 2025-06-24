@@ -77,11 +77,11 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install "${{ matrix.pip-version || 'pip' }}"
-        pip install "${{ matrix.setuptools-version || 'setuptools' }}"
-        pip install "${{ matrix.wheel-version || 'wheel' }}"
-        pip install "${{ matrix.numpy-version || 'numpy' }}"
-        pip install "${{ matrix.pyyaml-version || 'pyyaml' }}"
+        if [ -n "${{ matrix.pip-version }}" ]; then pip install "pip${{ matrix.pip-version }}"; else pip install --upgrade pip; fi
+        if [ -n "${{ matrix.setuptools-version }}" ]; then pip install "setuptools${{ matrix.setuptools-version }}"; else pip install --upgrade setuptools; fi
+        if [ -n "${{ matrix.wheel-version }}" ]; then pip install "wheel${{ matrix.wheel-version }}"; else pip install --upgrade wheel; fi
+        if [ -n "${{ matrix.numpy-version }}" ]; then pip install "numpy${{ matrix.numpy-version }}"; else pip install --upgrade numpy; fi
+        if [ -n "${{ matrix.pyyaml-version }}" ]; then pip install "pyyaml${{ matrix.pyyaml-version }}"; else pip install --upgrade pyyaml; fi
 
     - name: Run unit tests
       run: |
