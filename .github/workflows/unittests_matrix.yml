@@ -5,6 +5,7 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-22.04
+    name: ${{ matrix.python-version }} - Unit Tests
 
     strategy:
       matrix:
@@ -15,36 +16,57 @@ jobs:
               pip-version: '>=18.0,<19.0'
               wheel-version: '>=0.32,<0.33'
               pyyaml-version: '>=3.13,<3.14'
+
             - python-version: '3.8'
               numpy-version: '>=1.18,<1.19'
               setuptools-version: '>=41.5,<42.0'
               pip-version: '>=19.3,<20.0'
               wheel-version: '>=0.34,<0.35'
               pyyaml-version: '>=5.2,<5.3'
+
             - python-version: '3.9'
               numpy-version: '>=1.20,<1.21'
               setuptools-version: '>=51.0,<52.0'
               pip-version: '>=20.3,<21.0'
               wheel-version: '>=0.36,<0.37'
               pyyaml-version: '>=5.4,<5.5'
+
             - python-version: '3.10'
               numpy-version: '>=1.22,<1.23'
               setuptools-version: '>=58.5,<59.0'
               pip-version: '>=21.3,<22.0'
               wheel-version: '>=0.38,<0.39'
               pyyaml-version: '>=6.0,<6.1'
+
             - python-version: '3.11'
               numpy-version: '>=1.24,<1.25'
               setuptools-version: '>=65.6,<66.0'
               pip-version: '>=23.0,<24.0'
               wheel-version: '>=0.40,<0.41'
               pyyaml-version: '>=6.0,<6.1'
+
             - python-version: '3.12'
               numpy-version: '>=1.26,<1.27'
               setuptools-version: '>=69.0,<70.0'
               pip-version: '>=23.3,<24.0'
               wheel-version: '>=0.42,<0.43'
               pyyaml-version: '>=6.0,<6.1'
+
+            - python-version: '3.12'
+              numpy-version: ''
+              setuptools-version: ''
+              pip-version: ''
+              wheel-version: ''
+              pyyaml-version: ''
+
+            # Uncomment the following lines to test with Python 3.13 and newer versions of dependencies
+            # - python-version: '3.13'
+            #   numpy-version: '>=2.1,<2.2'
+            #   setuptools-version: '>=75.0,<76.0'
+            #   pip-version: '>=24.0,<25.0'
+            #   wheel-version: '>=0.45,<0.46'
+            #   pyyaml-version: '>=6.0,<6.1'
+
     steps:
     - uses: actions/checkout@v4
 
@@ -55,12 +77,12 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install "pip${{ matrix.pip-version }}"
-        pip install "setuptools${{ matrix.setuptools-version }}"
-        pip install "wheel${{ matrix.wheel-version }}"
-        pip install "numpy${{ matrix.numpy-version }}"
-        pip install "pyyaml${{ matrix.pyyaml-version }}"
-        
+        pip install "${{ matrix.pip-version || 'pip' }}"
+        pip install "${{ matrix.setuptools-version || 'setuptools' }}"
+        pip install "${{ matrix.wheel-version || 'wheel' }}"
+        pip install "${{ matrix.numpy-version || 'numpy' }}"
+        pip install "${{ matrix.pyyaml-version || 'pyyaml' }}"
+
     - name: Run unit tests
       run: |
         python -m unittest discover arcann_training/unittests
