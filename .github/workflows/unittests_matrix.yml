@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
@@ -39,12 +39,12 @@ jobs:
               pip-version: '>=23.0,<24.0'
               wheel-version: '>=0.40,<0.41'
               pyyaml-version: '>=6.0,<6.1'
-            # - python-version: '3.12'
-            #     numpy-version: '>=1.26,<1.27'
-            #     setuptools-version: '>=69.0,<70.0'
-            #     pip-version: '>=23.3,<24.0'
-            #     wheel-version: '>=0.42,<0.43'
-            #     pyyaml-version: '>=6.0,<6.1''
+            - python-version: '3.12'
+              numpy-version: '>=1.26,<1.27'
+              setuptools-version: '>=69.0,<70.0'
+              pip-version: '>=23.3,<24.0'
+              wheel-version: '>=0.42,<0.43'
+              pyyaml-version: '>=6.0,<6.1'
     steps:
     - uses: actions/checkout@v4
 
