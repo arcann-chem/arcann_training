@@ -143,10 +143,16 @@ def extract_and_convert_forces(
     version=None,
 ):
     if program == "cp2k":
-        del forces_in[0:4]
-        del forces_in[-1]
-        forces_in = [" ".join(_.replace("\n", "").split()) for _ in forces_in]
-        forces_in = [_.split(" ")[3:] for _ in forces_in]
+        if version >= 2025:
+            del forces_in[:3]
+            del forces_in[-2:]
+            forces_in = [" ".join(_.replace("\n", "").split()) for _ in forces_in]
+            forces_in = [_.split(" ")[2:-1] for _ in forces_in]
+        else: 
+            del forces_in[0:4]
+            del forces_in[-1]
+            forces_in = [" ".join(_.replace("\n", "").split()) for _ in forces_in]
+            forces_in = [_.split(" ")[3:] for _ in forces_in]
         forces_array = np.asarray(forces_in, dtype=np.float64).flatten()
         forces_out[system_candidates_not_skipped_counter - 1, :] = (
             forces_array * conversion_factor
