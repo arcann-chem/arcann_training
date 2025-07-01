@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="None" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>ArcanNN - Training</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Home";
+        var mkdocs_page_input_path = "index.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="." class="icon icon-home"> ArcanNN - Training
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Home</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#key-advantages">Key Advantages</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#iterative-training-process">Iterative Training Process</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#github-repository-structure">GitHub Repository Structure</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Getting started</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="getting-started/requirements/">ArcaNN Requirements</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="getting-started/installation/">ArcaNN Installation Guide</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="getting-started/hpc_configuration/">HPC Configuration</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Usage</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="usage/start/">Using ArcaNN</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="usage/iter_prerequisites/">Iterative procedure prerequisites</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="usage/initialization/">Initialization</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="usage/training/">Training</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="usage/exploration/">Exploration</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="usage/labeling/">Labeling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="usage/test/">Test</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Examples</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="examples/sn2/">SN2</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Contributions</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="contributions/unexpected_behavior/">Unexpected Behavior</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="contributions/contributions/">Contributions</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Project details</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="project_details/license/">License</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="project_details/authors/">Authors</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="project_details/funding/">Funding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="project_details/acknowledgments/">Acknowledgments</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href=".">ArcanNN - Training</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Home</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <div style="text-align: center;">
+<img src="./arcann_logo.svg" alt="ArcaNN logo" style="width: 25%; height: auto;" />
+</div>
+
+<hr />
+<p><a href="https://github.com/arcann-chem/arcann_training/blob/main/LICENSE"><img alt="GNU AGPL v3.0 License" src="https://img.shields.io/github/license/arcann-chem/arcann_training.svg" /></a>
+<a href="https://doi.org/10.1039/D4DD00209A"><img alt="DOI" src="https://img.shields.io/badge/DOI-10.1039%2FD4DD00209A-004976.svg" /></a>
+<a href="https://doi.org/10.48550/arXiv.2407.07751"><img alt="DOI" src="https://img.shields.io/badge/DOI-10.48550%2FarXiv.2407.07751-b31b1b.svg" /></a></p>
+<p><a href="https://github.com/arcann-chem/arcann/actions/workflows/unittests_requirements.yml"><img alt="Unit Tests Requirements" src="https://github.com/arcann-chem/arcann/actions/workflows/unittests_requirements.yml/badge.svg" /></a>
+<a href="https://github.com/arcann-chem/arcann/actions/workflows/unittests_matrix.yml"><img alt="Unit Tests Matrix" src="https://github.com/arcann-chem/arcann/actions/workflows/unittests_matrix.yml/badge.svg?branch=main" /></a>
+<a href="https://github.com/arcann-chem/arcann/actions/workflows/docs.yml"><img alt="Docs" src="https://github.com/arcann-chem/arcann/actions/workflows/docs.yml/badge.svg?branch=main" /></a></p>
+<hr />
+<h1 id="arcann">ArcaNN</h1>
+<p>ArcaNN proposes an automated enhanced sampling generation of training sets for chemically reactive machine learning interatomic potentials.
+In its current version, it aims to simplify and automate the iterative training process of a <a href="https://doi.org/10.1063/5.0155600">DeePMD-kit</a> neural network potential for a user-chosen system.
+The core concepts of this training procedure could be extended to other network architectures.</p>
+<h2 id="key-advantages">Key Advantages</h2>
+<ul>
+<li><strong>Modularity</strong>: The code is designed with modularity in mind, allowing users to finely tune the training process to fit their specific system and workflow.</li>
+<li><strong>Traceability</strong>: Every parameter set during the procedure is recorded, ensuring great traceability.</li>
+</ul>
+<h2 id="iterative-training-process">Iterative Training Process</h2>
+<p>During the iterative training process, you will:</p>
+<ol>
+<li>
+<p>Train neural network potentials.</p>
+</li>
+<li>
+<p>Use them as reactive force fields in molecular dynamics simulations to explore the phase space.</p>
+</li>
+<li>
+<p>Select and label configurations based on a query by committee approach.</p>
+</li>
+<li>
+<p>Train a new generation of neural network potentials again with the improved training set.</p>
+</li>
+</ol>
+<p>This workflow, often referred to as active or concurrent learning, is inspired by <a href="https://doi.org/10.1016/j.cpc.2020.107206">DP-GEN</a>.
+We adopt their naming scheme for the steps in the iterative procedure. Each iteration, or cycle, consists of the following steps:</p>
+<ul>
+<li><strong>Training</strong></li>
+<li><strong>Exploration</strong></li>
+<li><strong>Labeling</strong></li>
+<li>(Optional) <strong>Testing</strong></li>
+</ul>
+<p>Ensure you understand the meaning of each step before using the code.</p>
+<h2 id="github-repository-structure">GitHub Repository Structure</h2>
+<p>You will find in our <a href="https://github.com/arcann-chem/arcann_training/">GitHub repository</a> everything you need to set up the ArcaNN software, as well as example files that you can use as an example. The repository contains several folders:</p>
+<ul>
+<li>The <code>tools/</code> folder contains helper scripts and files.</li>
+<li>The <code>arcann_training/</code> folder contains the <code>ArcaNN Training</code> code. <strong>We strongly advise against modifying its contents</strong>. See <a href="getting-started/installation/">ArcaNN Installation Guide</a> for the installation. </li>
+<li>The <code>examples/</code> folder contains template files to set up the iterative training procedure for your system. Within this folder you can find : </li>
+<li>The <code>inputs/</code> folder with five JSON files, one per <code>step</code>.
+These files contain all the keywords used to control each step of an iteration (namely <strong>initialization</strong>, <strong>exploration</strong>, <strong>labeling</strong>, <strong>training</strong> and optionally <strong>test</strong>), including their type and the default values taken by the code if a keyword isn't provided by the user.
+If the default is a list containing a single value it means that this value will be repeated and used for every <strong>system</strong> (see the corresponding section fir each <code>step</code>).
+Note : For the <strong>exploration</strong> step some keywords have two default values, the first one will be used if the exploration is conducted with classical nuclei MD (<em>i.e.</em> LAMMPS) and the second one will be used with quantum nuclei MD (<em>i.e.</em> i-PI). </li>
+<li>The <code>user_files/</code> folder with:<ul>
+<li>A <code>machine.json</code> template file where all the information about your cluster should be provided (see <a href="./getting-started/hpc_conf.md">HPC Configuration</a>).</li>
+<li>A input folder for each <code>step</code>, where skeleton files are provided as templates for writing your own inputs for the respective external programs.
+For example, in the <code>exploration_lammps/</code>, <code>labeling_cp2k/</code> and <code>training_deepmd/</code>, you can find the necessecary files to perform the <strong>exploration</strong> with LAMMPS, the <strong>labeling</strong> with CP2K and the <strong>training</strong> with DeePMD-kit (see <a href="./usage/exploration">Exploration</a>, <a href="./usage/labeling">Labeling</a> and <a href="./usage/training">Training</a> for a detailed description of the <strong>tunneable</strong> keywords).</li>
+<li>A job folder for each step, where skeleton submission files are provided as template that <strong>ArcaNN</strong> use to launch the different phases in each <code>step</code> when they require a HPC machine.
+For example, in <code>job_exploration_lammps_slurm/</code>, <code>job_labeling_CP2K_slurm</code>, <code>job_training_deepmd_slurm</code> and the optional <code>step</code> <code>job_test_deepmd_slurm</code>, you can find basic <code>Slurm</code> submission files.</li>
+</ul>
+</li>
+</ul>
+<p>You <strong>must</strong> adapt these files to ensure they work on your machine (see <a href="usage/iter_prerequisites/">Usage</a>), but <strong>be careful not to modify the replaceable keywords</strong> (every word starting with <code>_R_</code> and ending with <code>_</code>) that Arcann will replace with user-defined or auto-generated values (e.g., the wall time for labeling calculations, the cluster partition to be used, etc.).</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="getting-started/requirements/" class="btn btn-neutral float-right" title="ArcaNN Requirements">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+      <span><a href="getting-started/requirements/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = ".";</script>
+    <script src="js/theme_extra.js"></script>
+    <script src="js/theme.js"></script>
+      <script src="search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.6.1
+Build Date UTC : 2025-07-01 07:37:39.225022+00:00
+-->
