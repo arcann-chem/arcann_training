@@ -25,7 +25,7 @@ In `user_files/` you will store all the files needed for each step. You can find
 
 
 - For the training step, from `training_deepmd` you will need: 
-    - A DeePMD-kit JSON file named `dptrain_VERSION.json`, where `VERSION` is the DeePMD-kit version that you will use (*e.g.*, `2.1`; currently supported versions are `2.0`, `2.1`, and `2.2`).
+    - A DeePMD-kit JSON file named `dptrain_VERSION.json`, where `VERSION` is the DeePMD-kit version that you will use (*e.g.*, `2.1`; currently supported versions are `2.0`, `2.1`, `2.2`, and `3.0`).
 
 
 - The SLURM scripts for individual jobs and for job arrays are organised by step in several fordels. Prepare your files according to your software choice for each step. You can fin them in: 
