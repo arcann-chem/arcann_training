@@ -62,6 +62,9 @@ def read_lammps_data(
     else:
         lines = data_file
 
+    # Basic validation of required sections
+    validate_lammps_sections(lines, data_file)
+
     # Input validation
     if not lines or not isinstance(lines, list):
         raise ValueError("Input 'lines' must be a non-empty list of strings.")
@@ -167,3 +170,163 @@ def read_lammps_data(
         masses,
         atoms,
     )
+
+
+@catch_errors_decorator
+def validate_lammps_sections(data_file: Union[Path, List[str]], source: Union[Path, str, None] = None) -> bool:
+    """
+    Check that a LAMMPS data file contains the minimum required sections.
+
+    Required:
+    - A line specifying the number of atoms (contains 'atoms')
+    - A line specifying the number of atom types (contains 'atom types')
+    - A 'Masses' section
+    - An 'Atoms' section header
+
+    Raises
+    ------
+    ValueError
+        With an explicit message indicating which section is missing.
+    """
+    # Read lines
+    if type(data_file) == type(Path(".")):
+        lines = textfile_to_string_list(data_file)
+    else:
+        lines = data_file
+
+    if not lines or not isinstance(lines, list):
+        raise ValueError("LAMMPS input is empty or invalid.")
+
+    lowered = [l.lower() for l in lines]
+
+    # atoms count line
+    has_atoms_count = any("atoms" in l for l in lowered)
+    if not has_atoms_count:
+        src = f": {source}" if isinstance(source, Path) else ""
+        raise ValueError(f"Missing 'N atoms' line in LAMMPS data file{src}.")
+
+    # atom types line
+    has_atom_types = any("atom types" in l for l in lowered)
+    if not has_atom_types:
+        src = f": {source}" if isinstance(source, Path) else ""
+        raise ValueError(f"Missing 'N atom types' line in LAMMPS data file{src}.")
+
+    # Masses section
+    has_masses = any("masses" in l for l in lowered)
+    if not has_masses:
+        src = f": {source}" if isinstance(source, Path) else ""
+        raise ValueError(f"Missing 'Masses' section in LAMMPS data file{src}.")
+
+    # Atoms section header (avoid Atomsk)
+    has_atoms_section = any(l.strip().lower().startswith("atoms") for l in lines if "atomsk" not in l.lower())
+    if not has_atoms_section:
+        src = f": {source}" if isinstance(source, Path) else ""
+        raise ValueError(f"Missing 'Atoms' section header in LAMMPS data file{src}.")
+
+    return True
+
+
+@catch_errors_decorator
+def get_lammps_atom_types(data_file: Union[Path, List[str]]) -> np.ndarray:
+    """
+    Extract per-atom type indices from a LAMMPS data file (zero-based).
+
+    Parameters
+    ----------
+    data_file : Path or List[str]
+        Path to the LAMMPS data file or a list of lines from it.
+
+    Returns
+    -------
+    np.ndarray
+        Integer array with the atom type for each atom (zero-based).
+
+    Raises
+    ------
+    ValueError
+        If the atom types cannot be parsed or the file is inconsistent.
+    """
+    # Read lines
+    if type(data_file) == type(Path(".")):
+        lines = textfile_to_string_list(data_file)
+    else:
+        lines = data_file
+
+    # Basic validation of required sections
+    validate_lammps_sections(lines, data_file)
+
+    # Determine the number of atoms by scanning for the first line containing 'atoms'
+    num_atoms = None
+    for l in lines:
+        if "atoms" in l.lower():
+            parts = l.split()
+            try:
+                num_atoms = int(parts[0])
+                break
+            except Exception:
+                continue
+    if num_atoms is None:
+        raise ValueError("The number of atoms was not found.")
+
+    # Find candidate Atoms section headers (avoid Atomsk), case-insensitive
+    indexes = [
+        idx
+        for idx, s in enumerate(lines)
+        if s.strip().lower().startswith("atoms") and "atomsk" not in s.lower()
+    ]
+    if not indexes:
+        raise ValueError("'Atoms' section not found in LAMMPS data file.")
+
+    # Try each candidate Atoms block until one yields the expected number of types
+    successful_types = None
+    for idx in indexes:
+        try:
+            # Collect atom lines by scanning forward, skipping blank/comment lines,
+            # until we have collected `num_atoms` entries.
+            types = []
+            scan_idx = idx + 1
+            while scan_idx < len(lines) and len(types) < int(num_atoms):
+                ln = lines[scan_idx].strip()
+                scan_idx += 1
+                if not ln:
+                    continue
+                if ln.startswith("#"):
+                    continue
+                fields = ln.split()
+                if len(fields) == 0:
+                    continue
+
+                # Try to parse 'id type ...' pattern
+                parsed = False
+                if len(fields) >= 2:
+                    try:
+                        _ = int(fields[0])
+                        atom_type = int(fields[1])
+                        types.append(atom_type - 1)
+                        parsed = True
+                    except Exception:
+                        parsed = False
+
+                if parsed:
+                    continue
+
+                # Try 'type x y z' (no id)
+                try:
+                    atom_type = int(fields[0])
+                    types.append(atom_type - 1)
+                    continue
+                except Exception:
+                    # Not parseable for this candidate; give up and try next
+                    raise ValueError
+
+            if len(types) == int(num_atoms):
+                successful_types = np.asarray(types, dtype=np.int64)
+                break
+        except Exception:
+            continue
+
+    if successful_types is None:
+        raise ValueError("Not enough atom lines found in Atoms section.")
+
+    return successful_types
+
