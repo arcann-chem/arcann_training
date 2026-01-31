@@ -217,7 +217,7 @@ def main(
                     lammps_data = [
                         " ".join(f.replace("\n", "").split()) for f in lammps_data
                     ]
-                    lammps_data = [g.split(" ")[1:2] for g in lammps_data]
+                    lammps_data = [g.split(" ")[1:2] for g in lammps_data if g.strip()]
                     type_atom_array = np.asarray(lammps_data, dtype=np.int64).flatten()
                     type_atom_array = type_atom_array - 1
                     np.savetxt(
@@ -615,7 +615,7 @@ def main(
                         lammps_data = [
                             " ".join(f.replace("\n", "").split()) for f in lammps_data
                         ]
-                        lammps_data = [g.split(" ")[1:2] for g in lammps_data]
+                        lammps_data = [g.split(" ")[1:2] for g in lammps_data if g.strip()]
                         type_atom_array = np.asarray(
                             lammps_data, dtype=np.int64
                         ).flatten()
