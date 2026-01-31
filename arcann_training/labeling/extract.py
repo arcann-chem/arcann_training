@@ -31,6 +31,7 @@ from arcann_training.common.parsing_labeling import (
     extract_and_convert_coordinates,
 )
 from arcann_training.common.check import validate_step_folder
+from arcann_training.common.lammps import get_lammps_atom_types
 
 # Import constants
 try:
@@ -182,44 +183,18 @@ def main(
                         "Input data file (lmp) not present.",
                     )
 
-                    lammps_data = textfile_to_string_list(
+                    # Validate LAMMPS data format and extract per-atom types
+                    type_atom_array = get_lammps_atom_types(
                         training_path / "user_files" / f"{system_auto}.lmp"
                     )
-                    indexes = [
-                        idx
-                        for idx, s in enumerate(lammps_data)
-                        if "Atoms" in s and "tomsk" not in s
-                    ]
-                    if len(indexes) > 1:
-                        for index in [
-                            idx
-                            for idx, s in enumerate(lammps_data)
-                            if "Atoms" in s and "tomsk" not in s
-                        ]:
-                            atom_list = [
-                                line.strip().split()
-                                for line in lammps_data[index + 2 : index + 4]
-                            ]
-                            if (
-                                len(atom_list[0]) == len(atom_list[1])
-                                and lammps_data[index + 1] == " \n"
-                                and atom_list[0][0] == "1"
-                                and atom_list[1][0] == "2"
-                            ):
-                                idx = index
-                                break
-                    else:
-                        idx = indexes[0]
-                    del lammps_data[0 : idx + 2]
-                    lammps_data = lammps_data[
-                        0 : main_json["systems_auto"][system_auto]["nb_atm"] + 1
-                    ]
-                    lammps_data = [
-                        " ".join(f.replace("\n", "").split()) for f in lammps_data
-                    ]
-                    lammps_data = [g.split(" ")[1:2] for g in lammps_data]
-                    type_atom_array = np.asarray(lammps_data, dtype=np.int64).flatten()
-                    type_atom_array = type_atom_array - 1
+                    expected_nb_atm = main_json["systems_auto"][system_auto]["nb_atm"]
+                    if len(type_atom_array) != expected_nb_atm:
+                        arcann_logger.error(
+                            f"LAMMPS file '{system_auto}.lmp' contains {len(type_atom_array)} atoms but expected {expected_nb_atm}."
+                        )
+                        raise ValueError(
+                            f"LAMMPS file '{system_auto}.lmp' atom count mismatch."
+                        )
                     np.savetxt(
                         f"{system_path}/type.raw",
                         type_atom_array,
@@ -580,46 +555,18 @@ def main(
                             "Input data file (lmp) not present.",
                         )
 
-                        lammps_data = textfile_to_string_list(
+                        # Validate LAMMPS data format and extract per-atom types
+                        type_atom_array = get_lammps_atom_types(
                             training_path / "user_files" / f"{system_auto}.lmp"
                         )
-                        indexes = [
-                            idx
-                            for idx, s in enumerate(lammps_data)
-                            if "Atoms" in s and "tomsk" not in s
-                        ]
-                        if len(indexes) > 1:
-                            for index in [
-                                idx
-                                for idx, s in enumerate(lammps_data)
-                                if "Atoms" in s and "tomsk" not in s
-                            ]:
-                                atom_list = [
-                                    line.strip().split()
-                                    for line in lammps_data[index + 2 : index + 4]
-                                ]
-                                if (
-                                    len(atom_list[0]) == len(atom_list[1])
-                                    and lammps_data[index + 1] == " \n"
-                                    and atom_list[0][0] == "1"
-                                    and atom_list[1][0] == "2"
-                                ):
-                                    idx = index
-                                    break
-                        else:
-                            idx = indexes[0]
-                        del lammps_data[0 : idx + 2]
-                        lammps_data = lammps_data[
-                            0 : main_json["systems_auto"][system_auto]["nb_atm"] + 1
-                        ]
-                        lammps_data = [
-                            " ".join(f.replace("\n", "").split()) for f in lammps_data
-                        ]
-                        lammps_data = [g.split(" ")[1:2] for g in lammps_data]
-                        type_atom_array = np.asarray(
-                            lammps_data, dtype=np.int64
-                        ).flatten()
-                        type_atom_array = type_atom_array - 1
+                        expected_nb_atm = main_json["systems_auto"][system_auto]["nb_atm"]
+                        if len(type_atom_array) != expected_nb_atm:
+                            arcann_logger.error(
+                                f"LAMMPS file '{system_auto}.lmp' contains {len(type_atom_array)} atoms but expected {expected_nb_atm}."
+                            )
+                            raise ValueError(
+                                f"LAMMPS file '{system_auto}.lmp' atom count mismatch."
+                            )
                         np.savetxt(
                             f"{system_path}/type.raw",
                             type_atom_array,

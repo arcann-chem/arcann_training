@@ -23,7 +23,11 @@ import unittest
 import numpy as np
 
 # Local imports
-from arcann_training.common.lammps import read_lammps_data
+from arcann_training.common.lammps import (
+    read_lammps_data,
+    get_lammps_atom_types,
+    validate_lammps_sections,
+)
 
 
 class TestReadLammpsData(unittest.TestCase):
@@ -151,6 +155,143 @@ class TestReadLammpsData(unittest.TestCase):
                 ]
             ),
         )
+
+    def test_atoms_header_variant(self):
+        """
+        Ensure that nonstandard Atoms header (e.g. 'Atoms # charge') is accepted
+        and atom types are correctly parsed.
+        """
+        data = [
+            "3 atoms",
+            "3 atom types",
+            "0.0 10.0 xlo xhi",
+            "0.0 10.0 ylo yhi",
+            "0.0 10.0 zlo zhi",
+            "0.0 0.0 0.0 xy xz yz",
+            "Masses",
+            "1 12.01",
+            "2 16.00",
+            "3 1.008",
+            "Atoms # charge",
+            "1 1 1.0 2.0 3.0",
+            "2 2 4.0 5.0 6.0",
+            "3 3 7.0 8.0 9.0",
+        ]
+        types = get_lammps_atom_types(data)
+        np.testing.assert_array_equal(types, np.array([0, 1, 2], dtype=np.int64))
+
+    def test_validate_sections_errors(self):
+        """Validate that missing sections raise clear error messages."""
+        missing_atoms_count = [
+            "invalid line",
+        ]
+        with self.assertRaisesRegex(ValueError, "Missing 'N atoms' line"):
+            validate_lammps_sections(missing_atoms_count)
+
+        missing_atom_types = [
+            "10 atoms",
+            "invalid",
+        ]
+        with self.assertRaisesRegex(ValueError, "Missing 'N atom types' line"):
+            validate_lammps_sections(missing_atom_types)
+
+        missing_masses = [
+            "3 atoms",
+            "3 atom types",
+            "0.0 10.0 xlo xhi",
+        ]
+        with self.assertRaisesRegex(ValueError, "Missing 'Masses' section"):
+            validate_lammps_sections(missing_masses)
+
+        missing_atoms_section = [
+            "3 atoms",
+            "3 atom types",
+            "0.0 10.0 xlo xhi",
+            "Masses",
+            "1 12.01",
+            "2 16.00",
+            "3 1.008",
+        ]
+        with self.assertRaisesRegex(ValueError, "Missing 'Atoms' section header"):
+            validate_lammps_sections(missing_atoms_section)
+
+    def test_atoms_no_id_format(self):
+        """
+        Atoms lines without an explicit id (format: 'type x y z') should be parsed.
+        """
+        data = [
+            "3 atoms",
+            "3 atom types",
+            "0.0 10.0 xlo xhi",
+            "0.0 10.0 ylo yhi",
+            "0.0 10.0 zlo zhi",
+            "0.0 0.0 0.0 xy xz yz",
+            "Masses",
+            "1 12.01",
+            "2 16.00",
+            "3 1.008",
+            "Atoms",
+            "1 1.0 2.0 3.0",
+            "2 4.0 5.0 6.0",
+            "3 7.0 8.0 9.0",
+        ]
+        types = get_lammps_atom_types(data)
+        np.testing.assert_array_equal(types, np.array([0, 1, 2], dtype=np.int64))
+
+    def test_atoms_with_comments_and_blank_lines(self):
+        """
+        Atom block with blank lines and comment lines between header and atom entries.
+        """
+        data = [
+            "3 atoms",
+            "3 atom types",
+            "0.0 10.0 xlo xhi",
+            "0.0 10.0 ylo yhi",
+            "0.0 10.0 zlo zhi",
+            "0.0 0.0 0.0 xy xz yz",
+            "Masses",
+            "1 12.01",
+            "2 16.00",
+            "3 1.008",
+            "Atoms # atomic",
+            "",
+            "# comment: following are atoms",
+            "1 1 1.0 2.0 3.0",
+            "2 2 4.0 5.0 6.0",
+            "3 3 7.0 8.0 9.0",
+        ]
+        types = get_lammps_atom_types(data)
+        np.testing.assert_array_equal(types, np.array([0, 1, 2], dtype=np.int64))
+
+    def test_atomsk_ignored_and_correct_atoms_used(self):
+        """
+        When an 'Atomsk' block appears, it should be ignored and the real 'Atoms' block used.
+        """
+        data = [
+            "# some header",
+            "Atomsk generated file",
+            "Atoms",
+            "# this is atomsk block and should be ignored",
+            "",
+            "1 2 3.0 4.0 5.0",
+            "",
+            "# real block below",
+            "Atoms",
+            "1 1 1.0 2.0 3.0",
+            "2 2 4.0 5.0 6.0",
+            "3 3 7.0 8.0 9.0",
+            "3 atoms",
+            "3 atom types",
+            "0.0 10.0 xlo xhi",
+            "0.0 10.0 ylo yhi",
+            "0.0 10.0 zlo zhi",
+            "Masses",
+            "1 12.01",
+            "2 16.00",
+            "3 1.008",
+        ]
+        types = get_lammps_atom_types(data)
+        np.testing.assert_array_equal(types, np.array([0, 1, 2], dtype=np.int64))
 
     def test_invalid_data_box(self):
         """

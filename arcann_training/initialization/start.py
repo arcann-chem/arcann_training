@@ -33,6 +33,7 @@ from arcann_training.initialization.utils import (
     check_typeraw_properties,
 )
 from arcann_training.common.utils import natural_sort_key
+from arcann_training.common.lammps import get_lammps_atom_types
 
 
 # Main function
@@ -140,6 +141,19 @@ def main(
         check_lmp_properties(
             user_files_path / f"{system_auto}.lmp", main_json["properties"]
         )
+
+    # Additional: validate LAMMPS file format (Atoms section parseable)
+    for system_auto in main_json["systems_auto"]:
+        try:
+            types = get_lammps_atom_types(user_files_path / f"{system_auto}.lmp")
+            if types.size == 0:
+                arcann_logger.error(f"LAMMPS file '{system_auto}.lmp' contains no atoms.")
+                return 1
+            arcann_logger.debug(f"LAMMPS '{system_auto}.lmp' parsed: {types.size} atoms.")
+        except Exception as e:
+            arcann_logger.error(f"Error parsing LAMMPS file '{system_auto}.lmp': {e}")
+            arcann_logger.error("Aborting...")
+            return 1
 
     # Check the dptrain against the properties
     check_dptrain_properties(user_files_path, main_json["properties"])
