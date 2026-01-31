@@ -96,6 +96,14 @@ def main(
     labeling_program = labeling_json["labeling_program"]
     arcann_logger.debug(f"labeling_program: {labeling_program}")
 
+    # Determine number of labeling steps (may be set in labeling_json)
+    labeling_nb_steps = labeling_json.get("labeling_nb_steps", None)
+    if labeling_nb_steps is None:
+        labeling_nb_steps = 1 if labeling_program == "orca" else 2
+    labeling_nb_steps = int(labeling_nb_steps)
+    final_step_number = labeling_nb_steps  # 1-based step number used in filenames
+    arcann_logger.debug(f"labeling_nb_steps: {labeling_nb_steps}")
+
     # Check if we can continue
     if not labeling_json["is_checked"]:
         arcann_logger.error(f"Lock found. Execute first: labeling launch.")
@@ -214,7 +222,7 @@ def main(
                     if labeling_program == "cp2k":
                         output_cp2k = textfile_to_string_list(
                             labeling_step_path
-                            / f"2_labeling_{padded_labeling_step}.out"
+                            / f"{final_step_number}_labeling_{padded_labeling_step}.out"
                         )
                         output_cp2k = [
                             _ for _ in output_cp2k if "CP2K| version string:" in _
@@ -227,7 +235,7 @@ def main(
                     elif labeling_program == "orca":
                         output_orca = textfile_to_string_list(
                             labeling_step_path
-                            / f"1_labeling_{padded_labeling_step}.out"
+                            / f"{final_step_number}_labeling_{padded_labeling_step}.out"
                         )
                         output_orca = [_ for _ in output_orca if "Program Version" in _]
                         program_version = float(output_orca[0].split(" ")[2][0])
@@ -243,12 +251,12 @@ def main(
                 )
                 del coordinate_xyz
 
-                if labeling_program == "cp2k":
+                    if labeling_program == "cp2k":
 
-                    # Energy
+                    # Energy (from final step)
                     energy_cp2k = textfile_to_string_list(
                         labeling_step_path
-                        / f"2_labeling_{padded_labeling_step}-Force_Eval.fe"
+                        / f"{final_step_number}_labeling_{padded_labeling_step}-Force_Eval.fe"
                     )
                     energy_array_raw = extract_and_convert_energy(
                         energy_cp2k,
@@ -281,7 +289,7 @@ def main(
                     # Forces
                     force_cp2k = textfile_to_string_list(
                         labeling_step_path
-                        / f"2_labeling_{padded_labeling_step}-Forces.for"
+                        / f"{final_step_number}_labeling_{padded_labeling_step}-Forces.for"
                     )
                     force_array_raw = extract_and_convert_forces(
                         force_cp2k,
@@ -296,11 +304,11 @@ def main(
                     # Virial
                     if (
                         labeling_step_path
-                        / f"2_labeling_{padded_labeling_step}-Stress_Tensor.st"
+                        / f"{final_step_number}_labeling_{padded_labeling_step}-Stress_Tensor.st"
                     ).is_file():
                         stress_cp2k = textfile_to_string_list(
                             labeling_step_path
-                            / f"2_labeling_{padded_labeling_step}-Stress_Tensor.st"
+                            / f"{final_step_number}_labeling_{padded_labeling_step}-Stress_Tensor.st"
                         )
                         virial_array_raw, is_virial = extract_and_convert_virial(
                             stress_cp2k,
@@ -316,15 +324,15 @@ def main(
                     # Wannier
                     if (
                         labeling_step_path
-                        / f"2_labeling_{padded_labeling_step}-Wannier.xyz"
+                        / f"{final_step_number}_labeling_{padded_labeling_step}-Wannier.xyz"
                     ).is_file():
                         output_cp2k = textfile_to_string_list(
                             labeling_step_path
-                            / f"2_labeling_{padded_labeling_step}.out"
+                            / f"{final_step_number}_labeling_{padded_labeling_step}.out"
                         )
                         wannier_xyz = textfile_to_string_list(
                             labeling_step_path
-                            / f"2_labeling_{padded_labeling_step}-Wannier.xyz"
+                            / f"{final_step_number}_labeling_{padded_labeling_step}-Wannier.xyz"
                         )
                         if system_candidates_not_skipped_counter == 1:
                             wannier_array_raw = np.zeros(
@@ -364,7 +372,7 @@ def main(
                 elif labeling_program == "orca":
                     # Energy
                     energy_orca = textfile_to_string_list(
-                        labeling_step_path / f"1_labeling_{padded_labeling_step}.engrad"
+                        labeling_step_path / f"{final_step_number}_labeling_{padded_labeling_step}.engrad"
                     )
                     energy_array_raw = extract_and_convert_energy(
                         energy_orca,
@@ -395,7 +403,7 @@ def main(
 
                     # Forces
                     force_orca = textfile_to_string_list(
-                        labeling_step_path / f"1_labeling_{padded_labeling_step}.engrad"
+                        labeling_step_path / f"{final_step_number}_labeling_{padded_labeling_step}.engrad"
                     )
                     force_array_raw = extract_and_convert_forces(
                         force_orca,
@@ -586,7 +594,7 @@ def main(
                         if labeling_program == "cp2k":
                             output_cp2k = textfile_to_string_list(
                                 labeling_step_path
-                                / f"2_labeling_{padded_labeling_step}.out"
+                                / f"{final_step_number}_labeling_{padded_labeling_step}.out"
                             )
                             output_cp2k = [
                                 _ for _ in output_cp2k if "CP2K| version string:" in _
@@ -622,7 +630,7 @@ def main(
                         # Energy
                         energy_cp2k = textfile_to_string_list(
                             labeling_step_path
-                            / f"2_labeling_{padded_labeling_step}-Force_Eval.fe"
+                            / f"{final_step_number}_labeling_{padded_labeling_step}-Force_Eval.fe"
                         )
                         energy_array_raw = extract_and_convert_energy(
                             energy_cp2k,
@@ -655,7 +663,7 @@ def main(
                         # Forces
                         force_cp2k = textfile_to_string_list(
                             labeling_step_path
-                            / f"2_labeling_{padded_labeling_step}-Forces.for"
+                            / f"{final_step_number}_labeling_{padded_labeling_step}-Forces.for"
                         )
                         force_array_raw = extract_and_convert_forces(
                             force_cp2k,
@@ -670,11 +678,11 @@ def main(
                         # Virial
                         if (
                             labeling_step_path
-                            / f"2_labeling_{padded_labeling_step}-Stress_Tensor.st"
+                            / f"{final_step_number}_labeling_{padded_labeling_step}-Stress_Tensor.st"
                         ).is_file():
                             stress_cp2k = textfile_to_string_list(
                                 labeling_step_path
-                                / f"2_labeling_{padded_labeling_step}-Stress_Tensor.st"
+                                / f"{final_step_number}_labeling_{padded_labeling_step}-Stress_Tensor.st"
                             )
                             virial_array_raw, is_virial = extract_and_convert_virial(
                                 stress_cp2k,
@@ -690,15 +698,15 @@ def main(
                         # Wannier
                         if (
                             labeling_step_path
-                            / f"2_labeling_{padded_labeling_step}-Wannier.xyz"
+                            / f"{final_step_number}_labeling_{padded_labeling_step}-Wannier.xyz"
                         ).is_file():
                             output_cp2k = textfile_to_string_list(
                                 labeling_step_path
-                                / f"2_labeling_{padded_labeling_step}.out"
+                                / f"{final_step_number}_labeling_{padded_labeling_step}.out"
                             )
                             wannier_xyz = textfile_to_string_list(
                                 labeling_step_path
-                                / f"2_labeling_{padded_labeling_step}-Wannier.xyz"
+                                / f"{final_step_number}_labeling_{padded_labeling_step}-Wannier.xyz"
                             )
                             if system_disturbed_candidates_not_skipped_counter == 1:
                                 wannier_array_raw = np.zeros(
@@ -739,7 +747,7 @@ def main(
                         # Energy
                         energy_orca = textfile_to_string_list(
                             labeling_step_path
-                            / f"2_labeling_{padded_labeling_step}.engrad"
+                            / f"{final_step_number}_labeling_{padded_labeling_step}.engrad"
                         )
                         energy_array_raw = extract_and_convert_energy(
                             energy_orca,
@@ -770,7 +778,7 @@ def main(
                         # Forces
                         force_orca = textfile_to_string_list(
                             labeling_step_path
-                            / f"2_labeling_{padded_labeling_step}.engrad"
+                            / f"{final_step_number}_labeling_{padded_labeling_step}.engrad"
                         )
                         force_array_raw = extract_and_convert_forces(
                             force_orca,

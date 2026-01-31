@@ -195,11 +195,20 @@ def main(
     labeling_program = current_input_json["labeling_program"]
     arcann_logger.debug(f"labeling_program: {labeling_program}")
 
+    # Determine number of labeling steps: prefer explicit user/default (`labeling_nb_steps`),
+    # otherwise infer from program (orca=1, cp2k=2).
+    labeling_nb_steps = current_input_json.get("labeling_nb_steps", None)
+    if labeling_nb_steps is None:
+        labeling_nb_steps = 1 if labeling_program == "orca" else 2
+    labeling_nb_steps = int(labeling_nb_steps)
+    arcann_logger.debug(f"labeling_nb_steps: {labeling_nb_steps}")
+
     # Generate the labeling JSON
     labeling_json = {}
     labeling_json = {
         **labeling_json,
         "labeling_program": labeling_program,
+        "labeling_nb_steps": labeling_nb_steps,
         "user_machine_keyword_label": user_machine_keyword,
     }
     labeling_program_up = labeling_program.upper()
@@ -234,11 +243,11 @@ def main(
 
     labeling_json["systems_auto"] = {}
 
-    job_array_params_file = {
-        f"{labeling_program}": [
-            f":SYSTEM:INDEX:{labeling_program_up}_INPUT_F1:{labeling_program_up}_INPUT_F2:{labeling_program_up}_WFRST_F:{labeling_program_up}_XYZ_F:NODES:MPI_PER_NODE:THREADS_PER_MPI:WALLTIME_S:"
-        ]
-    }
+    if labeling_nb_steps == 1:
+        header = f":SYSTEM:INDEX:{labeling_program_up}_INPUT_F1:{labeling_program_up}_XYZ_F:NODES:MPI_PER_NODE:THREADS_PER_MPI:WALLTIME_S:"
+    else:
+        header = f":SYSTEM:INDEX:{labeling_program_up}_INPUT_F1:{labeling_program_up}_INPUT_F2:{labeling_program_up}_WFRST_F:{labeling_program_up}_XYZ_F:NODES:MPI_PER_NODE:THREADS_PER_MPI:WALLTIME_S:"
+    job_array_params_file = {f"{labeling_program}": [header]}
 
     # Get the list of systems to label to get the next one
     total_to_label = 0
@@ -539,8 +548,8 @@ def main(
             f"{system_nb_nodes * system_nb_mpi_per_node}",
         )
 
-        # Labeling input second job
-        if labeling_program == "cp2k":
+        # Labeling input second job (only if multiple steps requested)
+        if labeling_nb_steps > 1:
             system_second_job_input = textfile_to_string_list(
                 training_path
                 / "user_files"
@@ -614,7 +623,7 @@ def main(
             )
             del first_job_input_t
 
-            if labeling_program == "cp2k":
+            if labeling_nb_steps > 1:
                 second_job_input_t = deepcopy(system_second_job_input)
                 second_job_input_t = replace_substring_in_string_list(
                     second_job_input_t, "_R_PADDEDSTEP_", padded_labeling_step
@@ -663,12 +672,18 @@ def main(
                 cell_info,
                 comments,
             )
-            job_array_params_line = f":{system_auto}:"
-            job_array_params_line += f"{padded_labeling_step}:"
-            job_array_params_line += f"1_labeling_{padded_labeling_step}:"
-            job_array_params_line += f"2_labeling_{padded_labeling_step}:"
-            job_array_params_line += f"labeling_{padded_labeling_step}-SCF.wfn:"
-            job_array_params_line += f"labeling_{padded_labeling_step}.xyz:"
+            if labeling_nb_steps == 1:
+                job_array_params_line = f":{system_auto}:"
+                job_array_params_line += f"{padded_labeling_step}:"
+                job_array_params_line += f"1_labeling_{padded_labeling_step}:"
+                job_array_params_line += f"labeling_{padded_labeling_step}.xyz:"
+            else:
+                job_array_params_line = f":{system_auto}:"
+                job_array_params_line += f"{padded_labeling_step}:"
+                job_array_params_line += f"1_labeling_{padded_labeling_step}:"
+                job_array_params_line += f"2_labeling_{padded_labeling_step}:"
+                job_array_params_line += f"labeling_{padded_labeling_step}-SCF.wfn:"
+                job_array_params_line += f"labeling_{padded_labeling_step}.xyz:"
             job_array_params_line += f"{system_nb_nodes}:"
             job_array_params_line += f"{system_nb_mpi_per_node}:"
             job_array_params_line += f"{system_nb_threads_per_mpi}:"
@@ -741,7 +756,7 @@ def main(
                     first_job_input_t,
                 )
                 del first_job_input_t
-                if labeling_program == "cp2k":
+                if labeling_nb_steps > 1:
                     second_job_input_t = deepcopy(system_second_job_input)
                     second_job_input_t = replace_substring_in_string_list(
                         second_job_input_t, "_R_PADDEDSTEP_", padded_labeling_step
@@ -792,12 +807,18 @@ def main(
                     comments,
                 )
 
-                job_array_params_line = f":{system_auto}:"
-                job_array_params_line += f"{padded_labeling_step}:"
-                job_array_params_line += f"1_labeling_{padded_labeling_step}:"
-                job_array_params_line += f"2_labeling_{padded_labeling_step}:"
-                job_array_params_line += f"labeling_{padded_labeling_step}-SCF.wfn:"
-                job_array_params_line += f"labeling_{padded_labeling_step}.xyz:"
+                if labeling_nb_steps == 1:
+                    job_array_params_line = f":{system_auto}:"
+                    job_array_params_line += f"{padded_labeling_step}:"
+                    job_array_params_line += f"1_labeling_{padded_labeling_step}:"
+                    job_array_params_line += f"labeling_{padded_labeling_step}.xyz:"
+                else:
+                    job_array_params_line = f":{system_auto}:"
+                    job_array_params_line += f"{padded_labeling_step}:"
+                    job_array_params_line += f"1_labeling_{padded_labeling_step}:"
+                    job_array_params_line += f"2_labeling_{padded_labeling_step}:"
+                    job_array_params_line += f"labeling_{padded_labeling_step}-SCF.wfn:"
+                    job_array_params_line += f"labeling_{padded_labeling_step}.xyz:"
                 job_array_params_line += f"{system_nb_nodes}:"
                 job_array_params_line += f"{system_nb_mpi_per_node}:"
                 job_array_params_line += f"{system_nb_threads_per_mpi}:"

@@ -54,6 +54,7 @@
         "user_machine_keyword_label": false,
         "job_email": "",
         "labeling_program": "cp2k",
+        "labeling_nb_steps": 2,
         "walltime_first_job_h": [0.5],
         "walltime_second_job_h": [1.0],
         "nb_nodes": [1],

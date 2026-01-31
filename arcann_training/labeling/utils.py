@@ -77,6 +77,7 @@ def generate_input_labeling_json(
 
     for key in [
         "labeling_program",
+        "labeling_nb_steps",
         "walltime_first_job_h",
         "walltime_second_job_h",
         "nb_nodes",
@@ -102,12 +103,10 @@ def generate_input_labeling_json(
             error_msg = f"'{key}' not found in any of the JSON dictionaries"
             raise KeyError(error_msg)
 
-        # This is not system dependent and should be a string and should not change from previous iteration (but issue just a warning if it does).
+        # This is not system dependent and should be a string/int and should not change from previous iteration (but issue just a warning if it does).
         if key == "labeling_program":
             if key in previous_input_json and value != previous_input_json[key]:
-                arcann_logger.critical(
-                    f"Labeling program changed from {previous_input_json[key]} to {value}!"
-                )
+                arcann_logger.critical(f"Labeling program changed from {previous_input_json[key]} to {value}!")
 
             if default_used:
                 merged_input_json[key] = value
@@ -120,6 +119,38 @@ def generate_input_labeling_json(
                         raise ValueError(error_msg)
                 else:
                     error_msg = f"Type mismatch: the type is '{type(value)}', but it should be '{type('string')}'."
+                    raise TypeError(error_msg)
+        elif key == "labeling_nb_steps":
+            # Number of labeling steps (1 or 2). Warn if changed from previous.
+            if key in previous_input_json and value != previous_input_json[key]:
+                arcann_logger.critical(f"Labeling steps changed from {previous_input_json[key]} to {value}!")
+
+            # Accept default, int or numeric-like strings; validate allowed values
+            if default_used:
+                merged_input_json[key] = int(value)
+            else:
+                # numeric types
+                if isinstance(value, (int, float)):
+                    iv = int(value)
+                    if iv in (1, 2):
+                        merged_input_json[key] = iv
+                    else:
+                        error_msg = f"Value error: 'labeling_nb_steps' must be 1 or 2, got {iv}"
+                        raise ValueError(error_msg)
+                # string that can be converted to int
+                elif isinstance(value, str):
+                    try:
+                        iv = int(value)
+                        if iv in (1, 2):
+                            merged_input_json[key] = iv
+                        else:
+                            error_msg = f"Value error: 'labeling_nb_steps' must be 1 or 2, got {iv}"
+                            raise ValueError(error_msg)
+                    except ValueError:
+                        error_msg = f"Type mismatch: 'labeling_nb_steps' must be an integer (1 or 2), got '{value}'"
+                        raise TypeError(error_msg)
+                else:
+                    error_msg = f"Type mismatch: 'labeling_nb_steps' must be an integer (1 or 2), got type '{type(value)}'"
                     raise TypeError(error_msg)
         else:
             # Everything else is system dependent so a list
