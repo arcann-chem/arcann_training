@@ -1,4 +1,6 @@
-# HPC Configuration 
+# HPC Configuration #
+
+> **Getting Started**: [Overview](./index.md) > [Requirements](./requirements.md) > [Installation](./installation.md) > **HPC Configuration**
 
 ArcaNN is designed for use on one or several HPC machines, whose specific configurations must be specified by the user through a `machine.json` file.
 A general example file can be found in the [GitHub Repository](https://github.com/arcann-chem/arcann_training/blob/main/examples/user_files/machine.json).
@@ -15,7 +17,6 @@ The `machine.json` file is organized as a JSON dictionary with one or more keys 
     // Additional machines can be added here
 }
 ```
-
 
 Each key in the JSON file is a short string designating the name of the machine (e.g., `"myHPCkeyword1"`, `"myHPCkeyword2"` are the names of 2 different HPC machines).
 The value associated with each key is a dictionary indicating the configuration entries for running jobs on the corresponding HPC machine.
@@ -53,7 +54,7 @@ Below is an example of the initial entries for an HPC machine using a SLURM job 
 
 ## HPC Entry ##
 
-Each HPC machine entry contains a JSON directonary where each key corresponds to a configuration entry. 
+Each HPC machine entry contains a JSON directonary where each key corresponds to a configuration entry.
 
 - **hostname**: A substring contained in the output of `python -c "import socket ; print(socket.gethostname())"`. This should match your machine's name.
 - **walltime_format**: The unit of time (e.g., hours) used to specify wall time on the cluster.
@@ -64,13 +65,13 @@ Each HPC machine entry contains a JSON directonary where each key corresponds to
 
 ## Resource Configuration ##
 
-Several resources can be available for calculation within the same HPC machine. 
+Several resources can be available for calculation within the same HPC machine.
 Each available resource in the HPC machine is represented by a key (e.g., `"mykeyword1"`) and includes:
 
-- **project_name**: Name of the project using the HPC resources. 
-It will correspond to the `_R_PROJECT_` keyword in the `#SBATCH --account=_R_PROJECT_` line of the slurm job. 
+- **project_name**: Name of the project using the HPC resources.
+It will correspond to the `_R_PROJECT_` keyword in the `#SBATCH --account=_R_PROJECT_` line of the slurm job.
 - **allocation_name**: Allocation or account name, typically used in large HPC facilities.
-It will correspond to the `_R_ALLOC_` keyword in the `#SBATCH --account=_R_PROJECT_@_R_ALLOC_` line of the slurm job. 
+It will correspond to the `_R_ALLOC_` keyword in the `#SBATCH --account=_R_PROJECT_@_R_ALLOC_` line of the slurm job.
 - **arch_name**: Architecture name (e.g., `a100` for GPU nodes).
 - **arch_type**: Architecture type (e.g., `gpu` or `cpu`).
 - **partition**: The partition on the HPC machine.
@@ -87,5 +88,10 @@ If your HPC setup does not include projects, allocations, partitions, or subpart
 
 To run ArcaNN on your HPC machine, you must provide example submission files tailored to your system.
 These files should be modeled after the `examples/user_files/job*/*.sh` files and **must include the replaceable strings** indicated by a `_R_` prefix and suffix.
-Place these files in the `$WORK_DIR/user_files/` folder, which you must create to use ArcaNN for a specific system (see [Usage](../usage/iter_prerequisites)).
+Place these files in the `$WORK_DIR/user_files/` folder, which you must create to use ArcaNN for a specific system (see [Usage](../usage/iter_prerequisites.md)).
 
+---
+
+**Previous**: [Installation Guide](./installation.md) | **Next**: [Getting Started with Usage](../usage/iter_prerequisites.md)
+
+[← Back to Overview](./index.md) | [View All Steps](../usage/start.md)

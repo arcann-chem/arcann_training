@@ -1,10 +1,14 @@
-# Using ArcaNN 
+# Using ArcaNN #
+
+> **Setup Complete**: [Requirements](../getting-started/requirements.md) → [Installation](../getting-started/installation.md) → [HPC Configuration](../getting-started/hpc_configuration.md) → **You Are Here**
+>
+> **Workflow Steps**: [Prerequisites](./iter_prerequisites.md) → [Initialization](./initialization.md) → [Training](./training.md) → [Exploration](./exploration.md) → [Labeling](./labeling.md) → [Repeat or Test](./test.md)
 
 ## Iterations, Steps and Phases of the Iterative Procedure ##
 
-At this stage, ArcaNN is installed in your machine, and you have made the necessary changes to adapt it (see [HPC Configuration](../../getting-started/hpc_conf)). As in the [GitHub Repository](https://github.com/arcann-chem/arcann_training/), you can now find in the location where you installed ArcaNN, an `arcann_traininig/` folder containing several files, as well as the `arcann_training/` scripts, a `tools/` directory and a `examples/` directory.
+At this stage, ArcaNN is installed in your machine, and you have made the necessary changes to adapt it (see [HPC Configuration](../getting-started/hpc_configuration.md)). As in the [GitHub Repository](https://github.com/arcann-chem/arcann_training/), you can now find in the location where you installed ArcaNN, an `arcann_training/` folder containing several files, as well as the `arcann_training/` scripts, a `tools/` directory and a `examples/` directory.
 
-To start the procedure, create an empty directory anywhere you like that will be your iterative training working directory. 
+To start the procedure, create an empty directory anywhere you like that will be your iterative training working directory.
 We will refer to this directory by the variable name `$WORK_DIR`.
 
 We will describe the **prerequisites**, and then the **initialization**, **training**, **exploration**, **labeling** steps and, the optional **test**.
@@ -16,7 +20,7 @@ Each iteration will have three folders: XXX-exploration, XXX-labeling, and XXX-t
 Each **step** is executed in its corresponding folder by running, in order, the relevant *phases* with the following command:
 
 ```bash
-python -m arcann_training STEP_NAME PHASE_NAME 
+python -m arcann_training STEP_NAME PHASE_NAME
 ```
 
 where `STEP_NAME` refers to the current **step** (`initialization`, `exploration`, `labeling`, `training`, or `test`) and `PHASE_NAME` is the specific task that needs to be performed within that **step**.
@@ -51,7 +55,7 @@ Since `initialization` has only a single `start` *phase*, which is self-explanat
 | --- | --- |
 | `prepare` | Prepares folders and files for training and the user-defined number of independent NNPs to be used in the next iteration. |
 | `launch` | Submits the training calculations using the `dp train` code from DeePMD-kit. |
-| `check` | Verifies whether the training has completed successfully. If any traoining ended abruptly, they need to be resubmitted manually to ensure the training finishes correctly. |
+| `check` | Verifies whether the training has completed successfully. If any training ended abruptly, they need to be resubmitted manually to ensure the training finishes correctly. |
 | `freeze` | Freezes the NN parameters into a binary file (`.pb` extension for TensorFlow back-end) usable with LAMMPS and Python. This is done with the `dp freeze` code from DeePMD-kit. |
 | `check_freeze` | Verifies that the calculations completed successfully. If any calculations finished abruptly, they must be resubmitted manually to ensure freezing completes correctly. |
 | `compress` | [Compresses](https://doi.org/10.1021/acs.jctc.2c00102) the NNP by modifying the `.pb` file to enhance performance with minimal loss of accuracy. Uses the `dp compress` code from DeePMD-kit (optional). |
