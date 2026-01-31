@@ -21,6 +21,17 @@ For this we need to go to the `XXX-labeling` folder and as usual run the `prepar
     "nb_mpi_per_node": [32, 32, 64],
     "nb_threads_per_mpi": [2, 2, 2],
 }
+
+Note: a new optional key `labeling_nb_steps` can be used to control whether the labeling
+workflow runs in one or two steps. Allowed values are `1` or `2`. If omitted, the code
+will infer a sensible default: ORCA → `1`, CP2K → `2`. To force a one-step CP2K run,
+set:
+
+```JSON
+{
+    "labeling_nb_steps": 1
+}
+```
 ```
 
 The `"use_machine_keyword_label"` keyword corresponds to the partition in the HPC machine, The `"nb_mpi_per_node"` and `"nb_nodes"` keywords set the number of CPU nodes used for the labeling. The wall times should be set for the first iteration but can be guessed automatically later using the average time per CP2K calculation measured in the previous iteration. 

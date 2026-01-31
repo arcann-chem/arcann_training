@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/06/11
+Last modified: 2026/01/31
 """
 
 # Standard library modules
@@ -71,6 +71,14 @@ def main(
     labeling_program = labeling_json["labeling_program"]
     arcann_logger.debug(f"labeling_program: {labeling_program}")
 
+    # Determine number of labeling steps (may be set in labeling_json)
+    labeling_nb_steps = labeling_json.get("labeling_nb_steps", None)
+    if labeling_nb_steps is None:
+        labeling_nb_steps = 1 if labeling_program == "orca" else 2
+    labeling_nb_steps = int(labeling_nb_steps)
+    last_step = labeling_nb_steps - 1
+    arcann_logger.debug(f"labeling_nb_steps: {labeling_nb_steps}")
+
     # Check if we can continue
     if not labeling_json["is_launched"]:
         arcann_logger.error(f"Lock found. Execute first: labeling launch.")
@@ -81,7 +89,7 @@ def main(
     # Counters
     candidates_expected_count = 0
     candidates_skipped_count = 0
-    candidates_step_count = {0: 0, 1: 0}
+    candidates_step_count = {i: 0 for i in range(labeling_nb_steps)}
 
     for system_auto_index, system_auto in enumerate(labeling_json["systems_auto"]):
         arcann_logger.info(
@@ -106,12 +114,12 @@ def main(
         system_candidates_skipped = []
         system_disturbed_candidates_skipped = []
 
-        # Because two steps and we care of the status of both
-        system_timings_sum = {0: 0, 1: 0}
-        system_timings = {0: [], 1: []}
-        system_candidates_converged_count = {0: 0, 1: 0}
-        system_candidates_not_converged = {0: [], 1: []}
-        system_candidates_failed = {0: [], 1: []}
+        # Step-aware containers for timings and statuses
+        system_timings_sum = {i: 0 for i in range(labeling_nb_steps)}
+        system_timings = {i: [] for i in range(labeling_nb_steps)}
+        system_candidates_converged_count = {i: 0 for i in range(labeling_nb_steps)}
+        system_candidates_not_converged = {i: [] for i in range(labeling_nb_steps)}
+        system_candidates_failed = {i: [] for i in range(labeling_nb_steps)}
 
         arcann_logger.debug(
             f"system_candidates_count + system_disturbed_candidates_count: {system_candidates_count + system_disturbed_candidates_count}"
@@ -144,7 +152,7 @@ def main(
                 if labeling_program == "cp2k":
                     system_output_cp2k_file = {}
                     system_output_cp2k = {}
-                    for step in [0, 1]:
+                    for step in range(labeling_nb_steps):
                         system_output_cp2k_file[step] = (
                             labeling_step_path
                             / f"{step+1}_labeling_{padded_labeling_step}.out"
@@ -244,7 +252,7 @@ def main(
                     if labeling_program == "cp2k":
                         system_output_cp2k_file = {}
                         system_output_cp2k = {}
-                        for step in [0, 1]:
+                        for step in range(labeling_nb_steps):
                             system_output_cp2k_file[step] = (
                                 labeling_step_path
                                 / f"{step+1}_labeling_{padded_labeling_step}.out"
@@ -327,12 +335,12 @@ def main(
                             )
 
         if (
-            candidates_step_count[1] == 0
+            candidates_step_count[last_step] == 0
             and candidates_skipped_count == 0
             and labeling_program == "cp2k"
         ):
             arcann_logger.critical(
-                "ALL jobs have failed/not converged/still running (second step)."
+                f"ALL jobs have failed/not converged/still running (step {last_step+1})."
             )
             arcann_logger.critical("Please check manually before relaunching this step")
             arcann_logger.critical(
@@ -357,7 +365,8 @@ def main(
 
         timings = {}
         # For the very special case where there are no converged subsystems (e.g., if you skipped all jobs)
-        for step, default_timing in enumerate([900.0, 3600.0]):
+        default_timings = [900.0] + [3600.0] * (labeling_nb_steps - 1)
+        for step, default_timing in enumerate(default_timings):
             if system_candidates_converged_count[step] != 0:
                 timings[step] = (
                     system_timings_sum[step] / system_candidates_converged_count[step]
@@ -368,8 +377,7 @@ def main(
         del system_timings_sum, system_candidates_converged_count, system_timings
 
         labeling_json["systems_auto"][system_auto]["timings_s"] = [
-            timings[0],
-            timings[1],
+            timings[i] for i in range(labeling_nb_steps)
         ]
         labeling_json["systems_auto"][system_auto][
             "candidates_skipped_count"
@@ -379,7 +387,7 @@ def main(
         ] = system_disturbed_candidates_skipped_count
         del timings
 
-        for step in [0, 1]:
+        for step in range(labeling_nb_steps):
             if labeling_program == "orca" and step == 1:
                 continue
             not_converged_file = (
@@ -461,19 +469,20 @@ def main(
         )
         arcann_logger.critical("Aborting")
         return 1
-    # Check second step, abort if not converged/failed and CP2K
-    if (
-        candidates_expected_count
-        != (candidates_step_count[1] + candidates_skipped_count)
-    ) and labeling_program == "cp2k":
-        arcann_logger.critical(
-            "Some jobs have failed/not converged/still running (second step). Check manually."
-        )
-        arcann_logger.critical(
-            "Or create files named 'skip' to skip some configurations."
-        )
-        arcann_logger.critical("Aborting")
-        return 1
+    # Check subsequent steps (for cp2k enforce success)
+    for step in range(1, labeling_nb_steps):
+        if (
+            candidates_expected_count
+            != (candidates_step_count[step] + candidates_skipped_count)
+        ) and labeling_program == "cp2k":
+            arcann_logger.critical(
+                f"Some jobs have failed/not converged/still running (step {step+1}). Check manually."
+            )
+            arcann_logger.critical(
+                "Or create files named 'skip' to skip some configurations."
+            )
+            arcann_logger.critical("Aborting")
+            return 1
 
     arcann_logger.info(f"-" * 88)
     # Update the booleans in the exploration JSON
@@ -482,14 +491,7 @@ def main(
     arcann_logger.debug(f"candidates_step_count: {candidates_step_count}")
     if (
         candidates_expected_count
-        == (candidates_step_count[1] + candidates_skipped_count)
-        and labeling_program == "cp2k"
-    ):
-        labeling_json["is_checked"] = True
-    elif (
-        candidates_expected_count
-        == (candidates_step_count[0] + candidates_skipped_count)
-        and labeling_program == "orca"
+        == (candidates_step_count[last_step] + candidates_skipped_count)
     ):
         labeling_json["is_checked"] = True
     del candidates_expected_count, candidates_skipped_count, candidates_step_count

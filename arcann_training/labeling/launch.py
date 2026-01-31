@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2026/01/31
 """
 
 # Standard library modules
@@ -68,6 +68,15 @@ def main(
 
     user_machine_keyword = current_input_json["user_machine_keyword_label"]
     arcann_logger.debug(f"user_machine_keyword: {user_machine_keyword}")
+
+    # Determine number of labeling steps (may be set in used_input.json or labeling json)
+    labeling_nb_steps = current_input_json.get(
+        "labeling_nb_steps", labeling_json.get("labeling_nb_steps", None)
+    )
+    if labeling_nb_steps is None:
+        labeling_nb_steps = 1 if labeling_json.get("labeling_program", "orca") == "orca" else 2
+    labeling_nb_steps = int(labeling_nb_steps)
+    arcann_logger.debug(f"labeling_nb_steps: {labeling_nb_steps}")
 
     # From the keyword (or default), get the machine spec (or for the fake one)
     (

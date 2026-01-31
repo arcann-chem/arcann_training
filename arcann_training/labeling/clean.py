@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2024/05/15
+Last modified: 2026/01/31
 """
 
 # Standard library modules
@@ -154,12 +154,18 @@ def main(
     arcann_logger.info(
         f"Please note that the wavefunction files are not included in the archive."
     )
+    # Determine number of labeling steps to show correct wavefunction instructions
+    labeling_nb_steps = labeling_config.get("labeling_nb_steps", None)
+    if labeling_nb_steps is None:
+        labeling_nb_steps = 1 if labeling_config.get("labeling_program", "orca") == "orca" else 2
+    labeling_nb_steps = int(labeling_nb_steps)
+
     if labeling_config["labeling_program"] == "cp2k":
         arcann_logger.info(
-            f"To keep only the wavefunction files from the 2nd step (your reference) in a labeling_{padded_curr_iter}_WFN.tar, execute:"
+            f"To keep only the wavefunction files from step {labeling_nb_steps} (your reference) in a labeling_{padded_curr_iter}_WFN.tar, execute:"
         )
         arcann_logger.info(
-            f"\"find ./ -name '2_*.wfn' | tar -cf labeling_{padded_curr_iter}_WFN.tar --files-from -\" (without the double quotes)."
+            f"\"find ./ -name '{labeling_nb_steps}_*.wfn' | tar -cf labeling_{padded_curr_iter}_WFN.tar --files-from -\" (without the double quotes)."
         )
         arcann_logger.info(
             f"To keep all wavefunction files in a labeling_{padded_curr_iter}_WFN.tar, execute:"
