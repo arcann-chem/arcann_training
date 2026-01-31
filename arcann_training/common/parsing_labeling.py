@@ -1,12 +1,12 @@
 """
 #----------------------------------------------------------------------------------------------------#
 #   ArcaNN: Automatic training of Reactive Chemical Architecture with Neural Networks                #
-#   Copyright 2022-2024 ArcaNN developers group <https://github.com/arcann-chem>                     #
+#   Copyright 2022-2026 ArcaNN developers group <https://github.com/arcann-chem>                     #
 #                                                                                                    #
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2024/03/01
-Last modified: 2024/08/29
+Last modified: 2026/01/31
 """
 
 # TODO: Homogenize the docstrings for this module
@@ -148,7 +148,7 @@ def extract_and_convert_forces(
             del forces_in[-2:]
             forces_in = [" ".join(_.replace("\n", "").split()) for _ in forces_in]
             forces_in = [_.split(" ")[2:-1] for _ in forces_in]
-        else: 
+        else:
             del forces_in[0:4]
             del forces_in[-1]
             forces_in = [" ".join(_.replace("\n", "").split()) for _ in forces_in]
