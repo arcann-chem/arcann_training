@@ -1,4 +1,6 @@
-# ArcaNN Installation Guide 
+# ArcaNN Installation Guide #
+
+> **Getting Started**: [Overview](./index.md) > [Requirements](./requirements.md) > **Installation** > [HPC Configuration](./hpc_configuration.md)
 
 ## Installation on Machines with Internet Access ##
 
@@ -91,9 +93,9 @@ rsync -rvu arcann_training USER@WORKMACHINE:/PATH/TO/INSTALLATION/FOLDER/.
 
 On your offline machine, create the required Python environment using the downloaded packages:
 
-``bash
+```bash
 conda create --name <ENVNAME> --file arcann_conda_linux-64_env_offline.txt
-``
+```
 
 - **Install ArcaNN:**
 
@@ -102,3 +104,9 @@ Finally, install ArcaNN as a Python module by following the installation steps p
 ```bash
 pip install .
 ```
+
+---
+
+**Previous**: [Requirements](./requirements.md) | **Next**: [HPC Configuration](./hpc_configuration.md)
+
+[← Back to Overview](./index.md) | [View All Steps](../usage/start.md)

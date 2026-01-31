@@ -1,4 +1,6 @@
-# Training 
+# Training #
+
+> **Workflow**: [Initialization](./initialization.md) > **Training** > [Exploration](./exploration.md) > [Labeling](./labeling.md) > (repeat or [Test](./test.md))
 
 During the training procedure you will use DeePMD-kit to train neural networks on the data sets that you have thus far generated (or on the initial ones only for the `000-training`). In order to do this go to the current iteration training folder `XXX-training`.
 There are 9 phases (see [Iterations, Steps and Phases of the Iterative Procedure](../start)) that you must now execute in order after having optionally modified the `input.json` file to define the relevant parameters (in case you want something different from the defaults, which are written to `default_input.json` in the `prepare` phase). The input keywords that you should check the most carefully are those related to the first phase `prepare`, as this sets all the important parameters for the training. Some phases will simply submit `Slurm` jobs (model training, freezing and compressing). You must wait for the jobs to finish before executing the next phase (generally this will be a check phase that will tell you that jobs have failed or are currently running). Once you have executed the first 8 phases, the training iteration is done! Executing the 9-th phases is optional, as this will only remove intermediary files.
@@ -39,7 +41,7 @@ This will create three folders `1/`, `2/` and `3/` and a copy of your `data/` fo
 }
 ```
 
-Here the `"user_machine_keyword"` should match the `"myHPCkeyword1"` keyword in the `machine.json` (see [HPC Configuration](../../getting-started/hpc_conf)). Note that the more performant GPUs should ideally be used for training, while the other steps could be alllocated to less performant GPUs or even to CPUs. Here we used a user chosen walltime of 4 h (instead of the default indicated by `-1`, which will calculate the job walltime automatically based on your previous trainings).
+Here the `"user_machine_keyword"` should match the `"myHPCkeyword1"` keyword in the `machine.json` (see [HPC Configuration](../getting-started/hpc_configuration.md)). Note that the more performant GPUs should ideally be used for training, while the other steps could be allocated to less performant GPUs or even to CPUs. Here we used a user chosen walltime of 4 h (instead of the default indicated by `-1`, which will calculate the job walltime automatically based on your previous trainings).
 The followiing keywords are the DeePMD training parameters, that you can eventually modify or keep the default values.
  We can then execute all the other phases in order (waiting for `Slurm` jobs to finish!). That's it! Now you just need to update the local folder:
 
@@ -48,6 +50,12 @@ rsync -rvu USER@HPC-MACHINE.fr:/PATH/TO/WORK_DIR $WORK_DIR
 ```
 
 and you are ready to move on to the exploration phase!
+
+---
+
+**Previous**: [Initialization](./initialization.md) | **Next**: [Exploration](./exploration.md)
+
+[← Back to Usage Overview](./start.md) | [View Full Workflow](./start.md)
 
 **Notes:**
 

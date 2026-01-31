@@ -1,4 +1,6 @@
-# ArcaNN Requirements 
+# ArcaNN Requirements #
+
+> **Getting Started**: [Overview](./index.md) > **Requirements** > [Installation](./installation.md) > [HPC Configuration](./hpc_configuration.md)
 
 ## Installation Requirements ##
 
@@ -26,3 +28,9 @@ Different steps in the workflow are supported by specific programs:
   - **i-PI**: Must be compatible with DeePMD-kit (Used in **exploration**)
   - **PLUMED**: Must be compatible with DeePMD-kit (Used in **exploration**)
 - **CP2K**: `>= 6.1` (Used in the **labeling** step)
+
+---
+
+**Next**: [Installation Guide](./installation.md)
+
+[← Back to Overview](./index.md) | [View All Steps](../usage/start.md)

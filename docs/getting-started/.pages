@@ -1,4 +1,5 @@
 nav:
+    - index.md
     - requirements.md
     - installation.md
     - hpc_configuration.md

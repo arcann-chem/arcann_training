@@ -1,13 +1,14 @@
-# Initialization 
+# Initialization #
 
+> **Workflow**: [Prerequisites](./iter_prerequisites.md) > **Initialization** > [Training](./training.md) > [Exploration](./exploration.md) > [Labeling](./labeling.md) > [Testing](./test.md)
 
 Now that you have decided the subsystems that you want to train your NNP on and prepared all the required files you can initialize the ArcaNN procedure by running (from the $WORK_DIR folder):
 
 ```bash
-python -m arcann_training initialization start 
+python -m arcann_training initialization start
 ```
 
-Now it should have generated your first `000-training` directory. In `$WORK_DIR` you will also find a `default_input.json` file that lools like this :
+Now it should have generated your first `000-training` directory. In `$WORK_DIR` you will also find a `default_input.json` file that looks like this :
 
 ```JSON
 {
@@ -23,3 +24,8 @@ The initialization will create several folders. The most important one is the `c
 
 If at this point you want to modify the datasets used for the first training you simply have to create an `input.json` from the `default_input.json` file and remove or add the system names to the list. You could also change the number of NNP if you wish. Then you only have have to execute the command of the initialization phase again and your `000-training` directory will be updated.
 
+---
+
+**Previous**: [Prerequisites](./iter_prerequisites.md) | **Next**: [Training](./training.md)
+
+[← Back to Usage Overview](./start.md) | [View Full Workflow](./start.md)
