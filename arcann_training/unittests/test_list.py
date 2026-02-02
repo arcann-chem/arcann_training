@@ -6,21 +6,18 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2026/01/31
+Last modified: 2026/02/02
 
-Test cases for the list module.
+Unit tests for the list module.
 
 Classes
 -------
 TestExcludeSubstringFromStringList():
     Test case for the 'exclude_substring_from_string_list' function.
-
 TestReplaceSubstringInStringList():
     Test case for the 'replace_substring_in_string_list' function.
-
 TestStringListToTextfile():
     Test case for the 'string_list_to_textfile' function.
-
 TestTextfileToStringList():
     Test case for the 'textfile_to_string_list' function.
 """
@@ -46,11 +43,9 @@ class TestExcludeSubstringFromStringList(unittest.TestCase):
     Methods
     -------
     test_exclude_substring_from_string_list():
-        Test the 'exclude_substring_from_string_list' function with valid input.
-    # test_exclude_substring_from_string_list_empty_list():
-    #     Test the 'exclude_substring_from_string_list' function with an empty input list.
+        Test validating 'exclude_substring_from_string_list' function with valid input.
     test_exclude_substring_from_string_list_invalid_input():
-        Test the 'exclude_substring_from_string_list' function with invalid input types.
+        Test validating 'exclude_substring_from_string_list' function with invalid input types.
     """
 
     def setUp(self):
@@ -68,7 +63,7 @@ class TestExcludeSubstringFromStringList(unittest.TestCase):
 
     def test_exclude_substring_from_string_list(self):
         """
-        Test the 'exclude_substring_from_string_list' function with valid input.
+        Test validating 'exclude_substring_from_string_list' function with valid input.
         """
         expected_output = [
             "chemical kinetics",
@@ -88,7 +83,7 @@ class TestExcludeSubstringFromStringList(unittest.TestCase):
 
     def test_exclude_substring_from_string_list_invalid_input(self):
         """
-        Test the 'exclude_substring_from_string_list' function with invalid input types.
+        Test validating 'exclude_substring_from_string_list' function with invalid input types.
         """
         self.input_list = "not a list"
         with self.assertRaises(TypeError):
@@ -113,13 +108,13 @@ class TestReplaceSubstringInStringList(unittest.TestCase):
     Methods
     -------
     test_replace_substring_in_string_list():
-        Test the function with a list of strings and check that it replaces the specified substring correctly.
+        Test validating function with a list of strings and check that it replaces the specified substring correctly.
     test_replace_substring_in_string_list_invalid_input():
-        Test the function with an invalid input and check that it raises a TypeError.
+        Test validating function with an invalid input and check that it raises a TypeError.
     test_replace_substring_in_string_list_empty_substring():
-        Test the function with an empty substring and check that it raises a ValueError.
+        Test validating function with an empty substring and check that it raises a ValueError.
     test_replace_substring_in_list_with_temp_file():
-        Test the function with a file object and check that it replaces the specified substring correctly.
+        Test validating function with a file object and check that it replaces the specified substring correctly.
     """
 
     def setUp(self):
@@ -139,7 +134,7 @@ class TestReplaceSubstringInStringList(unittest.TestCase):
 
     def test_replace_substring_in_string_list(self):
         """
-        Test the 'replace_substring_in_string_list' function with a list of strings.
+        Test validating 'replace_substring_in_string_list' function with a list of strings.
         """
         expected_output = [
             "classical mechanics",
@@ -155,7 +150,7 @@ class TestReplaceSubstringInStringList(unittest.TestCase):
 
     def test_replace_substring_in_string_list_invalid_input(self):
         """
-        Test the 'replace_substring_in_string_list' function with an invalid input.
+        Test validating 'replace_substring_in_string_list' function with an invalid input.
         """
         input_list = "not a list"
         with self.assertRaises(TypeError):
@@ -165,7 +160,7 @@ class TestReplaceSubstringInStringList(unittest.TestCase):
 
     def test_replace_substring_in_string_list_empty_substring(self):
         """
-        Test the 'replace_substring_in_string_list' function with an empty substring.
+        Test validating 'replace_substring_in_string_list' function with an empty substring.
         """
         substring_in = ""
         with self.assertRaises(ValueError):
@@ -181,7 +176,7 @@ class TestReplaceSubstringInStringList(unittest.TestCase):
 
     def test_replace_substring_in_list_with_temp_file(self):
         """
-        Test the 'replace_substring_in_string_list' function with a file object.
+        Test validating 'replace_substring_in_string_list' function with a file object.
         """
         with open(self.tmp_file.name, "w") as f:
             f.write("\n".join(self.input_list))
@@ -208,13 +203,13 @@ class TestStringListToTextfile(unittest.TestCase):
     Methods
     -------
     test_string_list_to_textfile_writes_to_file():
-        Test the function writing a list of strings to a text file.
+        Test validating function writing a list of strings to a text file.
     test_string_list_to_textfile_with_empty_list():
-        Test the function raising a 'ValueError' for an empty 'string_list'.
+        Test validating function raising a 'ValueError' for an empty 'string_list'.
     test_string_list_to_textfile_with_one_string():
-        Test the function writing a list with one string to a text file.
+        Test validating function writing a list with one string to a text file.
     test_string_list_to_textfile_appends_to_file():
-        Test the function appending a list of strings to an existing file.
+        Test validating function appending a list of strings to an existing file.
     """
 
     def setUp(self):
@@ -225,7 +220,7 @@ class TestStringListToTextfile(unittest.TestCase):
 
     def test_string_list_to_textfile_writes_to_file(self):
         """
-        Test the 'string_list_to_textfile' function writing a list of strings to a text file.
+        Test validating 'string_list_to_textfile' function writing a list of strings to a text file.
         """
         expected_output = ["foo", "bar", "baz"]
         print(expected_output)
@@ -241,7 +236,7 @@ class TestStringListToTextfile(unittest.TestCase):
 
     def test_string_list_to_textfile_with_empty_list(self):
         """
-        Test the 'string_list_to_textfile' function raising a ValueError for an empty 'string_list'.
+        Test validating 'string_list_to_textfile' function raising a ValueError for an empty 'string_list'.
         """
         input_file = self.temp_file
         with self.assertRaises(ValueError):
@@ -249,7 +244,7 @@ class TestStringListToTextfile(unittest.TestCase):
 
     def test_string_list_to_textfile_with_one_string(self):
         """
-        Test the 'string_list_to_textfile' function writing a list with one string to a text file.
+        Test validating 'string_list_to_textfile' function writing a list with one string to a text file.
         """
         expected_output = ["foo"]
         input_file = self.temp_file
@@ -263,7 +258,7 @@ class TestStringListToTextfile(unittest.TestCase):
 
     def test_string_list_to_textfile_appends_to_file(self):
         """
-        Test the 'string_list_to_textfile' function appending a list of strings to an existing file.
+        Test validating 'string_list_to_textfile' function appending a list of strings to an existing file.
         """
         existing_content = ["existing", "content"]
         input_file = self.temp_file
@@ -286,13 +281,13 @@ class TestTextfileToStringList(unittest.TestCase):
     Methods
     -------
     test_textfile_to_string_list_with_existing_file():
-        Test the function reading a file with multiple lines to a list of strings.
+        Test validating function reading a file with multiple lines to a list of strings.
     test_textfile_to_string_list_with_empty_file():
-        Test the function reading an empty file to an empty list.
+        Test validating function reading an empty file to an empty list.
     test_textfile_to_string_list_with_one_line_file():
-        Test the function reading a file with one line to a list containing that line.
+        Test validating function reading a file with one line to a list containing that line.
     test_textfile_to_string_list_with_nonexistent_file():
-        Test the function to raise a 'FileNotFoundError' for a nonexistent file.
+        Test validating function to raise a 'FileNotFoundError' for a nonexistent file.
     """
 
     def setUp(self):
@@ -306,7 +301,7 @@ class TestTextfileToStringList(unittest.TestCase):
 
     def test_textfile_to_string_list_with_existing_file(self):
         """
-        Test the 'textfile_to_string_list' function reading a file with multiple lines to a list of strings.
+        Test validating 'textfile_to_string_list' function reading a file with multiple lines to a list of strings.
         """
         strings = textfile_to_string_list(self.file_path)
         self.assertIsInstance(strings, list)
@@ -315,7 +310,7 @@ class TestTextfileToStringList(unittest.TestCase):
 
     def test_textfile_to_string_list_with_empty_file(self):
         """
-        Test the 'textfile_to_string_list' function reading an empty file to an empty list.
+        Test validating 'textfile_to_string_list' function reading an empty file to an empty list.
         """
         empty_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
         empty_file.close()
@@ -326,7 +321,7 @@ class TestTextfileToStringList(unittest.TestCase):
 
     def test_textfile_to_string_list_with_one_line_file(self):
         """
-        Test the 'textfile_to_string_list' function reading a file with one line to a list containing that line.
+        Test validating 'textfile_to_string_list' function reading a file with one line to a list containing that line.
         """
         one_line_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
         one_line_file.write("Line 1")
@@ -338,7 +333,7 @@ class TestTextfileToStringList(unittest.TestCase):
 
     def test_textfile_to_string_list_with_nonexistent_file(self):
         """
-        Test the 'textfile_to_string_list' function to raise a 'FileNotFoundError' for a nonexistent file.
+        Test validating 'textfile_to_string_list' function to raise a 'FileNotFoundError' for a nonexistent file.
         """
         with self.assertRaises(FileNotFoundError):
             textfile_to_string_list(Path("/path/to/nonexistent/file.txt"))

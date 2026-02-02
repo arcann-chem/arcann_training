@@ -6,14 +6,14 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2023/09/04
-Last modified: 2026/01/31
+Last modified: 2026/02/02
 
-Test cases for the slurm module.
+Unit tests for the slurm module.
 
 Classes
 -------
-TestReplaceInSlurmFileGeneral
-    Test cases for the 'replace_in_slurm_file_general' function.
+TestReplaceInSlurmFileGeneral():
+    Test case for the 'replace_in_slurm_file_general' function.
 """
 
 # Standard library modules
@@ -30,15 +30,15 @@ class TestReplaceInSlurmFileGeneral(unittest.TestCase):
     Methods
     -------
     test_replace_in_slurm_file_general_qosA():
-        Test replacing values for QoS function of walltime (small).
+        Test checking replacing values for QoS function of walltime (small).
     test_replace_in_slurm_file_general_qosB():
-        Test replacing values for QoS function of walltime (long).
-    test_replace_in_slurm_file_general_qosB_toolong():
-        Test replacing values for max QoS when walltime is too long.
+        Test checking replacing values for QoS function of walltime (long).
+    test_replace_in_slurm_file_general_toolong():
+        Test checking replacing values for max QoS when walltime is too long.
     test_replace_in_slurm_file_general_no_email():
-        Test replacing values when no email is provided.
+        Test checking replacing values when no email is provided.
     test_replace_in_slurm_file_general_no_partition_subpartition():
-        Test replacing values when partition and subpartition are not provided.
+        Test checking replacing values when partition and subpartition are not provided.
     """
 
     def setUp(self):
@@ -65,7 +65,7 @@ class TestReplaceInSlurmFileGeneral(unittest.TestCase):
 
     def test_replace_in_slurm_file_general_qosA(self):
         """
-        Test replacing values for QoS function of walltime (small).
+        Test checking replacing values for QoS function of walltime (small).
         """
         self.walltime_approx_s = 1800
         expected_result = [
@@ -90,7 +90,7 @@ class TestReplaceInSlurmFileGeneral(unittest.TestCase):
 
     def test_replace_in_slurm_file_general_qosB(self):
         """
-        Test replacing values for QoS function of walltime (long).
+        Test checking replacing values for QoS function of walltime (long).
         """
         self.walltime_approx_s = 5400
         expected_result = [
@@ -115,7 +115,7 @@ class TestReplaceInSlurmFileGeneral(unittest.TestCase):
 
     def test_replace_in_slurm_file_general_toolong(self):
         """
-        Test replacing values for max QoS when walltime is too long.
+        Test checking replacing values for max QoS when walltime is too long.
         """
         self.walltime_approx_s = 8000
         expected_result = [
@@ -140,7 +140,7 @@ class TestReplaceInSlurmFileGeneral(unittest.TestCase):
 
     def test_replace_in_slurm_file_general_no_email(self):
         """
-        Test replacing values when no email is provided.
+        Test checking replacing values when no email is provided.
         """
         self.walltime_approx_s = 3600
         self.slurm_email = ""
@@ -165,7 +165,7 @@ class TestReplaceInSlurmFileGeneral(unittest.TestCase):
 
     def test_replace_in_slurm_file_general_no_partition_subpartition(self):
         """
-        Test replacing values when partition and subpartition are not provided.
+        Test checking replacing values when partition and subpartition are not provided.
         """
         self.walltime_approx_s = 7200
         self.machine_spec["partition"] = None

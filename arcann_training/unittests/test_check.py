@@ -6,18 +6,16 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2026/01/31
+Last modified: 2026/02/02
 
-Test case for the check module.
+Unit tests for the check module.
 
 Classes
 -------
 TestCheckAtomsk():
     Test case for the 'check_atomsk' function.
-
 TestCheckVMD():
     Test case for the 'check_vmd' function.
-
 TestValidateStepFolder():
     Test case for the 'validate_step_folder' function.
 """
@@ -46,19 +44,15 @@ class TestCheckAtomsk(unittest.TestCase):
     Methods
     -------
     test_system_path():
-        Test that 'check_atomsk' finds atomsk in the system path and returns the full path.
-
+        Test confirming 'check_atomsk' finds atomsk in the system path and returns the full path.
     test_atomsk_path():
-        Test that 'check_atomsk' finds atomsk at a specified path and returns the full path.
-
+        Test confirming 'check_atomsk' finds atomsk at a specified path and returns the full path.
     test_invalid_path():
-        Test that 'check_atomsk' logs a warning for an invalid path.
-
+        Test confirming 'check_atomsk' logs a warning for an invalid path.
     test_invalid_env_var():
-        Test that 'check_atomsk' ignores an invalid ATOMSK_PATH environment variable.
-
+        Test confirming 'check_atomsk' ignores an invalid ATOMSK_PATH environment variable.
     test_env_var():
-        Test that 'check_atomsk' finds atomsk at an environment variable-specified path and returns the full path.
+        Test confirming 'check_atomsk' finds atomsk at an environment variable-specified path and returns the full path.
     """
 
     def setUp(self):
@@ -75,7 +69,7 @@ class TestCheckAtomsk(unittest.TestCase):
     @patch("shutil.which")
     def test_system_path(self, mock_which):
         """
-        Test that 'check_atomsk' finds atomsk in the system path and returns the full path.
+        Test confirming 'check_atomsk' finds atomsk in the system path and returns the full path.
         """
         mock_which.return_value = "/usr/bin/atomsk"
         atomsk_bin = check_atomsk()
@@ -83,7 +77,7 @@ class TestCheckAtomsk(unittest.TestCase):
 
     def test_atomsk_path(self):
         """
-        Test that 'check_atomsk finds atomsk at a specified path and returns the full path.
+        Test confirming 'check_atomsk finds atomsk at a specified path and returns the full path.
         """
         atomsk_path = Path(self.tempdir) / "atomsk"
         atomsk_bin = check_atomsk(str(atomsk_path))
@@ -91,7 +85,7 @@ class TestCheckAtomsk(unittest.TestCase):
 
     def test_invalid_path(self):
         """
-        Test that 'check_atomsk' logs a warning for an invalid path.
+        Test confirming 'check_atomsk' logs a warning for an invalid path.
         """
         invalid_path = "/invalid/path/to/atomsk"
         with self.assertLogs(level=logging.WARNING):
@@ -100,7 +94,7 @@ class TestCheckAtomsk(unittest.TestCase):
 
     def test_invalid_env_var(self):
         """
-        Test that 'check_atomsk' ignores an invalid ATOMSK_PATH environment variable.
+        Test confirming 'check_atomsk' ignores an invalid ATOMSK_PATH environment variable.
         """
         os.environ["ATOMSK_PATH"] = "/invalid/path/to/atomsk"
         atomsk_bin = check_atomsk()
@@ -108,7 +102,7 @@ class TestCheckAtomsk(unittest.TestCase):
 
     def test_env_var(self):
         """
-        Test that 'check_atomsk' finds vmd at an environment variable-specified path and returns the full path.
+        Test confirming 'check_atomsk' finds vmd at an environment variable-specified path and returns the full path.
         """
         atomsk_path = Path(self.tempdir) / "atomsk"
         os.environ["ATOMSK_PATH"] = str(atomsk_path)
@@ -123,19 +117,15 @@ class TestCheckVMD(unittest.TestCase):
     Methods
     -------
     test_system_path():
-        Test that 'check_vmd' finds vmd in the system path and returns the full path.
-
+        Test confirming 'check_vmd' finds vmd in the system path and returns the full path.
     test_vmd_path():
-        Test that 'check_vmd' finds vmd at a specified path and returns the full path.
-
+        Test confirming 'check_vmd' finds vmd at a specified path and returns the full path.
     test_invalid_path():
-        Test that 'check_vmd' logs a warning for an invalid path.
-
+        Test confirming 'check_vmd' logs a warning for an invalid path.
     test_invalid_env_var():
-        Test that 'check_vmd' ignores an invalid VMD_PATH environment variable.
-
+        Test confirming 'check_vmd' ignores an invalid VMD_PATH environment variable.
     test_env_var():
-        Test that 'check_vmd' finds vmd at an environment variable-specified path and returns the full path.
+        Test confirming 'check_vmd' finds vmd at an environment variable-specified path and returns the full path.
     """
 
     def setUp(self):
@@ -152,7 +142,7 @@ class TestCheckVMD(unittest.TestCase):
     @patch("shutil.which")
     def test_system_path(self, mock_which):
         """
-        Test that 'check_vmd' finds vmd in the system path and returns the full path.
+        Test confirming 'check_vmd' finds vmd in the system path and returns the full path.
         """
         mock_which.return_value = "/usr/bin/vmd"
         vmd_bin = check_vmd()
@@ -160,7 +150,7 @@ class TestCheckVMD(unittest.TestCase):
 
     def test_vmd_path(self):
         """
-        Test that 'check_vmd' finds vmd at a specified path and returns the full path.
+        Test confirming 'check_vmd' finds vmd at a specified path and returns the full path.
         """
         vmd_path = Path(self.tempdir) / "vmd"
         vmd_bin = check_vmd(str(vmd_path))
@@ -168,7 +158,7 @@ class TestCheckVMD(unittest.TestCase):
 
     def test_invalid_path(self):
         """
-        Test that 'check_vmd' logs a warning for an invalid path.
+        Test confirming 'check_vmd' logs a warning for an invalid path.
         """
         invalid_path = "/invalid/path/to/vmd"
         with self.assertLogs(level=logging.WARNING):
@@ -177,7 +167,7 @@ class TestCheckVMD(unittest.TestCase):
 
     def test_invalid_env_var(self):
         """
-        Test that 'check_vmd' ignores an invalid VMD_PATH environment variable.
+        Test confirming 'check_vmd' ignores an invalid VMD_PATH environment variable.
         """
         os.environ["VMD_PATH"] = "/invalid/path/to/vmd"
         vmd_bin = check_vmd()
@@ -185,7 +175,7 @@ class TestCheckVMD(unittest.TestCase):
 
     def test_env_var(self):
         """
-        Test that 'check_vmd' finds vmd at an environment variable-specified path and returns the full path.
+        Test confirming 'check_vmd' finds vmd at an environment variable-specified path and returns the full path.
         """
         vmd_path = Path(self.tempdir) / "vmd"
         os.environ["VMD_PATH"] = str(vmd_path)
@@ -200,9 +190,9 @@ class TestValidateStepFolder(unittest.TestCase):
     Methods
     -------
     test_validate_step_folder():
-        Test that 'validate_step_folder' returns None when the current directory name matches the expected directory for the step.
+        Test confirming 'validate_step_folder' returns None when the current directory name matches the expected directory for the step.
     test_validate_step_folder_raises_error():
-        Test that 'validate_step_folder' raises a ValueError when the current directory name does not contain the step name.
+        Test confirming 'validate_step_folder' raises a ValueError when the current directory name does not contain the step name.
     """
 
     def setUp(self):
@@ -216,7 +206,7 @@ class TestValidateStepFolder(unittest.TestCase):
 
     def test_validate_step_folder(self):
         """
-        Test that 'validate_step_folder' returns None when the current directory name matches the expected directory for the step.
+        Test confirming 'validate_step_folder' returns None when the current directory name matches the expected directory for the step.
         """
         os.chdir(self.step_folder)
         with self.step_folder:
@@ -224,7 +214,7 @@ class TestValidateStepFolder(unittest.TestCase):
 
     def test_validate_step_folder_raises_error(self):
         """
-        Test that 'validate_step_folder' raises a ValueError when the current directory name does not contain the step name.
+        Test confirming 'validate_step_folder' raises a ValueError when the current directory name does not contain the step name.
         """
         with tempfile.TemporaryDirectory() as temp_dir:
             os.chdir(temp_dir)

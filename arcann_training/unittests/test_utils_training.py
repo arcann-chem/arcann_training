@@ -6,16 +6,16 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2026/01/31
+Last modified: 2026/02/02
 
-Test cases for the (training) utils module.
+Unit tests for the training utils module.
 
-Class
------
+Classes
+-------
 TestCalculateDecaySteps():
     Test case for the 'calculate_decay_steps' function.
 TestCalculateDecayRate():
-    Test case for the 'calculate_decay_steps' function.
+    Test case for the 'calculate_decay_rate' function.
 TestCalculateLearningRate():
     Test case for the 'calculate_learning_rate' function.
 TestCheckInitialDatasets():
@@ -52,12 +52,12 @@ class TestCalculateDecaySteps(unittest.TestCase):
 
     Methods
     -------
-    test_calculate_decay_steps_valid_input():
-        Tests the function with valid inputs.
+    test_calculate_decay_steps_positive_input():
+        Test validating function with valid inputs.
     test_calculate_decay_steps_invalid_input():
-        Tests the function with invalid inputs.
+        Test validating function with invalid inputs.
     test_calculate_decay_steps_output_type():
-        Tests the type of output returned by the function, i.e., an integer.
+        Test validating type of output returned by the function, i.e., an integer.
     """
 
     def setUp(self):
@@ -67,13 +67,24 @@ class TestCalculateDecaySteps(unittest.TestCase):
         pass
 
     def test_calculate_decay_steps_positive_input(self):
-        self.assertEqual(calculate_decay_steps(20000), 5000)
-        self.assertEqual(calculate_decay_steps(50000), 12500)
-        self.assertEqual(calculate_decay_steps(60000), 15000)
-        self.assertEqual(calculate_decay_steps(100000), 25000)
-        self.assertEqual(calculate_decay_steps(150000), 30000)
+        """
+        Test validating function with valid inputs.
+        """
+        test_cases = [
+            (20000, 5000),
+            (50000, 12500),
+            (60000, 15000),
+            (100000, 25000),
+            (150000, 30000),
+        ]
+        for num_structures, expected in test_cases:
+            with self.subTest(num_structures=num_structures):
+                self.assertEqual(calculate_decay_steps(num_structures), expected)
 
     def test_calculate_decay_steps_invalid_input(self):
+        """
+        Test validating function with invalid inputs.
+        """
         with self.assertRaises(ValueError) as cm:
             calculate_decay_steps(0)
         error_msg = str(cm.exception)
@@ -99,21 +110,24 @@ class TestCalculateDecaySteps(unittest.TestCase):
         self.assertEqual(error_msg, expected_error_msg)
 
     def test_calculate_decay_steps_output_type(self):
+        """
+        Test validating type of output returned by the function.
+        """
         self.assertIsInstance(calculate_decay_steps(20000), int)
 
 
 class TestCalculateDecayRate(unittest.TestCase):
     """
-    Test case for the 'calculate_decay_steps' function.
+    Test case for the 'calculate_decay_rate' function.
 
     Methods
     -------
     test_calculate_decay_rate_valid_input():
-        Tests the function with valid inputs.
+        Test validating function with valid inputs.
     test_calculate_decay_rate_invalid_input():
-        Tests the function with invalid inputs.
+        Test validating function with invalid inputs.
     test_calculate_decay_rate_output_type():
-        Tests the type of output returned by the function, i.e., an float.
+        Test validating type of output returned by the function, i.e., an float.
     """
 
     def setUp(self):
@@ -123,19 +137,28 @@ class TestCalculateDecayRate(unittest.TestCase):
         pass
 
     def test_calculate_decay_rate_valid_input(self):
-        self.assertAlmostEqual(
-            calculate_decay_rate(50000, 0.01, 0.001, 5000), 0.7943282347242815, places=7
-        )
-        self.assertAlmostEqual(
-            calculate_decay_rate(200000, 0.05, 0.005, 10000),
-            0.8912509381337456,
-            places=7,
-        )
-        self.assertAlmostEqual(
-            calculate_decay_rate(500000, 0.1, 0.01, 25000), 0.8912509381337456, places=7
-        )
+        """
+        Test validating function with valid inputs.
+        """
+        test_cases = [
+            (50000, 0.01, 0.001, 5000, 0.7943282347242815),
+            (200000, 0.05, 0.005, 10000, 0.8912509381337456),
+            (500000, 0.1, 0.01, 25000, 0.8912509381337456),
+        ]
+        for num_structures, start_lr, stop_lr, decay_steps, expected in test_cases:
+            with self.subTest(num_structures=num_structures):
+                self.assertAlmostEqual(
+                    calculate_decay_rate(
+                        num_structures, start_lr, stop_lr, decay_steps
+                    ),
+                    expected,
+                    places=7,
+                )
 
     def test_calculate_decay_rate_invalid_input(self):
+        """
+        Test validating function with invalid inputs.
+        """
         with self.assertRaises(ValueError) as cm:
             calculate_decay_rate(100, -0.01, 0.001, 5000)
         error_msg = str(cm.exception)
@@ -158,6 +181,9 @@ class TestCalculateDecayRate(unittest.TestCase):
         self.assertEqual(error_msg, expected_error_msg)
 
     def test_calculate_decay_rate_output_type(self):
+        """
+        Test validating type of output returned by the function.
+        """
         self.assertIsInstance(calculate_decay_rate(100, 0.01, 0.001, 5000), float)
 
 
@@ -168,11 +194,11 @@ class TestCalculateLearningRate(unittest.TestCase):
     Methods
     -------
     test_calculate_learning_rate_valid_input():
-        Tests the function with valid inputs.
+        Test validating function with valid inputs.
     test_calculate_learning_rate_invalid_input():
-        Tests the function with invalid inputs.
+        Test validating function with invalid inputs.
     test_calculate_learning_rate_output_type():
-        Tests the type of output returned by the function, i.e., an float.
+        Test validating type of output returned by the function, i.e., an float.
     """
 
     def setUp(self):
@@ -182,23 +208,28 @@ class TestCalculateLearningRate(unittest.TestCase):
         pass
 
     def test_calculate_learning_rate_valid_input(self):
-        self.assertAlmostEqual(
-            calculate_learning_rate(10000, 0.01, 0.7875603898650455, 5000),
-            0.006202513676843825,
-            places=7,
-        )
-        self.assertAlmostEqual(
-            calculate_learning_rate(20000, 0.05, 0.8613440861579459, 10000),
-            0.03709568173796334,
-            places=7,
-        )
-        self.assertAlmostEqual(
-            calculate_learning_rate(500000, 0.1, 0.9082829387412657, 25000),
-            0.014602362613303355,
-            places=7,
-        )
+        """
+        Test validating function with valid inputs.
+        """
+        test_cases = [
+            (10000, 0.01, 0.7875603898650455, 5000, 0.006202513676843825),
+            (20000, 0.05, 0.8613440861579459, 10000, 0.03709568173796334),
+            (500000, 0.1, 0.9082829387412657, 25000, 0.014602362613303355),
+        ]
+        for numb_steps, start_lr, decay_rate, decay_steps, expected in test_cases:
+            with self.subTest(numb_steps=numb_steps):
+                self.assertAlmostEqual(
+                    calculate_learning_rate(
+                        numb_steps, start_lr, decay_rate, decay_steps
+                    ),
+                    expected,
+                    places=7,
+                )
 
     def test_calculate_learning_rate_invalid_input(self):
+        """
+        Test validating function with invalid inputs.
+        """
         with self.assertRaises(ValueError) as cm:
             calculate_learning_rate(-100, 0.01, 0.1, 5000)
         error_msg = str(cm.exception)
@@ -226,6 +257,9 @@ class TestCalculateLearningRate(unittest.TestCase):
         self.assertEqual(error_msg, expected_error_msg)
 
     def test_calculate_learning_rate_output_type(self):
+        """
+        Test validating type of output returned by the function.
+        """
         self.assertIsInstance(calculate_learning_rate(30000, 0.01, 0.1, 5000), float)
 
 
@@ -236,13 +270,13 @@ class TestCheckInitialDatasets(unittest.TestCase):
     Methods
     -------
     test_check_initial_datasets():
-        Tests if the function returns the correct dictionary of initial dataset names and number of samples.
+        Test checking the function returns the correct dictionary of initial dataset names and number of samples.
     test_check_initial_datasets_invalid_num_samples():
-        Tests if the function raises a ValueError when one of the initial datasets has an invalid number of samples.
+        Test checking the function raises a ValueError when one of the initial datasets has an invalid number of samples.
     test_check_initial_datasets_missing_json():
-        Tests if the function raises a FileNotFoundError when the initial_datasets.json file is missing.
+        Test checking the function raises a FileNotFoundError when the initial_datasets.json file is missing.
     test_check_initial_datasets_missing_dataset():
-        Tests if the function raises a FileNotFoundError when one of the initial datasets is missing.
+        Test checking the function raises a FileNotFoundError when one of the initial datasets is missing.
     """
 
     def setUp(self):
@@ -267,12 +301,18 @@ class TestCheckInitialDatasets(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_check_initial_datasets(self):
+        """
+        Test checking the function returns the correct dictionary of datasets.
+        """
         expected_result = {"dataset1": 100, "dataset2": 200}
         self.assertDictEqual(
             check_initial_datasets(Path(self.temp_dir.name)), expected_result
         )
 
     def test_check_initial_datasets_invalid_num_samples(self):
+        """
+        Test checking the function raises a ValueError for invalid sample counts.
+        """
         np.save(
             Path(self.temp_dir.name) / "data" / "dataset1" / "set.000" / "box.npy",
             np.zeros(50),
@@ -281,11 +321,17 @@ class TestCheckInitialDatasets(unittest.TestCase):
             check_initial_datasets(Path(self.temp_dir.name))
 
     def test_check_initial_datasets_missing_json(self):
+        """
+        Test checking the function raises a FileNotFoundError when JSON is missing.
+        """
         (Path(self.temp_dir.name) / "control" / "initial_datasets.json").unlink()
         with self.assertRaises(FileNotFoundError) as cm:
             check_initial_datasets(Path(self.temp_dir.name))
 
     def test_check_initial_datasets_missing_dataset(self):
+        """
+        Test checking the function raises a FileNotFoundError when data is missing.
+        """
         (
             Path(self.temp_dir.name) / "data" / "dataset2" / "set.000" / "box.npy"
         ).unlink()
@@ -302,14 +348,14 @@ class TestDeepMDConfigValidation(unittest.TestCase):
     Methods
     -------
     test_valid_config():
-        Tests if the function correctly validates a valid configuration.
+        Test checking the function correctly validates a valid configuration.
     test_invalid_model_version():
-        Tests if the function raises a ValueError for an invalid model version.
+        Test checking the function raises a ValueError for an invalid model version.
     """
 
     def test_valid_config(self):
         """
-        Tests if the function correctly validates a valid configuration.
+        Test checking the function correctly validates a valid configuration.
         """
         config = {
             "deepmd_model_version": 2.1,
@@ -319,7 +365,7 @@ class TestDeepMDConfigValidation(unittest.TestCase):
 
     def test_invalid_model_version(self):
         """
-        Tests if the function raises a ValueError for an invalid model version.
+        Test checking the function raises a ValueError for an invalid model version.
         """
         config = {
             "deepmd_model_version": 1.5,
@@ -335,13 +381,13 @@ class TestGenerateTrainingJson(unittest.TestCase):
     Methods
     -------
     test_valid_user_input():
-        Tests if the function correctly validates a valid configuration.
+        Test checking the function correctly validates a valid configuration.
     test_invalid_key():
-        Tests if the function raises a ValueError for an invalid key in user input.
+        Test checking the function raises a ValueError for an invalid key in user input.
     test_type_mismatch():
-        Tests if the function raises a TypeError for a type mismatch in user input.
+        Test checking the function raises a TypeError for a type mismatch in user input.
     test_use_previous_json():
-        Tests if the function correctly updates training JSON with previous JSON.
+        Test checking the function correctly updates training JSON with previous JSON.
     """
 
     def setUp(self):
@@ -366,7 +412,7 @@ class TestGenerateTrainingJson(unittest.TestCase):
 
     def test_valid_user_input(self):
         """
-        Tests if the function correctly validates a valid configuration.
+        Test checking the function correctly validates a valid configuration.
         """
         user_input = {
             "user_machine_keyword_train": "custom",
@@ -418,7 +464,7 @@ class TestGenerateTrainingJson(unittest.TestCase):
 
     def test_invalid_key(self):
         """
-        Tests if the function raises a ValueError for an invalid key in user input.
+        Test checking the function raises a ValueError for an invalid key in user input.
         """
         user_input = {"numb_steps": "dos"}
         previous_json = {}
@@ -428,7 +474,7 @@ class TestGenerateTrainingJson(unittest.TestCase):
 
     def test_type_mismatch(self):
         """
-        Tests if the function raises a TypeError for a type mismatch in user input.
+        Test checking the function raises a TypeError for a type mismatch in user input.
         """
         user_input = {"numb_steps": "invalid_type"}
         previous_json = {}
@@ -438,7 +484,7 @@ class TestGenerateTrainingJson(unittest.TestCase):
 
     def test_use_previous_json(self):
         """
-        Tests if the function correctly updates training JSON with previous JSON.
+        Test checking the function correctly updates training JSON with previous JSON.
         """
         user_input = {}
         previous_json = {

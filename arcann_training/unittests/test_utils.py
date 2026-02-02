@@ -6,15 +6,14 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2026/01/31
+Last modified: 2026/02/02
 
-Test case for the utils module.
+Unit tests for the utils module.
 
 Classes
 -------
 TestConvertSecondsToHhMmSs():
     Test case for the 'convert_seconds_to_hh_mm_ss' function.
-
 TestCatchErrorsDecorator():
     Test case for the 'catch_errors_decorator' function.
 """
@@ -37,11 +36,11 @@ class TestConvertSecondsToHhMmSs(unittest.TestCase):
     Methods
     -------
     test_convert_seconds_to_hh_mm_ss():
-        Test the conversion of time durations in seconds to the HH:MM:SS format.
+        Test validating conversion of time durations in seconds to the HH:MM:SS format.
     """
 
     def test_convert_seconds_to_hh_mm_ss(self):
-        """Test conversion of various time durations in seconds to the HH:MM:SS format."""
+        """Test converting various time durations in seconds to the HH:MM:SS format."""
         test_cases = [
             (0, "0:00:00"),
             (1, "0:00:01"),
@@ -62,15 +61,14 @@ class TestCatchErrorsDecorator(unittest.TestCase):
     Methods
     -------
     test_no_exception():
-        Test the decorator behavior when the decorated function runs without exceptions.
-
+        Test validating decorator behavior when the decorated function runs without exceptions.
     test_exception_raised():
-        Test the decorator behavior when the decorated function raises an exception.
+        Test validating decorator behavior when the decorated function raises an exception.
     """
 
     def test_no_exception(self):
         """
-        Test the decorator behavior when the decorated function runs without exceptions.
+        Test validating decorator behavior when the decorated function runs without exceptions.
         """
 
         @catch_errors_decorator
@@ -81,7 +79,7 @@ class TestCatchErrorsDecorator(unittest.TestCase):
         self.assertEqual(result, 42)
 
     def test_exception_raised(self):
-        """Test the decorator behavior when the decorated function raises an exception."""
+        """Test checking the decorator behavior when the decorated function raises an exception."""
 
         @catch_errors_decorator
         def func_with_exception():
@@ -92,29 +90,51 @@ class TestCatchErrorsDecorator(unittest.TestCase):
 
 
 class TestNaturalSortKey(unittest.TestCase):
+    """
+    Test case for the 'natural_sort_key' function.
+    """
+
     def test_with_numbers(self):
+        """
+        Test handling strings containing a single number.
+        """
         self.assertEqual(
             natural_sort_key("abc123def"), ["abc", "00000000000000000123", "def"]
         )
 
     def test_without_numbers(self):
+        """
+        Test handling strings without numbers.
+        """
         self.assertEqual(natural_sort_key("abcdef"), ["abcdef"])
 
     def test_empty_string(self):
+        """
+        Test handling empty string input.
+        """
         self.assertEqual(natural_sort_key(""), [])
 
     def test_mixed_case_string(self):
+        """
+        Test normalizing mixed-case strings during sorting.
+        """
         self.assertEqual(
             natural_sort_key("AbC123DeF"), ["abc", "00000000000000000123", "def"]
         )
 
     def test_string_with_multiple_numbers(self):
+        """
+        Test handling strings containing multiple numbers.
+        """
         self.assertEqual(
             natural_sort_key("abc12def34"),
             ["abc", "00000000000000000012", "def", "00000000000000000034"],
         )
 
     def test_non_string_input(self):
+        """
+        Test rejecting non-string input values.
+        """
         with self.assertRaises(TypeError):
             natural_sort_key(123)
 

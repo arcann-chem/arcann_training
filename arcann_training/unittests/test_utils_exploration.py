@@ -6,9 +6,9 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2026/01/31
+Last modified: 2026/02/02
 
-Test cases for the (training) utils module.
+Unit tests for the exploration utils module.
 
 Classes
 -------
@@ -44,7 +44,7 @@ class TestCreateModelsList(unittest.TestCase):
     Methods
     -------
     test_create_models_list():
-        Test the 'create_models_list' function with various inputs and validate the output.
+        Test validating 'create_models_list' function with various inputs and validate the output.
     """
 
     def setUp(self):
@@ -90,7 +90,7 @@ class TestCreateModelsList(unittest.TestCase):
 
     def test_create_models_list(self):
         """
-        Test the 'create_models_list' function with various inputs and validate the output.
+        Test validating 'create_models_list' function with various inputs and validate the output.
         """
         # Load the config JSON and prevtraining JSON files for the test
         with self.config_file.open(mode="r") as f:
@@ -126,12 +126,12 @@ class TestGetLastFrameNumber(unittest.TestCase):
     Methods
     -------
     test_get_last_frame_number():
-        Test the 'get_last_frame_number' function with various inputs and validate the output.
+        Test validating 'get_last_frame_number' function with various inputs and validate the output.
     """
 
     def test_get_last_frame_number(self):
         """
-        Test the 'get_last_frame_number' function with various inputs and validate the output.
+        Test validating 'get_last_frame_number' function with various inputs and validate the output.
         """
         # Test the function with various inputs
         model_deviation = np.array(
@@ -161,7 +161,7 @@ class TestUpdateSystemNbStepsFactor(unittest.TestCase):
     Methods
     -------
     test_update_nb_steps_factor():
-        Test the 'update_system_nb_steps_factor' function with various inputs and validate the output.
+        Test validating 'update_system_nb_steps_factor' function with various inputs and validate the output.
     """
 
     def setUp(self):
@@ -181,6 +181,9 @@ class TestUpdateSystemNbStepsFactor(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_update_nb_steps_factor(self):
+        """
+        Test updating the nb steps factor for different rejected/candidate ratios.
+        """
         # Load the JSON file for the test
         with self.temp_file.open(mode="r") as f:
             prevexploration_json = json.load(f)

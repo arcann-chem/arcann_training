@@ -6,30 +6,25 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2023/09/04
-Last modified: 2026/01/31
+Last modified: 2026/02/02
 
-Test cases for the machine module.
+Unit tests for the machine module.
 
 Classes
 -------
 TestGetHostName():
-    Test cases for the 'get_host_name' function.
-
+    Test case for the 'get_host_name' function.
 TestAssertSameMachine():
-    Test cases for the 'assert_same_machine' function.
-
+    Test case for the 'assert_same_machine' function.
 TestGetMachineKeyword():
-    Test cases for the 'get_machine_keyword' function.
-
+    Test case for the 'get_machine_keyword' function.
 TestGetMachineFromConfigs():
-    Test cases for the 'get_machine_from_configs' function.
+    Test case for the 'get_machine_from_configs' function.
 
 """
 
-import socket
-
 # Standard library modules
-
+import socket
 import unittest
 from unittest.mock import patch
 
@@ -44,22 +39,22 @@ from arcann_training.common.machine import (
 
 class TestGetHostName(unittest.TestCase):
     """
-    Test cases for the 'get_host_name' function.
+    Test case for the 'get_host_name' function.
 
     Methods
     -------
     test_fully_qualified_hostname():
-        Test fully-qualified hostname case.
+        Test checking fully-qualified hostname case.
     test_fully_qualified_hostname():
-        Test partial hostname case.
+        Test checking partial hostname case.
     test_fully_qualified_hostname():
-        Test timeout exception case.
+        Test checking timeout exception case.
     """
 
     @patch("socket.gethostname")
     def test_fully_qualified_hostname(self, mock_gethostname):
         """
-        Test fully-qualified hostname case.
+        Test checking fully-qualified hostname case.
         """
         mock_gethostname.return_value = "fully.qualified.hostname"
         result = get_host_name()
@@ -69,7 +64,7 @@ class TestGetHostName(unittest.TestCase):
     @patch("socket.gethostbyaddr")
     def test_partial_hostname(self, mock_gethostbyaddr, mock_gethostname):
         """
-        Test partial hostname case.
+        Test checking partial hostname case.
         """
         mock_gethostname.return_value = "partial"
         mock_gethostbyaddr.return_value = ("fully.qualified.partial", [], [])
@@ -80,7 +75,7 @@ class TestGetHostName(unittest.TestCase):
     @patch("socket.gethostbyaddr")
     def test_timeout_exception(self, mock_gethostbyaddr, mock_gethostname):
         """
-        Test timeout exception case.
+        Test checking timeout exception case.
         """
         mock_gethostname.return_value = "partial"
         mock_gethostbyaddr.side_effect = socket.timeout
@@ -90,19 +85,19 @@ class TestGetHostName(unittest.TestCase):
 
 class TestAssertSameMachine(unittest.TestCase):
     """
-    Test cases for the 'assert_same_machine' function.
+    Test case for the 'assert_same_machine' function.
 
     Methods
     -------
     test_matching_machine_keyword():
-        Test case with matching machine keyword.
+        Test checking matching machine keyword.
     test_non_matching_machine_keyword():
-        Test case with non-matching machine keyword.
+        Test checking non-matching machine keyword.
     """
 
     def test_matching_machine_keyword(self):
         """
-        Test case with matching machine keyword.
+        Test checking matching machine keyword.
         """
         user_machine_keyword = "machine1"
         control_json = {"user_machine_keyword_step1": "machine1"}
@@ -113,7 +108,7 @@ class TestAssertSameMachine(unittest.TestCase):
 
     def test_non_matching_machine_keyword(self):
         """
-        Test case with non-matching machine keyword.
+        Test checking non-matching machine keyword.
         """
         user_machine_keyword = "machine1"
         control_json = {"user_machine_keyword_step1": "machine2"}
@@ -125,25 +120,25 @@ class TestAssertSameMachine(unittest.TestCase):
 
 class TestGetMachineKeyword(unittest.TestCase):
     """
-    Test cases for the 'get_machine_keyword' function.
+    Test case for the 'get_machine_keyword' function.
 
     Methods
     -------
     test_valid_bool_value():
-        Test valid boolean value case.
+        Test checking valid boolean value case.
     test_valid_string_value():
-        Test valid string value case.
+        Test checking valid string value case.
     test_valid_list_value():
-        Test valid list value case.
+        Test checking valid list value case.
     test_key_not_found():
-        Test case where key is not found in any JSON.
+        Test checking when key is not found in any JSON.
     test_invalid_value_type():
-        Test case with an invalid value type.
+        Test checking an invalid value type.
     """
 
     def test_valid_bool_value(self):
         """
-        Test valid boolean value case.
+        Test checking valid boolean value case.
         """
         input_json = {"user_machine_keyword_train": True}
         previous_json = {}
@@ -154,7 +149,7 @@ class TestGetMachineKeyword(unittest.TestCase):
 
     def test_valid_string_value(self):
         """
-        Test valid string value case.
+        Test checking valid string value case.
         """
         input_json = {"user_machine_keyword_label": "some_keyword"}
         previous_json = {}
@@ -165,7 +160,7 @@ class TestGetMachineKeyword(unittest.TestCase):
 
     def test_valid_list_value(self):
         """
-        Test valid list value case.
+        Test checking valid list value case.
         """
         input_json = {
             "user_machine_keyword_exp": ["project", "allocation", "arch_name"]
@@ -178,7 +173,7 @@ class TestGetMachineKeyword(unittest.TestCase):
 
     def test_key_not_found(self):
         """
-        Test case where key is not found in any JSON.
+        Test checking when key is not found in any JSON.
         """
         input_json = {}
         previous_json = {}
@@ -189,7 +184,7 @@ class TestGetMachineKeyword(unittest.TestCase):
 
     def test_invalid_value_type(self):
         """
-        Test case with an invalid value type.
+        Test checking an invalid value type.
         """
         input_json = {"user_machine_keyword": 123}
         previous_json = {}
@@ -201,22 +196,22 @@ class TestGetMachineKeyword(unittest.TestCase):
 
 class TestGetMachineFromConfigs(unittest.TestCase):
     """
-    Test cases for the 'get_machine_from_configs' function.
+    Test case for the 'get_machine_from_configs' function.
 
     Methods
     -------
     test_matching_hostname():
-        Test case where a matching hostname is found.
+        Test checking when a matching hostname is found.
     test_matching_machine_short_name():
-        Test case where a matching machine short name is provided.
+        Test checking when a matching machine short name is provided.
     test_no_matching_config():
-        Test case where no matching configuration is found.
+        Test checking when no matching configuration is found.
     """
 
     @patch("arcann_training.common.machine.get_host_name", return_value="my_machine")
     def test_matching_hostname(self, mock_get_host_name):
         """
-        Test case where a matching hostname is found.
+        Test checking when a matching hostname is found.
         """
         machine_configs = [
             {"machine1": {"hostname": "my_machine"}},
@@ -227,7 +222,7 @@ class TestGetMachineFromConfigs(unittest.TestCase):
 
     def test_matching_machine_short_name(self):
         """
-        Test case where a matching machine short name is provided.
+        Test checking when a matching machine short name is provided.
         """
         machine_configs = [
             {"machine1": {"hostname": "my_machine"}},
@@ -243,7 +238,7 @@ class TestGetMachineFromConfigs(unittest.TestCase):
     )
     def test_no_matching_config(self, mock_get_host_name):
         """
-        Test case where no matching configuration is found.
+        Test checking when no matching configuration is found.
         """
         machine_configs = [
             {"machine1": {"hostname": "my_machine"}},

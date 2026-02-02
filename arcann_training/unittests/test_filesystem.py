@@ -6,32 +6,26 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2026/01/31
+Last modified: 2026/02/02
 
-Test cases for the list module.
+Unit tests for the filesystem module.
 
 Classes
 -------
 TestChangeDirectory():
     Test case for the 'change_directory' function.
-
 TestCheckDirectory():
     Test case for the 'check_directory' function.
-
 TestCheckFileExistence():
     Test case for the 'check_file_existence' function.
-
 TestRemoveFile():
     Test case for the 'remove_file' function.
-
 TestRemoveFilesMatchingGlob():
     Test case for the 'remove_files_matching_glob' function.
-
 TestRemoveTree():
-    Unit test case for the 'remove_tree' function.
-
+    Test case for the 'remove_tree' function.
 TestRemoveAllSymlink():
-    Unit test case for the 'remove_all_symlink' function.
+    Test case for the 'remove_all_symlink' function.
 """
 
 # Standard library modules
@@ -59,15 +53,15 @@ class TestChangeDirectory(unittest.TestCase):
     Methods
     -------
     test_change_directory_existing_directory():
-        Test changing to an existing directory.
+        Test checking changing to an existing directory.
     test_change_directory_nonexistent_directory():
-        Test raising an error for a nonexistent directory.
+        Test checking raising an error for a nonexistent directory.
     test_change_directory_file_not_directory():
-        Test raising an error for a file instead of a directory.
+        Test checking raising an error for a file instead of a directory.
     test_change_directory_error():
-        Test raising an error if there is an error in changing the directory.
+        Test checking raising an error if there is an error in changing the directory.
     test_change_directory_directory_with_space():
-        Test changing to a directory with a space in the name.
+        Test checking changing to a directory with a space in the name.
     """
 
     def setUp(self):
@@ -82,7 +76,7 @@ class TestChangeDirectory(unittest.TestCase):
 
     def test_change_directory_existing_directory(self):
         """
-        Test changing to an existing directory.
+        Test checking changing to an existing directory.
         """
         change_directory(self.temp_dir_paths[0])
         self.assertEqual(
@@ -93,14 +87,14 @@ class TestChangeDirectory(unittest.TestCase):
 
     def test_change_directory_nonexistent_directory(self):
         """
-        Test raising an error for a nonexistent directory.
+        Test checking raising an error for a nonexistent directory.
         """
         with self.assertRaises(FileNotFoundError, msg="No FileNotFoundError raised."):
             change_directory(Path("nonexistent_directory"))
 
     def test_change_directory_file_not_directory(self):
         """
-        Test raising an error for a file instead of a directory.
+        Test checking raising an error for a file instead of a directory.
         """
         temp_file = self.temp_dir_paths[0] / "temp_file.txt"
         with open(temp_file, "w") as f:
@@ -110,14 +104,14 @@ class TestChangeDirectory(unittest.TestCase):
 
     def test_change_directory_error(self):
         """
-        Test raising an error if there is an error in changing the directory.
+        Test checking raising an error if there is an error in changing the directory.
         """
         with self.assertRaises(OSError, msg="No OSError raised."):
             change_directory(self.temp_dir_paths[2])
 
     def test_change_directory_directory_with_space(self):
         """
-        Test changing to a directory with a space in the name.
+        Test checking changing to a directory with a space in the name.
         """
         temp_dir_with_space = self.temp_dir_paths[1] / "directory with space"
         Path.mkdir(temp_dir_with_space)
@@ -136,13 +130,13 @@ class TestCheckDirectory(unittest.TestCase):
     Methods
     -------
     test_check_directory_existing_directory():
-        Test checking an existing directory with 'abort_on_error=True'.
+        Test checking checking an existing directory with 'abort_on_error=True'.
     test_check_directory_nonexistent_directory():
-        Test raising a 'FileNotFoundError' for a nonexistent directory with 'abort_on_error=True'.
+        Test checking raising a 'FileNotFoundError' for a nonexistent directory with 'abort_on_error=True'.
     test_check_directory_nonexistent_directory_no_abort():
-        Test logging a warning for a nonexistent directory with 'abort_on_error=False'.
+        Test checking logging a warning for a nonexistent directory with 'abort_on_error=False'.
     test_check_directory_existing_directory_no_abort():
-        Test checking an existing directory with 'abort_on_error=False'.
+        Test checking checking an existing directory with 'abort_on_error=False'.
     """
 
     def setUp(self):
@@ -153,21 +147,21 @@ class TestCheckDirectory(unittest.TestCase):
 
     def test_check_directory_existing_directory(self):
         """
-        Test checking an existing directory with 'abort_on_error=True'.
+        Test checking checking an existing directory with 'abort_on_error=True'.
         """
         check_directory(Path(self.temp_dir.name))
         self.assertTrue(True)
 
     def test_check_directory_nonexistent_directory(self):
         """
-        Test raising a 'FileNotFoundError' for a nonexistent directory with 'abort_on_error=True'.
+        Test checking raising a 'FileNotFoundError' for a nonexistent directory with 'abort_on_error=True'.
         """
         with self.assertRaises(FileNotFoundError):
             check_directory(Path("nonexistent_directory"))
 
     def test_check_directory_nonexistent_directory_no_abort(self):
         """
-        Test logging a warning for a nonexistent directory with 'abort_on_error=False'.
+        Test checking logging a warning for a nonexistent directory with 'abort_on_error=False'.
         """
         with self.assertLogs(level="WARNING"):
             check_directory(Path("nonexistent_directory"), abort_on_error=False)
@@ -175,7 +169,7 @@ class TestCheckDirectory(unittest.TestCase):
 
     def test_check_directory_existing_directory_no_abort(self):
         """
-        Test checking an existing directory with 'abort_on_error=False'.
+        Test checking checking an existing directory with 'abort_on_error=False'.
         """
         check_directory(Path(self.temp_dir.name), abort_on_error=False)
         self.assertTrue(True)
@@ -188,13 +182,13 @@ class TestCheckFileExistence(unittest.TestCase):
     Methods
     -------
     test_check_file_existence_existing_file():
-        Test checking an existing file with 'expected_existence=True' and 'abort_on_error=True'.
+        Test checking checking an existing file with 'expected_existence=True' and 'abort_on_error=True'.
     test_check_file_existence_nonexistent_file():
-        Test raising a 'FileNotFoundError' for a nonexistent file with 'abort_on_error=True'.
+        Test checking raising a 'FileNotFoundError' for a nonexistent file with 'abort_on_error=True'.
     test_check_file_existence_nonexistent_file_no_abort():
-        Test logging a warning for a nonexistent file with 'abort_on_error=False'.
+        Test checking logging a warning for a nonexistent file with 'abort_on_error=False'.
     test_check_file_existence_existing_file_no_abort():
-        Test raising a 'FileExistsError' for an existing file with 'expected_existence=False' and 'abort_on_error=True'.
+        Test checking raising a 'FileExistsError' for an existing file with 'expected_existence=False' and 'abort_on_error=True'.
     """
 
     def setUp(self):
@@ -208,21 +202,21 @@ class TestCheckFileExistence(unittest.TestCase):
 
     def test_check_file_existence_existing_file(self):
         """
-        Test checking an existing file with 'expected_existence=True' and 'abort_on_error=True'.
+        Test checking checking an existing file with 'expected_existence=True' and 'abort_on_error=True'.
         """
         check_file_existence(self.temp_file)
         self.assertTrue(True)
 
     def test_check_file_existence_nonexistent_file(self):
         """
-        Test raising a 'FileNotFoundError' for a nonexistent file with 'abort_on_error=True'.
+        Test checking raising a 'FileNotFoundError' for a nonexistent file with 'abort_on_error=True'.
         """
         with self.assertRaises(FileNotFoundError):
             check_file_existence(Path(self.temp_dir.name) / "nonexistent_file.txt")
 
     def test_check_file_existence_nonexistent_file_no_abort(self):
         """
-        Test logging a warning for a nonexistent file with 'abort_on_error=False'.
+        Test checking logging a warning for a nonexistent file with 'abort_on_error=False'.
         """
         with self.assertLogs(level="WARNING"):
             check_file_existence(
@@ -232,7 +226,7 @@ class TestCheckFileExistence(unittest.TestCase):
 
     def test_check_file_existence_existing_file_no_abort(self):
         """
-        Test raising a 'FileExistsError' for an existing file with 'expected_existence=False' and 'abort_on_error=True'.
+        Test checking raising a 'FileExistsError' for an existing file with 'expected_existence=False' and 'abort_on_error=True'.
         """
         with self.assertRaises(FileExistsError):
             check_file_existence(
@@ -249,9 +243,9 @@ class TestRemoveFile(unittest.TestCase):
     Methods
     -------
     test_remove_existing_file():
-        Test that the 'remove_file' function successfully removes an existing file.
+        Test confirming the 'remove_file' function successfully removes an existing file.
     test_remove_nonexistent_file():
-        Test that the 'remove_file' function does not raise an error when attempting to remove a nonexistent file.
+        Test confirming the 'remove_file' function does not raise an error when attempting to remove a nonexistent file.
     """
 
     def setUp(self):
@@ -265,7 +259,7 @@ class TestRemoveFile(unittest.TestCase):
 
     def test_remove_existing_file(self):
         """
-        Test that the 'remove_file' function successfully removes an existing file.
+        Test confirming the 'remove_file' function successfully removes an existing file.
         """
         self.assertTrue(self.temp_file.is_file())
         remove_file(self.temp_file)
@@ -273,7 +267,7 @@ class TestRemoveFile(unittest.TestCase):
 
     def test_remove_nonexistent_file(self):
         """
-        Test that the 'remove_file' function does not raise an error when attempting to remove a nonexistent file.
+        Test confirming the 'remove_file' function does not raise an error when attempting to remove a nonexistent file.
         """
         self.assertFalse((Path(self.temp_dir.name) / "nonexistent_file.txt").is_file())
         remove_file(Path(self.temp_dir.name) / "nonexistent_file.txt")
@@ -287,13 +281,13 @@ class TestRemoveFilesMatchingGlob(unittest.TestCase):
     Methods
     -------
     test_remove_files_matching_glob()
-        Test removing files with a matching glob pattern.
+        Test checking removing files with a matching glob pattern.
     test_remove_files_matching_glob_nonexistent_directory()
-        Test raising an error when the directory does not exist.
+        Test checking raising an error when the directory does not exist.
     test_remove_files_matching_glob_non_directory()
-        Test raising an error when the directory path is not a directory.
+        Test checking raising an error when the directory path is not a directory.
     test_remove_files_no_matching_glob()
-        Test not removing any files when no files match the glob pattern.
+        Test checking not removing any files when no files match the glob pattern.
     """
 
     def setUp(self):
@@ -313,7 +307,7 @@ class TestRemoveFilesMatchingGlob(unittest.TestCase):
 
     def test_remove_files_matching_glob(self):
         """
-        Test removing files with a matching glob pattern.
+        Test checking removing files with a matching glob pattern.
         """
         self.assertTrue(self.temp_file_1.is_file())
         self.assertTrue(self.temp_file_2.is_file())
@@ -325,21 +319,21 @@ class TestRemoveFilesMatchingGlob(unittest.TestCase):
 
     def test_remove_files_matching_glob_nonexistent_directory(self):
         """
-        Test raising an error when the directory does not exist.
+        Test checking raising an error when the directory does not exist.
         """
         with self.assertRaises(NotADirectoryError):
             remove_files_matching_glob(Path("nonexistent_directory"), "*.toc")
 
     def test_remove_files_matching_glob_non_directory(self):
         """
-        Test raising an error when the directory path is not a directory.
+        Test checking raising an error when the directory path is not a directory.
         """
         with self.assertRaises(NotADirectoryError):
             remove_files_matching_glob(self.temp_file_1, "*.txt")
 
     def test_remove_files_no_matching_glob(self):
         """
-        Test not removing any files when no files match the glob pattern.
+        Test checking not removing any files when no files match the glob pattern.
         """
         self.assertTrue(self.temp_file_1.is_file())
         self.assertTrue(self.temp_file_2.is_file())
@@ -352,16 +346,16 @@ class TestRemoveFilesMatchingGlob(unittest.TestCase):
 
 class TestRemoveTree(unittest.TestCase):
     """
-    Unit test case for the 'remove_tree' function.
+    Test case for the 'remove_tree' function.
 
     Methods
     -------
     test_remove_tree():
-        Test removing an existing directory tree and its contents.
+        Test checking removing an existing directory tree and its contents.
     test_remove_tree_nonexistent_directory():
-        Test removing a nonexistent directory.
+        Test checking removing a nonexistent directory.
     test_remove_tree_file_not_a_directory():
-        Test raising an error when the given path is not a directory.
+        Test checking raising an error when the given path is not a directory.
     """
 
     def setUp(self):
@@ -382,7 +376,7 @@ class TestRemoveTree(unittest.TestCase):
 
     def test_remove_tree(self):
         """
-        Test removing an existing directory tree and its contents.
+        Test checking removing an existing directory tree and its contents.
         """
         self.assertTrue(self.temp_file_1.is_file())
         self.assertTrue(self.temp_subdir.is_dir())
@@ -399,14 +393,14 @@ class TestRemoveTree(unittest.TestCase):
 
     def test_remove_tree_nonexistent_directory(self):
         """
-        Test removing a nonexistent directory.
+        Test checking removing a nonexistent directory.
         """
         with self.assertRaises(FileNotFoundError):
             remove_tree(Path("nonexistent_directory"))
 
     def test_remove_tree_file_not_a_directory(self):
         """
-        Test raising an error when the given path is not a directory.
+        Test checking raising an error when the given path is not a directory.
         """
         with self.assertRaises(NotADirectoryError):
             remove_tree(self.temp_file_1)
@@ -417,18 +411,16 @@ class TestRemoveTree(unittest.TestCase):
 
 class TestRemoveAllSymlink(unittest.TestCase):
     """
-    Unit test case for the 'remove_all_symlink' function.
+    Test case for the 'remove_all_symlink' function.
 
     Methods
     -------
     test_remove_all_symlink():
-        Test removing symbolic links within a directory and its subdirectories.
-
+        Test checking removing symbolic links within a directory and its subdirectories.
     test_remove_all_symlink_empty_directory()
-        Test removing symbolic links from an empty directory.
-
+        Test checking removing symbolic links from an empty directory.
     test_remove_all_symlink_no_symlinks()
-        Test removing symbolic links from a directory with no symbolic links.
+        Test checking removing symbolic links from a directory with no symbolic links.
     """
 
     def setUp(self):
@@ -445,7 +437,7 @@ class TestRemoveAllSymlink(unittest.TestCase):
 
     def test_remove_all_symlink(self):
         """
-        Test removing symbolic links within a directory and its subdirectories.
+        Test checking removing symbolic links within a directory and its subdirectories.
         """
         self.assertTrue((self.temp_dir_path / "file1").is_symlink())
         self.assertTrue((self.temp_dir_path / "dir1" / "file2").is_symlink())
@@ -459,7 +451,7 @@ class TestRemoveAllSymlink(unittest.TestCase):
 
     def test_remove_all_symlink_empty_directory(self):
         """
-        Test removing symbolic links from an empty directory.
+        Test checking removing symbolic links from an empty directory.
         """
         empty_dir = self.temp_dir_path / "empty_dir"
         empty_dir.mkdir()
@@ -470,7 +462,7 @@ class TestRemoveAllSymlink(unittest.TestCase):
 
     def test_remove_all_symlink_no_symlinks(self):
         """
-        Test removing symbolic links from a directory with no symbolic links.
+        Test checking removing symbolic links from a directory with no symbolic links.
         """
         no_symlinks_dir = self.temp_dir_path / "no_symlinks_dir"
         no_symlinks_dir.mkdir()
