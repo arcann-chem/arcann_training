@@ -21,12 +21,26 @@ Each **step** is executed in its corresponding folder by running, in order, the 
 
 ```bash
 python -m arcann_training STEP_NAME PHASE_NAME
+
+arcann-training STEP_NAME PHASE_NAME
 ```
 
 where `STEP_NAME` refers to the current **step** (`initialization`, `exploration`, `labeling`, `training`, or `test`) and `PHASE_NAME` is the specific task that needs to be performed within that **step**.
 This will become clearer with examples in the sections below, where each **step** is explained.
 The following tables provide a brief description of the *phases* in each **step**, in the correct order.
 Since `initialization` has only a single `start` *phase*, which is self-explanatory, it is detailed in the example below.
+
+You can list available steps and phases with:
+
+```bash
+python -m arcann_training --list-steps
+python -m arcann_training --list-phases
+python -m arcann_training --list-phases training
+
+arcann-training --list-steps
+arcann-training --list-phases
+arcann-training --list-phases training
+```
 
 ### Exploration ###
 

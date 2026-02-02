@@ -41,6 +41,8 @@ To ensure that `ArcaNN` has been installed correctly, run the following command:
 
 ```bash
 python -m arcann_training --help
+
+arcann-training --help
 ```
 
 This command should display the basic usage message of the code.

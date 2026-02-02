@@ -15,6 +15,8 @@ Now go to the empty `000-training` folder created by the script execute the `pre
 
 ```bash
 python -m arcann_training training prepare
+
+arcann-training training prepare
 ```
 
 This will create three folders `1/`, `2/` and `3/` and a copy of your `data/` folder, as well as a `default_input.json` file containing the default training parameters. If you want to modify some of the default values you can create a `input.json` file from the `default_input.json` file that looks like this:

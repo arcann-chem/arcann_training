@@ -6,6 +6,8 @@ Now that you have decided the subsystems that you want to train your NNP on and 
 
 ```bash
 python -m arcann_training initialization start
+
+arcann-training initialization start
 ```
 
 Now it should have generated your first `000-training` directory. In `$WORK_DIR` you will also find a `default_input.json` file that looks like this :

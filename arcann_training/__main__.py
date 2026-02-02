@@ -21,31 +21,102 @@ from pathlib import Path
 from arcann_training.common.logging import setup_logging
 
 # Parsing
-parser = argparse.ArgumentParser(description="Deepmd iterative program suite")
-parser.add_argument("step_name", type=str, help="Step name")
-parser.add_argument("phase_name", type=str, help="Phase name")
-parser.add_argument(
-    "-v", "--verbose", type=int, default=0, help="verbosity, 0 (default) or 1 (debug)"
-)
-parser.add_argument(
-    "-i",
-    "--input",
-    type=str,
-    default="input.json",
-    help="name of the input file (with ext)",
-)
-parser.add_argument(
-    "-c", "--cluster", type=str, default=None, help="name of the fake cluster"
-)
+def _discover_steps(base_path: Path):
+    steps = ["initialization", "training", "exploration", "labeling", "test"]
+    valid_phases = {}
+    for step in steps:
+        step_path = base_path / step
+        files = [
+            f.stem
+            for f in step_path.iterdir()
+            if f.is_file() and f.suffix == ".py" and f.stem not in ["__init__", "utils"]
+        ]
+        valid_phases[step] = sorted(files)
+    return steps, valid_phases
+
+
+def _build_parser(base_path: Path):
+    steps, valid_phases = _discover_steps(base_path)
+
+    parser = argparse.ArgumentParser(description="Deepmd iterative program suite")
+    parser.add_argument(
+        "--list-steps",
+        action="store_true",
+        help="list available steps and exit",
+    )
+    parser.add_argument(
+        "--list-phases",
+        nargs="?",
+        const="__all__",
+        metavar="STEP",
+        help="list phases for a step (or all steps) and exit",
+    )
+
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="enable debug logging",
+    )
+    common.add_argument(
+        "-i",
+        "--input",
+        type=str,
+        default="input.json",
+        help="name of the input file (with ext)",
+    )
+    common.add_argument(
+        "-c", "--cluster", type=str, default=None, help="name of the fake cluster"
+    )
+    common.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="validate inputs and show the selected step/phase without running",
+    )
+
+    subparsers = parser.add_subparsers(dest="step_name", required=False)
+    for step in steps:
+        step_parser = subparsers.add_parser(step, help=f"{step} step")
+        phase_subparsers = step_parser.add_subparsers(
+            dest="phase_name", required=True
+        )
+        for phase in valid_phases.get(step, []):
+            phase_subparsers.add_parser(
+                phase, parents=[common], help=f"{phase} phase"
+            )
+
+    return parser, steps, valid_phases
 
 
 def main(argv=None) -> int:
+    deepmd_iterative_path: Path = Path(__file__).parent
+    parser, steps, valid_phases = _build_parser(deepmd_iterative_path)
     args = parser.parse_args(argv)
 
-    deepmd_iterative_path: Path = Path(__file__).parent
+    if args.list_steps:
+        print("\n".join(steps))
+        return 0
+
+    if args.list_phases is not None:
+        if args.list_phases == "__all__":
+            for step in steps:
+                phases = ", ".join(valid_phases.get(step, []))
+                print(f"{step}: {phases}")
+            return 0
+        if args.list_phases not in steps:
+            parser.error(f"Invalid step '{args.list_phases}'. Valid steps are: {steps}")
+        phases = ", ".join(valid_phases.get(args.list_phases, []))
+        print(f"{args.list_phases}: {phases}")
+        return 0
+
+    if args.step_name is None or args.phase_name is None:
+        parser.print_help()
+        return 2
 
     # Setup logging
-    logging_config = setup_logging(args.verbose)
+    verbose_level = 1 if args.verbose else 0
+    logging_config = setup_logging(verbose_level)
     logging.config.dictConfig(logging_config)
     arcann_logger = logging.getLogger("ArcaNN")
     del logging_config
@@ -64,8 +135,6 @@ def main(argv=None) -> int:
     else:
         fake_cluster = None
 
-    del args
-
     # Start
     arcann_logger.info(f"-" * 88)
     arcann_logger.info(f"-" * 88)
@@ -76,42 +145,23 @@ def main(argv=None) -> int:
     arcann_logger.info(f"-" * 88)
     arcann_logger.info(f"-" * 88)
 
-    steps = ["initialization", "training", "exploration", "labeling", "test"]
-    valid_phases = {}
-    for step in steps:
-        step_path = deepmd_iterative_path / step
-        files = [
-            f.stem
-            for f in step_path.iterdir()
-            if f.is_file() and f.suffix == ".py" and f.stem not in ["__init__", "utils"]
-        ]
-        valid_phases[step] = files
-
-    if step_name not in steps:
-        arcann_logger.error(f"Invalid step. Valid steps are: {steps}")
-        arcann_logger.error(f"Aborting...")
-        exit_code = 1
-        return exit_code
-
-    elif phase_name not in valid_phases.get(step_name, []):
-        arcann_logger.error(
-            f"Invalid phase for step {step_name}. Valid phases are: {valid_phases[step_name]}"
+    if args.dry_run:
+        arcann_logger.info(
+            f"Dry run: {step_name.capitalize()} - {phase_name.capitalize()} (input: {input_fn})"
         )
-        arcann_logger.error(f"Aborting...")
-        exit_code = 1
-        return exit_code
+        return 0
+    del args
 
     # Launch the module
-    else:
-        try:
-            submodule = importlib.import_module(submodule_name)
-            exit_code = submodule.main(
-                step_name, phase_name, deepmd_iterative_path, fake_cluster, input_fn
-            )
-            del submodule, submodule_name
-        except Exception:
-            arcann_logger.exception("Unhandled error while running the step.")
-            exit_code = 1
+    try:
+        submodule = importlib.import_module(submodule_name)
+        exit_code = submodule.main(
+            step_name, phase_name, deepmd_iterative_path, fake_cluster, input_fn
+        )
+        del submodule, submodule_name
+    except Exception:
+        arcann_logger.exception("Unhandled error while running the step.")
+        exit_code = 1
 
     del deepmd_iterative_path, fake_cluster, input_fn
 
