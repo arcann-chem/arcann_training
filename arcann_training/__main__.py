@@ -14,6 +14,7 @@ import argparse
 import importlib
 import logging
 import logging.config
+import sys
 from pathlib import Path
 
 # Local imports
@@ -37,8 +38,9 @@ parser.add_argument(
     "-c", "--cluster", type=str, default=None, help="name of the fake cluster"
 )
 
-if __name__ == "__main__":
-    args = parser.parse_args()
+
+def main(argv=None) -> int:
+    args = parser.parse_args(argv)
 
     deepmd_iterative_path: Path = Path(__file__).parent
 
@@ -89,7 +91,7 @@ if __name__ == "__main__":
         arcann_logger.error(f"Invalid step. Valid steps are: {steps}")
         arcann_logger.error(f"Aborting...")
         exit_code = 1
-        exit(exit_code)
+        return exit_code
 
     elif phase_name not in valid_phases.get(step_name, []):
         arcann_logger.error(
@@ -97,7 +99,7 @@ if __name__ == "__main__":
         )
         arcann_logger.error(f"Aborting...")
         exit_code = 1
-        exit(exit_code)
+        return exit_code
 
     # Launch the module
     else:
@@ -107,7 +109,8 @@ if __name__ == "__main__":
                 step_name, phase_name, deepmd_iterative_path, fake_cluster, input_fn
             )
             del submodule, submodule_name
-        except Exception as e:
+        except Exception:
+            arcann_logger.exception("Unhandled error while running the step.")
             exit_code = 1
 
     del deepmd_iterative_path, fake_cluster, input_fn
@@ -126,4 +129,9 @@ if __name__ == "__main__":
     arcann_logger.info(f"-" * 88)
     arcann_logger.info(f"-" * 88)
 
-    del exit_code, step_name, phase_name
+    del step_name, phase_name
+    return exit_code
+
+
+if __name__ == "__main__":
+    sys.exit(main())
