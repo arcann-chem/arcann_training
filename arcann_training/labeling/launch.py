@@ -74,7 +74,9 @@ def main(
         "labeling_nb_steps", labeling_json.get("labeling_nb_steps", None)
     )
     if labeling_nb_steps is None:
-        labeling_nb_steps = 1 if labeling_json.get("labeling_program", "orca") == "orca" else 2
+        labeling_nb_steps = (
+            1 if labeling_json.get("labeling_program", "orca") == "orca" else 2
+        )
     labeling_nb_steps = int(labeling_nb_steps)
     arcann_logger.debug(f"labeling_nb_steps: {labeling_nb_steps}")
 

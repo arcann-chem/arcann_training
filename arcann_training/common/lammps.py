@@ -173,7 +173,9 @@ def read_lammps_data(
 
 
 @catch_errors_decorator
-def validate_lammps_sections(data_file: Union[Path, List[str]], source: Union[Path, str, None] = None) -> bool:
+def validate_lammps_sections(
+    data_file: Union[Path, List[str]], source: Union[Path, str, None] = None
+) -> bool:
     """
     Check that a LAMMPS data file contains the minimum required sections.
 
@@ -218,7 +220,11 @@ def validate_lammps_sections(data_file: Union[Path, List[str]], source: Union[Pa
         raise ValueError(f"Missing 'Masses' section in LAMMPS data file{src}.")
 
     # Atoms section header (avoid Atomsk)
-    has_atoms_section = any(l.strip().lower().startswith("atoms") for l in lines if "atomsk" not in l.lower())
+    has_atoms_section = any(
+        l.strip().lower().startswith("atoms")
+        for l in lines
+        if "atomsk" not in l.lower()
+    )
     if not has_atoms_section:
         src = f": {source}" if isinstance(source, Path) else ""
         raise ValueError(f"Missing 'Atoms' section header in LAMMPS data file{src}.")
@@ -329,4 +335,3 @@ def get_lammps_atom_types(data_file: Union[Path, List[str]]) -> np.ndarray:
         raise ValueError("Not enough atom lines found in Atoms section.")
 
     return successful_types
-

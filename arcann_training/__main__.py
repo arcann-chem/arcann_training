@@ -20,6 +20,7 @@ from pathlib import Path
 # Local imports
 from arcann_training.common.logging import setup_logging
 
+
 # Parsing
 def _discover_steps(base_path: Path):
     steps = ["initialization", "training", "exploration", "labeling", "test"]
@@ -78,13 +79,9 @@ def _build_parser(base_path: Path):
     subparsers = parser.add_subparsers(dest="step_name", required=False)
     for step in steps:
         step_parser = subparsers.add_parser(step, help=f"{step} step")
-        phase_subparsers = step_parser.add_subparsers(
-            dest="phase_name", required=True
-        )
+        phase_subparsers = step_parser.add_subparsers(dest="phase_name", required=True)
         for phase in valid_phases.get(step, []):
-            phase_subparsers.add_parser(
-                phase, parents=[common], help=f"{phase} phase"
-            )
+            phase_subparsers.add_parser(phase, parents=[common], help=f"{phase} phase")
 
     return parser, steps, valid_phases
 

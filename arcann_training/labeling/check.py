@@ -489,9 +489,8 @@ def main(
     arcann_logger.debug(f"candidates_expected_count: {candidates_expected_count}")
     arcann_logger.debug(f"candidates_skipped_count: {candidates_skipped_count}")
     arcann_logger.debug(f"candidates_step_count: {candidates_step_count}")
-    if (
-        candidates_expected_count
-        == (candidates_step_count[last_step] + candidates_skipped_count)
+    if candidates_expected_count == (
+        candidates_step_count[last_step] + candidates_skipped_count
     ):
         labeling_json["is_checked"] = True
     del candidates_expected_count, candidates_skipped_count, candidates_step_count

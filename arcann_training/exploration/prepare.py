@@ -17,7 +17,6 @@ from copy import deepcopy
 import random
 import subprocess
 
-
 # Non-standard library imports
 import numpy as np
 import yaml
@@ -1361,7 +1360,7 @@ def main(
                             / system_ipi_xyz_fn.replace(".xyz", ".lmp")
                         )
                         # Get again the system_cell and nb_atom
-                        (system_nb_atm, num_atom_types, box, masses, coords) = (
+                        system_nb_atm, num_atom_types, box, masses, coords = (
                             read_lammps_data(system_lammps_data)
                         )
                         system_cell = [

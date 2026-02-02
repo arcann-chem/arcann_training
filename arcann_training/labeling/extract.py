@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2026/01/31
+Last modified: 2026/02/02
 """
 
 # Standard library modules
@@ -251,7 +251,7 @@ def main(
                 )
                 del coordinate_xyz
 
-                    if labeling_program == "cp2k":
+                if labeling_program == "cp2k":
 
                     # Energy (from final step)
                     energy_cp2k = textfile_to_string_list(
@@ -372,7 +372,8 @@ def main(
                 elif labeling_program == "orca":
                     # Energy
                     energy_orca = textfile_to_string_list(
-                        labeling_step_path / f"{final_step_number}_labeling_{padded_labeling_step}.engrad"
+                        labeling_step_path
+                        / f"{final_step_number}_labeling_{padded_labeling_step}.engrad"
                     )
                     energy_array_raw = extract_and_convert_energy(
                         energy_orca,
@@ -403,7 +404,8 @@ def main(
 
                     # Forces
                     force_orca = textfile_to_string_list(
-                        labeling_step_path / f"{final_step_number}_labeling_{padded_labeling_step}.engrad"
+                        labeling_step_path
+                        / f"{final_step_number}_labeling_{padded_labeling_step}.engrad"
                     )
                     force_array_raw = extract_and_convert_forces(
                         force_orca,
@@ -567,7 +569,9 @@ def main(
                         type_atom_array = get_lammps_atom_types(
                             training_path / "user_files" / f"{system_auto}.lmp"
                         )
-                        expected_nb_atm = main_json["systems_auto"][system_auto]["nb_atm"]
+                        expected_nb_atm = main_json["systems_auto"][system_auto][
+                            "nb_atm"
+                        ]
                         if len(type_atom_array) != expected_nb_atm:
                             arcann_logger.error(
                                 f"LAMMPS file '{system_auto}.lmp' contains {len(type_atom_array)} atoms but expected {expected_nb_atm}."

@@ -157,7 +157,9 @@ def main(
     # Determine number of labeling steps to show correct wavefunction instructions
     labeling_nb_steps = labeling_config.get("labeling_nb_steps", None)
     if labeling_nb_steps is None:
-        labeling_nb_steps = 1 if labeling_config.get("labeling_program", "orca") == "orca" else 2
+        labeling_nb_steps = (
+            1 if labeling_config.get("labeling_program", "orca") == "orca" else 2
+        )
     labeling_nb_steps = int(labeling_nb_steps)
 
     if labeling_config["labeling_program"] == "cp2k":

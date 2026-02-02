@@ -106,7 +106,9 @@ def generate_input_labeling_json(
         # This is not system dependent and should be a string/int and should not change from previous iteration (but issue just a warning if it does).
         if key == "labeling_program":
             if key in previous_input_json and value != previous_input_json[key]:
-                arcann_logger.critical(f"Labeling program changed from {previous_input_json[key]} to {value}!")
+                arcann_logger.critical(
+                    f"Labeling program changed from {previous_input_json[key]} to {value}!"
+                )
 
             if default_used:
                 merged_input_json[key] = value
@@ -123,7 +125,9 @@ def generate_input_labeling_json(
         elif key == "labeling_nb_steps":
             # Number of labeling steps (1 or 2). Warn if changed from previous.
             if key in previous_input_json and value != previous_input_json[key]:
-                arcann_logger.critical(f"Labeling steps changed from {previous_input_json[key]} to {value}!")
+                arcann_logger.critical(
+                    f"Labeling steps changed from {previous_input_json[key]} to {value}!"
+                )
 
             # Accept default, int or numeric-like strings; validate allowed values
             if default_used:
@@ -135,7 +139,9 @@ def generate_input_labeling_json(
                     if iv in (1, 2):
                         merged_input_json[key] = iv
                     else:
-                        error_msg = f"Value error: 'labeling_nb_steps' must be 1 or 2, got {iv}"
+                        error_msg = (
+                            f"Value error: 'labeling_nb_steps' must be 1 or 2, got {iv}"
+                        )
                         raise ValueError(error_msg)
                 # string that can be converted to int
                 elif isinstance(value, str):

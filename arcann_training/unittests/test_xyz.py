@@ -154,10 +154,13 @@ class TestParseXyzTrajectoryFile(unittest.TestCase):
             ) = parse_xyz_trajectory_file(xyz_file)
 
         np.testing.assert_array_equal(atom_counts, np.array([2, 2]))
-        self.assertEqual(comments, [
-            'Lattice="1 0 0 0 1 0 0 0 1" Properties=species:S:1:pos:R:3',
-            "frame 2 comment",
-        ])
+        self.assertEqual(
+            comments,
+            [
+                'Lattice="1 0 0 0 1 0 0 0 1" Properties=species:S:1:pos:R:3',
+                "frame 2 comment",
+            ],
+        )
         self.assertEqual(atomic_symbols.shape, (2, 2))
         np.testing.assert_array_equal(atomic_symbols[0], np.array(["H", "O"]))
         np.testing.assert_array_equal(
@@ -297,7 +300,9 @@ class TestWriteXyzFrame(unittest.TestCase):
             lines = out_file.read_text().splitlines()
 
         self.assertEqual(lines[0], "2")
-        self.assertTrue(lines[1].startswith('Lattice="1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0"'))
+        self.assertTrue(
+            lines[1].startswith('Lattice="1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0"')
+        )
         self.assertIn("Properties=species:S:1:pos:R:3", lines[1])
         self.assertEqual(lines[2], "H 0.000000 0.000000 0.000000")
         self.assertEqual(lines[3], "O 0.000000 0.000000 1.000000")

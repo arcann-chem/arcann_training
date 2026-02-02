@@ -43,7 +43,6 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
-
 # Local imports
 from arcann_training.common.utils import catch_errors_decorator
 

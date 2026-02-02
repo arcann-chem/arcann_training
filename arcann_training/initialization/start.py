@@ -147,9 +147,13 @@ def main(
         try:
             types = get_lammps_atom_types(user_files_path / f"{system_auto}.lmp")
             if types.size == 0:
-                arcann_logger.error(f"LAMMPS file '{system_auto}.lmp' contains no atoms.")
+                arcann_logger.error(
+                    f"LAMMPS file '{system_auto}.lmp' contains no atoms."
+                )
                 return 1
-            arcann_logger.debug(f"LAMMPS '{system_auto}.lmp' parsed: {types.size} atoms.")
+            arcann_logger.debug(
+                f"LAMMPS '{system_auto}.lmp' parsed: {types.size} atoms."
+            )
         except Exception as e:
             arcann_logger.error(f"Error parsing LAMMPS file '{system_auto}.lmp': {e}")
             arcann_logger.error("Aborting...")

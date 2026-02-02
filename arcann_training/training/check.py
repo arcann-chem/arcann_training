@@ -98,7 +98,9 @@ def main(
                     time_pattern = r"wall time = (\d+\.\d+) s"
 
                 else:
-                    training_out_time = [s for s in training_out if "training time" in s]
+                    training_out_time = [
+                        s for s in training_out if "training time" in s
+                    ]
                     batch_pattern = r"batch\s*(\d+)\s"
                     time_pattern = r"training time (\d+\.\d+) s"
 
