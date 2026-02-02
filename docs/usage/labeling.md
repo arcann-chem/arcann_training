@@ -1,4 +1,4 @@
-# Labeling #
+# Labeling
 
 > **Workflow**: [Exploration](./exploration.md) > **Labeling** > [Training (next iteration)](./training.md) or [Testing](./test.md)
 

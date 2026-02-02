@@ -1,4 +1,4 @@
-# HPC Configuration #
+# HPC Configuration
 
 > **Getting Started**: [Overview](./index.md) > [Requirements](./requirements.md) > [Installation](./installation.md) > **HPC Configuration**
 
@@ -6,7 +6,7 @@ ArcaNN is designed for use on one or several HPC machines, whose specific config
 A general example file can be found in the [GitHub Repository](https://github.com/arcann-chem/arcann_training/blob/main/examples/user_files/machine.json).
 You should modify this file to suit your setup and then copy it to the `user_files/` folder in your working directory (see later in [Usage](../usage/iter_prerequisites.md)).
 
-## Structure of the `machine.json` File ##
+## Structure of the `machine.json` File
 
 The `machine.json` file is organized as a JSON dictionary with one or more keys that designate different HPC machines. The typical structure looks like this:
 
@@ -52,7 +52,7 @@ Below is an example of the initial entries for an HPC machine using a SLURM job 
 }
 ```
 
-## HPC Entry ##
+## HPC Entry
 
 Each HPC machine entry contains a JSON directonary where each key corresponds to a configuration entry.
 
@@ -63,7 +63,7 @@ Each HPC machine entry contains a JSON directonary where each key corresponds to
 - **max_jobs**: Maximum number of jobs per user allowed by the scheduler. Can also be a user-defined safety limit.
 - **max_array_size**: Maximum number of jobs in a single job array. This is important for `Slurm` as ArcaNN relies heavily on job arrays.
 
-## Resource Configuration ##
+## Resource Configuration
 
 Several resources can be available for calculation within the same HPC machine.
 Each available resource in the HPC machine is represented by a key (e.g., `"mykeyword1"`) and includes:
@@ -80,7 +80,7 @@ It will correspond to the `_R_ALLOC_` keyword in the `#SBATCH --account=_R_PROJE
 - **valid_for**: Specifies the steps this partition is valid for (e.g., `["training", "freezing", "compressing", "exploration", "test", "labeling"]`).
 - **default**: Indicates the default partition for specific steps.
 
-## Customization and Submission Files ##
+## Customization and Submission Files
 
 You can add multiple partition configurations as needed. For example, `"mykeyword1"` could represent a GPU partition using A100 GPU nodes, which is used for training unless a different partition is specified.
 

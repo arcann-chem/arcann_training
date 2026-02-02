@@ -1,8 +1,8 @@
-# Getting Started with ArcaNN #
+# Getting Started with ArcaNN
 
 Welcome! This section will guide you through everything you need to set up ArcaNN on your system and configure it for your HPC cluster.
 
-## Quick Start Path ##
+## Quick Start Path
 
 Follow these steps in order to get ArcaNN up and running:
 
@@ -10,9 +10,9 @@ Follow these steps in order to get ArcaNN up and running:
 
 ---
 
-## Step-by-Step Setup Guide ##
+## Step-by-Step Setup Guide
 
-### Step 1 : Check Your System Requirements ###
+### Step 1 : Check Your System Requirements
 
 **Status**: Start here first
 
@@ -27,7 +27,7 @@ Before installing ArcaNN, ensure your system has all necessary dependencies:
 
 ---
 
-### Step 2 : Install ArcaNN ###
+### Step 2 : Install ArcaNN
 
 **Status**: After requirements are satisfied
 
@@ -45,7 +45,7 @@ Two installation methods available:
 
 ---
 
-### Step 3 : Configure Your HPC Cluster ###
+### Step 3 : Configure Your HPC Cluster
 
 **Status**: After ArcaNN installation
 
@@ -62,7 +62,7 @@ Set up your `machine.json` file to connect ArcaNN to your HPC resources:
 
 ---
 
-### Step 4 : Ready to Use ArcaNN ###
+### Step 4 : Ready to Use ArcaNN
 
 **Status**: After HPC configuration
 
@@ -77,7 +77,7 @@ Once you complete the three steps above, you're ready to start the iterative tra
 
 ---
 
-## Navigation ##
+## Navigation
 
 ← [Home](../index.md) | [Next: Check Requirements →](./requirements.md)
 

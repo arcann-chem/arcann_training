@@ -1,8 +1,8 @@
-# ArcaNN Requirements #
+# ArcaNN Requirements
 
 > **Getting Started**: [Overview](./index.md) > **Requirements** > [Installation](./installation.md) > [HPC Configuration](./hpc_configuration.md)
 
-## Installation Requirements ##
+## Installation Requirements
 
 To install and run the software, ensure the following dependencies are installed:
 
@@ -12,14 +12,14 @@ To install and run the software, ensure the following dependencies are installed
 - **Wheel**: `>= 0.37`
 - **NumPy**: `>= 1.22`
 
-## External Programs for Trajectories/Structures Manipulation ##
+## External Programs for Trajectories/Structures Manipulation
 
 ArcaNN requires the following external programs for manipulating trajectories and structures:
 
 - **VMD**: `>= 1.9.3`
 - **Atomsk**: `>= b0.12.2`
 
-## Supported Programs by Workflow Step ##
+## Supported Programs by Workflow Step
 
 Different steps in the workflow are supported by specific programs:
 

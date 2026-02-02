@@ -1,10 +1,10 @@
-# Using ArcaNN #
+# Using ArcaNN
 
 > **Setup Complete**: [Requirements](../getting-started/requirements.md) → [Installation](../getting-started/installation.md) → [HPC Configuration](../getting-started/hpc_configuration.md) → **You Are Here**
 >
 > **Workflow Steps**: [Prerequisites](./iter_prerequisites.md) → [Initialization](./initialization.md) → [Training](./training.md) → [Exploration](./exploration.md) → [Labeling](./labeling.md) → [Repeat or Test](./test.md)
 
-## Iterations, Steps and Phases of the Iterative Procedure ##
+## Iterations, Steps and Phases of the Iterative Procedure
 
 At this stage, ArcaNN is installed in your machine, and you have made the necessary changes to adapt it (see [HPC Configuration](../getting-started/hpc_configuration.md)). As in the [GitHub Repository](https://github.com/arcann-chem/arcann_training/), you can now find in the location where you installed ArcaNN, an `arcann_training/` folder containing several files, as well as the `arcann_training/` scripts, a `tools/` directory and a `examples/` directory.
 
@@ -42,7 +42,7 @@ arcann-training --list-phases
 arcann-training --list-phases training
 ```
 
-### Exploration ###
+### Exploration
 
 | Phase | Description |
 | --- | --- |
@@ -53,7 +53,7 @@ arcann-training --list-phases training
 | `extract` | Extracts a user-defined number of candidate configurations per **system**, saving them to a `SYSNAME/candidates_SYSNAME.xyz` file for labeling and addition to the NNP training set. |
 | `clean` | Removes files that are no longer required (optional). |
 
-### Labeling ###
+### Labeling
 
 | Phase | Description |
 | --- | --- |
@@ -63,7 +63,7 @@ arcann-training --list-phases training
 | `extract` | Extracts necessary information from the CP2K outputs and builds DeePMD-kit "systems"/datasets for each **system** (stored in the `$WORK_DIR/data/` folder). |
 | `clean` | Removes files that are no longer required and compresses the calculation outputs into an archive (optional). |
 
-### Training ###
+### Training
 
 | Phase | Description |
 | --- | --- |
@@ -77,7 +77,7 @@ arcann-training --list-phases training
 | `increment` | Changes the iteration number in `control` and creates new `exploration`, `labeling`, and `training` folders for the next iteration. |
 | `clean` | Removes files that are no longer required (optional). |
 
-### Test ###
+### Test
 
 | Phase | Description |
 | --- | --- |
@@ -86,7 +86,7 @@ arcann-training --list-phases training
 | `check` | Verifies whether the calculations have completed successfully. |
 | `clean` | Removes files that are no longer required (optional). If "detail files" weren't requested, the `XXX-test/` folder will be removed, as all the step information is consolidated in the `control/test_XXX.json` file. Otherwise, the "detail files" will be compressed into .npy format and stored in `XXX-test/`. |
 
-## Parameters ##
+## Parameters
 
 Parameters will need to be defined for most *phases* of each **step** (*e.g.*, length of MD simulations, temperature, number of CPU tasks for labeling calculations, etc.).
 This is done via input files in the JSON format.

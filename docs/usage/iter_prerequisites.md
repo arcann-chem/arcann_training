@@ -1,4 +1,4 @@
-# Iterative procedure prerequisites #
+# Iterative procedure prerequisites
 
 > **Workflow**: [Getting Started](../getting-started/hpc_configuration.md) > **Prerequisites** > [Initialization](./initialization.md) > [Training](./training.md) > [Exploration](./exploration.md) > [Labeling](./labeling.md)
 

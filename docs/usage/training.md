@@ -1,4 +1,4 @@
-# Training #
+# Training
 
 > **Workflow**: [Initialization](./initialization.md) > **Training** > [Exploration](./exploration.md) > [Labeling](./labeling.md) > (repeat or [Test](./test.md))
 

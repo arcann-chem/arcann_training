@@ -14,25 +14,25 @@
 
 ---
 
-# ArcaNN #
+# ArcaNN
 
 ArcaNN proposes an automated enhanced sampling generation of training sets for chemically reactive machine learning interatomic potentials.
 In its current version, it aims to simplify and automate the iterative training process of a [DeePMD-kit](https://doi.org/10.1063/5.0155600) neural network potential for a user-chosen system.
 The core concepts of this training procedure could be extended to other network architectures.
 
-## Quick Navigation ##
+## Quick Navigation
 
 | [**Start Here**](./getting-started/index.md) | [Prerequisites](./usage/iter_prerequisites.md) | [SN2 Example](./examples/sn2.md) |
 | [Requirements](./getting-started/requirements.md) | [Initialization](./usage/initialization.md) | [Contribute](./contributions/contributions.md) |
 | [Installation](./getting-started/installation.md) | [Full Workflow](./usage/start.md) | [Report Issues](./contributions/unexpected_behavior.md) |
 | [HPC Setup](./getting-started/hpc_configuration.md) |
 
-## Key Advantages ##
+## Key Advantages
 
 - **Modularity**: The code is designed with modularity in mind, allowing users to finely tune the training process to fit their specific system and workflow.
 - **Traceability**: Every parameter set during the procedure is recorded, ensuring great traceability.
 
-## Iterative Training Process ##
+## Iterative Training Process
 
 During the iterative training process, you will:
 
@@ -52,13 +52,13 @@ We adopt their naming scheme for the steps in the iterative procedure. Each iter
 - **Labeling**
 - (Optional) **Testing**
 
-### Workflow Overview ###
+### Workflow Overview
 
 **Start your first run**: [Prerequisites](./usage/iter_prerequisites.md) → [Initialization](./usage/initialization.md)
 
 Ensure you understand the meaning of each step before using the code.
 
-## GitHub Repository Structure ##
+## GitHub Repository Structure
 
 You will find in our [GitHub repository](https://github.com/arcann-chem/arcann_training/) everything you need to set up the ArcaNN software, as well as example files that you can use as an example. The repository contains several folders:
 

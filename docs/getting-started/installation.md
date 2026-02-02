@@ -1,8 +1,8 @@
-# ArcaNN Installation Guide #
+# ArcaNN Installation Guide
 
 > **Getting Started**: [Overview](./index.md) > [Requirements](./requirements.md) > **Installation** > [HPC Configuration](./hpc_configuration.md)
 
-## Installation on Machines with Internet Access ##
+## Installation on Machines with Internet Access
 
 To install `ArcaNN`, follow these steps:
 
@@ -58,7 +58,7 @@ pip install -e .
 
 This method allows any modifications to the source files to take effect immediately during program execution. It is only recommended if you plan to modify the source files and requires you to keep the repository folder on your machine.
 
-## Installation on Machines without Internet Access ##
+## Installation on Machines without Internet Access
 
 If your machine does not have access to the internet, follow these steps:
 

@@ -1,4 +1,4 @@
-# SN2 #
+# SN2
 
 Here we introduce the basic usage of the ArcaNN software, ilustrated by a SN2 reaction. All the files are available in the [GitHub Repository](https://github.com/arcann-chem/arcann_training/); and after ArcaNN installation, you will find them at `examples/sn2_ch3cl_br/` inside your local `arcann_traininig` directory.
 
@@ -6,7 +6,7 @@ The iterative training and dataset generation for the SN2 reaction, comprised tw
 
 The files set up for the non-reactive SN2 ArcaNN training is illustrated bellow. Then, the ArcaNN inputs for each step of the first iteration and the corresponding control `json` files are detailed.
 
-## User files ##
+## User files
 
 We will start by creating a `user_files/` directory (See [Iterative procedure prerequisites](../usage/iter_prerequisites.md)) where we will include the necessary files for each step of the procedure. You also need to create a `data/` directory where the initial labeled datasets will be stored. For the reactive training, you will store the datasets of the non-reactive training in the corresponding `data/` directory, together with the initial datasets.
 
@@ -14,22 +14,22 @@ For the non-reactive training, 6 systems were defined : 3 systems to explore the
 
 In the `user_files/` folder you will find the following files for each one of the systems (for clarity purposes, we only indicate the files of the `ch3cl_br_close_300K` system here). Note also that `hpc1` and `hpc2` are the machine keywords indicated in the machine.json file, see [HPC Configuration](../getting-started/hpc_configuration.md).
 
-### JSON FILES ###
+### JSON FILES
 
 - `machine.json` : file containing the cluster parameters.
 - `dp_train_2.1.json` : input for DeePMD trainings.
 
-### JOB FILES ###
+### JOB FILES
 
 - `job_lammps-deepmd_explore_gpu_hpc1.sh` and `job-array_lammps-deepmd_explore_gpu_hpc1.sh` : job scripts for exploration
 - `job_CP2K_label_cpu_hpc1.sh` and `job-array_CP2K_label_hpc1.sh`: job scripts for labeling
 - `job_deepmd_compress_gpu_hpc1.sh`, `job_deepmd_freeze_gpu_hpc1.sh` and `job_deepmd_train_gpu_hpc1.sh` job scripts for training
 
-### CP2K FILES ###
+### CP2K FILES
 
 - `1_ch3cl_br_close_300K_labeling_XXXXX_hpc1.inp`,  `2_ch3cl_br_close_300K_labeling_XXXXX_hpc1.inp`, `1_ch3cl_br_close_300K_labeling_XXXXX_hpc1.inp`, `2_ch3cl_br_close_300K_labeling_XXXXX_hpc2.inp` : inputs for CP2K labeling. There are 2 input files per subsystem, see details in [labeling](../labeling).
 
-### LAMMPS FILES ###
+### LAMMPS FILES
 
 - `ch3cl_br_close_300K.lmp` : starting configurations for the first exploration in the LAMMPS format.
 - `ch3cl_br_close_300K.in` : inputs for LAMMPS exploration.
@@ -40,7 +40,7 @@ Additional plumed files can be used, and must be named as `plumed_KEYWORD_SYSTEM
 
 The atom order is defined in the `properties.txt` file. It makes sure that the order of the  atoms in the `SYSTEM.lmp` files match the order indicated in the `"type_map"` keyword of the DeePMD-kit `dptrain_2.1.json` training file. Also, it makes sure that the generated structures also presents the correct atom numbering to avoid conflicts.
 
-## Initialization ##
+## Initialization
 
 After the initialization step, a `default_input.json` file is generated, containing the name of the `LMP` systems found in the `user_files/`, and the default number of NNP for training defined in ArcaNN.
 
@@ -51,7 +51,7 @@ After the initialization step, a `default_input.json` file is generated, contain
 }
 ```
 
-## Training ##
+## Training
 
 You can now move to the `000-training` directory corresponding to the training of the first generation of NNP. After running the `prepare` phase, a `default_input.json` file is created. In order to modify some of the default parameters, an `input.json` file must be created in the same directory, where only the parameters to be updated need to be indicated as the following:
 
@@ -132,7 +132,7 @@ The corresponding `control` file in your local `$WORKDIR/control/` is updated af
 When a `phase` is executed succesfully, the corresponding `"is_prepared"`, `"is_launched"`, `"is_checked"`, etc. keywords are set to `true`
 Additional performance data, such as the mean time (`"mean_s_per_step"`), median time (`"median_s_per_step"`) and standard deviation (`"stdeviation_s_per_step"`) per training step are reported in this file.
 
-## Exploration ##
+## Exploration
 
 After the first training phase you now have starting NNP that can be used to propagate reactive MD. After executing the `prepare` phase in the `0001-exploration/` folder, you will obtain an `default_input.json` file with default values.
 
@@ -218,7 +218,7 @@ If we have a look at the `exploration_001.json` file inside the `$WORKDIR/contro
 
 The total number of MD simulations is indicated by the `"nb_sim"` keyword. The `"vmd_path"` and the `"atomsk_path"` correspond to the ones indicated in the `used_input.json`, but are not necessary if the code is already available in the ArcaNN path. When the `exploration` step is succesfully finished, all the `phase` keywords are set to `"true"`.
 
-## Labeling ##
+## Labeling
 
 For the last `step` of the first iteration, we move to the `$WORKDIR/001-labeling/` folder to run the different `phases`. You should adapt the Slurm parameters for the electronic structure calculation to match the architecture of your system. In this case, the number of MPI processes per node is set to 16 with the `"nb_mpi_per_node"` keyword in the `input.json`:
 

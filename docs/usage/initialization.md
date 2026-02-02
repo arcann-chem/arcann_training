@@ -1,4 +1,4 @@
-# Initialization #
+# Initialization
 
 > **Workflow**: [Prerequisites](./iter_prerequisites.md) > **Initialization** > [Training](./training.md) > [Exploration](./exploration.md) > [Labeling](./labeling.md) > [Testing](./test.md)
 
