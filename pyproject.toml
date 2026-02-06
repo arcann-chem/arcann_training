@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "arcann_training"
-version = "1.0.0"
+version = "1.1.0"
 description = "Automated enhanced sampling for reactive machine-learning interatomic potentials."
 readme = "README.md"
 requires-python = ">=3.10"

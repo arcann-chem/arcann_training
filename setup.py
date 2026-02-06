@@ -6,7 +6,7 @@ long_description = (this_dir / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="arcann_training",
-    version="1.0.0",
+    version="1.1.0",
     author="Rolf David",
     author_email="",
     description="Automated enhanced sampling for reactive machine-learning interatomic potentials.",
