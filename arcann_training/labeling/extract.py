@@ -6,7 +6,7 @@
 #   SPDX-License-Identifier: AGPL-3.0-only                                                           #
 #----------------------------------------------------------------------------------------------------#
 Created: 2022/01/01
-Last modified: 2026/02/02
+Last modified: 2026/02/06
 """
 
 # Standard library modules
@@ -857,7 +857,7 @@ def main(
 
     del system_auto, system_auto_index
     del system_candidates_count, system_candidates_skipped_count, system_path, data_path
-    del indexes, idx, type_atom_array, lammps_data
+    del type_atom_array
     del program_version
     del system_disturbed_candidates_count, system_disturbed_candidates_skipped_count
 
