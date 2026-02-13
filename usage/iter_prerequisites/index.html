@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Iterative procedure prerequisites - ArcanNN - Training</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Iterative procedure prerequisites";
+        var mkdocs_page_input_path = "usage/iter_prerequisites.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ArcanNN - Training
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Getting started</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../getting-started/requirements/">ArcaNN Requirements</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../getting-started/installation/">ArcaNN Installation Guide</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../getting-started/hpc_configuration/">HPC Configuration</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Usage</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../start/">Using ArcaNN</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Iterative procedure prerequisites</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../initialization/">Initialization</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../training/">Training</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../exploration/">Exploration</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../labeling/">Labeling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../test/">Test</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Examples</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../examples/sn2/">SN2</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Contributions</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../contributions/unexpected_behavior/">Unexpected Behavior</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../contributions/contributions/">Contributions</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Project details</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/license/">License</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/authors/">Authors</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/funding/">Funding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/acknowledgments/">Acknowledgments</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ArcanNN - Training</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Usage</li>
+      <li class="breadcrumb-item active">Iterative procedure prerequisites</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="iterative-procedure-prerequisites">Iterative procedure prerequisites</h1>
+<p>When training a neural network potential (NNP) for a chemical system (or several systems that you want to describe with the same NNP), you will often want to explore the chemical space as diversely as possible.
+In ArcaNN, this is made possible by the use of <strong>systems</strong>.
+A <strong>system</strong> corresponds to a particular way of exploring the chemical space that interests you and will be represented by specific <em>datasets</em> within the total training set of the NNP.
+A <em>dataset</em> corresponds to an ensemble of structures (<em>e.g.</em>, atomic positions, types of atoms, box size, etc.) and corresponding labels (<em>e.g.</em>, energy, forces, virial).</p>
+<p>You get the idea: you need a subsystem for every kind of chemical composition, physical state (temperature, density, pressure, cell size, etc.), biased reactive pathway, and more that you wish to include in your final training <em>dataset</em>.</p>
+<p><strong>Attention</strong>, <strong>systems</strong> are defined once and for all in the <a href="../initialization">Initialization</a> of the procedure.
+Because of this, every time you want to include a new subsystem (such as transition state structures, see <a href="../../examples/sn2/">SN2</a> example), you will need to initialize the procedure again.
+This is very simple—you only need to create a new <code>$WORK_DIR</code> and include the necessary files in <code>user_files/</code> for each extra <strong>system</strong> you want to add.</p>
+<p>To initiate the iterative training procedure, you should create in your <code>$WORK_DIR</code> two folders: <code>user_files/</code> and <code>data/</code>.</p>
+<p>In <code>user_files/</code> you will store all the files needed for each step. You can find some templates to start with in the <a href="https://github.com/arcann-chem/">GitHub Repository</a>, now available in your machine at your ArcaNN installation location <code>arcann_training/examples/user_files/</code>.</p>
+<ul>
+<li>
+<p>For the exploration step, you must adapt the template files found in <code>exploration_lammps/</code> or <code>exploration_sander_emle/</code> depending of your choice. You will need the following files:</p>
+<ul>
+<li>The input files: <code>SYSTEM.in</code> for LAMMPS and <code>SYSTEM.xml</code> for i-PI.</li>
+<li>The plumed files: <code>plumed_SYSTEM.dat</code> where <code>SYSNAME</code> refers to the <strong>system</strong> name (additional PLUMED files can be used as <code>plumed_*_SYSNAME.dat</code>, which will also be taken into account for explorations).</li>
+</ul>
+</li>
+<li>
+<p>For the labeling step, use the template files found in <code>labeling_cp2k/</code> or <code>labeling_orca/</code>. You will need the following files:</p>
+<ul>
+<li>The input files : <code>[1-2]_SYSNAME_labeling_XXXXX_[cluster].inp</code>, where <code>[cluster]</code> refers to the short string selected for the labeling cluster in the <code>machine.json</code>; see <a href="../labeling">Labeling</a>.</li>
+</ul>
+</li>
+<li>
+<p>For the training step, from <code>training_deepmd</code> you will need: </p>
+<ul>
+<li>A DeePMD-kit JSON file named <code>dptrain_VERSION.json</code>, where <code>VERSION</code> is the DeePMD-kit version that you will use (<em>e.g.</em>, <code>2.1</code>; currently supported versions are <code>2.0</code>, <code>2.1</code>, <code>2.2</code>, and <code>3.0</code>).</li>
+</ul>
+</li>
+<li>
+<p>The SLURM scripts for individual jobs and for job arrays are organised by step in several fordels. Prepare your files according to your software choice for each step. You can fin them in: </p>
+<ul>
+<li><code>job_exploration_lammps_slurm</code> and <code>job_exploration_sander_emle_slurm</code> for exploration.</li>
+<li><code>job_labeling_orca_slurm</code> and <code>job_labeling_cp2k_slurm</code> for the labeling.</li>
+<li><code>job_training_deepmd_slurm</code> for training. </li>
+<li><code>job_test_deepmd_slurm</code> for testing. </li>
+</ul>
+</li>
+</ul>
+<p>We <strong>strongly</strong> advise you to create the previous files starting from the templates, as they contain replaceable strings for the key parameters that will be updated by the procedure.</p>
+<ul>
+<li>A representative file in the <a href="https://docs.lammps.org/2001/data_format.html">LAMMPS Data Format</a> format for each <strong>system</strong>, named <code>SYSTEM.lmp</code>, where <code>SYSTEM</code> refers to the <strong>system</strong> name  (we will refer to them as <code>LMP</code> files).
+This file represent the configuration of the <strong>system</strong>, with the number of atoms and the number of types of atoms, the simulation cell dimension, the atomic masses for each type and the atomic geometry of your <strong>system</strong>. They will be used as starting point for the first exploration.</li>
+</ul>
+<p>The order of the atoms in the <code>LMP</code> files <strong>must</strong> be identical for every <strong>system</strong> and <strong>must</strong> match the order indicated in the <code>"type_map"</code> keyword of the DeePMD-kit <code>dptrain_VERSION.json</code> training file. </p>
+<ul>
+<li>A <code>properties</code> file must be provided and named <code>properties.txt</code>.
+This is file will be used by <a href="https://atomsk.univ-lille.fr/tutorial_properties.php">atomsk</a>. In the case you have several <strong>systems</strong> with different chemical composition, the properties file must be the same for all systems to ensure consistant type mapping. </li>
+</ul>
+<p>Then, gather all these files and store them inside the <code>user_files/</code> directory. <strong>Don't</strong> create subdirectories inside <code>user_files</code>. </p>
+<p>Finally, you also need to prepare at least one initial <em>dataset</em> which will be used for your first neural networks training, that you will store in the <code>data/</code> directory. 
+It must follow DeePMD-kit standards and should contain a <code>type.raw</code> file and <code>set.000/</code> folder with <code>box.npy</code>, <code>coord.npy</code>, <code>energy.npy</code> and <code>force.npy</code> (see <a href="https://docs.deepmodeling.com/projects/deepmd/en/master/">DeePMD-kit documentation</a>).
+You can prepare as many initial <em>datasets</em> as you wish and they should all be stored in the <code>$WORK_DIR/data/</code> folder with a folder name starting with <code>init_</code>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../start/" class="btn btn-neutral float-left" title="Using ArcaNN"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../initialization/" class="btn btn-neutral float-right" title="Initialization">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../start/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../initialization/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Using ArcaNN - ArcanNN - Training</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Using ArcaNN";
+        var mkdocs_page_input_path = "usage/start.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ArcanNN - Training
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Getting started</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../getting-started/requirements/">ArcaNN Requirements</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../getting-started/installation/">ArcaNN Installation Guide</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../getting-started/hpc_configuration/">HPC Configuration</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Usage</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Using ArcaNN</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#iterations-steps-and-phases-of-the-iterative-procedure">Iterations, Steps and Phases of the Iterative Procedure</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#exploration">Exploration</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#labeling">Labeling</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#training">Training</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#test">Test</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#parameters">Parameters</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../iter_prerequisites/">Iterative procedure prerequisites</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../initialization/">Initialization</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../training/">Training</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../exploration/">Exploration</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../labeling/">Labeling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../test/">Test</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Examples</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../examples/sn2/">SN2</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Contributions</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../contributions/unexpected_behavior/">Unexpected Behavior</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../contributions/contributions/">Contributions</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Project details</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/license/">License</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/authors/">Authors</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/funding/">Funding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../project_details/acknowledgments/">Acknowledgments</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ArcanNN - Training</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Usage</li>
+      <li class="breadcrumb-item active">Using ArcaNN</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="using-arcann">Using ArcaNN</h1>
+<h2 id="iterations-steps-and-phases-of-the-iterative-procedure">Iterations, Steps and Phases of the Iterative Procedure</h2>
+<p>At this stage, ArcaNN is installed in your machine, and you have made the necessary changes to adapt it (see <a href="../../getting-started/hpc_conf">HPC Configuration</a>). As in the <a href="https://github.com/arcann-chem/arcann_training/">GitHub Repository</a>, you can now find in the location where you installed ArcaNN, an <code>arcann_traininig/</code> folder containing several files, as well as the <code>arcann_training/</code> scripts, a <code>tools/</code> directory and a <code>examples/</code> directory.</p>
+<p>To start the procedure, create an empty directory anywhere you like that will be your iterative training working directory. 
+We will refer to this directory by the variable name <code>$WORK_DIR</code>.</p>
+<p>We will describe the <strong>prerequisites</strong>, and then the <strong>initialization</strong>, <strong>training</strong>, <strong>exploration</strong>, <strong>labeling</strong> steps and, the optional <strong>test</strong>.
+At the end of each step description, we include an example.</p>
+<p>As described in more detail below, training the NNP proceeds in iterations consisting of three <strong>steps</strong>: exploration, labeling, and training.
+Each <strong>step</strong> is broken down into elementary tasks, which we call <em>phases</em>.
+Each iteration will have three folders: XXX-exploration, XXX-labeling, and XXX-training (<em>e.g.</em>, <code>XXX</code> is <code>003</code> for the 3rd iteration).
+Each <strong>step</strong> is executed in its corresponding folder by running, in order, the relevant <em>phases</em> with the following command:</p>
+<pre><code class="language-bash">python -m arcann_training STEP_NAME PHASE_NAME 
+</code></pre>
+<p>where <code>STEP_NAME</code> refers to the current <strong>step</strong> (<code>initialization</code>, <code>exploration</code>, <code>labeling</code>, <code>training</code>, or <code>test</code>) and <code>PHASE_NAME</code> is the specific task that needs to be performed within that <strong>step</strong>.
+This will become clearer with examples in the sections below, where each <strong>step</strong> is explained.
+The following tables provide a brief description of the <em>phases</em> in each <strong>step</strong>, in the correct order.
+Since <code>initialization</code> has only a single <code>start</code> <em>phase</em>, which is self-explanatory, it is detailed in the example below.</p>
+<h3 id="exploration">Exploration</h3>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>prepare</code></td>
+<td>Prepares the folders for running the exploration MDs of all <strong>systems</strong> (automatically generating input files required for each simulation).</td>
+</tr>
+<tr>
+<td><code>launch</code></td>
+<td>Submits the MD simulation to the specified partition of the cluster, usually with a SLURM array.</td>
+</tr>
+<tr>
+<td><code>check</code></td>
+<td>Verifies whether the exploration simulations have completed successfully. If any simulations ended abruptly, it indicates which ones, allowing the user to <code>skip</code> or <code>force</code> them (see <a href="#exploration">Exploration</a>).</td>
+</tr>
+<tr>
+<td><code>deviate</code></td>
+<td>Reads the model deviation (maximum deviation between atomic forces predicted by the committee of NN) along the trajectories of each system and identifies configurations that are candidates (deviations within specified boundaries; see <a href="#exploration">Exploration</a>).</td>
+</tr>
+<tr>
+<td><code>extract</code></td>
+<td>Extracts a user-defined number of candidate configurations per <strong>system</strong>, saving them to a <code>SYSNAME/candidates_SYSNAME.xyz</code> file for labeling and addition to the NNP training set.</td>
+</tr>
+<tr>
+<td><code>clean</code></td>
+<td>Removes files that are no longer required (optional).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="labeling">Labeling</h3>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>prepare</code></td>
+<td>Prepares folders and files to run electronic structure calculations on identified candidates of each <strong>system</strong>, obtaining the energies and forces required to train the NNP.</td>
+</tr>
+<tr>
+<td><code>launch</code></td>
+<td>Submits the calculations with one SLURM array per <strong>system</strong>.</td>
+</tr>
+<tr>
+<td><code>check</code></td>
+<td>Verifies that calculations have completed successfully. If any calculations finished abruptly, it writes their index to a text file in the corresponding <code>SYSNAME/</code> folder. The user must decide whether to <code>skip</code> or resubmit manually each failed calculation before proceeding.</td>
+</tr>
+<tr>
+<td><code>extract</code></td>
+<td>Extracts necessary information from the CP2K outputs and builds DeePMD-kit "systems"/datasets for each <strong>system</strong> (stored in the <code>$WORK_DIR/data/</code> folder).</td>
+</tr>
+<tr>
+<td><code>clean</code></td>
+<td>Removes files that are no longer required and compresses the calculation outputs into an archive (optional).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="training">Training</h3>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>prepare</code></td>
+<td>Prepares folders and files for training and the user-defined number of independent NNPs to be used in the next iteration.</td>
+</tr>
+<tr>
+<td><code>launch</code></td>
+<td>Submits the training calculations using the <code>dp train</code> code from DeePMD-kit.</td>
+</tr>
+<tr>
+<td><code>check</code></td>
+<td>Verifies whether the training has completed successfully. If any traoining ended abruptly, they need to be resubmitted manually to ensure the training finishes correctly.</td>
+</tr>
+<tr>
+<td><code>freeze</code></td>
+<td>Freezes the NN parameters into a binary file (<code>.pb</code> extension for TensorFlow back-end) usable with LAMMPS and Python. This is done with the <code>dp freeze</code> code from DeePMD-kit.</td>
+</tr>
+<tr>
+<td><code>check_freeze</code></td>
+<td>Verifies that the calculations completed successfully. If any calculations finished abruptly, they must be resubmitted manually to ensure freezing completes correctly.</td>
+</tr>
+<tr>
+<td><code>compress</code></td>
+<td><a href="https://doi.org/10.1021/acs.jctc.2c00102">Compresses</a> the NNP by modifying the <code>.pb</code> file to enhance performance with minimal loss of accuracy. Uses the <code>dp compress</code> code from DeePMD-kit (optional).</td>
+</tr>
+<tr>
+<td><code>check_compress</code></td>
+<td>Verifies that the calculations completed successfully. If any calculations finished abruptly, they must be resubmitted manually to ensure compressing completes correctly.</td>
+</tr>
+<tr>
+<td><code>increment</code></td>
+<td>Changes the iteration number in <code>control</code> and creates new <code>exploration</code>, <code>labeling</code>, and <code>training</code> folders for the next iteration.</td>
+</tr>
+<tr>
+<td><code>clean</code></td>
+<td>Removes files that are no longer required (optional).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="test">Test</h3>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>prepare</code></td>
+<td>Prepares folders and files for testing the performance of the current iteration's NNP on each <em>dataset</em> included in the training set.</td>
+</tr>
+<tr>
+<td><code>launch</code></td>
+<td>Submits the testing calculations using the <code>dp test</code> code from DeePMD-kit. If you need <a href="https://docs.deepmodeling.com/projects/deepmd/en/r2/test/test.html">"detail files"</a> generated by <code>dp test</code>, include this directly in the <code>job_test_deepmd</code> file.</td>
+</tr>
+<tr>
+<td><code>check</code></td>
+<td>Verifies whether the calculations have completed successfully.</td>
+</tr>
+<tr>
+<td><code>clean</code></td>
+<td>Removes files that are no longer required (optional). If "detail files" weren't requested, the <code>XXX-test/</code> folder will be removed, as all the step information is consolidated in the <code>control/test_XXX.json</code> file. Otherwise, the "detail files" will be compressed into .npy format and stored in <code>XXX-test/</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="parameters">Parameters</h2>
+<p>Parameters will need to be defined for most <em>phases</em> of each <strong>step</strong> (<em>e.g.</em>, length of MD simulations, temperature, number of CPU tasks for labeling calculations, etc.).
+This is done via input files in the JSON format.
+Executing <em>phase</em> without an input file will use all the default values (see the <code>exploration.json</code> file in <code>examples/inputs</code> for all <code>exploration</code> phases) and write them to a <code>default_json.json</code> file.
+This file serves as a reminder of what the default values are.
+After successfully executing a <em>phase</em>, a <code>used_input.json</code> file will be created, indicating which parameters <code>ArcaNN</code> used for that <em>phase</em>.
+It will be appended with additional parameters after a subsequent <em>phase</em> (<em>e.g.</em>, after <code>exploration prepare</code>, a <code>used_input.json</code> is created and appended after <code>exploration deviate</code> with parameters specific to the <code>deviate</code> phase).
+If you want to override the default values for a phase, simply create an <code>input.json</code> file with the parameters you want to change.
+For example, to override the number of picoseconds for the <code>exploration prepare</code> phase, add an <code>input.json</code> file like this:</p>
+<pre><code class="language-JSON">{
+    &quot;exp_time_ps&quot;: 100
+}
+</code></pre>
+<p>And run or rerun  <code>exploration prepare</code>: you will see within the  <code>used_input.json</code> that the requested parameters have been read, and that dependent parameters (<em>e.g.</em>, walltime) have been adjusted accordingly.</p>
+<p>The parameters indicated in an <code>input.json</code> file will <strong>always override</strong> the default or auto-calculated ones, and for some of them, the values <strong>will persist</strong>.
+For instance, if you provided an override for <code>max_candidates</code> in iteration <code>003</code>, it will be maintained in iteration <code>004</code> without requiring another <code>input.json</code>.</p>
+<p>We will now describe each <strong>step</strong> of the concurrent learning procedure in detail.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../../getting-started/hpc_configuration/" class="btn btn-neutral float-left" title="HPC Configuration"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../iter_prerequisites/" class="btn btn-neutral float-right" title="Iterative procedure prerequisites">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../../getting-started/hpc_configuration/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../iter_prerequisites/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
