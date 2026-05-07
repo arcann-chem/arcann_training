@@ -86,3 +86,28 @@ jobs:
     - name: Run unit tests
       run: |
         python -m unittest discover arcann_training/unittests
+
+  package:
+    runs-on: ubuntu-22.04
+    name: ${{ matrix.python-version }} - Package Install
+
+    strategy:
+      matrix:
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install package
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install .
+
+    - name: Check CLI entry point
+      run: |
+        arcann-training --list-steps

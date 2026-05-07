@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=60", "wheel>=0.37"]
+requires = ["setuptools>=64", "wheel>=0.37"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,10 +7,10 @@ name = "arcann_training"
 version = "1.1.0"
 description = "Automated enhanced sampling for reactive machine-learning interatomic potentials."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.7"
 license = { text = "GNU Affero General Public License v3" }
 authors = [{ name = "Rolf David" }]
-dependencies = ["numpy>=1.22", "pyyaml>=6.0"]
+dependencies = ["numpy>=1.15", "pyyaml>=3.13"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "License :: OSI Approved :: GNU Affero General Public License v3",
@@ -29,3 +29,11 @@ Homepage = "https://github.com/arcann-chem/arcann"
 
 [project.scripts]
 arcann-training = "arcann_training.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["arcann_training*"]
+
+[tool.setuptools.package-data]
+"arcann_training.assets" = ["*.json"]
+"arcann_training.assets.others" = ["*.in", "*.tcl"]
