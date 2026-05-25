@@ -60,12 +60,6 @@ class TestCalculateDecaySteps(unittest.TestCase):
         Test validating type of output returned by the function, i.e., an integer.
     """
 
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_calculate_decay_steps_positive_input(self):
         """
         Test validating function with valid inputs.
@@ -129,12 +123,6 @@ class TestCalculateDecayRate(unittest.TestCase):
     test_calculate_decay_rate_output_type():
         Test validating type of output returned by the function, i.e., an float.
     """
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
 
     def test_calculate_decay_rate_valid_input(self):
         """
@@ -200,12 +188,6 @@ class TestCalculateLearningRate(unittest.TestCase):
     test_calculate_learning_rate_output_type():
         Test validating type of output returned by the function, i.e., an float.
     """
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
 
     def test_calculate_learning_rate_valid_input(self):
         """

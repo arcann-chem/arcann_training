@@ -58,9 +58,6 @@ class TestExcludeSubstringFromStringList(unittest.TestCase):
         ]
         self.substring = "quantum"
 
-    def tearDown(self):
-        pass
-
     def test_exclude_substring_from_string_list(self):
         """
         Test validating 'exclude_substring_from_string_list' function with valid input.
@@ -127,10 +124,11 @@ class TestReplaceSubstringInStringList(unittest.TestCase):
         ]
         self.substring_in = "quantum"
         self.substring_out = "classical"
-        self.tmp_file = tempfile.NamedTemporaryFile()
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.tmp_file_path = Path(self.temp_dir.name) / "input.txt"
 
     def tearDown(self):
-        self.tmp_file.close()
+        self.temp_dir.cleanup()
 
     def test_replace_substring_in_string_list(self):
         """
@@ -178,10 +176,10 @@ class TestReplaceSubstringInStringList(unittest.TestCase):
         """
         Test validating 'replace_substring_in_string_list' function with a file object.
         """
-        with open(self.tmp_file.name, "w") as f:
+        with self.tmp_file_path.open("w") as f:
             f.write("\n".join(self.input_list))
 
-        with open(self.tmp_file.name, "r") as f:
+        with self.tmp_file_path.open("r") as f:
             output = replace_substring_in_string_list(
                 f.readlines(), self.substring_in, self.substring_out
             )
@@ -213,22 +211,21 @@ class TestStringListToTextfile(unittest.TestCase):
     """
 
     def setUp(self):
-        self.temp_file = Path(tempfile.mkstemp()[1])
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.temp_file = Path(self.temp_dir.name) / "strings.txt"
 
     def tearDown(self):
-        self.temp_file.unlink()
+        self.temp_dir.cleanup()
 
     def test_string_list_to_textfile_writes_to_file(self):
         """
         Test validating 'string_list_to_textfile' function writing a list of strings to a text file.
         """
         expected_output = ["foo", "bar", "baz"]
-        print(expected_output)
         input_file = self.temp_file
         string_list_to_textfile(input_file, expected_output)
         with input_file.open("r") as f:
             lines = f.readlines()
-        print(expected_output)
         expected_lines = [f"{s}\n" for s in expected_output]
         self.assertEqual(
             lines, expected_lines, "The file does not contain the expected contents"
@@ -291,13 +288,12 @@ class TestTextfileToStringList(unittest.TestCase):
     """
 
     def setUp(self):
-        self.temp_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
-        self.temp_file.write("Line 1\nLine 2\nLine 3\n")
-        self.temp_file.close()
-        self.file_path = Path(self.temp_file.name)
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.file_path = Path(self.temp_dir.name) / "input.txt"
+        self.file_path.write_text("Line 1\nLine 2\nLine 3\n")
 
     def tearDown(self):
-        self.file_path.unlink()
+        self.temp_dir.cleanup()
 
     def test_textfile_to_string_list_with_existing_file(self):
         """
@@ -312,24 +308,19 @@ class TestTextfileToStringList(unittest.TestCase):
         """
         Test validating 'textfile_to_string_list' function reading an empty file to an empty list.
         """
-        empty_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
-        empty_file.close()
-        empty_file_path = Path(empty_file.name)
+        empty_file_path = Path(self.temp_dir.name) / "empty.txt"
+        empty_file_path.write_text("")
         strings = textfile_to_string_list(empty_file_path)
         self.assertEqual(strings, [])
-        empty_file_path.unlink()
 
     def test_textfile_to_string_list_with_one_line_file(self):
         """
         Test validating 'textfile_to_string_list' function reading a file with one line to a list containing that line.
         """
-        one_line_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
-        one_line_file.write("Line 1")
-        one_line_file.close()
-        one_line_file_path = Path(one_line_file.name)
+        one_line_file_path = Path(self.temp_dir.name) / "one-line.txt"
+        one_line_file_path.write_text("Line 1")
         strings = textfile_to_string_list(one_line_file_path)
         self.assertEqual(strings, ["Line 1"])
-        one_line_file_path.unlink()
 
     def test_textfile_to_string_list_with_nonexistent_file(self):
         """

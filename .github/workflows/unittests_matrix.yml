@@ -85,7 +85,7 @@ jobs:
 
     - name: Run unit tests
       run: |
-        python -m unittest discover arcann_training/unittests
+        python -m unittest discover -s arcann_training/unittests -p "test_*.py"
 
   package:
     runs-on: ubuntu-22.04

@@ -63,9 +63,6 @@ class TestStringListToXml(unittest.TestCase):
             b"<root><child1>value1</child1><child2>value2</child2></root>"
         )
 
-    def tearDown(self):
-        pass
-
     def test_string_list_to_xml(self):
         """
         Test confirming the function correctly converts a list of strings to a XML tree.
@@ -97,9 +94,6 @@ class TestXmlToStringList(unittest.TestCase):
             "<child2>value2</child2>",
             "</root>",
         ]
-
-    def tearDown(self):
-        pass
 
     def test_xml_to_string_list(self):
         """
@@ -209,17 +203,17 @@ class TestWriteXmlFile(unittest.TestCase):
     """
 
     def setUp(self):
-        self.tmp_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
+        self.temp_dir = tempfile.TemporaryDirectory()
         self.xml_tree = ET.ElementTree(
             ET.fromstring("<root><child1>value1</child1><child2>value2</child2></root>")
         )
         self.expected_xml_string = minidom.parseString(
             ET.tostring(self.xml_tree.getroot())
         ).toprettyxml(indent=" ")
-        self.tmp_file_path = Path(self.tmp_file.name)
+        self.tmp_file_path = Path(self.temp_dir.name) / "output.xml"
 
     def tearDown(self):
-        Path.unlink(self.tmp_file_path)
+        self.temp_dir.cleanup()
 
     def test_write_xml_file(self):
         """
