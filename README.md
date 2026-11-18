@@ -2,6 +2,13 @@
 <img src="./docs/arcann_logo.svg" alt="ArcaNN logo" style="width: 25%; height: auto;" />
 </div>
 
+> [!IMPORTANT]
+> **ArcaNN has moved to the [champagnn](https://github.com/champagnn) organisation.**
+> This repository is archived and no longer maintained.
+>
+> - Code, issues and releases: <https://github.com/champagnn/arcann_training>
+> - Documentation: <https://champagnn.github.io/arcann_training/>
+
 ---
 
 [![GNU AGPL v3.0 License](https://img.shields.io/github/license/arcann-chem/arcann_training.svg)](https://github.com/arcann-chem/arcann_training/blob/main/LICENSE)
@@ -22,11 +29,11 @@ The main advantages of this code are its modularity, the ability to finely tune 
 During the iterative training process, you will iteratively train neural network potentials, use them as reactive force fields for molecular dynamics simulations (to explore the phase space), select and label some configurations based on a query by committee approach, and then train neural network potentials again with an improved training set, and so forth.
 This workflow, sometimes referred to as active or concurrent learning, was heavily inspired by [DP-GEN](https://doi.org/10.1016/j.cpc.2020.107206), and we use their naming scheme for the steps of the iterative procedure.
 
-We refer the reader to the [documentation](https://arcann-chem.github.io/arcann_training/) and the accompanying paper [ArcaNN: automated enhanced sampling generation of training sets for chemically reactive machine learning interatomic potentials](https://doi.org/10.1039/D4DD00209A).
+We refer the reader to the [documentation](https://champagnn.github.io/arcann_training/) and the accompanying paper [ArcaNN: automated enhanced sampling generation of training sets for chemically reactive machine learning interatomic potentials](https://doi.org/10.1039/D4DD00209A).
 
 ## Installation ##
 
-To install ArcaNN, please read the [documentation](https://arcann-chem.github.io/arcann_training/getting-started/requirements/).
+To install ArcaNN, please read the [documentation](https://champagnn.github.io/arcann_training/getting-started/requirements/).
 
 ## License ##
 

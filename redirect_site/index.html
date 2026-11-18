@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ArcaNN has moved</title>
+<link rel="canonical" href="https://champagnn.github.io/arcann_training/">
+<!-- Fallback when JavaScript is off: redirect after 10 seconds. -->
+<meta http-equiv="refresh" content="10; url=https://champagnn.github.io/arcann_training/">
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+         max-width: 40rem; margin: 15vh auto; padding: 0 1rem; line-height: 1.5; }
+  h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+  .new-home { font-size: 1.15rem; }
+  .countdown { opacity: 0.75; }
+</style>
+</head>
+<body>
+<h1>ArcaNN has moved</h1>
+<p>ArcaNN is now developed and maintained by the <strong>champagnn</strong> organisation.
+This site is no longer updated.</p>
+<p class="new-home">New documentation:
+<a href="https://champagnn.github.io/arcann_training/">https://champagnn.github.io/arcann_training/</a></p>
+<p>Source code: <a href="https://github.com/champagnn/arcann_training">https://github.com/champagnn/arcann_training</a></p>
+<p>Please update your bookmarks.</p>
+<p class="countdown">You will be redirected to the new documentation in <span id="seconds">10</span> seconds.
+If you are not redirected, <a href="https://champagnn.github.io/arcann_training/">click here</a>.</p>
+<script>
+  (function () {
+    var target = "https://champagnn.github.io/arcann_training/";
+    var left = 10;
+    var el = document.getElementById("seconds");
+    var timer = setInterval(function () {
+      left -= 1;
+      el.textContent = left;
+      if (left <= 0) {
+        clearInterval(timer);
+        window.location.replace(target);
+      }
+    }, 1000);
+  })();
+</script>
+</body>
+</html>

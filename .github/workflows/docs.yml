@@ -1,29 +1,36 @@
 name: Documentation Deployment
+# The documentation has moved to https://champagnn.github.io/arcann_training/.
+# This workflow replaces the old site on gh-pages with a single "we've moved"
+# page (redirect_site/index.html). Every old URL, through 404.html, redirects to
+# the new home page. It only deploys from main.
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.x
-        uses: actions/setup-python@v5
+      - name: Build redirect site
+        run: |
+          mkdir _site
+          cp redirect_site/index.html _site/index.html
+          cp redirect_site/index.html _site/404.html
+          touch _site/.nojekyll
+      - uses: peaceiris/actions-gh-pages@v4
         with:
-          python-version: 3.x
-      - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
-      - uses: actions/cache@v4
-        with:
-          key: mkdocs-${{ env.cache_id }}
-          path: .cache
-          restore-keys: |
-            mkdocs-
-      - run: pip install mkdocs mkdocs-awesome-pages-plugin mkdocs-markdownextradata-plugin
-      - run: mkdocs gh-deploy --force --clean --verbose
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: "Replace documentation with a we've moved page"
